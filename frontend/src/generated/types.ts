@@ -1051,10 +1051,13 @@ export interface ServerSettings {
 }
 
 export interface ServerTunnel {
+  acceptUdp: boolean;
   address: string;
   enable: boolean;
   engine: string;
   exitOutbound: string;
+  fallbackTransports: string[];
+  forwardPorts: string[];
   id: number;
   name: string;
   port: number;
@@ -1064,6 +1067,7 @@ export interface ServerTunnel {
   security: string;
   serverName: string;
   shortId: string;
+  transport: string;
   uuid: string;
 }
 

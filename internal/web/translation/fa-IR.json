@@ -2558,6 +2558,18 @@
       "statusDown": "قطع",
       "statusExitOnly": "از سرور ورودی تست می‌شود",
       "statusExit": "خروج از",
+      "engine": "موتور",
+      "engineXray": "Xray (داخلی)",
+      "engineBackpack": "BackPack",
+      "transport": "ترنسپورت",
+      "fallbackTransports": "ترنسپورت‌های جایگزین",
+      "fallbackTransportsHint": "وقتی ترنسپورت اصلی مسدود شود، به ترتیب امتحان می‌شوند.",
+      "forwardPorts": "پورت‌های فوروارد",
+      "forwardPortsHint": "پورت‌هایی که روی این سرور باز می‌شوند و به سرور دیگر می‌رسند؛ مثلاً 443=127.0.0.1:2096. بعد از هر مورد Enter بزنید.",
+      "acceptUdp": "UDP هم منتقل شود",
+      "engineMissing": "موتور BackPack روی این سرور نصب نیست و تانل‌های BackPack اجرا نمی‌شوند.",
+      "engineMissingHint": "اگر این سرور به GitHub دسترسی ندارد، فایل backpack را دستی در پوشه‌ی bin پنل قرار دهید.",
+      "installEngine": "نصب BackPack",
       "toasts": {
         "list": "دریافت تانل‌ها",
         "add": "ساخت تانل",
@@ -2565,7 +2577,8 @@
         "update": "به‌روزرسانی تانل",
         "del": "حذف تانل",
         "link": "دریافت لینک راه‌اندازی",
-        "status": "تست تانل"
+        "status": "تست تانل",
+        "installEngine": "نصب موتور BackPack"
       }
     }
   },

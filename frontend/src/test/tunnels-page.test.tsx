@@ -23,7 +23,24 @@ const portal = {
   shortId: 'a1b2c3d4',
   routeInbounds: ['inbound-443'],
   exitOutbound: '',
+  transport: '',
+  fallbackTransports: null,
+  forwardPorts: null,
+  acceptUdp: false,
 };
+const backpackPortal = {
+  ...portal,
+  id: 3,
+  name: 'bp1',
+  engine: 'backpack',
+  security: 'none',
+  transport: 'wssmux',
+  fallbackTransports: ['quic'],
+  forwardPorts: ['443=127.0.0.1:2096'],
+  routeInbounds: null,
+};
+let listed: Record<string, unknown>[];
+let engineInstalled: boolean;
 const bridge = { ...portal, id: 2, name: 'ir1', role: 'bridge', routeInbounds: null };
 let statusOfPortal: Record<string, unknown>;
 
@@ -36,6 +53,8 @@ function openTunnels() {
 }
 
 beforeEach(() => {
+  listed = [portal, bridge];
+  engineInstalled = true;
   statusOfPortal = {
     connected: true,
     latencyMs: 182,
@@ -44,7 +63,17 @@ beforeEach(() => {
     error: '',
   };
   vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
-    if (url === '/panel/api/tunnels/list') return new Msg(true, '', [portal, bridge]);
+    if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
+    if (url === '/panel/api/tunnels/engine')
+      return new Msg(true, '', { installed: engineInstalled, version: 'v2.0.0' });
+    if (url === '/panel/api/tunnels/status/3')
+      return new Msg(true, '', {
+        connected: true,
+        latencyMs: 0,
+        exitIp: '198.51.100.7',
+        exitLoc: '',
+        error: '',
+      });
     if (url === '/panel/api/tunnels/link/1') return new Msg(true, '', 'dalan://tunnel/abc');
     if (url === '/panel/api/tunnels/status/1') return new Msg(true, '', statusOfPortal);
     return new Msg(true, '', []);
@@ -112,6 +141,7 @@ test('creates an entry tunnel from the form', async () => {
         name: 'tr1',
         address: '198.51.100.7',
         port: 9443,
+        engine: 'xray',
         security: 'reality',
         serverName: 'www.example.org',
         routeInbounds: [],
@@ -140,4 +170,67 @@ test('shows a tunnel that does not answer as down', async () => {
 
   expect(await screen.findByText('Down')).toBeTruthy();
   expect(screen.queryByText(/Connected/)).toBeNull();
+});
+
+test('shows a BackPack tunnel with its transport, forwarded ports and engine status', async () => {
+  listed = [backpackPortal];
+  openTunnels();
+
+  expect(await screen.findByText('bp1')).toBeTruthy();
+  expect(screen.getByText('BackPack')).toBeTruthy();
+  expect(screen.getByText('wssmux')).toBeTruthy();
+  expect(screen.getByText('443=127.0.0.1:2096')).toBeTruthy();
+  expect(await screen.findByText('Connected')).toBeTruthy();
+  expect(screen.getByText('Exits from 198.51.100.7')).toBeTruthy();
+});
+
+test('offers to install the BackPack engine when a BackPack tunnel has none', async () => {
+  listed = [backpackPortal];
+  engineInstalled = false;
+  openTunnels();
+
+  fireEvent.click(await screen.findByRole('button', { name: 'Install BackPack' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith('/panel/api/tunnels/engine/install'),
+  );
+});
+
+test('does not mention the BackPack engine while only Xray tunnels exist', async () => {
+  engineInstalled = false;
+  openTunnels();
+  await screen.findByText('de1');
+
+  expect(screen.queryByRole('button', { name: 'Install BackPack' })).toBeNull();
+});
+
+test('creates a BackPack entry tunnel with its transport and forwarded ports', async () => {
+  openTunnels();
+  await screen.findByText('de1');
+
+  fireEvent.click(screen.getByRole('button', { name: 'New tunnel' }));
+  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'bp2' } });
+  fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
+  fireEvent.click(screen.getByRole('radio', { name: 'BackPack' }));
+  const ports = await screen.findByLabelText('Forwarded ports');
+  fireEvent.change(ports, { target: { value: '443=127.0.0.1:2096' } });
+  fireEvent.keyDown(ports, { key: 'Enter', keyCode: 13 });
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/add',
+      {
+        name: 'bp2',
+        address: '198.51.100.7',
+        port: 8443,
+        engine: 'backpack',
+        transport: 'tcpmux',
+        fallbackTransports: [],
+        forwardPorts: ['443=127.0.0.1:2096'],
+        acceptUdp: false,
+      },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
 });

@@ -4621,6 +4621,9 @@ export const SCHEMAS: Record<string, unknown> = {
   "ServerTunnel": {
     "description": "ServerTunnel is one end of a tunnel between two panels. The portal listens and\ntakes user traffic; the bridge dials the portal and is where traffic leaves.",
     "properties": {
+      "acceptUdp": {
+        "type": "boolean"
+      },
       "address": {
         "example": "203.0.113.10",
         "type": "string"
@@ -4637,6 +4640,19 @@ export const SCHEMAS: Record<string, unknown> = {
         "description": "ExitOutbound (bridge) is the local outbound tunnel traffic leaves from; empty means \"direct\".",
         "example": "direct",
         "type": "string"
+      },
+      "fallbackTransports": {
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "forwardPorts": {
+        "description": "ForwardPorts (portal) are ports opened on this server and carried to the other end, like \"443=127.0.0.1:2096\".",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
       },
       "id": {
         "example": 1,
@@ -4676,16 +4692,24 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "a1b2c3d4",
         "type": "string"
       },
+      "transport": {
+        "description": "Transport, FallbackTransports, ForwardPorts and AcceptUDP belong to the BackPack engine.",
+        "example": "wssmux",
+        "type": "string"
+      },
       "uuid": {
         "example": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10",
         "type": "string"
       }
     },
     "required": [
+      "acceptUdp",
       "address",
       "enable",
       "engine",
       "exitOutbound",
+      "fallbackTransports",
+      "forwardPorts",
       "id",
       "name",
       "port",
@@ -4695,6 +4719,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "security",
       "serverName",
       "shortId",
+      "transport",
       "uuid"
     ],
     "type": "object"

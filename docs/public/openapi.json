@@ -4647,6 +4647,9 @@
       "ServerTunnel": {
         "description": "ServerTunnel is one end of a tunnel between two panels. The portal listens and\ntakes user traffic; the bridge dials the portal and is where traffic leaves.",
         "properties": {
+          "acceptUdp": {
+            "type": "boolean"
+          },
           "address": {
             "example": "203.0.113.10",
             "type": "string"
@@ -4663,6 +4666,19 @@
             "description": "ExitOutbound (bridge) is the local outbound tunnel traffic leaves from; empty means \"direct\".",
             "example": "direct",
             "type": "string"
+          },
+          "fallbackTransports": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "forwardPorts": {
+            "description": "ForwardPorts (portal) are ports opened on this server and carried to the other end, like \"443=127.0.0.1:2096\".",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "id": {
             "example": 1,
@@ -4702,16 +4718,24 @@
             "example": "a1b2c3d4",
             "type": "string"
           },
+          "transport": {
+            "description": "Transport, FallbackTransports, ForwardPorts and AcceptUDP belong to the BackPack engine.",
+            "example": "wssmux",
+            "type": "string"
+          },
           "uuid": {
             "example": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10",
             "type": "string"
           }
         },
         "required": [
+          "acceptUdp",
           "address",
           "enable",
           "engine",
           "exitOutbound",
+          "fallbackTransports",
+          "forwardPorts",
           "id",
           "name",
           "port",
@@ -4721,6 +4745,7 @@
           "security",
           "serverName",
           "shortId",
+          "transport",
           "uuid"
         ],
         "type": "object"
@@ -13468,10 +13493,17 @@
                   "success": true,
                   "obj": [
                     {
+                      "acceptUdp": false,
                       "address": "203.0.113.10",
                       "enable": true,
                       "engine": "xray",
                       "exitOutbound": "direct",
+                      "fallbackTransports": [
+                        ""
+                      ],
+                      "forwardPorts": [
+                        ""
+                      ],
                       "id": 1,
                       "name": "de1",
                       "port": 8443,
@@ -13483,6 +13515,7 @@
                       "security": "reality",
                       "serverName": "www.example.com",
                       "shortId": "a1b2c3d4",
+                      "transport": "wssmux",
                       "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
                     }
                   ]
@@ -13589,12 +13622,79 @@
         }
       }
     },
+    "/panel/api/tunnels/engine": {
+      "get": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Whether the BackPack engine binary is on this server, and the BackPack release this Dalan version installs.",
+        "operationId": "get_panel_api_tunnels_engine",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "installed": false,
+                    "version": "v2.0.0"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/engine/install": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Download the pinned BackPack release for this CPU, verify it against the checksums published with it, put it in the panel bin folder and start the BackPack tunnels. Uses the panel proxy settings. Can take a few minutes.",
+        "operationId": "post_panel_api_tunnels_engine_install",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/tunnels/add": {
       "post": {
         "tags": [
           "Tunnels"
         ],
-        "summary": "Create the entry end of a tunnel on this server. Secrets are generated by the panel. routeInbounds lists the local inbound tags whose traffic leaves through the tunnel.",
+        "summary": "Create the entry end of a tunnel on this server. Secrets are generated by the panel. With the default engine (xray), routeInbounds lists the local inbound tags whose traffic leaves through the tunnel. With engine \"backpack\", send transport, forwardPorts (for example \"443=127.0.0.1:2096\") and optionally fallbackTransports and acceptUdp instead of security, serverName and routeInbounds.",
         "operationId": "post_panel_api_tunnels_add",
         "requestBody": {
           "required": true,
@@ -13638,10 +13738,17 @@
                 "example": {
                   "success": true,
                   "obj": {
+                    "acceptUdp": false,
                     "address": "203.0.113.10",
                     "enable": true,
                     "engine": "xray",
                     "exitOutbound": "direct",
+                    "fallbackTransports": [
+                      ""
+                    ],
+                    "forwardPorts": [
+                      ""
+                    ],
                     "id": 1,
                     "name": "de1",
                     "port": 8443,
@@ -13653,6 +13760,7 @@
                     "security": "reality",
                     "serverName": "www.example.com",
                     "shortId": "a1b2c3d4",
+                    "transport": "wssmux",
                     "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
                   }
                 }
@@ -13705,10 +13813,17 @@
                 "example": {
                   "success": true,
                   "obj": {
+                    "acceptUdp": false,
                     "address": "203.0.113.10",
                     "enable": true,
                     "engine": "xray",
                     "exitOutbound": "direct",
+                    "fallbackTransports": [
+                      ""
+                    ],
+                    "forwardPorts": [
+                      ""
+                    ],
                     "id": 1,
                     "name": "de1",
                     "port": 8443,
@@ -13720,6 +13835,7 @@
                     "security": "reality",
                     "serverName": "www.example.com",
                     "shortId": "a1b2c3d4",
+                    "transport": "wssmux",
                     "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
                   }
                 }

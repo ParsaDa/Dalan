@@ -1,17 +1,39 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net"
+	"os"
+	"path/filepath"
+	"runtime"
 	"time"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/config"
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
+	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
 
 	"gorm.io/gorm"
 )
+
+// tunnelEngines runs the BackPack processes of this panel; tests replace it with one on a fake engine.
+var tunnelEngines = &backpack.Supervisor{
+	Binary: filepath.Join(config.GetBinFolderPath(), "backpack"),
+	Dir:    filepath.Join(config.GetDBFolderPath(), "tunnels"),
+}
+
+const engineInstallTimeout = 5 * time.Minute
+
+// EngineInfo says whether the BackPack engine is on this server and which release Dalan installs.
+type EngineInfo struct {
+	Installed bool   `json:"installed" example:"true"`
+	Version   string `json:"version" example:"v2.0.0"`
+}
 
 // TunnelService stores the tunnel ends this panel owns and schedules Xray to pick up changes.
 type TunnelService struct {
@@ -52,7 +74,7 @@ func (s *TunnelService) create(t *model.ServerTunnel) error {
 	if err := db.Create(t).Error; err != nil {
 		return err
 	}
-	s.xrayService.SetToNeedRestart()
+	s.applyChange()
 	return nil
 }
 
@@ -116,7 +138,7 @@ func (s *TunnelService) SetEnable(id int, enable bool) error {
 	if err := database.GetDB().Model(&model.ServerTunnel{}).Where("id = ?", id).Update("enable", enable).Error; err != nil {
 		return err
 	}
-	s.xrayService.SetToNeedRestart()
+	s.applyChange()
 	return nil
 }
 
@@ -127,7 +149,7 @@ func (s *TunnelService) Delete(id int) error {
 	if err := database.GetDB().Delete(&model.ServerTunnel{}, id).Error; err != nil {
 		return err
 	}
-	s.xrayService.SetToNeedRestart()
+	s.applyChange()
 	return nil
 }
 
@@ -139,9 +161,72 @@ func (s *TunnelService) Status(id int) (tunnel.Status, error) {
 	if err != nil {
 		return tunnel.Status{}, err
 	}
+	if t.Engine == model.TunnelEngineBackpack {
+		return s.backpackStatus(t), nil
+	}
 	if t.Role != model.TunnelRolePortal {
 		return tunnel.Status{}, errors.New("only the entry end of a tunnel can be tested from this server")
 	}
 	addr := fmt.Sprintf("127.0.0.1:%d", xrayreverse.ProbePort(*t))
 	return tunnel.ProbeVia(addr, tunnel.DefaultProbeURL, tunnelProbeTimeout), nil
+}
+
+// applyChange lets both engines pick up a stored change; a missing BackPack engine is reported by Status.
+func (s *TunnelService) applyChange() {
+	s.xrayService.SetToNeedRestart()
+	if err := s.ReconcileEngines(); err != nil {
+		logger.Warning("BackPack tunnels:", err)
+	}
+}
+
+// ReconcileEngines starts and stops BackPack processes to match the stored tunnels.
+func (s *TunnelService) ReconcileEngines() error {
+	tunnels, err := s.GetAll()
+	if err != nil {
+		return err
+	}
+	return tunnelEngines.Reconcile(tunnels)
+}
+
+// StopEngines stops every BackPack process this panel started.
+func (s *TunnelService) StopEngines() { tunnelEngines.StopAll() }
+
+func (s *TunnelService) EngineInfo() EngineInfo {
+	_, err := os.Stat(tunnelEngines.Binary)
+	return EngineInfo{Installed: err == nil, Version: backpack.PinnedVersion}
+}
+
+// InstallEngine downloads the pinned BackPack release through the panel's own proxy settings and starts its tunnels.
+func (s *TunnelService) InstallEngine() error {
+	arch := runtime.GOARCH
+	switch arch {
+	case "amd64", "arm64", "386", "s390x":
+	default:
+		return fmt.Errorf("BackPack publishes no build for %s", arch)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), engineInstallTimeout)
+	defer cancel()
+	client := (&SettingService{}).NewProxiedHTTPClient(engineInstallTimeout)
+	if err := backpack.Install(ctx, client, backpack.ReleaseBaseURL, backpack.PinnedVersion, arch, tunnelEngines.Binary); err != nil {
+		return err
+	}
+	return s.ReconcileEngines()
+}
+
+func (s *TunnelService) backpackStatus(t *model.ServerTunnel) tunnel.Status {
+	if !s.EngineInfo().Installed {
+		return tunnel.Status{Error: backpack.ErrNotInstalled.Error()}
+	}
+	snap, err := backpack.ReadSnapshot(tunnelEngines.Dir, t.Name)
+	if err != nil {
+		return tunnel.Status{Error: err.Error()}
+	}
+	status := tunnel.Status{Connected: snap.Connected}
+	// On the entry end the connected peer is the exit server, which is where traffic leaves.
+	if t.Role == model.TunnelRolePortal && snap.Connected {
+		if host, _, err := net.SplitHostPort(snap.Peer); err == nil {
+			status.ExitIP = host
+		}
+	}
+	return status
 }

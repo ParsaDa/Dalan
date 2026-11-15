@@ -1149,10 +1149,17 @@ export const EXAMPLES: Record<string, unknown> = {
     "subnetIp": ""
   },
   "ServerTunnel": {
+    "acceptUdp": false,
     "address": "203.0.113.10",
     "enable": true,
     "engine": "xray",
     "exitOutbound": "direct",
+    "fallbackTransports": [
+      ""
+    ],
+    "forwardPorts": [
+      ""
+    ],
     "id": 1,
     "name": "de1",
     "port": 8443,
@@ -1164,6 +1171,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "security": "reality",
     "serverName": "www.example.com",
     "shortId": "a1b2c3d4",
+    "transport": "wssmux",
     "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
   },
   "Setting": {

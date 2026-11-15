@@ -35,6 +35,7 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 | `Makefile` | `brand-check` target in `verify` |
 | `internal/web/service/xray.go` | one block before the final `dropRefusedScript` calls in `GetXrayConfig` injects tunnels |
 | `internal/web/controller/api.go` | registers `/tunnels` |
+| `internal/web/web.go` | starts BackPack tunnels after Xray in `startTask`, stops them before Xray in the stop path |
 | `internal/database/db.go`, `migrate_data.go` | `ServerTunnel` in the model lists |
 | `tools/openapigen/main.go` | `ServerTunnel` in `StructAllow` |
 | `frontend/src/routes/panelRoutes.tsx`, `CommandPalette.tsx` | Tunnels route and its palette keywords |

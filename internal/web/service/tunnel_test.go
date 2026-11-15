@@ -1,13 +1,17 @@
 package service
 
 import (
+	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/dbtest"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 )
 
 func newTunnelDB(t *testing.T) *TunnelService {
@@ -158,5 +162,93 @@ func TestStatusProbesAnEntryTunnelAndRefusesAnExitTunnel(t *testing.T) {
 	}
 	if _, err := svc.Status(bridge.Id); err == nil || !strings.Contains(err.Error(), "entry") {
 		t.Fatalf("Status(bridge) error = %v, want one saying only the entry end can be tested", err)
+	}
+}
+
+// fakeBackpack stands in for the engine: it writes the status file BackPack would, then waits.
+func fakeBackpack(t *testing.T) *backpack.Supervisor {
+	t.Helper()
+	binary := filepath.Join(t.TempDir(), "backpack")
+	script := `#!/bin/sh
+name=$(basename "$2" .toml)
+printf '{"name":"%s","connected":true,"peer":"198.51.100.7:40000","bytes_in":10,"bytes_out":20}' "$name" > "$(dirname "$2")/$name.metrics.json"
+exec sleep 600
+`
+	if err := os.WriteFile(binary, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake engine: %v", err)
+	}
+	sup := &backpack.Supervisor{Binary: binary, Dir: t.TempDir()}
+	previous := tunnelEngines
+	tunnelEngines = sup
+	t.Cleanup(func() {
+		sup.StopAll()
+		tunnelEngines = previous
+	})
+	return sup
+}
+
+func backpackPortalSpec() tunnel.PortalSpec {
+	return tunnel.PortalSpec{
+		Name: "bp1", Address: "203.0.113.10", Port: 8443, Engine: model.TunnelEngineBackpack,
+		Transport: "tcpmux", ForwardPorts: []string{"443=127.0.0.1:2096"},
+	}
+}
+
+func waitForStatus(t *testing.T, svc *TunnelService, id int, connected bool) tunnel.Status {
+	t.Helper()
+	var status tunnel.Status
+	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); time.Sleep(30 * time.Millisecond) {
+		var err error
+		if status, err = svc.Status(id); err != nil {
+			t.Fatalf("Status: %v", err)
+		}
+		if status.Connected == connected {
+			return status
+		}
+	}
+	t.Fatalf("status never became connected=%v: %+v", connected, status)
+	return status
+}
+
+func TestABackpackTunnelRunsItsEngineAndReportsTheEnginesStatus(t *testing.T) {
+	svc := newTunnelDB(t)
+	sup := fakeBackpack(t)
+
+	portal, err := svc.CreatePortal(backpackPortalSpec(), nil)
+	if err != nil {
+		t.Fatalf("CreatePortal: %v", err)
+	}
+	if tags := inboundTags(t); hasTag(tags, "tunnel-bp1-link") {
+		t.Fatalf("a BackPack tunnel was also injected into Xray: %v", tags)
+	}
+	status := waitForStatus(t, svc, portal.Id, true)
+	if status.ExitIP != "198.51.100.7" {
+		t.Fatalf("status = %+v, want the connected peer 198.51.100.7 as the exit address", status)
+	}
+
+	if err := svc.SetEnable(portal.Id, false); err != nil {
+		t.Fatalf("SetEnable: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(sup.Dir, "bp1.toml")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatal("disabling the tunnel left its engine config, and so its engine, in place")
+	}
+}
+
+func TestABackpackTunnelWithoutTheEngineIsCreatedAndSaysWhatIsMissing(t *testing.T) {
+	svc := newTunnelDB(t)
+	previous := tunnelEngines
+	tunnelEngines = &backpack.Supervisor{Binary: filepath.Join(t.TempDir(), "backpack"), Dir: t.TempDir()}
+	t.Cleanup(func() { tunnelEngines = previous })
+
+	portal, err := svc.CreatePortal(backpackPortalSpec(), nil)
+	if err != nil {
+		t.Fatalf("CreatePortal without the engine: %v", err)
+	}
+	status, err := svc.Status(portal.Id)
+	if err != nil || status.Connected || !strings.Contains(status.Error, "not installed") {
+		t.Fatalf("Status = %+v, %v; want not connected, saying the engine is not installed", status, err)
+	}
+	if info := svc.EngineInfo(); info.Installed || info.Version != backpack.PinnedVersion {
+		t.Fatalf("EngineInfo = %+v, want not installed and the pinned version", info)
 	}
 }
