@@ -29,7 +29,7 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 
 ## State of the repository
 
-`main` is at Dalan **0.3.0** (version bumped, tag `v0.3.0` to be created by the owner). Releases so far: `v0.1.0`, `v0.2.0`, plus the rolling `dev-latest` pre-release built on every push to `main`.
+`main` is at Dalan **0.3.0**; **0.3.1** is on the branch below (tag `v0.3.1` to be created by the owner after the merge). Releases so far: `v0.1.0`, `v0.2.0`, plus the rolling `dev-latest` pre-release built on every push to `main`.
 
 | PR | What |
 |---|---|
