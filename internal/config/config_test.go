@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -82,8 +83,8 @@ func TestGetPortOverride(t *testing.T) {
 }
 
 func TestDalanVersionIsSeparateFromUpstreamVersion(t *testing.T) {
-	if got := GetDalanVersion(); got != "0.1.0" {
-		t.Errorf("GetDalanVersion() = %q, want %q", got, "0.1.0")
+	if got := GetDalanVersion(); !regexp.MustCompile(`^\d+\.\d+\.\d+$`).MatchString(got) {
+		t.Errorf("GetDalanVersion() = %q, want a plain x.y.z version the update check can compare", got)
 	}
 	if got, want := GetBaseVersion(), strings.TrimSpace(version); got != want {
 		t.Errorf("GetBaseVersion() = %q, want the upstream version %q that node protocol gates compare", got, want)
