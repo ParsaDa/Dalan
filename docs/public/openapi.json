@@ -4644,6 +4644,87 @@
         ],
         "type": "object"
       },
+      "ServerTunnel": {
+        "description": "ServerTunnel is one end of a tunnel between two panels. The portal listens and\ntakes user traffic; the bridge dials the portal and is where traffic leaves.",
+        "properties": {
+          "address": {
+            "example": "203.0.113.10",
+            "type": "string"
+          },
+          "enable": {
+            "example": true,
+            "type": "boolean"
+          },
+          "engine": {
+            "example": "xray",
+            "type": "string"
+          },
+          "exitOutbound": {
+            "description": "ExitOutbound (bridge) is the local outbound tunnel traffic leaves from; empty means \"direct\".",
+            "example": "direct",
+            "type": "string"
+          },
+          "id": {
+            "example": 1,
+            "type": "integer"
+          },
+          "name": {
+            "example": "de1",
+            "type": "string"
+          },
+          "port": {
+            "example": 8443,
+            "type": "integer"
+          },
+          "realityPublicKey": {
+            "type": "string"
+          },
+          "role": {
+            "example": "portal",
+            "type": "string"
+          },
+          "routeInbounds": {
+            "description": "RouteInbounds (portal) lists the local inbound tags whose traffic leaves through this tunnel.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "security": {
+            "example": "reality",
+            "type": "string"
+          },
+          "serverName": {
+            "example": "www.example.com",
+            "type": "string"
+          },
+          "shortId": {
+            "example": "a1b2c3d4",
+            "type": "string"
+          },
+          "uuid": {
+            "example": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10",
+            "type": "string"
+          }
+        },
+        "required": [
+          "address",
+          "enable",
+          "engine",
+          "exitOutbound",
+          "id",
+          "name",
+          "port",
+          "realityPublicKey",
+          "role",
+          "routeInbounds",
+          "security",
+          "serverName",
+          "shortId",
+          "uuid"
+        ],
+        "type": "object"
+      },
       "Setting": {
         "description": "Setting stores key-value configuration settings for the 3x-ui panel.",
         "properties": {
@@ -5042,6 +5123,10 @@
     {
       "name": "Hosts",
       "description": "Per-inbound override endpoints. Each enabled host renders one extra subscription link/proxy with its own address/port/TLS, superseding the legacy externalProxy array. All endpoints under /panel/api/hosts."
+    },
+    {
+      "name": "Tunnels",
+      "description": "Reverse tunnels between this panel and other servers. The entry end (portal) listens; the exit end (bridge) dials it, so the connection is always opened from the exit server. All endpoints under /panel/api/tunnels."
     },
     {
       "name": "Backup",
@@ -13327,6 +13412,344 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/list": {
+      "get": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "List the tunnel ends stored on this panel.",
+        "operationId": "get_panel_api_tunnels_list",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ServerTunnel"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "address": "203.0.113.10",
+                      "enable": true,
+                      "engine": "xray",
+                      "exitOutbound": "direct",
+                      "id": 1,
+                      "name": "de1",
+                      "port": 8443,
+                      "realityPublicKey": "",
+                      "role": "portal",
+                      "routeInbounds": [
+                        ""
+                      ],
+                      "security": "reality",
+                      "serverName": "www.example.com",
+                      "shortId": "a1b2c3d4",
+                      "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/link/{id}": {
+      "get": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Setup link of an entry tunnel. Importing it on the other server creates the matching exit end. The link never contains the REALITY private key.",
+        "operationId": "get_panel_api_tunnels_link_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Tunnel ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": "dalan://tunnel/eyJ2IjoxfQ"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/add": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Create the entry end of a tunnel on this server. Secrets are generated by the panel. routeInbounds lists the local inbound tags whose traffic leaves through the tunnel.",
+        "operationId": "post_panel_api_tunnels_add",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "name": "de1",
+                "address": "203.0.113.10",
+                "port": 8443,
+                "security": "reality",
+                "serverName": "www.example.com",
+                "routeInbounds": [
+                  "inbound-443"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/ServerTunnel"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "address": "203.0.113.10",
+                    "enable": true,
+                    "engine": "xray",
+                    "exitOutbound": "direct",
+                    "id": 1,
+                    "name": "de1",
+                    "port": 8443,
+                    "realityPublicKey": "",
+                    "role": "portal",
+                    "routeInbounds": [
+                      ""
+                    ],
+                    "security": "reality",
+                    "serverName": "www.example.com",
+                    "shortId": "a1b2c3d4",
+                    "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/import": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Create the exit end of a tunnel from the setup link of an entry server. exitOutbound is the local outbound traffic leaves from; empty means direct.",
+        "operationId": "post_panel_api_tunnels_import",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "link": "dalan://tunnel/eyJ2IjoxfQ",
+                "exitOutbound": ""
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/ServerTunnel"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "address": "203.0.113.10",
+                    "enable": true,
+                    "engine": "xray",
+                    "exitOutbound": "direct",
+                    "id": 1,
+                    "name": "de1",
+                    "port": 8443,
+                    "realityPublicKey": "",
+                    "role": "portal",
+                    "routeInbounds": [
+                      ""
+                    ],
+                    "security": "reality",
+                    "serverName": "www.example.com",
+                    "shortId": "a1b2c3d4",
+                    "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/setEnable/{id}": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Enable or disable a tunnel end.",
+        "operationId": "post_panel_api_tunnels_setEnable_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Tunnel ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "enable": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/del/{id}": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Delete a tunnel end from this panel. The other server keeps its end until it is deleted there.",
+        "operationId": "post_panel_api_tunnels_del_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Tunnel ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",

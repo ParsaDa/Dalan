@@ -17,6 +17,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tuic"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/json_util"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/maskcompat"
 	"github.com/mhsanaei/3x-ui/v3/internal/xray"
@@ -492,6 +493,12 @@ func (s *XrayService) GetXrayConfig() (*xray.Config, error) {
 		logger.Warning("read nodes for egress injection failed:", err)
 	} else {
 		injectNodeEgresses(xrayConfig, nodes)
+	}
+
+	if tunnels, err := (&TunnelService{}).GetAll(); err != nil {
+		logger.Warning("read tunnels for config injection failed:", err)
+	} else if err := xrayreverse.Apply(xrayConfig, tunnels); err != nil {
+		logger.Warning("tunnel injection skipped:", err)
 	}
 
 	xrayConfig.RouterConfig = dropRefusedScript(xrayConfig.RouterConfig, "routing", routingScriptRefused)

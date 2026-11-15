@@ -4618,6 +4618,87 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "ServerTunnel": {
+    "description": "ServerTunnel is one end of a tunnel between two panels. The portal listens and\ntakes user traffic; the bridge dials the portal and is where traffic leaves.",
+    "properties": {
+      "address": {
+        "example": "203.0.113.10",
+        "type": "string"
+      },
+      "enable": {
+        "example": true,
+        "type": "boolean"
+      },
+      "engine": {
+        "example": "xray",
+        "type": "string"
+      },
+      "exitOutbound": {
+        "description": "ExitOutbound (bridge) is the local outbound tunnel traffic leaves from; empty means \"direct\".",
+        "example": "direct",
+        "type": "string"
+      },
+      "id": {
+        "example": 1,
+        "type": "integer"
+      },
+      "name": {
+        "example": "de1",
+        "type": "string"
+      },
+      "port": {
+        "example": 8443,
+        "type": "integer"
+      },
+      "realityPublicKey": {
+        "type": "string"
+      },
+      "role": {
+        "example": "portal",
+        "type": "string"
+      },
+      "routeInbounds": {
+        "description": "RouteInbounds (portal) lists the local inbound tags whose traffic leaves through this tunnel.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "security": {
+        "example": "reality",
+        "type": "string"
+      },
+      "serverName": {
+        "example": "www.example.com",
+        "type": "string"
+      },
+      "shortId": {
+        "example": "a1b2c3d4",
+        "type": "string"
+      },
+      "uuid": {
+        "example": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10",
+        "type": "string"
+      }
+    },
+    "required": [
+      "address",
+      "enable",
+      "engine",
+      "exitOutbound",
+      "id",
+      "name",
+      "port",
+      "realityPublicKey",
+      "role",
+      "routeInbounds",
+      "security",
+      "serverName",
+      "shortId",
+      "uuid"
+    ],
+    "type": "object"
+  },
   "Setting": {
     "description": "Setting stores key-value configuration settings for the 3x-ui panel.",
     "properties": {

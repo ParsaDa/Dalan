@@ -128,7 +128,8 @@
     "openMenu": "打开菜单",
     "pinSidebar": "固定侧边栏",
     "unpinSidebar": "取消固定侧边栏",
-    "subFormats": "Sub Formats"
+    "subFormats": "Sub Formats",
+    "tunnels": "Tunnels"
   },
   "pages": {
     "login": {
@@ -2522,6 +2523,44 @@
       "visit": "访问",
       "yourBrand": "您的品牌展示位",
       "yourBrandText": "让每天打开 3X-UI 的数千名服务器管理员看到您的公司。"
+    },
+    "tunnels": {
+      "title": "Tunnels",
+      "subtitle": "Reverse tunnels between this server and your other servers. The exit server opens the connection toward the entry server.",
+      "newPortal": "New tunnel",
+      "importLink": "Import link",
+      "empty": "No tunnels yet",
+      "name": "Name",
+      "role": "Role",
+      "rolePortal": "Entry (listens)",
+      "roleBridge": "Exit (dials)",
+      "address": "Address",
+      "addressHint": "The address the other server will dial: this server's public IP or domain.",
+      "port": "Port",
+      "security": "Security",
+      "securityReality": "REALITY",
+      "securityNone": "None (not encrypted)",
+      "serverName": "Server name (SNI)",
+      "serverNameHint": "A real HTTPS site this tunnel imitates, for example a large well-known site reachable from this server.",
+      "routeInbounds": "Inbounds that leave through this tunnel",
+      "routeInboundsHint": "Traffic of the selected inbounds on this server exits from the other server.",
+      "exitOutbound": "Exit outbound",
+      "exitOutboundHint": "Leave empty to exit directly from this server.",
+      "link": "Setup link",
+      "linkHint": "Paste this link in the Tunnels page of the other server, under Import link.",
+      "copyLink": "Copy setup link",
+      "linkCopied": "Setup link copied",
+      "pasteLink": "Paste the setup link from the entry server",
+      "enabled": "Enabled",
+      "deleteConfirm": "Delete this tunnel?",
+      "toasts": {
+        "list": "Load tunnels",
+        "add": "Create tunnel",
+        "import": "Import tunnel",
+        "update": "Update tunnel",
+        "del": "Delete tunnel",
+        "link": "Get setup link"
+      }
     }
   },
   "tgbot": {
