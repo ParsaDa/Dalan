@@ -266,5 +266,6 @@ Expected: either "Already up to date" or a completed merge with `check-brand.sh`
 - [ ] **Step 2:** Push `claude/dalan-foundation`, open a PR into `main` titled `feat: Dalan foundation — brand, own releases, upstream sync`.
 - [ ] **Step 3 (owner action):** In `ParsaDa/dalan` → Settings → Actions, enable workflows (forks start with Actions off) and allow "Read and write permissions" for `GITHUB_TOKEN` so `release.yml` can publish.
 - [ ] **Step 4:** After merge, confirm `git ls-remote --tags origin v0.1.0` is empty, then tag `v0.1.0` on `main` and push the tag.
+- [ ] **Step 4b:** `release.yml` publishes tag builds as pre-releases, and the installer and the update check only see the release marked latest. After the run finishes: `gh release edit v0.1.0 --prerelease=false --latest`.
 - [ ] **Step 5:** Verify the release: the `release.yml` run is green; the release `v0.1.0` in `ParsaDa/dalan` has `x-ui-linux-amd64.tar.gz`, `x-ui-linux-arm64.tar.gz` and their `.sha256` files; `curl -sI https://github.com/ParsaDa/dalan/releases/latest/download/x-ui-linux-amd64.tar.gz` ends in HTTP 200.
 - [ ] **Step 6 (owner action):** On a throwaway VPS run the README install command; the panel opens, the sidebar says Dalan, and the update page reports version `0.1.0` with no update available.
