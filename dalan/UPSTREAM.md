@@ -42,6 +42,7 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 | `internal/database/db.go`, `migrate_data.go` | `ServerTunnel` and `NodeEnrolment` in the model lists |
 | `tools/openapigen/main.go` | `ServerTunnel`, `NodeEnrolment` and the `enrolment` package in `StructAllow` |
 | `frontend/src/routes/panelRoutes.tsx`, `CommandPalette.tsx` | Tunnels route and its palette keywords |
+| `frontend/src/pages/nodes/NodeList.tsx` | `<EnrolNode />` button in the toolbar |
 | `frontend/src/pages/api-docs/endpoints.ts` | Tunnels and Node enrolment sections |
 | `internal/web/translation/*.json` | `menu.tunnels`, `pages.tunnels` and `pages.enrolments` |
 

@@ -41,6 +41,8 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 | #6 | BackPack engine: config rendering, process supervisor, verified installer, status, UI |
 | #7 | 0.3.0 |
 
+Unreleased on branch `claude/new-session-zu5aqy` (no PR opened yet): reverse node enrolment and the management channel, item 1 of the list below. Design: `dalan/plans/2026-11-15-node-enrolment-design.md`. Operator guide: "Nodes that dial in" in `dalan/TUNNELS.md`.
+
 ### Where the tunnel code is
 
 - `internal/database/model/server_tunnel.go` — `ServerTunnel`, one end of a tunnel. Roles `portal` (entry, listens) and `bridge` (exit, dials). Engines `xray`, `backpack`.
@@ -48,6 +50,10 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 - `internal/tunnel/xrayreverse/apply.go` — injects enabled Xray tunnels into the *generated* Xray config (never the stored template). Portal: VLESS inbound whose client has `reverse.tag`, plus a routing rule sending the chosen inbound tags to outbound `tunnel-<name>`, plus a loopback probe inbound on `62900 + id%500`. Bridge: VLESS outbound with `reverse.tag` and a rule sending its traffic to the exit outbound.
 - `internal/tunnel/probe.go` — one GET through the probe port; reports latency, exit IP and country (Cloudflare trace).
 - `internal/tunnel/backpack/` — `RenderConfig` (TOML), `Supervisor` (one process per tunnel, restart on change or crash, config file 0600 and removed with the tunnel), `ReadSnapshot` (`<name>.metrics.json`), `Install` (pinned `v2.0.0`, verified against the release's `SHA256SUMS`).
+- `ServerTunnel.ManagePort` marks a management tunnel. `xrayreverse.Apply` gives the portal a loopback `dokodemo-door` inbound on that port and gives the bridge a freedom outbound whose `redirect` pins every tunnelled connection to `127.0.0.1:<ManagePort>` (the node's panel). `internal/web/service/tunnel_management.go` creates, replaces and deletes these; the ordinary tunnel routes refuse to delete or probe them.
+- `internal/tunnel/enrol/` — the enrolment link (`dalan://enrol/...`), the sealed request and reply (X25519 + HKDF + AES-GCM, key in the link) and the node's HTTP client.
+- `internal/web/service/enrolment/` — `Create`, `Redeem`, `Delete`, `NodeDeleted` on the main panel and `Join` on the node. It is its own package because `service/panel` imports `service`. `internal/database/model/node_enrolment.go` is its table. Routes in `internal/web/controller/enrolment.go`: `/panel/api/enrolments/*` and the public `POST <base path>dalan/enrol`. CLI: `enrol_cmd.go` (`x-ui enrol <link>`); `x-ui.sh` gets its `enrol` case from `scripts/dalan/rebrand.sh` and restarts Xray afterwards.
+- `frontend/src/pages/nodes/EnrolNode.tsx`, `frontend/src/api/queries/useEnrolments.ts`, tests in `frontend/src/test/enrol-node.test.tsx`.
 - `internal/web/service/tunnel.go`, `internal/web/controller/tunnel.go` — service and routes. The hook into config generation is one block in `XrayService.GetXrayConfig` (`internal/web/service/xray.go`); BackPack engines start in `startTask` and stop in the stop path of `internal/web/web.go`.
 - `frontend/src/pages/tunnels/TunnelsPage.tsx`, `frontend/src/api/queries/useTunnels.ts`, tests in `frontend/src/test/tunnels-page.test.tsx`.
 - Engine files at runtime: binary `<bin folder>/backpack` (normally `/usr/local/x-ui/bin/backpack`), configs and status in `<db folder>/tunnels/` (normally `/etc/x-ui/tunnels/`).
@@ -59,6 +65,8 @@ Every place Dalan touches upstream code is listed in `dalan/UPSTREAM.md`. Keep t
 Verified by automated tests that run in CI:
 - Two real Xray cores in-process: a request entering the portal leaves from the bridge, and the probe works through the tunnel's own probe port (`internal/tunnel/xrayreverse/e2e_test.go`, excluded under `-race`, see below).
 - A REALITY tunnel built from a setup link is accepted by Xray's own config loader.
+- A management tunnel between two real Xray cores reaches the bridge's panel port and, whatever destination is asked for, nothing else on the bridge.
+- Two real panel processes with real Xray cores (`make node-e2e`, which now builds the core from go.mod): a node enrols with the CLI, goes online through its tunnel, receives an inbound pushed over it, and the link cannot be used twice.
 - Service, controller and page behaviour; installer against a local release server (good checksum, wrong checksum, missing checksum, failed download keeps the current engine); supervisor with a stand-in engine.
 
 Verified once by hand, not in CI:
@@ -67,6 +75,7 @@ Verified once by hand, not in CI:
 
 **Not verified — waiting on the owner's tests:**
 - An Xray REALITY tunnel between two real servers (owner was testing `v0.2.0`; result not reported yet).
+- Node enrolment between two real servers, and with REALITY: the automated tests run both panels on one host with tunnel security "none". `dalan enrol` through the real `x-ui.sh` (systemd, Alpine and Docker restart paths) has not been run.
 - Tunnel status against a real tunnel.
 - The BackPack installer against the real GitHub release. Asset name `backpack_linux_<arch>.tar.gz`, archive member `backpack` and `SHA256SUMS` were taken from BackPack's `install.sh`, not from a real download.
 - BackPack transports other than `tcpmux`; anything across a filtered link.
@@ -81,13 +90,15 @@ Verified once by hand, not in CI:
 - An Xray tunnel is tested only from the entry end. The exit end shows "tested from the entry server".
 - No traffic totals per tunnel in the UI (BackPack's snapshot has them; Xray has outbound stats).
 - BackPack: no way to update an installed engine from the panel; on a server that cannot reach GitHub the binary must be copied by hand; forwarded-port conflicts with local inbounds are not checked; `skip_optz` is left at the engine default, so BackPack applies its own TCP tuning to the host.
-- Deleting a tunnel on one server leaves the other end in place.
+- Deleting a tunnel on one server leaves the other end in place. The same holds for an enrolled node: deleting it on the main panel leaves the bridge `node-<name>` and the main panel's API token on the node.
+- Enrolment: a node whose panel listens on one specific IP is refused (the bridge delivers to 127.0.0.1); each node takes its own tunnel port on the main panel; an https node is registered with certificate verification off, because the hop is loopback through the tunnel; a management tunnel has no status of its own in the Tunnels page (the node's status is its health); Dalan must already be installed on the node.
+- `docs/content/docs/en/reference/api/meta.json` lists neither `tunnels` nor `node-enrolment`, so those generated pages are not in the docs site navigation.
 - A data race inside xray-core's VLESS reverse monitor (`proxy/vless/outbound`, handler read while `New` is still writing it) makes the two-core traffic test unusable under `-race`; the file carries `//go:build !race`. Worth reporting upstream.
 - `node-e2e` in CI failed once with `bind: address already in use` in upstream's harness and passed on re-run. Treat one such failure as a flake, a second as real.
 
 ## What is left, in order
 
-1. **Reverse node enrolment and management channel** (design §7.2). Today 3x-ui's master dials its nodes; with the master in Iran that dies in a shutdown. Plan: operator presses "add node" and gets a one-line command with a one-time token; the node abroad calls an enrolment endpoint on the Iran panel, receives a tunnel config, opens a reverse tunnel, and through it a loopback port on the Iran server reaches the node's panel API. The Iran panel then registers the node at `127.0.0.1:<port>` and uses the existing `runtime.Remote` layer unchanged (`model.Node` already has `AllowPrivateAddress`). Default engine for this tunnel: Xray, so enrolment needs no extra binary. Every new `runtime.Remote` call needs a cell in `internal/web/node_contract_test.go`; multi-tick flows go in `internal/nodee2e/`.
+1. **Reverse node enrolment and management channel** — built on the branch above, waiting for the owner's test on two real servers and a PR. Still open inside it: one shared port for all management tunnels, and install plus enrol in one command.
 2. **One-panel tunnel creation**: with the management channel in place, the Iran panel creates both ends itself instead of copy-pasting a link, and a tunnel is created automatically when a node is added.
 3. **Spare tunnels and automatic switching**: several tunnels per route on different transports and ports, health from the probe (Xray) and snapshot (BackPack), switch only after the alternative has been better several times in a row. For Xray, a balancer over `tunnel-<name>` outbounds is the natural mechanism. Plus a route test before creation (which transports pass between two servers), direct tunnels, and the backup server (design §7.7).
 4. **Delivering engine binaries and updates to the Iran server through the node abroad**, so nothing depends on the Iran server reaching GitHub.

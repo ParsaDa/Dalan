@@ -62,10 +62,49 @@ The exit server cannot test a tunnel by itself, so its rows say so.
 
 The test uses a loopback port per tunnel (62900 + the tunnel's id). If an inbound already uses that port, that tunnel is not tested.
 
+## Nodes that dial in
+
+A server abroad that the main panel cannot reach can still be one of its nodes: the node opens a tunnel to the main panel and is managed through it. The main panel never opens a connection toward the node.
+
+Both servers need Dalan.
+
+1. On the main panel open **Nodes → Add node with a command**.
+
+   | Field | What to enter |
+   |---|---|
+   | Node name | Short, lower-case: `de1` |
+   | This panel's address | The panel as the new node can reach it, with its path: `https://panel.example.com:2053/secret/` |
+   | Address | This server's public IP or domain, as the node will dial the tunnel |
+   | Port | A free port on this server for this node's tunnel; open it in the firewall |
+   | Security, Server name (SNI) | As for any tunnel; REALITY is recommended |
+
+2. Press **Create command** and copy the command. It is shown once, works once and expires after 30 minutes.
+3. On the node, run it:
+
+   ```bash
+   dalan enrol 'dalan://enrol/...'
+   ```
+
+   Xray restarts on the node and the node appears online in the main panel's node list within a minute.
+
+What to know:
+
+- The node is listed with the address `127.0.0.1` and a port between 61000 and 61999. That port exists only on the main panel's loopback and leads through the tunnel to the node's panel.
+- On the node, whatever arrives through this tunnel can reach the node's own panel port and nothing else.
+- The enrolment itself needs the main panel's web port to be reachable from the node, once. Afterwards only the tunnel port is used. The exchange is encrypted with a key inside the command, so it is safe even when the panel is served over plain HTTP.
+- The command gives the main panel an API token of the node. Treat the command like a password until it is used.
+- Each node needs its own tunnel port on the main panel.
+- Deleting the node in the main panel closes its tunnel there. On the node, the tunnel `node-<name>` stays until it is deleted in the node's Tunnels page or the node joins another main panel.
+- Running `dalan enrol` again with a new command moves the node to that main panel; the earlier panel's token stops working.
+- If the node's panel is set to listen on one specific IP, clear that setting first: the tunnel delivers to `127.0.0.1`.
+- A waiting enrolment can be cancelled in the same dialog.
+
 ## Not built yet
 
 - Traffic totals per tunnel in the panel.
-- Creating both ends from one panel, and tunnels created automatically when a node is added.
+- Creating both ends of a user tunnel from one panel, and a user tunnel created automatically when a node is added.
+- Installing Dalan and enrolling a node in one command.
+- One shared port for the management tunnels of all nodes.
 - Spare tunnels with automatic switching.
 - Xray tunnels over transports other than REALITY on TCP.
 - Updating the BackPack engine from the panel after it is installed.
