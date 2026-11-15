@@ -1,12 +1,14 @@
 package panel
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/config"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/dbtest"
 )
 
@@ -46,13 +48,18 @@ func serveLatestRelease(t *testing.T, status int, body string) {
 }
 
 func TestUpdateInfoComparesDalanReleases(t *testing.T) {
+	current := config.GetDalanVersion()
+	var major, minor, patch int
+	if _, err := fmt.Sscanf(current, "%d.%d.%d", &major, &minor, &patch); err != nil {
+		t.Fatalf("Dalan version %q is not x.y.z: %v", current, err)
+	}
 	cases := []struct {
 		name, latestTag string
 		wantAvailable   bool
 	}{
-		{"newer release", "v0.1.1", true},
-		{"same release", "v0.1.0", false},
-		{"older release", "v0.0.9", false},
+		{"newer release", fmt.Sprintf("v%d.%d.%d", major, minor, patch+1), true},
+		{"same release", "v" + current, false},
+		{"older release", "v0.0.1", false},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -61,8 +68,8 @@ func TestUpdateInfoComparesDalanReleases(t *testing.T) {
 			if err != nil {
 				t.Fatalf("GetUpdateInfo: %v", err)
 			}
-			if info.CurrentVersion != "0.1.0" {
-				t.Errorf("CurrentVersion = %q, want %q", info.CurrentVersion, "0.1.0")
+			if info.CurrentVersion != current {
+				t.Errorf("CurrentVersion = %q, want Dalan's own version %q", info.CurrentVersion, current)
 			}
 			if info.UpdateAvailable != c.wantAvailable {
 				t.Errorf("UpdateAvailable = %v, want %v", info.UpdateAvailable, c.wantAvailable)
