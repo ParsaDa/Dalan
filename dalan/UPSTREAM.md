@@ -29,7 +29,6 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 |---|---|
 | `internal/web/service/panel/panel.go` | release and updater URLs come from `config.RepoSlug` |
 | `internal/config/config.go` | embeds `dalan_version`; `GetBaseVersion` returns it |
-| `internal/web/service/discord/discord.go` | user-agent URL |
 | `frontend/src/layouts/AppSidebar.tsx`, `frontend/src/pages/login/LoginPage.tsx` | brand text |
 | `frontend/public/manifest.webmanifest` | app name |
 | `.github/workflows/claude-issue-analyst.yml`, `claude-pr-review.yml`, `docs-deploy.yml` | skipped outside the upstream repository |
