@@ -13538,6 +13538,57 @@
         }
       }
     },
+    "/panel/api/tunnels/status/{id}": {
+      "get": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. Only the entry end can be tested.",
+        "operationId": "get_panel_api_tunnels_status_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Tunnel ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "connected": true,
+                    "latencyMs": 182,
+                    "exitIp": "203.0.113.77",
+                    "exitLoc": "DE",
+                    "error": ""
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/tunnels/add": {
       "post": {
         "tags": [

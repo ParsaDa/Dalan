@@ -25,6 +25,7 @@ const portal = {
   exitOutbound: '',
 };
 const bridge = { ...portal, id: 2, name: 'ir1', role: 'bridge', routeInbounds: null };
+let statusOfPortal: Record<string, unknown>;
 
 function openTunnels() {
   return renderWithProviders(
@@ -35,9 +36,17 @@ function openTunnels() {
 }
 
 beforeEach(() => {
+  statusOfPortal = {
+    connected: true,
+    latencyMs: 182,
+    exitIp: '203.0.113.77',
+    exitLoc: 'DE',
+    error: '',
+  };
   vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
     if (url === '/panel/api/tunnels/list') return new Msg(true, '', [portal, bridge]);
     if (url === '/panel/api/tunnels/link/1') return new Msg(true, '', 'dalan://tunnel/abc');
+    if (url === '/panel/api/tunnels/status/1') return new Msg(true, '', statusOfPortal);
     return new Msg(true, '', []);
   });
   vi.spyOn(HttpUtil, 'post').mockImplementation(async () => new Msg(true, '', {}));
@@ -110,4 +119,25 @@ test('creates an entry tunnel from the form', async () => {
       { headers: { 'Content-Type': 'application/json' } },
     ),
   );
+});
+
+test('shows a working entry tunnel as connected with its latency and exit', async () => {
+  openTunnels();
+
+  expect(await screen.findByText('Connected · 182 ms')).toBeTruthy();
+  expect(screen.getByText('Exits from DE · 203.0.113.77')).toBeTruthy();
+  expect(screen.getByText('Tested from the entry server')).toBeTruthy();
+  expect(HttpUtil.get).not.toHaveBeenCalledWith(
+    '/panel/api/tunnels/status/2',
+    expect.anything(),
+    expect.anything(),
+  );
+});
+
+test('shows a tunnel that does not answer as down', async () => {
+  statusOfPortal = { connected: false, latencyMs: 0, exitIp: '', exitLoc: '', error: 'timeout' };
+  openTunnels();
+
+  expect(await screen.findByText('Down')).toBeTruthy();
+  expect(screen.queryByText(/Connected/)).toBeNull();
 });

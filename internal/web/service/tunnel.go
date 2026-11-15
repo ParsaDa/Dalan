@@ -3,10 +3,12 @@ package service
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
 
 	"gorm.io/gorm"
 )
@@ -127,4 +129,19 @@ func (s *TunnelService) Delete(id int) error {
 	}
 	s.xrayService.SetToNeedRestart()
 	return nil
+}
+
+const tunnelProbeTimeout = 8 * time.Second
+
+// Status sends one request through an entry tunnel and reports whether it came back, how fast and from where.
+func (s *TunnelService) Status(id int) (tunnel.Status, error) {
+	t, err := s.get(id)
+	if err != nil {
+		return tunnel.Status{}, err
+	}
+	if t.Role != model.TunnelRolePortal {
+		return tunnel.Status{}, errors.New("only the entry end of a tunnel can be tested from this server")
+	}
+	addr := fmt.Sprintf("127.0.0.1:%d", xrayreverse.ProbePort(*t))
+	return tunnel.ProbeVia(addr, tunnel.DefaultProbeURL, tunnelProbeTimeout), nil
 }

@@ -130,3 +130,33 @@ func TestSetupLinkIsServedForPortalsOnly(t *testing.T) {
 		t.Fatal("SetupLink for a missing tunnel returned no error")
 	}
 }
+
+func TestStatusProbesAnEntryTunnelAndRefusesAnExitTunnel(t *testing.T) {
+	svc := newTunnelDB(t)
+	portal, err := svc.CreatePortal(tunnel.PortalSpec{
+		Name: "de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+	}, nil)
+	if err != nil {
+		t.Fatalf("CreatePortal: %v", err)
+	}
+	// No Xray runs in this test, so the probe port is closed: that is a status, not a failure.
+	status, err := svc.Status(portal.Id)
+	if err != nil || status.Connected || status.Error == "" {
+		t.Fatalf("Status(portal) = %+v, %v; want a not-connected status carrying the reason", status, err)
+	}
+
+	entry, err := tunnel.NewPortal(tunnel.PortalSpec{
+		Name: "ir1", Address: "203.0.113.20", Port: 9443, Security: model.TunnelSecurityNone,
+	})
+	if err != nil {
+		t.Fatalf("NewPortal: %v", err)
+	}
+	link, _ := tunnel.SetupLink(entry)
+	bridge, err := svc.Import(link, "")
+	if err != nil {
+		t.Fatalf("Import: %v", err)
+	}
+	if _, err := svc.Status(bridge.Id); err == nil || !strings.Contains(err.Error(), "entry") {
+		t.Fatalf("Status(bridge) error = %v, want one saying only the entry end can be tested", err)
+	}
+}

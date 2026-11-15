@@ -30,6 +30,7 @@ import { useInboundOptions } from '@/api/queries/useInboundOptions';
 import {
   fetchSetupLink,
   useTunnelMutations,
+  useTunnelStatus,
   useTunnelsQuery,
   type NewPortalValues,
   type ServerTunnel,
@@ -40,6 +41,34 @@ import { ClipboardManager } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,30}$/;
+
+function TunnelStatusCell({ tunnel }: { tunnel: ServerTunnel }) {
+  const { t } = useTranslation();
+  const isEntry = tunnel.role === 'portal';
+  const { data, isLoading, error } = useTunnelStatus(tunnel.id, isEntry && tunnel.enable);
+
+  if (!isEntry) {
+    return <Typography.Text type="secondary">{t('pages.tunnels.statusExitOnly')}</Typography.Text>;
+  }
+  if (!tunnel.enable) return <Typography.Text type="secondary">—</Typography.Text>;
+  if (isLoading) return <Spin size="small" />;
+  if (!data?.connected) {
+    return (
+      <Tag color="error" title={data?.error || (error as Error | null)?.message}>
+        {t('pages.tunnels.statusDown')}
+      </Tag>
+    );
+  }
+  const exit = [data.exitLoc, data.exitIp].filter(Boolean).join(' · ');
+  return (
+    <Space orientation="vertical" size={0}>
+      <Tag color="success">{`${t('pages.tunnels.statusConnected')} · ${data.latencyMs} ms`}</Tag>
+      {exit && (
+        <Typography.Text type="secondary">{`${t('pages.tunnels.statusExit')} ${exit}`}</Typography.Text>
+      )}
+    </Space>
+  );
+}
 
 export default function TunnelsPage() {
   const { t } = useTranslation();
@@ -156,6 +185,10 @@ export default function TunnelsPage() {
         ) : (
           <Tag color="green">{t('pages.tunnels.roleBridge')}</Tag>
         ),
+    },
+    {
+      title: t('pages.tunnels.status'),
+      render: (_, row) => <TunnelStatusCell tunnel={row} />,
     },
     {
       title: t('pages.tunnels.address'),

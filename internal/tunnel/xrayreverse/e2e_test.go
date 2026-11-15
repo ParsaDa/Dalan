@@ -133,6 +133,10 @@ func TestUserTrafficOnThePortalLeavesFromTheBridge(t *testing.T) {
 		if string(body) != "reached through the bridge" {
 			t.Fatalf("body = %q, want %q", body, "reached through the bridge")
 		}
+		probe := tunnel.ProbeVia(fmt.Sprintf("127.0.0.1:%d", ProbePort(portalTunnel)), target.URL, 3*time.Second)
+		if !probe.Connected || probe.Error != "" {
+			t.Fatalf("probe through the tunnel's own probe port = %+v, want connected", probe)
+		}
 		return
 	}
 	t.Fatalf("no response through the tunnel within 15s: %v", lastErr)
