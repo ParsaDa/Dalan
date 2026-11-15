@@ -98,5 +98,10 @@ build-storybook: ## Build the static Storybook (compile-checks all stories)
 # network and a live advisory database, so an unchanged commit could pass today
 # and fail tomorrow.
 .PHONY: verify
-verify: gen-check lint format-check typecheck test build build-storybook docs-openapi-check ## Full local gate (mirrors CI)
+.PHONY: brand-check
+brand-check: ## Fail if an upstream release URL survives in scripts or workflows
+	bash scripts/dalan/rebrand_test.sh
+	bash scripts/dalan/check-brand.sh
+
+verify: gen-check lint format-check typecheck test build build-storybook docs-openapi-check brand-check ## Full local gate (mirrors CI)
 	@echo "verify: OK"

@@ -1,5 +1,30 @@
 [English](/README.md) | [فارسی](/README.fa_IR.md) | [العربية](/README.ar_EG.md) | [中文](/README.zh_CN.md) | [Español](/README.es_ES.md) | [Русский](/README.ru_RU.md) | [Türkçe](/README.tr_TR.md)
 
+# Dalan
+
+**Dalan** is a fork of [3x-ui](https://github.com/MHSanaei/3x-ui) that adds managed tunnels between servers: reverse tunnels that the server abroad opens toward the entry server, set up from the panel on both ends.
+
+> [!NOTE]
+> Dalan is under active development. This release is 3x-ui with Dalan's own name, releases and updater. The tunnel features are not released yet.
+
+## Install
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)
+```
+
+After installation the panel is managed from the terminal with `dalan` (the original `x-ui` command keeps working). A server that already runs 3x-ui keeps its database and settings.
+
+## Based on
+
+Dalan is built on [3x-ui](https://github.com/MHSanaei/3x-ui) by MHSanaei and contributors, and is released under the same license, GPL-3.0. How upstream changes are merged is described in [dalan/UPSTREAM.md](dalan/UPSTREAM.md).
+
+---
+
+# Upstream documentation (3x-ui)
+
+Everything below is the 3x-ui README, kept unchanged. Its install commands and links point to 3x-ui, not to Dalan.
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./media/3x-ui-dark.png">

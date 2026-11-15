@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -77,5 +78,14 @@ func TestGetPortOverride(t *testing.T) {
 				t.Errorf("error = %v, wantErr %t", err, tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestDalanVersionIsSeparateFromUpstreamVersion(t *testing.T) {
+	if got := GetDalanVersion(); got != "0.1.0" {
+		t.Errorf("GetDalanVersion() = %q, want %q", got, "0.1.0")
+	}
+	if got, want := GetBaseVersion(), strings.TrimSpace(version); got != want {
+		t.Errorf("GetBaseVersion() = %q, want the upstream version %q that node protocol gates compare", got, want)
 	}
 }

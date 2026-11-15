@@ -1,5 +1,30 @@
 [English](/README.md) | [فارسی](/README.fa_IR.md) | [العربية](/README.ar_EG.md) | [中文](/README.zh_CN.md) | [Español](/README.es_ES.md) | [Русский](/README.ru_RU.md) | [Türkçe](/README.tr_TR.md)
 
+# دالان (Dalan)
+
+**دالان** یک فورک از [3x-ui](https://github.com/MHSanaei/3x-ui) است که مدیریت تانل بین سرورها را به پنل اضافه می‌کند: تانل‌های ریورس که سرور خارج به سمت سرور ورودی باز می‌کند و هر دو سر آن از داخل پنل ساخته می‌شود.
+
+> [!NOTE]
+> دالان در حال توسعه است. این نسخه همان 3x-ui است با نام، ریلیز و آپدیت مستقل دالان. امکانات تانل هنوز منتشر نشده‌اند.
+
+## نصب
+
+```bash
+bash <(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)
+```
+
+بعد از نصب، پنل در ترمینال با دستور `dalan` مدیریت می‌شود (دستور `x-ui` هم مثل قبل کار می‌کند). سروری که از قبل 3x-ui دارد، دیتابیس و تنظیماتش را نگه می‌دارد.
+
+## بر پایه‌ی
+
+دالان بر پایه‌ی [3x-ui](https://github.com/MHSanaei/3x-ui) ساخته‌ی MHSanaei و مشارکت‌کنندگانش است و با همان لایسنس GPL-3.0 منتشر می‌شود. روش دریافت تغییرات 3x-ui در [dalan/UPSTREAM.md](dalan/UPSTREAM.md) آمده است.
+
+---
+
+# مستندات 3x-ui
+
+ادامه‌ی این صفحه README خود 3x-ui است و بدون تغییر نگه داشته شده. دستورهای نصب و لینک‌های آن به 3x-ui اشاره دارند، نه دالان.
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./media/3x-ui-dark.png">
