@@ -27,8 +27,7 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 
 | Place | What Dalan changed |
 |---|---|
-| `internal/web/service/panel/panel.go` | release and updater URLs come from `config.RepoSlug` |
-| `internal/config/config.go` | embeds `dalan_version`; `GetBaseVersion` returns it |
+| `internal/web/service/panel/panel.go` | release and updater URLs come from `panel_brand.go`; the update check compares `config.GetDalanVersion()` |
 | `frontend/src/layouts/AppSidebar.tsx`, `frontend/src/pages/login/LoginPage.tsx` | brand text |
 | `frontend/public/manifest.webmanifest` | app name |
 | `.github/workflows/claude-issue-analyst.yml`, `claude-pr-review.yml`, `docs-deploy.yml` | skipped outside the upstream repository |
@@ -41,5 +40,5 @@ Keep upstream's change and re-apply the Dalan line on top.
 
 - New Dalan code goes in new files and new packages.
 - Never rename the Go module path, the `x-ui` binary, `/etc/x-ui`, `XUI_*` variables or the service units.
-- Never edit `internal/config/version`; it records which 3x-ui release Dalan is based on.
+- Never edit `internal/config/version`; it is the 3x-ui version Dalan is built on, and nodes are checked against it before newer protocols are pushed to them. Dalan's own version is `internal/config/dalan_version`.
 - Never hand-edit a URL in a root `*.sh` file; change `scripts/dalan/rebrand.sh` and re-run it.

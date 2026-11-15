@@ -137,7 +137,7 @@ func (s *PanelService) GetUpdateInfo() (*PanelUpdateInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	current := config.GetBaseVersion()
+	current := config.GetDalanVersion()
 	return &PanelUpdateInfo{
 		Channel:         "stable",
 		CurrentVersion:  current,
