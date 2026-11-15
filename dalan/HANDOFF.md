@@ -49,7 +49,7 @@ Unreleased on branch `claude/new-session-zu5aqy` (no PR opened yet): reverse nod
 - `internal/tunnel/setup.go` — `NewPortal`, `SetupLink`, `ParseSetupLink`. Link format `dalan://tunnel/<base64url JSON>`; version 1 = Xray, version 2 = BackPack. The REALITY private key never enters a link.
 - `internal/tunnel/xrayreverse/apply.go` — injects enabled Xray tunnels into the *generated* Xray config (never the stored template). Portal: VLESS inbound whose client has `reverse.tag`, plus a routing rule sending the chosen inbound tags to outbound `tunnel-<name>`, plus a loopback probe inbound on `62900 + id%500`. Bridge: VLESS outbound with `reverse.tag` and a rule sending its traffic to the exit outbound.
 - `internal/tunnel/probe.go` — one GET through the probe port; reports latency, exit IP and country (Cloudflare trace).
-- `internal/tunnel/backpack/` — `RenderConfig` (TOML), `Supervisor` (one process per tunnel, restart on change or crash, config file 0600 and removed with the tunnel), `ReadSnapshot` (`<name>.metrics.json`), `Install` (pinned `v2.0.0`, verified against the release's `SHA256SUMS`).
+- `internal/tunnel/backpack/` — `RenderConfig` (TOML), `Supervisor` (one process per tunnel, restart on change or crash, config file 0600 and removed with the tunnel), `ReadSnapshot` (`<name>.metrics.json`), `Install` (pinned `v1.8.5`, the newest published BackPack release, verified against the release's `SHA256SUMS`).
 - `ServerTunnel.ManagePort` marks a management tunnel. `xrayreverse.Apply` gives the portal a loopback `dokodemo-door` inbound on that port and gives the bridge a freedom outbound whose `redirect` pins every tunnelled connection to `127.0.0.1:<ManagePort>` (the node's panel). `internal/web/service/tunnel_management.go` creates, replaces and deletes these; the ordinary tunnel routes refuse to delete or probe them.
 - `internal/tunnel/enrol/` — the enrolment link (`dalan://enrol/...`), the sealed request and reply (X25519 + HKDF + AES-GCM, key in the link) and the node's HTTP client.
 - `internal/web/service/enrolment/` — `Create`, `Redeem`, `Delete`, `NodeDeleted` on the main panel and `Join` on the node. It is its own package because `service/panel` imports `service`. `internal/database/model/node_enrolment.go` is its table. Routes in `internal/web/controller/enrolment.go`: `/panel/api/enrolments/*` and the public `POST <base path>dalan/enrol`. CLI: `enrol_cmd.go` (`x-ui enrol <link>`); `x-ui.sh` gets its `enrol` case from `scripts/dalan/rebrand.sh` and restarts Xray afterwards.
@@ -70,14 +70,14 @@ Verified by automated tests that run in CI:
 - Service, controller and page behaviour; installer against a local release server (good checksum, wrong checksum, missing checksum, failed download keeps the current engine); supervisor with a stand-in engine.
 
 Verified once by hand, not in CI:
-- A real BackPack v2.0.0 binary (built from source with `CGO_ENABLED=0`) on both ends carries a forwarded TCP port: `DALAN_BACKPACK_E2E_BINARY=/path/to/backpack go test ./internal/tunnel/backpack/`.
+- A real BackPack v1.8.5 binary (built from that tag with `CGO_ENABLED=0`) on both ends carries a forwarded TCP port: `DALAN_BACKPACK_E2E_BINARY=/path/to/backpack go test ./internal/tunnel/backpack/`.
 - A real install of v0.1.0 on a server by the owner: panel came up, `dalan` command works.
 
 **Not verified — waiting on the owner's tests:**
 - An Xray REALITY tunnel between two real servers (owner was testing `v0.2.0`; result not reported yet).
 - Node enrolment between two real servers, and with REALITY: the automated tests run both panels on one host with tunnel security "none". `dalan enrol` through the real `x-ui.sh` (systemd, Alpine and Docker restart paths) has not been run.
 - Tunnel status against a real tunnel.
-- The BackPack installer against the real GitHub release. Asset name `backpack_linux_<arch>.tar.gz`, archive member `backpack` and `SHA256SUMS` were taken from BackPack's `install.sh`, not from a real download.
+- The BackPack install button on a real server. The installer itself was run once against the real GitHub release of v1.8.5 (download, checksum, unpack). Dalan 0.3.0 pinned v2.0.0, which BackPack has not published, so its install button always answers 404.
 - BackPack transports other than `tcpmux`; anything across a filtered link.
 - The conflict path of `scripts/dalan/sync-upstream.sh` (upstream had not moved since the fork).
 - Whether the Docker image workflow succeeds on a tag after PR #2 (it failed on `v0.1.0`; not rechecked for `v0.2.0`).

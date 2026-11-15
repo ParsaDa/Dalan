@@ -18,7 +18,7 @@ import (
 
 const (
 	// PinnedVersion is the BackPack release Dalan installs; it moves only with a Dalan release.
-	PinnedVersion = "v2.0.0"
+	PinnedVersion = "v1.8.5"
 	// ReleaseBaseURL is where BackPack publishes its releases.
 	ReleaseBaseURL = "https://github.com"
 

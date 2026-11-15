@@ -32,7 +32,7 @@ const engineInstallTimeout = 5 * time.Minute
 // EngineInfo says whether the BackPack engine is on this server and which release Dalan installs.
 type EngineInfo struct {
 	Installed bool   `json:"installed" example:"true"`
-	Version   string `json:"version" example:"v2.0.0"`
+	Version   string `json:"version" example:"v1.8.5"`
 }
 
 // TunnelService stores the tunnel ends this panel owns and schedules Xray to pick up changes.

@@ -2020,7 +2020,7 @@ export const sections: readonly Section[] = [
         summary:
           'Whether the BackPack engine binary is on this server, and the BackPack release this Dalan version installs.',
         response:
-          '{\n  "success": true,\n  "obj": {\n    "installed": false,\n    "version": "v2.0.0"\n  }\n}',
+          '{\n  "success": true,\n  "obj": {\n    "installed": false,\n    "version": "v1.8.5"\n  }\n}',
       },
       {
         method: 'POST',

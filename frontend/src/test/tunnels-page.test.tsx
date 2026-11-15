@@ -65,7 +65,7 @@ beforeEach(() => {
   vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
     if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
     if (url === '/panel/api/tunnels/engine')
-      return new Msg(true, '', { installed: engineInstalled, version: 'v2.0.0' });
+      return new Msg(true, '', { installed: engineInstalled, version: 'v1.8.5' });
     if (url === '/panel/api/tunnels/status/3')
       return new Msg(true, '', {
         connected: true,
