@@ -162,6 +162,8 @@ Expected: PASS. If a node-sync or version-gate test fails, read it: a master and
 Rules both scripts implement:
 - Target files: `*.sh` in the repo root, and `.github/workflows/*.yml`.
 - Replace, case-insensitively, `github.com/MHSanaei/3x-ui`, `raw.githubusercontent.com/MHSanaei/3x-ui`, `api.github.com/repos/MHSanaei/3x-ui` and `ghcr.io/mhsanaei/3x-ui` with the same host and `ParsaDa/dalan` (image: `ghcr.io/parsada/dalan`).
+- Terminal command `dalan` (owner request, 2026-11-15): after every `chmod +x /usr/bin/x-ui` line in a root `*.sh`, add `ln -sf /usr/bin/x-ui /usr/bin/dalan`; in `x-ui.sh` only, after the uninstall line `rm ${xui_folder}/ -rf`, add `rm -f /usr/bin/dalan /usr/bin/x-ui`. `x-ui` keeps working.
+- `raw.githubusercontent.com/ParsaDa/dalan/master/` becomes `/main/` (the fork has no `master` branch).
 - Never touch: `github.com/mhsanaei/3x-ui/v3` (module path), anything containing `mtg-multi`, the strings `/etc/x-ui`, `/usr/local/x-ui`, `x-ui-linux-`.
 
 - [ ] **Step 1: Write the failing test** — `scripts/dalan/rebrand_test.sh`, plain Bash, exits non-zero on the first failed assertion. It builds a temp tree with:
