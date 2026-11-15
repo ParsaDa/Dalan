@@ -2006,6 +2006,15 @@ export const sections: readonly Section[] = [
         response: '{\n  "success": true,\n  "obj": "dalan://tunnel/eyJ2IjoxfQ"\n}',
       },
       {
+        method: 'GET',
+        path: '/panel/api/tunnels/status/:id',
+        summary:
+          'Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. Only the entry end can be tested.',
+        params: [{ name: 'id', in: 'path', type: 'number', desc: 'Tunnel ID.' }],
+        response:
+          '{\n  "success": true,\n  "obj": {\n    "connected": true,\n    "latencyMs": 182,\n    "exitIp": "203.0.113.77",\n    "exitLoc": "DE",\n    "error": ""\n  }\n}',
+      },
+      {
         method: 'POST',
         path: '/panel/api/tunnels/add',
         summary:

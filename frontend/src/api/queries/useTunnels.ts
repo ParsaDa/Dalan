@@ -80,3 +80,31 @@ export async function fetchSetupLink(id: number): Promise<string> {
   if (!msg?.success || typeof msg.obj !== 'string') throw new Error(msg?.msg || '');
   return msg.obj;
 }
+
+const TunnelStatusSchema = z.object({
+  connected: z.boolean(),
+  latencyMs: z.number(),
+  exitIp: z.string(),
+  exitLoc: z.string(),
+  error: z.string(),
+});
+export type TunnelStatus = z.infer<typeof TunnelStatusSchema>;
+
+async function fetchTunnelStatus(id: number): Promise<TunnelStatus> {
+  const msg = await HttpUtil.get(`/panel/api/tunnels/status/${id}`, undefined, { silent: true });
+  if (!msg?.success) throw new Error(msg?.msg || 'Failed to test tunnel');
+  const validated = parseMsg(msg, TunnelStatusSchema, 'tunnels/status');
+  if (!validated.obj) throw new Error('Failed to test tunnel');
+  return validated.obj;
+}
+
+// Each test sends a real request through the tunnel, so it runs once a minute, not on every render.
+export function useTunnelStatus(id: number, enabled: boolean) {
+  return useQuery({
+    queryKey: [...TUNNELS_KEY, 'status', id],
+    queryFn: () => fetchTunnelStatus(id),
+    enabled,
+    retry: false,
+    refetchInterval: 60_000,
+  });
+}

@@ -63,6 +63,15 @@ func TestTunnelRoutesCreateLinkImportToggleAndDelete(t *testing.T) {
 		t.Fatalf("importing garbage: success=%v msg=%q", bad.Success, bad.Msg)
 	}
 
+	statusEnv := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/status/1", nil)
+	var status struct {
+		Connected bool   `json:"connected"`
+		Error     string `json:"error"`
+	}
+	if err := json.Unmarshal(statusEnv.Obj, &status); err != nil || !statusEnv.Success || status.Connected || status.Error == "" {
+		t.Fatalf("status with no Xray running = %s (success=%v, %v), want a not-connected status with its reason", statusEnv.Obj, statusEnv.Success, err)
+	}
+
 	off := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/setEnable/1", map[string]any{"enable": false})
 	if !off.Success {
 		t.Fatalf("setEnable failed: %s", off.Msg)

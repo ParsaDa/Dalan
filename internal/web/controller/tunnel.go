@@ -22,6 +22,7 @@ func NewTunnelController(g *gin.RouterGroup) *TunnelController {
 func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.GET("/list", a.list)
 	g.GET("/link/:id", a.link)
+	g.GET("/status/:id", a.status)
 
 	g.POST("/add", a.add)
 	g.POST("/import", a.importLink)
@@ -115,4 +116,18 @@ func (a *TunnelController) del(c *gin.Context) {
 		return
 	}
 	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), a.tunnelService.Delete(id))
+}
+
+func (a *TunnelController) status(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.status"), err)
+		return
+	}
+	status, err := a.tunnelService.Status(id)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.status"), err)
+		return
+	}
+	jsonObj(c, status, nil)
 }

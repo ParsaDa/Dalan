@@ -33,9 +33,17 @@ Xray restarts on each server within 30 seconds and the exit server connects.
 - For traffic that arrives through a tunnel, the exit server refuses private and loopback destinations. Users cannot reach the exit server's own network.
 - Deleting a tunnel on one server does not delete it on the other.
 
+## Status
+
+On the entry server the Tunnels page tests each enabled tunnel once a minute by sending a real request through it. A working tunnel shows **Connected**, the round-trip time, and the country and address the request left from. **Down** means the request did not come back; hover it for the reason.
+
+The exit server cannot test a tunnel by itself, so its rows say so.
+
+The test uses a loopback port per tunnel (62900 + the tunnel's id). If an inbound already uses that port, that tunnel is not tested.
+
 ## Not built yet
 
-- Connection status, latency and traffic per tunnel in the panel.
+- Traffic totals per tunnel in the panel.
 - Creating both ends from one panel, and tunnels created automatically when a node is added.
 - Spare tunnels with automatic switching.
 - Other engines (BackPack) and transports other than REALITY over TCP.

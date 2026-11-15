@@ -18,6 +18,12 @@ func PortalOutboundTag(name string) string { return "tunnel-" + name }
 func portalInboundTag(name string) string  { return "tunnel-" + name + "-link" }
 func bridgeOutboundTag(name string) string { return "tunnel-" + name + "-dial" }
 func bridgeInboundTag(name string) string  { return "tunnel-" + name + "-exit" }
+func probeInboundTag(name string) string   { return "tunnel-" + name + "-probe" }
+
+const probeBasePort = 62900
+
+// ProbePort is the loopback SOCKS port routed into a portal tunnel so the panel can test it end to end.
+func ProbePort(t model.ServerTunnel) int { return probeBasePort + t.Id%500 }
 
 // Apply adds every enabled Xray tunnel to a generated config; the stored template is never touched.
 func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
@@ -49,6 +55,12 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 				return err
 			}
 			cfg.InboundConfigs = append(cfg.InboundConfigs, inbound)
+			if probe, ok := probeInbound(cfg, t); ok {
+				cfg.InboundConfigs = append(cfg.InboundConfigs, probe)
+				rules = append(rules, map[string]any{
+					"type": "field", "inboundTag": []string{probeInboundTag(t.Name)}, "outboundTag": PortalOutboundTag(t.Name),
+				})
+			}
 			if len(t.RouteInbounds) > 0 {
 				rules = append(rules, map[string]any{
 					"type": "field", "inboundTag": t.RouteInbounds, "outboundTag": PortalOutboundTag(t.Name),
@@ -134,4 +146,18 @@ func bridgeOutbound(t model.ServerTunnel) map[string]any {
 		},
 		"streamSettings": stream,
 	}
+}
+
+// The probe is skipped, not moved, when its port is taken: the panel must know the port without asking Xray.
+func probeInbound(cfg *xray.Config, t model.ServerTunnel) (xray.InboundConfig, bool) {
+	port := ProbePort(t)
+	for i := range cfg.InboundConfigs {
+		if cfg.InboundConfigs[i].Port == port {
+			return xray.InboundConfig{}, false
+		}
+	}
+	return xray.InboundConfig{
+		Listen: json_util.RawMessage(`"127.0.0.1"`), Port: port, Protocol: "mixed",
+		Settings: json_util.RawMessage(`{"auth":"noauth","udp":false}`), Tag: probeInboundTag(t.Name),
+	}, true
 }

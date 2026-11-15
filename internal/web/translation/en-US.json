@@ -2553,13 +2553,19 @@
       "pasteLink": "Paste the setup link from the entry server",
       "enabled": "Enabled",
       "deleteConfirm": "Delete this tunnel?",
+      "status": "Status",
+      "statusConnected": "Connected",
+      "statusDown": "Down",
+      "statusExitOnly": "Tested from the entry server",
+      "statusExit": "Exits from",
       "toasts": {
         "list": "Load tunnels",
         "add": "Create tunnel",
         "import": "Import tunnel",
         "update": "Update tunnel",
         "del": "Delete tunnel",
-        "link": "Get setup link"
+        "link": "Get setup link",
+        "status": "Test tunnel"
       }
     }
   },
