@@ -1161,6 +1161,7 @@ export const EXAMPLES: Record<string, unknown> = {
       ""
     ],
     "id": 1,
+    "managePort": 0,
     "name": "de1",
     "port": 8443,
     "realityPublicKey": "",

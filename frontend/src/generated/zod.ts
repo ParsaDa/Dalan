@@ -1125,6 +1125,7 @@ export const ServerTunnelSchema = z.object({
   fallbackTransports: z.array(z.string()),
   forwardPorts: z.array(z.string()),
   id: z.number().int(),
+  managePort: z.number().int(),
   name: z.string(),
   port: z.number().int(),
   realityPublicKey: z.string(),

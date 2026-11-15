@@ -4658,6 +4658,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": 1,
         "type": "integer"
       },
+      "managePort": {
+        "description": "ManagePort marks a management tunnel. Portal: the loopback port opened here. Bridge: this\nserver's panel port, the only place the tunnel's traffic may go. Zero is an ordinary tunnel.",
+        "example": 0,
+        "type": "integer"
+      },
       "name": {
         "example": "de1",
         "type": "string"
@@ -4711,6 +4716,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "fallbackTransports",
       "forwardPorts",
       "id",
+      "managePort",
       "name",
       "port",
       "realityPublicKey",

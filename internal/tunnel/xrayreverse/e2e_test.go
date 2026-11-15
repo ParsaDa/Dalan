@@ -141,3 +141,91 @@ func TestUserTrafficOnThePortalLeavesFromTheBridge(t *testing.T) {
 	}
 	t.Fatalf("no response through the tunnel within 15s: %v", lastErr)
 }
+
+func managementPair(t *testing.T, portalManagePort, panelPort int) (portal, bridge model.ServerTunnel) {
+	t.Helper()
+	portal, err := tunnel.NewPortal(tunnel.PortalSpec{
+		Name: "node-de1", Address: "127.0.0.1", Port: freePort(t), Security: model.TunnelSecurityNone,
+	})
+	if err != nil {
+		t.Fatalf("NewPortal: %v", err)
+	}
+	link, err := tunnel.SetupLink(portal)
+	if err != nil {
+		t.Fatalf("SetupLink: %v", err)
+	}
+	bridge, err = tunnel.ParseSetupLink(link)
+	if err != nil {
+		t.Fatalf("ParseSetupLink: %v", err)
+	}
+	portal.ManagePort, bridge.ManagePort = portalManagePort, panelPort
+	return portal, bridge
+}
+
+func getEventually(t *testing.T, client *http.Client, url string) string {
+	t.Helper()
+	var lastErr error
+	for deadline := time.Now().Add(15 * time.Second); time.Now().Before(deadline); time.Sleep(300 * time.Millisecond) {
+		resp, err := client.Get(url)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		return string(body)
+	}
+	t.Fatalf("no response from %s within 15s: %v", url, lastErr)
+	return ""
+}
+
+// The bridge's ordinary outbound keeps its default refusal of loopback, so only the management path can answer.
+func TestManagementPortOnThePortalReachesOnlyTheBridgesPanel(t *testing.T) {
+	panel := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(w, "node panel")
+	}))
+	t.Cleanup(panel.Close)
+	other := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(w, "another service on the node")
+	}))
+	t.Cleanup(other.Close)
+
+	managePort, socksPort := freePort(t), freePort(t)
+	portalTunnel, bridgeTunnel := managementPair(t, managePort, panel.Listener.Addr().(*net.TCPAddr).Port)
+
+	// A rule an operator (or an attacker on the portal) could add: arbitrary destinations sent into the tunnel.
+	portal := &xray.Config{
+		InboundConfigs: []xray.InboundConfig{{
+			Listen: []byte(`"127.0.0.1"`), Port: socksPort, Protocol: "mixed",
+			Settings: []byte(`{"auth":"noauth"}`), Tag: "stray",
+		}},
+		OutboundConfigs: []byte(`[{"tag":"blocked","protocol":"blackhole"}]`),
+		RouterConfig: []byte(`{"rules":[{"type":"field","inboundTag":["stray"],"outboundTag":"` +
+			PortalOutboundTag(portalTunnel.Name) + `"}]}`),
+	}
+	if err := Apply(portal, []model.ServerTunnel{portalTunnel}); err != nil {
+		t.Fatalf("Apply portal: %v", err)
+	}
+	bridge := &xray.Config{OutboundConfigs: []byte(`[{"tag":"direct","protocol":"freedom"}]`)}
+	if err := Apply(bridge, []model.ServerTunnel{bridgeTunnel}); err != nil {
+		t.Fatalf("Apply bridge: %v", err)
+	}
+	startXray(t, portal)
+	startXray(t, bridge)
+
+	direct := &http.Client{Timeout: 3 * time.Second}
+	if body := getEventually(t, direct, fmt.Sprintf("http://127.0.0.1:%d/", managePort)); body != "node panel" {
+		t.Fatalf("management port answered %q, want %q", body, "node panel")
+	}
+
+	dialer, err := proxy.SOCKS5("tcp", fmt.Sprintf("127.0.0.1:%d", socksPort), nil, proxy.Direct)
+	if err != nil {
+		t.Fatalf("socks dialer: %v", err)
+	}
+	stray := &http.Client{Timeout: 3 * time.Second, Transport: &http.Transport{
+		DialContext: func(_ context.Context, network, addr string) (net.Conn, error) { return dialer.Dial(network, addr) },
+	}}
+	if body := getEventually(t, stray, other.URL); body != "node panel" {
+		t.Fatalf("a request for another service on the node answered %q; it must land on the panel port only", body)
+	}
+}

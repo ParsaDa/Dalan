@@ -1059,6 +1059,7 @@ export interface ServerTunnel {
   fallbackTransports: string[];
   forwardPorts: string[];
   id: number;
+  managePort: number;
   name: string;
   port: number;
   realityPublicKey: string;
