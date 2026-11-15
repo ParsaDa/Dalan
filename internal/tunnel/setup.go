@@ -15,11 +15,14 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 )
 
 const (
-	setupLinkPrefix  = "dalan://tunnel/"
-	setupLinkVersion = 1
+	setupLinkPrefix = "dalan://tunnel/"
+	// Version 2 links describe BackPack tunnels; a panel that only knows version 1 refuses them by number.
+	setupLinkXray     = 1
+	setupLinkBackpack = 2
 )
 
 var errNotASetupLink = errors.New("not a Dalan tunnel link")
@@ -34,6 +37,13 @@ type PortalSpec struct {
 	Port       int
 	Security   string
 	ServerName string
+
+	// Engine is "xray" when empty. The fields below belong to the BackPack engine.
+	Engine             string
+	Transport          string
+	FallbackTransports []string
+	ForwardPorts       []string
+	AcceptUDP          bool
 }
 
 type setupPayload struct {
@@ -46,9 +56,12 @@ type setupPayload struct {
 	ServerName string `json:"serverName,omitempty"`
 	PublicKey  string `json:"publicKey,omitempty"`
 	ShortId    string `json:"shortId,omitempty"`
+
+	Transport          string   `json:"transport,omitempty"`
+	FallbackTransports []string `json:"fallbackTransports,omitempty"`
 }
 
-func validate(name, address string, port int, security, serverName string) error {
+func validateEndpoint(name, address string, port int) error {
 	switch {
 	case !namePattern.MatchString(name):
 		return fmt.Errorf("tunnel name %q must be lower-case letters, digits and dashes, at most 31 characters", name)
@@ -56,6 +69,12 @@ func validate(name, address string, port int, security, serverName string) error
 		return errors.New("tunnel address is required")
 	case port < 1 || port > 65535:
 		return fmt.Errorf("tunnel port %d is out of range", port)
+	}
+	return nil
+}
+
+func validateXray(security, serverName string) error {
+	switch {
 	case security != model.TunnelSecurityNone && security != model.TunnelSecurityReality:
 		return fmt.Errorf("tunnel security %q is not supported", security)
 	case security == model.TunnelSecurityReality && strings.TrimSpace(serverName) == "":
@@ -64,14 +83,49 @@ func validate(name, address string, port int, security, serverName string) error
 	return nil
 }
 
+func validateBackpackTransports(transport string, fallbacks []string) error {
+	for _, name := range append([]string{transport}, fallbacks...) {
+		known := false
+		for _, t := range backpack.Transports {
+			known = known || t == name
+		}
+		if !known {
+			return fmt.Errorf("unknown BackPack transport %q", name)
+		}
+	}
+	return nil
+}
+
 // NewPortal validates a spec and generates the secrets for the listening end of a tunnel.
 func NewPortal(spec PortalSpec) (model.ServerTunnel, error) {
-	if err := validate(spec.Name, spec.Address, spec.Port, spec.Security, spec.ServerName); err != nil {
+	if err := validateEndpoint(spec.Name, spec.Address, spec.Port); err != nil {
 		return model.ServerTunnel{}, err
 	}
 	portal := model.ServerTunnel{
 		Name: spec.Name, Role: model.TunnelRolePortal, Engine: model.TunnelEngineXray, Enable: true,
-		Address: strings.TrimSpace(spec.Address), Port: spec.Port, UUID: uuid.NewString(), Security: spec.Security,
+		Address: strings.TrimSpace(spec.Address), Port: spec.Port, UUID: uuid.NewString(),
+	}
+	switch spec.Engine {
+	case "", model.TunnelEngineXray:
+		if err := validateXray(spec.Security, spec.ServerName); err != nil {
+			return model.ServerTunnel{}, err
+		}
+		portal.Security = spec.Security
+	case model.TunnelEngineBackpack:
+		if err := validateBackpackTransports(spec.Transport, spec.FallbackTransports); err != nil {
+			return model.ServerTunnel{}, err
+		}
+		portal.Engine = model.TunnelEngineBackpack
+		portal.Security = model.TunnelSecurityNone
+		portal.Transport, portal.FallbackTransports = spec.Transport, spec.FallbackTransports
+		portal.ForwardPorts, portal.AcceptUDP = spec.ForwardPorts, spec.AcceptUDP
+		// Rendering is the engine's own validation of the forwarded ports.
+		if _, err := backpack.RenderConfig(portal); err != nil {
+			return model.ServerTunnel{}, err
+		}
+		return portal, nil
+	default:
+		return model.ServerTunnel{}, fmt.Errorf("tunnel engine %q is not supported", spec.Engine)
 	}
 	if spec.Security == model.TunnelSecurityReality {
 		key, err := ecdh.X25519().GenerateKey(rand.Reader)
@@ -95,11 +149,16 @@ func SetupLink(portal model.ServerTunnel) (string, error) {
 	if portal.Role != model.TunnelRolePortal {
 		return "", errors.New("a setup link can only be made from the portal end of a tunnel")
 	}
-	raw, err := json.Marshal(setupPayload{
-		Version: setupLinkVersion, Name: portal.Name, Address: portal.Address, Port: portal.Port,
+	payload := setupPayload{
+		Version: setupLinkXray, Name: portal.Name, Address: portal.Address, Port: portal.Port,
 		UUID: portal.UUID, Security: portal.Security, ServerName: portal.ServerName,
 		PublicKey: portal.RealityPublicKey, ShortId: portal.ShortId,
-	})
+	}
+	if portal.Engine == model.TunnelEngineBackpack {
+		payload.Version = setupLinkBackpack
+		payload.Transport, payload.FallbackTransports = portal.Transport, portal.FallbackTransports
+	}
+	raw, err := json.Marshal(payload)
 	if err != nil {
 		return "", err
 	}
@@ -120,21 +179,34 @@ func ParseSetupLink(link string) (model.ServerTunnel, error) {
 	if err := json.Unmarshal(raw, &p); err != nil {
 		return model.ServerTunnel{}, errNotASetupLink
 	}
-	if p.Version != setupLinkVersion {
-		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands version %d", p.Version, setupLinkVersion)
-	}
-	if err := validate(p.Name, p.Address, p.Port, p.Security, p.ServerName); err != nil {
+	if err := validateEndpoint(p.Name, p.Address, p.Port); err != nil {
 		return model.ServerTunnel{}, err
 	}
 	if _, err := uuid.Parse(p.UUID); err != nil {
 		return model.ServerTunnel{}, errors.New("tunnel link has no valid uuid")
 	}
-	if p.Security == model.TunnelSecurityReality && (p.PublicKey == "" || p.ShortId == "") {
-		return model.ServerTunnel{}, errors.New("tunnel link is missing its REALITY public key or short id")
-	}
-	return model.ServerTunnel{
+	bridge := model.ServerTunnel{
 		Name: p.Name, Role: model.TunnelRoleBridge, Engine: model.TunnelEngineXray, Enable: true,
 		Address: p.Address, Port: p.Port, UUID: p.UUID, Security: p.Security,
-		ServerName: p.ServerName, RealityPublicKey: p.PublicKey, ShortId: p.ShortId,
-	}, nil
+	}
+	switch p.Version {
+	case setupLinkXray:
+		if err := validateXray(p.Security, p.ServerName); err != nil {
+			return model.ServerTunnel{}, err
+		}
+		if p.Security == model.TunnelSecurityReality && (p.PublicKey == "" || p.ShortId == "") {
+			return model.ServerTunnel{}, errors.New("tunnel link is missing its REALITY public key or short id")
+		}
+		bridge.ServerName, bridge.RealityPublicKey, bridge.ShortId = p.ServerName, p.PublicKey, p.ShortId
+	case setupLinkBackpack:
+		if err := validateBackpackTransports(p.Transport, p.FallbackTransports); err != nil {
+			return model.ServerTunnel{}, err
+		}
+		bridge.Engine = model.TunnelEngineBackpack
+		bridge.Security = model.TunnelSecurityNone
+		bridge.Transport, bridge.FallbackTransports = p.Transport, p.FallbackTransports
+	default:
+		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands versions %d and %d", p.Version, setupLinkXray, setupLinkBackpack)
+	}
+	return bridge, nil
 }

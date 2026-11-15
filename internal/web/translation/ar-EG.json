@@ -2558,6 +2558,18 @@
       "statusDown": "Down",
       "statusExitOnly": "Tested from the entry server",
       "statusExit": "Exits from",
+      "engine": "Engine",
+      "engineXray": "Xray (built in)",
+      "engineBackpack": "BackPack",
+      "transport": "Transport",
+      "fallbackTransports": "Fallback transports",
+      "fallbackTransportsHint": "Tried in order when the main transport is blocked.",
+      "forwardPorts": "Forwarded ports",
+      "forwardPortsHint": "Ports opened on this server and carried to the other server, for example 443=127.0.0.1:2096. Press Enter after each one.",
+      "acceptUdp": "Carry UDP too",
+      "engineMissing": "The BackPack engine is not installed on this server, so BackPack tunnels cannot run.",
+      "engineMissingHint": "If this server cannot reach GitHub, copy the backpack binary into the panel's bin folder by hand.",
+      "installEngine": "Install BackPack",
       "toasts": {
         "list": "Load tunnels",
         "add": "Create tunnel",
@@ -2565,7 +2577,8 @@
         "update": "Update tunnel",
         "del": "Delete tunnel",
         "link": "Get setup link",
-        "status": "Test tunnel"
+        "status": "Test tunnel",
+        "installEngine": "Install the BackPack engine"
       }
     }
   },

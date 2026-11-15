@@ -90,3 +90,37 @@ func TestTunnelRoutesCreateLinkImportToggleAndDelete(t *testing.T) {
 		t.Fatal("deleting a missing tunnel reported success")
 	}
 }
+
+func TestTunnelRoutesCreateABackpackTunnelAndReportTheEngine(t *testing.T) {
+	engine := newTunnelEngine(t)
+
+	added := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+		"name": "bp1", "address": "203.0.113.10", "port": 9443, "engine": "backpack",
+		"transport": "wssmux", "fallbackTransports": []string{"quic"},
+		"forwardPorts": []string{"443=127.0.0.1:2096"}, "acceptUdp": true,
+	})
+	var portal model.ServerTunnel
+	if err := json.Unmarshal(added.Obj, &portal); err != nil || !added.Success {
+		t.Fatalf("add failed: %s (%v)", added.Msg, err)
+	}
+	if portal.Engine != "backpack" || portal.Transport != "wssmux" || !portal.AcceptUDP ||
+		len(portal.ForwardPorts) != 1 || len(portal.FallbackTransports) != 1 {
+		t.Fatalf("stored tunnel = %+v, want the BackPack settings from the request", portal)
+	}
+
+	refused := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+		"name": "bp2", "address": "203.0.113.10", "port": 9444, "engine": "backpack", "transport": "wssmux",
+	})
+	if refused.Success || !strings.Contains(refused.Msg, "forwarded port") {
+		t.Fatalf("a BackPack tunnel with no forwarded port: success=%v msg=%q", refused.Success, refused.Msg)
+	}
+
+	info := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/engine", nil)
+	var got struct {
+		Installed bool   `json:"installed"`
+		Version   string `json:"version"`
+	}
+	if err := json.Unmarshal(info.Obj, &got); err != nil || got.Installed || got.Version != "v2.0.0" {
+		t.Fatalf("engine info = %s (%v), want not installed, v2.0.0", info.Obj, err)
+	}
+}

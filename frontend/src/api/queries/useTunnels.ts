@@ -10,24 +10,46 @@ export type { ServerTunnel };
 const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
 const TUNNELS_KEY = ['tunnels'] as const;
 // The API sends null for an empty tag list; the table and form want an array.
+const stringList = z.array(z.string()).nullish();
 const TunnelListSchema = z.array(
-  ServerTunnelSchema.extend({ routeInbounds: z.array(z.string()).nullish() }),
+  ServerTunnelSchema.extend({
+    routeInbounds: stringList,
+    forwardPorts: stringList,
+    fallbackTransports: stringList,
+  }),
 );
 
-export interface NewPortalValues {
-  name: string;
-  address: string;
-  port: number;
-  security: 'reality' | 'none';
-  serverName: string;
-  routeInbounds: string[];
-}
+export type NewPortalValues =
+  | {
+      name: string;
+      address: string;
+      port: number;
+      engine: 'xray';
+      security: 'reality' | 'none';
+      serverName: string;
+      routeInbounds: string[];
+    }
+  | {
+      name: string;
+      address: string;
+      port: number;
+      engine: 'backpack';
+      transport: string;
+      fallbackTransports: string[];
+      forwardPorts: string[];
+      acceptUdp: boolean;
+    };
 
 async function fetchTunnels(): Promise<ServerTunnel[]> {
   const msg = await HttpUtil.get('/panel/api/tunnels/list', undefined, { silent: true });
   if (!msg?.success) throw new Error(msg?.msg || 'Failed to fetch tunnels');
   const validated = parseMsg(msg, TunnelListSchema, 'tunnels/list');
-  return (validated.obj ?? []).map((t) => ({ ...t, routeInbounds: t.routeInbounds ?? [] }));
+  return (validated.obj ?? []).map((t) => ({
+    ...t,
+    routeInbounds: t.routeInbounds ?? [],
+    forwardPorts: t.forwardPorts ?? [],
+    fallbackTransports: t.fallbackTransports ?? [],
+  }));
 }
 
 export function useTunnelsQuery() {
@@ -67,7 +89,16 @@ export function useTunnelMutations() {
     onSuccess: refresh,
   });
 
+  const installEngine = useMutation({
+    mutationFn: () => HttpUtil.post('/panel/api/tunnels/engine/install'),
+    onSuccess: (msg) => {
+      if (msg?.success) queryClient.invalidateQueries({ queryKey: TUNNELS_KEY });
+    },
+  });
+
   return {
+    installEngine: installEngine.mutateAsync,
+    installingEngine: installEngine.isPending,
     create: create.mutateAsync,
     importLink: importLink.mutateAsync,
     setEnable: setEnable.mutateAsync,
@@ -106,5 +137,18 @@ export function useTunnelStatus(id: number, enabled: boolean) {
     enabled,
     retry: false,
     refetchInterval: 60_000,
+  });
+}
+
+const EngineInfoSchema = z.object({ installed: z.boolean(), version: z.string() });
+
+export function useTunnelEngine() {
+  return useQuery({
+    queryKey: [...TUNNELS_KEY, 'engine'],
+    queryFn: async () => {
+      const msg = await HttpUtil.get('/panel/api/tunnels/engine', undefined, { silent: true });
+      if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the tunnel engine');
+      return parseMsg(msg, EngineInfoSchema, 'tunnels/engine').obj ?? null;
+    },
   });
 }

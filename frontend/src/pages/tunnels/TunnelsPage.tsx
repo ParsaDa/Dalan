@@ -12,6 +12,7 @@ import {
   Layout,
   Modal,
   Popconfirm,
+  Radio,
   Result,
   Select,
   Space,
@@ -29,6 +30,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
 import {
   fetchSetupLink,
+  useTunnelEngine,
   useTunnelMutations,
   useTunnelStatus,
   useTunnelsQuery,
@@ -41,13 +43,42 @@ import { ClipboardManager } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,30}$/;
+const BACKPACK_TRANSPORTS = [
+  'tcp',
+  'tcpmux',
+  'stealth',
+  'ws',
+  'wss',
+  'wsmux',
+  'wssmux',
+  'kcp',
+  'quic',
+  'udp',
+  'xdi',
+  'pck',
+].map((value) => ({ value, label: value }));
+
+interface PortalFormValues {
+  name: string;
+  address: string;
+  port: number;
+  engine: 'xray' | 'backpack';
+  security: 'reality' | 'none';
+  serverName?: string;
+  routeInbounds?: string[];
+  transport: string;
+  fallbackTransports?: string[];
+  forwardPorts?: string[];
+  acceptUdp?: boolean;
+}
 
 function TunnelStatusCell({ tunnel }: { tunnel: ServerTunnel }) {
   const { t } = useTranslation();
-  const isEntry = tunnel.role === 'portal';
-  const { data, isLoading, error } = useTunnelStatus(tunnel.id, isEntry && tunnel.enable);
+  // Xray tunnels are tested from the entry end; a BackPack engine reports its own state on both ends.
+  const testable = tunnel.role === 'portal' || tunnel.engine === 'backpack';
+  const { data, isLoading, error } = useTunnelStatus(tunnel.id, testable && tunnel.enable);
 
-  if (!isEntry) {
+  if (!testable) {
     return <Typography.Text type="secondary">{t('pages.tunnels.statusExitOnly')}</Typography.Text>;
   }
   if (!tunnel.enable) return <Typography.Text type="secondary">—</Typography.Text>;
@@ -62,7 +93,11 @@ function TunnelStatusCell({ tunnel }: { tunnel: ServerTunnel }) {
   const exit = [data.exitLoc, data.exitIp].filter(Boolean).join(' · ');
   return (
     <Space orientation="vertical" size={0}>
-      <Tag color="success">{`${t('pages.tunnels.statusConnected')} · ${data.latencyMs} ms`}</Tag>
+      <Tag color="success">
+        {data.latencyMs > 0
+          ? `${t('pages.tunnels.statusConnected')} · ${data.latencyMs} ms`
+          : t('pages.tunnels.statusConnected')}
+      </Tag>
       {exit && (
         <Typography.Text type="secondary">{`${t('pages.tunnels.statusExit')} ${exit}`}</Typography.Text>
       )}
@@ -79,15 +114,19 @@ export default function TunnelsPage() {
   }, [messageApi]);
 
   const { tunnels, loading, fetched, fetchError, refetch } = useTunnelsQuery();
-  const { create, importLink, setEnable, remove } = useTunnelMutations();
+  const { create, importLink, setEnable, remove, installEngine, installingEngine } =
+    useTunnelMutations();
+  const { data: engineInfo } = useTunnelEngine();
   const { data: inboundOptions = [] } = useInboundOptions();
 
   const [portalOpen, setPortalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [portalForm] = Form.useForm<NewPortalValues>();
+  const [portalForm] = Form.useForm<PortalFormValues>();
   const [importForm] = Form.useForm<{ link: string; exitOutbound?: string }>();
   const security = Form.useWatch('security', portalForm);
+  const engine = Form.useWatch('engine', portalForm);
+  const usesBackpack = tunnels.some((tunnel) => tunnel.engine === 'backpack');
 
   const inboundTagOptions = useMemo(
     () =>
@@ -110,16 +149,25 @@ export default function TunnelsPage() {
     const values = await portalForm.validateFields();
     setSaving(true);
     try {
-      const ok = report(
-        await create({
-          name: values.name,
-          address: values.address.trim(),
-          port: values.port,
-          security: values.security,
-          serverName: values.security === 'reality' ? (values.serverName ?? '').trim() : '',
-          routeInbounds: values.routeInbounds ?? [],
-        }),
-      );
+      const common = { name: values.name, address: values.address.trim(), port: values.port };
+      const request: NewPortalValues =
+        values.engine === 'backpack'
+          ? {
+              ...common,
+              engine: 'backpack',
+              transport: values.transport,
+              fallbackTransports: values.fallbackTransports ?? [],
+              forwardPorts: values.forwardPorts ?? [],
+              acceptUdp: values.acceptUdp ?? false,
+            }
+          : {
+              ...common,
+              engine: 'xray',
+              security: values.security,
+              serverName: values.security === 'reality' ? (values.serverName ?? '').trim() : '',
+              routeInbounds: values.routeInbounds ?? [],
+            };
+      const ok = report(await create(request));
       if (ok) {
         setPortalOpen(false);
         portalForm.resetFields();
@@ -174,7 +222,12 @@ export default function TunnelsPage() {
     {
       title: t('pages.tunnels.name'),
       dataIndex: 'name',
-      render: (name: string) => <Typography.Text strong>{name}</Typography.Text>,
+      render: (name: string, row) => (
+        <Space>
+          <Typography.Text strong>{name}</Typography.Text>
+          {row.engine === 'backpack' && <Tag>{t('pages.tunnels.engineBackpack')}</Tag>}
+        </Space>
+      ),
     },
     {
       title: t('pages.tunnels.role'),
@@ -197,8 +250,10 @@ export default function TunnelsPage() {
     {
       title: t('pages.tunnels.security'),
       dataIndex: 'security',
-      render: (value: string) =>
-        value === 'reality' ? (
+      render: (value: string, row) =>
+        row.engine === 'backpack' ? (
+          <Tag>{row.transport}</Tag>
+        ) : value === 'reality' ? (
           <Tag>{t('pages.tunnels.securityReality')}</Tag>
         ) : (
           <Tag color="warning">{t('pages.tunnels.securityNone')}</Tag>
@@ -207,9 +262,11 @@ export default function TunnelsPage() {
     {
       title: t('pages.tunnels.routeInbounds'),
       render: (_, row) =>
-        row.role === 'portal'
-          ? (row.routeInbounds ?? []).map((tag) => <Tag key={tag}>{tag}</Tag>)
-          : row.exitOutbound || 'direct',
+        row.role !== 'portal'
+          ? row.exitOutbound || 'direct'
+          : (row.engine === 'backpack' ? row.forwardPorts : row.routeInbounds).map((item) => (
+              <Tag key={item}>{item}</Tag>
+            )),
     },
     {
       width: 110,
@@ -289,6 +346,24 @@ export default function TunnelsPage() {
                   <Typography.Paragraph type="secondary">
                     {t('pages.tunnels.subtitle')}
                   </Typography.Paragraph>
+                  {usesBackpack && engineInfo && !engineInfo.installed && (
+                    <Alert
+                      type="warning"
+                      showIcon
+                      title={t('pages.tunnels.engineMissing')}
+                      description={t('pages.tunnels.engineMissingHint')}
+                      action={
+                        <Button
+                          size="small"
+                          loading={installingEngine}
+                          onClick={async () => report(await installEngine())}
+                        >
+                          {t('pages.tunnels.installEngine')}
+                        </Button>
+                      }
+                      style={{ marginBottom: 12 }}
+                    />
+                  )}
                   {tunnels.some((tunnel) => tunnel.role === 'portal') && (
                     <Alert
                       type="info"
@@ -325,7 +400,16 @@ export default function TunnelsPage() {
         <Form
           form={portalForm}
           layout="vertical"
-          initialValues={{ security: 'reality', port: 8443, routeInbounds: [] }}
+          initialValues={{
+            engine: 'xray',
+            security: 'reality',
+            port: 8443,
+            routeInbounds: [],
+            transport: 'tcpmux',
+            fallbackTransports: [],
+            forwardPorts: [],
+            acceptUdp: false,
+          }}
         >
           <Form.Item
             name="name"
@@ -349,36 +433,86 @@ export default function TunnelsPage() {
           >
             <InputNumber min={1} max={65535} style={{ width: '100%' }} />
           </Form.Item>
-          <Form.Item name="security" label={t('pages.tunnels.security')}>
-            <Select
+          <Form.Item name="engine" label={t('pages.tunnels.engine')}>
+            <Radio.Group
               options={[
-                { value: 'reality', label: t('pages.tunnels.securityReality') },
-                { value: 'none', label: t('pages.tunnels.securityNone') },
+                { value: 'xray', label: t('pages.tunnels.engineXray') },
+                { value: 'backpack', label: t('pages.tunnels.engineBackpack') },
               ]}
             />
           </Form.Item>
-          {security !== 'none' && (
-            <Form.Item
-              name="serverName"
-              label={t('pages.tunnels.serverName')}
-              extra={t('pages.tunnels.serverNameHint')}
-              rules={[{ required: true, whitespace: true }]}
-            >
-              <Input placeholder="www.example.com" autoComplete="off" />
-            </Form.Item>
+          {engine === 'backpack' ? (
+            <>
+              <Form.Item name="transport" label={t('pages.tunnels.transport')}>
+                <Select options={BACKPACK_TRANSPORTS} />
+              </Form.Item>
+              <Form.Item
+                name="fallbackTransports"
+                label={t('pages.tunnels.fallbackTransports')}
+                extra={t('pages.tunnels.fallbackTransportsHint')}
+              >
+                <Select
+                  mode="multiple"
+                  options={BACKPACK_TRANSPORTS}
+                  tagRender={selectTagRender}
+                  allowClear
+                />
+              </Form.Item>
+              <Form.Item
+                name="forwardPorts"
+                label={t('pages.tunnels.forwardPorts')}
+                extra={t('pages.tunnels.forwardPortsHint')}
+                rules={[{ required: true, type: 'array', min: 1 }]}
+              >
+                <Select
+                  mode="tags"
+                  open={false}
+                  tagRender={selectTagRender}
+                  tokenSeparators={[' ', ',']}
+                />
+              </Form.Item>
+              <Form.Item
+                name="acceptUdp"
+                label={t('pages.tunnels.acceptUdp')}
+                valuePropName="checked"
+              >
+                <Switch />
+              </Form.Item>
+            </>
+          ) : (
+            <>
+              <Form.Item name="security" label={t('pages.tunnels.security')}>
+                <Select
+                  options={[
+                    { value: 'reality', label: t('pages.tunnels.securityReality') },
+                    { value: 'none', label: t('pages.tunnels.securityNone') },
+                  ]}
+                />
+              </Form.Item>
+              {security !== 'none' && (
+                <Form.Item
+                  name="serverName"
+                  label={t('pages.tunnels.serverName')}
+                  extra={t('pages.tunnels.serverNameHint')}
+                  rules={[{ required: true, whitespace: true }]}
+                >
+                  <Input placeholder="www.example.com" autoComplete="off" />
+                </Form.Item>
+              )}
+              <Form.Item
+                name="routeInbounds"
+                label={t('pages.tunnels.routeInbounds')}
+                extra={t('pages.tunnels.routeInboundsHint')}
+              >
+                <Select
+                  mode="multiple"
+                  options={inboundTagOptions}
+                  tagRender={selectTagRender}
+                  allowClear
+                />
+              </Form.Item>
+            </>
           )}
-          <Form.Item
-            name="routeInbounds"
-            label={t('pages.tunnels.routeInbounds')}
-            extra={t('pages.tunnels.routeInboundsHint')}
-          >
-            <Select
-              mode="multiple"
-              options={inboundTagOptions}
-              tagRender={selectTagRender}
-              allowClear
-            />
-          </Form.Item>
         </Form>
       </Modal>
 

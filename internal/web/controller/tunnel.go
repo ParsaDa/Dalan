@@ -23,9 +23,11 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.GET("/list", a.list)
 	g.GET("/link/:id", a.link)
 	g.GET("/status/:id", a.status)
+	g.GET("/engine", a.engine)
 
 	g.POST("/add", a.add)
 	g.POST("/import", a.importLink)
+	g.POST("/engine/install", a.installEngine)
 	g.POST("/setEnable/:id", a.setEnable)
 	g.POST("/del/:id", a.del)
 }
@@ -61,6 +63,12 @@ func (a *TunnelController) add(c *gin.Context) {
 		Security      string   `json:"security"`
 		ServerName    string   `json:"serverName"`
 		RouteInbounds []string `json:"routeInbounds"`
+
+		Engine             string   `json:"engine"`
+		Transport          string   `json:"transport"`
+		FallbackTransports []string `json:"fallbackTransports"`
+		ForwardPorts       []string `json:"forwardPorts"`
+		AcceptUDP          bool     `json:"acceptUdp"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
@@ -68,6 +76,8 @@ func (a *TunnelController) add(c *gin.Context) {
 	}
 	portal, err := a.tunnelService.CreatePortal(tunnel.PortalSpec{
 		Name: req.Name, Address: req.Address, Port: req.Port, Security: req.Security, ServerName: req.ServerName,
+		Engine: req.Engine, Transport: req.Transport, FallbackTransports: req.FallbackTransports,
+		ForwardPorts: req.ForwardPorts, AcceptUDP: req.AcceptUDP,
 	}, req.RouteInbounds)
 	if err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
@@ -130,4 +140,12 @@ func (a *TunnelController) status(c *gin.Context) {
 		return
 	}
 	jsonObj(c, status, nil)
+}
+
+func (a *TunnelController) engine(c *gin.Context) {
+	jsonObj(c, a.tunnelService.EngineInfo(), nil)
+}
+
+func (a *TunnelController) installEngine(c *gin.Context) {
+	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.installEngine"), a.tunnelService.InstallEngine())
 }

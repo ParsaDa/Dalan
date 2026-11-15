@@ -1,6 +1,7 @@
 package backpack
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -97,7 +98,8 @@ func (s *Supervisor) startLocked(name, rendered string) error {
 	if err := os.WriteFile(s.configPath(name), []byte(rendered), 0o600); err != nil {
 		return err
 	}
-	cmd := exec.Command(s.Binary, "-c", s.configPath(name))
+	// The engine outlives any one request; it is stopped by signal, not by a context.
+	cmd := exec.CommandContext(context.Background(), s.Binary, "-c", s.configPath(name))
 	cmd.Dir = s.Dir
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("start BackPack for tunnel %q: %w", name, err)
