@@ -4,7 +4,8 @@ const (
 	TunnelRolePortal = "portal"
 	TunnelRoleBridge = "bridge"
 
-	TunnelEngineXray = "xray"
+	TunnelEngineXray     = "xray"
+	TunnelEngineBackpack = "backpack"
 
 	TunnelSecurityNone    = "none"
 	TunnelSecurityReality = "reality"
@@ -27,6 +28,13 @@ type ServerTunnel struct {
 	RealityPrivateKey string `json:"-" gorm:"column:reality_private_key"`
 	RealityPublicKey  string `json:"realityPublicKey" gorm:"column:reality_public_key"`
 	ShortId           string `json:"shortId" gorm:"column:short_id" example:"a1b2c3d4"`
+
+	// Transport, FallbackTransports, ForwardPorts and AcceptUDP belong to the BackPack engine.
+	Transport          string   `json:"transport" example:"wssmux"`
+	FallbackTransports []string `json:"fallbackTransports" gorm:"serializer:json;column:fallback_transports"`
+	// ForwardPorts (portal) are ports opened on this server and carried to the other end, like "443=127.0.0.1:2096".
+	ForwardPorts []string `json:"forwardPorts" gorm:"serializer:json;column:forward_ports"`
+	AcceptUDP    bool     `json:"acceptUdp" gorm:"column:accept_udp"`
 
 	// RouteInbounds (portal) lists the local inbound tags whose traffic leaves through this tunnel.
 	RouteInbounds []string `json:"routeInbounds" gorm:"serializer:json;column:route_inbounds"`
