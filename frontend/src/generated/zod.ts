@@ -850,6 +850,15 @@ export const InboundTrafficSummarySchema = z.object({
 });
 export type InboundTrafficSummary = z.infer<typeof InboundTrafficSummarySchema>;
 
+export const InvitationSchema = z.object({
+  command: z.string(),
+  expiresAt: z.number().int(),
+  id: z.number().int(),
+  link: z.string(),
+  name: z.string(),
+});
+export type Invitation = z.infer<typeof InvitationSchema>;
+
 export const LogEntrySchema = z.object({
   DateTime: z.string(),
   Email: z.string(),
@@ -929,6 +938,16 @@ export const NodeSchema = z.object({
   xrayVersion: z.string(),
 });
 export type Node = z.infer<typeof NodeSchema>;
+
+export const NodeEnrolmentSchema = z.object({
+  expiresAt: z.number().int(),
+  id: z.number().int(),
+  name: z.string(),
+  nodeId: z.number().int(),
+  tunnelId: z.number().int(),
+  usedAt: z.number().int(),
+});
+export type NodeEnrolment = z.infer<typeof NodeEnrolmentSchema>;
 
 export const NodeMutationRequestSchema = z.object({
   address: z.string(),
@@ -1125,6 +1144,7 @@ export const ServerTunnelSchema = z.object({
   fallbackTransports: z.array(z.string()),
   forwardPorts: z.array(z.string()),
   id: z.number().int(),
+  managePort: z.number().int(),
   name: z.string(),
   port: z.number().int(),
   realityPublicKey: z.string(),

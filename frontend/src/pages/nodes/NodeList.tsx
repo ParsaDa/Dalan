@@ -21,6 +21,7 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
+import EnrolNode from './EnrolNode';
 import NodeHistoryPanel from './NodeHistoryPanel';
 import type { NodeRecord } from '@/api/queries/useNodesQuery';
 import { isPanelUpdateAvailable } from '@/lib/panel-version';
@@ -594,6 +595,7 @@ export default function NodeList({
         <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={onAdd}>
           {t('pages.nodes.addNode')}
         </Button>
+        <EnrolNode />
         <Button icon={<SafetyCertificateOutlined aria-hidden />} onClick={onMtls}>
           {t('pages.nodes.mtls.title')}
         </Button>

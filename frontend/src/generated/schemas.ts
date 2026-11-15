@@ -3489,6 +3489,40 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "Invitation": {
+    "description": "Invitation is a new enrolment with the link that is shown once and never stored.",
+    "properties": {
+      "command": {
+        "example": "dalan enrol 'dalan://enrol/eyJ2IjoxfQ'",
+        "type": "string"
+      },
+      "expiresAt": {
+        "example": 1700001800,
+        "format": "int64",
+        "type": "integer"
+      },
+      "id": {
+        "example": 1,
+        "type": "integer"
+      },
+      "link": {
+        "example": "dalan://enrol/eyJ2IjoxfQ",
+        "type": "string"
+      },
+      "name": {
+        "example": "de1",
+        "type": "string"
+      }
+    },
+    "required": [
+      "command",
+      "expiresAt",
+      "id",
+      "link",
+      "name"
+    ],
+    "type": "object"
+  },
   "LogEntry": {
     "properties": {
       "DateTime": {
@@ -3821,6 +3855,46 @@ export const SCHEMAS: Record<string, unknown> = {
       "xrayError",
       "xrayState",
       "xrayVersion"
+    ],
+    "type": "object"
+  },
+  "NodeEnrolment": {
+    "description": "NodeEnrolment is one invitation for a node abroad to dial into this panel, and afterwards the\nrecord tying that node to its management tunnel. Its secrets are cleared once it is used.",
+    "properties": {
+      "expiresAt": {
+        "example": 1700001800,
+        "format": "int64",
+        "type": "integer"
+      },
+      "id": {
+        "example": 1,
+        "type": "integer"
+      },
+      "name": {
+        "example": "de1",
+        "type": "string"
+      },
+      "nodeId": {
+        "example": 0,
+        "type": "integer"
+      },
+      "tunnelId": {
+        "example": 3,
+        "type": "integer"
+      },
+      "usedAt": {
+        "example": 0,
+        "format": "int64",
+        "type": "integer"
+      }
+    },
+    "required": [
+      "expiresAt",
+      "id",
+      "name",
+      "nodeId",
+      "tunnelId",
+      "usedAt"
     ],
     "type": "object"
   },
@@ -4658,6 +4732,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": 1,
         "type": "integer"
       },
+      "managePort": {
+        "description": "ManagePort marks a management tunnel. Portal: the loopback port opened here. Bridge: this\nserver's panel port, the only place the tunnel's traffic may go. Zero is an ordinary tunnel.",
+        "example": 0,
+        "type": "integer"
+      },
       "name": {
         "example": "de1",
         "type": "string"
@@ -4711,6 +4790,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "fallbackTransports",
       "forwardPorts",
       "id",
+      "managePort",
       "name",
       "port",
       "realityPublicKey",

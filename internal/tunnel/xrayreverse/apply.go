@@ -19,6 +19,8 @@ func portalInboundTag(name string) string  { return "tunnel-" + name + "-link" }
 func bridgeOutboundTag(name string) string { return "tunnel-" + name + "-dial" }
 func bridgeInboundTag(name string) string  { return "tunnel-" + name + "-exit" }
 func probeInboundTag(name string) string   { return "tunnel-" + name + "-probe" }
+func manageInboundTag(name string) string  { return "tunnel-" + name + "-manage" }
+func panelOutboundTag(name string) string  { return "tunnel-" + name + "-panel" }
 
 const probeBasePort = 62900
 
@@ -55,6 +57,13 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 				return err
 			}
 			cfg.InboundConfigs = append(cfg.InboundConfigs, inbound)
+			if t.ManagePort > 0 {
+				cfg.InboundConfigs = append(cfg.InboundConfigs, manageInbound(t))
+				rules = append(rules, map[string]any{
+					"type": "field", "inboundTag": []string{manageInboundTag(t.Name)}, "outboundTag": PortalOutboundTag(t.Name),
+				})
+				continue
+			}
 			if probe, ok := probeInbound(cfg, t); ok {
 				cfg.InboundConfigs = append(cfg.InboundConfigs, probe)
 				rules = append(rules, map[string]any{
@@ -69,7 +78,10 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 		case model.TunnelRoleBridge:
 			outbounds = append(outbounds, bridgeOutbound(t))
 			exit := t.ExitOutbound
-			if exit == "" {
+			if t.ManagePort > 0 {
+				outbounds = append(outbounds, panelOutbound(t))
+				exit = panelOutboundTag(t.Name)
+			} else if exit == "" {
 				exit = defaultExitOutbound
 			}
 			rules = append(rules, map[string]any{
@@ -145,6 +157,29 @@ func bridgeOutbound(t model.ServerTunnel) map[string]any {
 			"reverse": map[string]any{"tag": bridgeInboundTag(t.Name)},
 		},
 		"streamSettings": stream,
+	}
+}
+
+// The address is a placeholder: the bridge decides where management traffic lands, never the portal.
+func manageInbound(t model.ServerTunnel) xray.InboundConfig {
+	return xray.InboundConfig{
+		Listen: json_util.RawMessage(`"127.0.0.1"`), Port: t.ManagePort, Protocol: "dokodemo-door",
+		Settings: json_util.RawMessage(fmt.Sprintf(`{"address":"127.0.0.1","port":%d,"network":"tcp"}`, t.ManagePort)),
+		Tag:      manageInboundTag(t.Name),
+	}
+}
+
+// Redirect pins the destination to this server's panel, whatever the portal asked for.
+func panelOutbound(t model.ServerTunnel) map[string]any {
+	panel := fmt.Sprintf("127.0.0.1:%d", t.ManagePort)
+	return map[string]any{
+		"tag": panelOutboundTag(t.Name), "protocol": "freedom",
+		"settings": map[string]any{
+			"redirect": panel,
+			"finalRules": []any{map[string]any{
+				"action": "allow", "network": "tcp", "ip": []string{"127.0.0.1/32"}, "port": fmt.Sprint(t.ManagePort),
+			}},
+		},
 	}
 }
 

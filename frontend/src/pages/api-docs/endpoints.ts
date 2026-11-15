@@ -2020,7 +2020,7 @@ export const sections: readonly Section[] = [
         summary:
           'Whether the BackPack engine binary is on this server, and the BackPack release this Dalan version installs.',
         response:
-          '{\n  "success": true,\n  "obj": {\n    "installed": false,\n    "version": "v2.0.0"\n  }\n}',
+          '{\n  "success": true,\n  "obj": {\n    "installed": false,\n    "version": "v1.8.5"\n  }\n}',
       },
       {
         method: 'POST',
@@ -2057,6 +2057,38 @@ export const sections: readonly Section[] = [
         summary:
           'Delete a tunnel end from this panel. The other server keeps its end until it is deleted there.',
         params: [{ name: 'id', in: 'path', type: 'number', desc: 'Tunnel ID.' }],
+      },
+    ],
+  },
+
+  {
+    id: 'enrolments',
+    title: 'Node enrolment',
+    description:
+      'Invite a node that must dial into this panel instead of being dialled. Creating an enrolment opens a management tunnel and returns a one-time link; running "dalan enrol <link>" on the node registers it here behind a loopback port of this server. The node itself calls the public route POST {basePath}dalan/enrol, whose body is sealed with a key from the link; it needs no session and is not listed here. All operator endpoints are under /panel/api/enrolments.',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/panel/api/enrolments/list',
+        summary:
+          'Enrolments that are still waiting (nodeId 0) and those that tie a joined node to its management tunnel. Expired links are removed.',
+        responseSchema: 'NodeEnrolment',
+        responseSchemaArray: true,
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/enrolments/add',
+        summary:
+          'Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored.',
+        body: '{\n  "name": "de1",\n  "panelUrl": "https://panel.example.com:2053/",\n  "address": "203.0.113.10",\n  "port": 8443,\n  "security": "reality",\n  "serverName": "www.example.com"\n}',
+        responseSchema: 'Invitation',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/enrolments/del/:id',
+        summary:
+          'Cancel a waiting enrolment and close its tunnel. An enrolment that belongs to a joined node is removed by deleting the node.',
+        params: [{ name: 'id', in: 'path', type: 'number', desc: 'Enrolment ID.' }],
       },
     ],
   },

@@ -3652,6 +3652,9 @@ if [[ $# -gt 0 ]]; then
         "restart")
             check_install 0 && restart 0
             ;;
+        "enrol")
+            check_install 0 && "${xui_folder}/x-ui" enrol "$2" && restart_xray 0
+            ;;
         "restart-xray")
             check_install 0 && restart_xray 0
             ;;

@@ -2580,6 +2580,29 @@
         "status": "Test tunnel",
         "installEngine": "Install the BackPack engine"
       }
+    },
+    "enrolments": {
+      "title": "Add node with a command",
+      "intro": "For a server that this panel cannot reach but that can reach this panel. The node dials in and is managed through its own tunnel.",
+      "name": "Node name",
+      "nameInvalid": "Lower-case letters, digits and dashes, at most 26 characters.",
+      "required": "This field is required.",
+      "panelUrl": "This panel's address",
+      "panelUrlHint": "As the new node can reach it, including the panel path. It is used once, for the enrolment itself.",
+      "create": "Create command",
+      "commandTitle": "Run this on the new node",
+      "commandHint": "Dalan must already be installed there. The command works once, expires in 30 minutes and is shown only now.",
+      "copy": "Copy command",
+      "copied": "Command copied",
+      "waiting": "Waiting to join",
+      "expires": "Expires",
+      "cancel": "Cancel enrolment",
+      "cancelConfirm": "Cancel this enrolment and close its tunnel?",
+      "toasts": {
+        "list": "Load enrolments",
+        "add": "Create node enrolment",
+        "del": "Cancel enrolment"
+      }
     }
   },
   "tgbot": {

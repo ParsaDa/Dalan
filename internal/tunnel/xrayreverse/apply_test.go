@@ -93,3 +93,31 @@ func TestApplyKeepsTunnelRulesAheadOfOperatorRulesAndSkipsDisabledTunnels(t *tes
 		t.Fatalf("a disabled tunnel changed the config: %s %s", untouched.RouterConfig, untouched.OutboundConfigs)
 	}
 }
+
+func TestManagementPortalListensOnLoopbackAndHasNoProbe(t *testing.T) {
+	portalTunnel := model.ServerTunnel{
+		Id: 7, Name: "node-de1", Role: model.TunnelRolePortal, Enable: true, Security: model.TunnelSecurityNone,
+		Address: "203.0.113.10", Port: 8443, UUID: "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10", ManagePort: 41000,
+	}
+	cfg := &xray.Config{OutboundConfigs: []byte(`[{"tag":"direct","protocol":"freedom"}]`)}
+	if err := Apply(cfg, []model.ServerTunnel{portalTunnel}); err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+	var manage *xray.InboundConfig
+	for i := range cfg.InboundConfigs {
+		in := &cfg.InboundConfigs[i]
+		if in.Port == ProbePort(portalTunnel) {
+			t.Fatalf("management tunnel got a probe inbound %q; a probe would be answered by the node's panel", in.Tag)
+		}
+		if in.Port == 41000 {
+			manage = in
+		}
+	}
+	if manage == nil {
+		t.Fatalf("no inbound on the management port 41000")
+	}
+	if string(manage.Listen) != `"127.0.0.1"` {
+		t.Fatalf("management inbound listens on %s, want loopback only", manage.Listen)
+	}
+	buildWithXray(t, cfg)
+}

@@ -40,6 +40,7 @@ func run(root, outDir string) error {
 				"InboundFallback",
 				"Host",
 				"ServerTunnel",
+				"NodeEnrolment",
 				"SubBalancer",
 			),
 			AliasAllow: setOf("Protocol"),
@@ -91,6 +92,10 @@ func run(root, outDir string) error {
 				"GeoEntryPage",
 			),
 			AliasAllow: setOf("GeoKind"),
+		},
+		{
+			Path:        resolveRel(root, "internal/web/service/enrolment"),
+			StructAllow: setOf("Invitation"),
 		},
 		{
 			Path: resolveRel(root, "internal/web/service"),

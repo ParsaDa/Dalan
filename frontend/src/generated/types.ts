@@ -799,6 +799,14 @@ export interface InboundTrafficSummary {
   up: number;
 }
 
+export interface Invitation {
+  command: string;
+  expiresAt: number;
+  id: number;
+  link: string;
+  name: string;
+}
+
 export interface LogEntry {
   DateTime: string;
   Email: string;
@@ -871,6 +879,15 @@ export interface Node {
   xrayError: string;
   xrayState: string;
   xrayVersion: string;
+}
+
+export interface NodeEnrolment {
+  expiresAt: number;
+  id: number;
+  name: string;
+  nodeId: number;
+  tunnelId: number;
+  usedAt: number;
 }
 
 export interface NodeMutationRequest {
@@ -1059,6 +1076,7 @@ export interface ServerTunnel {
   fallbackTransports: string[];
   forwardPorts: string[];
   id: number;
+  managePort: number;
   name: string;
   port: number;
   realityPublicKey: string;

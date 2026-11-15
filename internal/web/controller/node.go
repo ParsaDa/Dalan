@@ -11,6 +11,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/middleware"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
+	"github.com/mhsanaei/3x-ui/v3/internal/web/service/enrolment"
 
 	"github.com/gin-gonic/gin"
 )
@@ -213,6 +214,10 @@ func (a *NodeController) del(c *gin.Context) {
 	if err := a.nodeService.Delete(id); err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.nodes.toasts.delete"), err)
 		return
+	}
+	// Dalan: a node that dialled in owns a management tunnel, which goes with it.
+	if err := (&enrolment.Service{}).NodeDeleted(id); err != nil {
+		logger.Warning("closing the management tunnel of deleted node", id, "failed:", err)
 	}
 	jsonMsg(c, I18nWeb(c, "pages.nodes.toasts.delete"), nil)
 }

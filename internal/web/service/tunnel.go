@@ -32,7 +32,7 @@ const engineInstallTimeout = 5 * time.Minute
 // EngineInfo says whether the BackPack engine is on this server and which release Dalan installs.
 type EngineInfo struct {
 	Installed bool   `json:"installed" example:"true"`
-	Version   string `json:"version" example:"v2.0.0"`
+	Version   string `json:"version" example:"v1.8.5"`
 }
 
 // TunnelService stores the tunnel ends this panel owns and schedules Xray to pick up changes.
@@ -143,8 +143,12 @@ func (s *TunnelService) SetEnable(id int, enable bool) error {
 }
 
 func (s *TunnelService) Delete(id int) error {
-	if _, err := s.get(id); err != nil {
+	t, err := s.get(id)
+	if err != nil {
 		return err
+	}
+	if t.ManagePort > 0 && t.Role == model.TunnelRolePortal {
+		return errManagementTunnel
 	}
 	if err := database.GetDB().Delete(&model.ServerTunnel{}, id).Error; err != nil {
 		return err
@@ -163,6 +167,9 @@ func (s *TunnelService) Status(id int) (tunnel.Status, error) {
 	}
 	if t.Engine == model.TunnelEngineBackpack {
 		return s.backpackStatus(t), nil
+	}
+	if t.ManagePort > 0 {
+		return tunnel.Status{}, errors.New("a management tunnel is tested by its node's status, not by a request through it")
 	}
 	if t.Role != model.TunnelRolePortal {
 		return tunnel.Status{}, errors.New("only the entry end of a tunnel can be tested from this server")

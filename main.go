@@ -673,6 +673,8 @@ func main() {
 		migrateDb()
 	case "encrypt-tokens":
 		encryptNodeTokens()
+	case "enrol":
+		joinMainPanel(os.Args[2:])
 	case "migrate-db":
 		if err := migrateDbCmd.Parse(os.Args[2:]); err != nil {
 			fmt.Println(err)
@@ -776,6 +778,7 @@ Commands:
     migrate-db     SQLite <-> .dump (--dump/--restore) or copy into PostgreSQL (--dsn)
     encrypt-tokens encrypt node bearer tokens with the configured active key
     setting        set settings
+    enrol          join a main panel with the link it issued (dalan enrol <link>)
     install-awg-kernel
                    build and install the AmneziaWG kernel module (required for
                    an AmneziaWG inbound's kernel mode)

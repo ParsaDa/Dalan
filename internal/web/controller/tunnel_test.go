@@ -120,7 +120,7 @@ func TestTunnelRoutesCreateABackpackTunnelAndReportTheEngine(t *testing.T) {
 		Installed bool   `json:"installed"`
 		Version   string `json:"version"`
 	}
-	if err := json.Unmarshal(info.Obj, &got); err != nil || got.Installed || got.Version != "v2.0.0" {
-		t.Fatalf("engine info = %s (%v), want not installed, v2.0.0", info.Obj, err)
+	if err := json.Unmarshal(info.Obj, &got); err != nil || got.Installed || got.Version != "v1.8.5" {
+		t.Fatalf("engine info = %s (%v), want not installed, v1.8.5", info.Obj, err)
 	}
 }

@@ -40,4 +40,8 @@ type ServerTunnel struct {
 	RouteInbounds []string `json:"routeInbounds" gorm:"serializer:json;column:route_inbounds"`
 	// ExitOutbound (bridge) is the local outbound tunnel traffic leaves from; empty means "direct".
 	ExitOutbound string `json:"exitOutbound" gorm:"column:exit_outbound" example:"direct"`
+
+	// ManagePort marks a management tunnel. Portal: the loopback port opened here. Bridge: this
+	// server's panel port, the only place the tunnel's traffic may go. Zero is an ordinary tunnel.
+	ManagePort int `json:"managePort" gorm:"column:manage_port;default:0" example:"0"`
 }
