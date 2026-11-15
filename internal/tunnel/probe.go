@@ -35,8 +35,14 @@ func ProbeVia(socksAddr, url string, timeout time.Duration) Status {
 			return dialer.Dial(network, addr)
 		},
 	}}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return Status{Error: err.Error()}
+	}
 	start := time.Now()
-	resp, err := client.Get(url)
+	resp, err := client.Do(req)
 	if err != nil {
 		return Status{Error: err.Error()}
 	}
