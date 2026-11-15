@@ -1,0 +1,113 @@
+import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+
+import TunnelsPage from '@/pages/tunnels/TunnelsPage';
+import { ClipboardManager, HttpUtil, Msg } from '@/utils';
+import { renderWithProviders } from './test-utils';
+
+vi.mock('@/layouts/AppSidebar', () => ({ default: () => null }));
+
+const portal = {
+  id: 1,
+  name: 'de1',
+  role: 'portal',
+  engine: 'xray',
+  enable: true,
+  address: '203.0.113.10',
+  port: 8443,
+  uuid: '8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10',
+  security: 'reality',
+  serverName: 'www.example.com',
+  realityPublicKey: 'pub',
+  shortId: 'a1b2c3d4',
+  routeInbounds: ['inbound-443'],
+  exitOutbound: '',
+};
+const bridge = { ...portal, id: 2, name: 'ir1', role: 'bridge', routeInbounds: null };
+
+function openTunnels() {
+  return renderWithProviders(
+    <MemoryRouter>
+      <TunnelsPage />
+    </MemoryRouter>,
+  );
+}
+
+beforeEach(() => {
+  vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
+    if (url === '/panel/api/tunnels/list') return new Msg(true, '', [portal, bridge]);
+    if (url === '/panel/api/tunnels/link/1') return new Msg(true, '', 'dalan://tunnel/abc');
+    return new Msg(true, '', []);
+  });
+  vi.spyOn(HttpUtil, 'post').mockImplementation(async () => new Msg(true, '', {}));
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+test('lists both ends with their role and offers the setup link only for the entry end', async () => {
+  vi.spyOn(ClipboardManager, 'copyText').mockResolvedValue(true);
+  openTunnels();
+
+  expect(await screen.findByText('de1')).toBeTruthy();
+  expect(screen.getByText('ir1')).toBeTruthy();
+  expect(screen.getByText('Entry (listens)')).toBeTruthy();
+  expect(screen.getByText('Exit (dials)')).toBeTruthy();
+
+  const copyButtons = screen.getAllByRole('button', { name: 'Copy setup link' });
+  expect(copyButtons).toHaveLength(1);
+  fireEvent.click(copyButtons[0]);
+
+  await waitFor(() => expect(ClipboardManager.copyText).toHaveBeenCalledWith('dalan://tunnel/abc'));
+});
+
+test('imports a pasted setup link', async () => {
+  openTunnels();
+  await screen.findByText('de1');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Import link' }));
+  fireEvent.change(
+    await screen.findByPlaceholderText('Paste the setup link from the entry server'),
+    { target: { value: '  dalan://tunnel/xyz ' } },
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/import',
+      { link: 'dalan://tunnel/xyz', exitOutbound: '' },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('creates an entry tunnel from the form', async () => {
+  openTunnels();
+  await screen.findByText('de1');
+
+  fireEvent.click(screen.getByRole('button', { name: 'New tunnel' }));
+  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'tr1' } });
+  fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
+  fireEvent.change(screen.getByLabelText('Port'), { target: { value: '9443' } });
+  fireEvent.change(screen.getByLabelText('Server name (SNI)'), {
+    target: { value: 'www.example.org' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/add',
+      {
+        name: 'tr1',
+        address: '198.51.100.7',
+        port: 9443,
+        security: 'reality',
+        serverName: 'www.example.org',
+        routeInbounds: [],
+      },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
