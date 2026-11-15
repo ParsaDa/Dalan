@@ -252,3 +252,32 @@ func TestABackpackTunnelWithoutTheEngineIsCreatedAndSaysWhatIsMissing(t *testing
 		t.Fatalf("EngineInfo = %+v, want not installed and the pinned version", info)
 	}
 }
+
+func TestAManagementTunnelIsNotProbedAndCannotBeDeletedFromTheTunnelList(t *testing.T) {
+	svc := newTunnelDB(t)
+	portal, err := svc.CreateManagementPortal(tunnel.PortalSpec{
+		Name: "node-de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+	})
+	if err != nil {
+		t.Fatalf("CreateManagementPortal: %v", err)
+	}
+	if portal.ManagePort < managePortFirst || portal.ManagePort > managePortLast {
+		t.Fatalf("management port %d is outside %d-%d", portal.ManagePort, managePortFirst, managePortLast)
+	}
+	// A probe would be answered by the node's panel and read as a broken tunnel.
+	if _, err := svc.Status(portal.Id); err == nil || !strings.Contains(err.Error(), "node's status") {
+		t.Fatalf("Status(management tunnel) error = %v, want a pointer to the node's status", err)
+	}
+	if err := svc.Delete(portal.Id); !errors.Is(err, errManagementTunnel) {
+		t.Fatalf("Delete(management tunnel) = %v, want errManagementTunnel", err)
+	}
+	if !hasTag(inboundTags(t), "tunnel-node-de1-manage") {
+		t.Fatalf("the management inbound is missing from the generated Xray config: %v", inboundTags(t))
+	}
+	if err := svc.DeleteManagement(portal.Id); err != nil {
+		t.Fatalf("DeleteManagement: %v", err)
+	}
+	if hasTag(inboundTags(t), "tunnel-node-de1-manage") {
+		t.Fatalf("the management inbound survived DeleteManagement")
+	}
+}

@@ -893,6 +893,13 @@ export const EXAMPLES: Record<string, unknown> = {
     "total": 10737418240,
     "up": 1048576
   },
+  "Invitation": {
+    "command": "dalan enrol 'dalan://enrol/eyJ2IjoxfQ'",
+    "expiresAt": 1700001800,
+    "id": 1,
+    "link": "dalan://enrol/eyJ2IjoxfQ",
+    "name": "de1"
+  },
   "LogEntry": {
     "DateTime": "2025-01-01T12:00:00Z",
     "Email": "alice@example.com",
@@ -964,6 +971,14 @@ export const EXAMPLES: Record<string, unknown> = {
     "xrayError": "",
     "xrayState": "",
     "xrayVersion": "25.10.31"
+  },
+  "NodeEnrolment": {
+    "expiresAt": 1700001800,
+    "id": 1,
+    "name": "de1",
+    "nodeId": 0,
+    "tunnelId": 3,
+    "usedAt": 0
   },
   "NodeMutationRequest": {
     "address": "",

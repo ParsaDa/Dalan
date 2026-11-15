@@ -3515,6 +3515,40 @@
         ],
         "type": "object"
       },
+      "Invitation": {
+        "description": "Invitation is a new enrolment with the link that is shown once and never stored.",
+        "properties": {
+          "command": {
+            "example": "dalan enrol 'dalan://enrol/eyJ2IjoxfQ'",
+            "type": "string"
+          },
+          "expiresAt": {
+            "example": 1700001800,
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "example": 1,
+            "type": "integer"
+          },
+          "link": {
+            "example": "dalan://enrol/eyJ2IjoxfQ",
+            "type": "string"
+          },
+          "name": {
+            "example": "de1",
+            "type": "string"
+          }
+        },
+        "required": [
+          "command",
+          "expiresAt",
+          "id",
+          "link",
+          "name"
+        ],
+        "type": "object"
+      },
       "LogEntry": {
         "properties": {
           "DateTime": {
@@ -3847,6 +3881,46 @@
           "xrayError",
           "xrayState",
           "xrayVersion"
+        ],
+        "type": "object"
+      },
+      "NodeEnrolment": {
+        "description": "NodeEnrolment is one invitation for a node abroad to dial into this panel, and afterwards the\nrecord tying that node to its management tunnel. Its secrets are cleared once it is used.",
+        "properties": {
+          "expiresAt": {
+            "example": 1700001800,
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "example": 1,
+            "type": "integer"
+          },
+          "name": {
+            "example": "de1",
+            "type": "string"
+          },
+          "nodeId": {
+            "example": 0,
+            "type": "integer"
+          },
+          "tunnelId": {
+            "example": 3,
+            "type": "integer"
+          },
+          "usedAt": {
+            "example": 0,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expiresAt",
+          "id",
+          "name",
+          "nodeId",
+          "tunnelId",
+          "usedAt"
         ],
         "type": "object"
       },
@@ -5158,6 +5232,10 @@
     {
       "name": "Tunnels",
       "description": "Reverse tunnels between this panel and other servers. The entry end (portal) listens; the exit end (bridge) dials it, so the connection is always opened from the exit server. All endpoints under /panel/api/tunnels."
+    },
+    {
+      "name": "Node enrolment",
+      "description": "Invite a node that must dial into this panel instead of being dialled. Creating an enrolment opens a management tunnel and returns a one-time link; running \"dalan enrol <link>\" on the node registers it here behind a loopback port of this server. The node itself calls the public route POST {basePath}dalan/enrol, whose body is sealed with a key from the link; it needs no session and is not listed here. All operator endpoints are under /panel/api/enrolments."
     },
     {
       "name": "Backup",
@@ -13921,6 +13999,155 @@
             "in": "path",
             "required": true,
             "description": "Tunnel ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/enrolments/list": {
+      "get": {
+        "tags": [
+          "Node enrolment"
+        ],
+        "summary": "Enrolments that are still waiting (nodeId 0) and those that tie a joined node to its management tunnel. Expired links are removed.",
+        "operationId": "get_panel_api_enrolments_list",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NodeEnrolment"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "expiresAt": 1700001800,
+                      "id": 1,
+                      "name": "de1",
+                      "nodeId": 0,
+                      "tunnelId": 3,
+                      "usedAt": 0
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/enrolments/add": {
+      "post": {
+        "tags": [
+          "Node enrolment"
+        ],
+        "summary": "Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored.",
+        "operationId": "post_panel_api_enrolments_add",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "name": "de1",
+                "panelUrl": "https://panel.example.com:2053/",
+                "address": "203.0.113.10",
+                "port": 8443,
+                "security": "reality",
+                "serverName": "www.example.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/Invitation"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "command": "dalan enrol 'dalan://enrol/eyJ2IjoxfQ'",
+                    "expiresAt": 1700001800,
+                    "id": 1,
+                    "link": "dalan://enrol/eyJ2IjoxfQ",
+                    "name": "de1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/enrolments/del/{id}": {
+      "post": {
+        "tags": [
+          "Node enrolment"
+        ],
+        "summary": "Cancel a waiting enrolment and close its tunnel. An enrolment that belongs to a joined node is removed by deleting the node.",
+        "operationId": "post_panel_api_enrolments_del_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Enrolment ID.",
             "schema": {
               "type": "integer"
             }

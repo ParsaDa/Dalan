@@ -2580,6 +2580,13 @@
         "status": "Test tunnel",
         "installEngine": "Install the BackPack engine"
       }
+    },
+    "enrolments": {
+      "toasts": {
+        "list": "Load enrolments",
+        "add": "Create node enrolment",
+        "del": "Cancel enrolment"
+      }
     }
   },
   "tgbot": {

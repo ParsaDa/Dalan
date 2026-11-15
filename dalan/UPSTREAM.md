@@ -32,15 +32,18 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 | `frontend/public/manifest.webmanifest` | app name |
 | `.github/workflows/claude-issue-analyst.yml`, `claude-pr-review.yml`, `docs-deploy.yml` | skipped outside the upstream repository |
 | `README.md`, `README.fa_IR.md` | top section |
-| `Makefile` | `brand-check` target in `verify` |
+| `Makefile` | `brand-check` target in `verify`; `node-e2e` also builds an Xray core for the enrolment test |
 | `internal/web/service/xray.go` | one block before the final `dropRefusedScript` calls in `GetXrayConfig` injects tunnels |
-| `internal/web/controller/api.go` | registers `/tunnels` |
+| `internal/web/controller/api.go` | registers `/tunnels` and `/enrolments` (the latter also adds the public `dalan/enrol` route) |
+| `internal/web/controller/node.go` | `del` closes the management tunnel of a deleted node |
+| `main.go` | `enrol` command (its code is in `enrol_cmd.go`) and its help line |
+| `x-ui.sh` | `enrol` case, added by `scripts/dalan/rebrand.sh` |
 | `internal/web/web.go` | starts BackPack tunnels after Xray in `startTask`, stops them before Xray in the stop path |
-| `internal/database/db.go`, `migrate_data.go` | `ServerTunnel` in the model lists |
-| `tools/openapigen/main.go` | `ServerTunnel` in `StructAllow` |
+| `internal/database/db.go`, `migrate_data.go` | `ServerTunnel` and `NodeEnrolment` in the model lists |
+| `tools/openapigen/main.go` | `ServerTunnel`, `NodeEnrolment` and the `enrolment` package in `StructAllow` |
 | `frontend/src/routes/panelRoutes.tsx`, `CommandPalette.tsx` | Tunnels route and its palette keywords |
-| `frontend/src/pages/api-docs/endpoints.ts` | Tunnels section |
-| `internal/web/translation/*.json` | `menu.tunnels` and `pages.tunnels` |
+| `frontend/src/pages/api-docs/endpoints.ts` | Tunnels and Node enrolment sections |
+| `internal/web/translation/*.json` | `menu.tunnels`, `pages.tunnels` and `pages.enrolments` |
 
 Keep upstream's change and re-apply the Dalan line on top.
 

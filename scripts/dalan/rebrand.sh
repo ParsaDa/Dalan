@@ -37,6 +37,15 @@ add_command_alias() {
         "$1"
 }
 
+add_enrol_command() {
+    # "dalan enrol <link>" joins a main panel, then Xray restarts to open the management tunnel.
+    [[ "$(basename "$1")" == "x-ui.sh" ]] || return 0
+    grep -qF -- '"enrol")' "$1" && return 0
+    sed -E -i \
+        -e 's#^([[:space:]]*)"restart-xray"\)$#\1"enrol")\n\1    check_install 0 \&\& "${xui_folder}/x-ui" enrol "$2" \&\& restart_xray 0\n\1    ;;\n&#' \
+        "$1"
+}
+
 drop_upstream_docker_hub() {
     # Upstream also publishes to its author's Docker Hub account; Dalan images go to GHCR only.
     perl -0pi -e 's/^[ \t]*hsanaeii\/3x-ui[ \t]*\n//mg; s/^([ \t]*)- name: Login to Docker Hub\n(?:\1[ \t]+.*\n)*\n?//mg' "$1"
@@ -45,7 +54,10 @@ drop_upstream_docker_hub() {
 while IFS= read -r file; do
     rebrand_urls "${file}"
     case "${file}" in
-        *.sh) add_command_alias "${file}" ;;
+        *.sh)
+            add_command_alias "${file}"
+            add_enrol_command "${file}"
+            ;;
         *.yml) drop_upstream_docker_hub "${file}" ;;
     esac
 done < <(targets)
