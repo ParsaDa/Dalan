@@ -39,6 +39,7 @@ func run(root, outDir string) error {
 				"ClientInbound",
 				"InboundFallback",
 				"Host",
+				"ServerTunnel",
 				"SubBalancer",
 			),
 			AliasAllow: setOf("Protocol"),

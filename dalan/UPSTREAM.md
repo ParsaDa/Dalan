@@ -33,6 +33,13 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 | `.github/workflows/claude-issue-analyst.yml`, `claude-pr-review.yml`, `docs-deploy.yml` | skipped outside the upstream repository |
 | `README.md`, `README.fa_IR.md` | top section |
 | `Makefile` | `brand-check` target in `verify` |
+| `internal/web/service/xray.go` | one block before the final `dropRefusedScript` calls in `GetXrayConfig` injects tunnels |
+| `internal/web/controller/api.go` | registers `/tunnels` |
+| `internal/database/db.go`, `migrate_data.go` | `ServerTunnel` in the model lists |
+| `tools/openapigen/main.go` | `ServerTunnel` in `StructAllow` |
+| `frontend/src/routes/panelRoutes.tsx`, `CommandPalette.tsx` | Tunnels route and its palette keywords |
+| `frontend/src/pages/api-docs/endpoints.ts` | Tunnels section |
+| `internal/web/translation/*.json` | `menu.tunnels` and `pages.tunnels` |
 
 Keep upstream's change and re-apply the Dalan line on top.
 

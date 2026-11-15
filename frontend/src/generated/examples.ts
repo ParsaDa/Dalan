@@ -1148,6 +1148,24 @@ export const EXAMPLES: Record<string, unknown> = {
     "subnetCidr": 0,
     "subnetIp": ""
   },
+  "ServerTunnel": {
+    "address": "203.0.113.10",
+    "enable": true,
+    "engine": "xray",
+    "exitOutbound": "direct",
+    "id": 1,
+    "name": "de1",
+    "port": 8443,
+    "realityPublicKey": "",
+    "role": "portal",
+    "routeInbounds": [
+      ""
+    ],
+    "security": "reality",
+    "serverName": "www.example.com",
+    "shortId": "a1b2c3d4",
+    "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
+  },
   "Setting": {
     "id": 0,
     "key": "",

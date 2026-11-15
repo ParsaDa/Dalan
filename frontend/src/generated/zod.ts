@@ -1116,6 +1116,24 @@ export const ServerSettingsSchema = z.object({
 });
 export type ServerSettings = z.infer<typeof ServerSettingsSchema>;
 
+export const ServerTunnelSchema = z.object({
+  address: z.string(),
+  enable: z.boolean(),
+  engine: z.string(),
+  exitOutbound: z.string(),
+  id: z.number().int(),
+  name: z.string(),
+  port: z.number().int(),
+  realityPublicKey: z.string(),
+  role: z.string(),
+  routeInbounds: z.array(z.string()),
+  security: z.string(),
+  serverName: z.string(),
+  shortId: z.string(),
+  uuid: z.string(),
+});
+export type ServerTunnel = z.infer<typeof ServerTunnelSchema>;
+
 export const SettingSchema = z.object({
   id: z.number().int(),
   key: z.string(),

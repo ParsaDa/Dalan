@@ -1050,6 +1050,23 @@ export interface ServerSettings {
   subnetIp: string;
 }
 
+export interface ServerTunnel {
+  address: string;
+  enable: boolean;
+  engine: string;
+  exitOutbound: string;
+  id: number;
+  name: string;
+  port: number;
+  realityPublicKey: string;
+  role: string;
+  routeInbounds: string[];
+  security: string;
+  serverName: string;
+  shortId: string;
+  uuid: string;
+}
+
 export interface Setting {
   id: number;
   key: string;

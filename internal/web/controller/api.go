@@ -224,6 +224,9 @@ func (a *APIController) initRouter(g *gin.RouterGroup) {
 	hosts := api.Group("/hosts")
 	a.hostController = NewHostController(hosts)
 
+	// Tunnels API — reverse tunnels between this panel and other servers
+	NewTunnelController(api.Group("/tunnels"))
+
 	// Settings + Xray config management live under the API surface too, so the
 	// same API token drives them. Paths are /panel/api/setting/* and
 	// /panel/api/xray/*.
