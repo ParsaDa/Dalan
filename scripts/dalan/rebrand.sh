@@ -37,9 +37,15 @@ add_command_alias() {
         "$1"
 }
 
+drop_upstream_docker_hub() {
+    # Upstream also publishes to its author's Docker Hub account; Dalan images go to GHCR only.
+    perl -0pi -e 's/^[ \t]*hsanaeii\/3x-ui[ \t]*\n//mg; s/^([ \t]*)- name: Login to Docker Hub\n(?:\1[ \t]+.*\n)*\n?//mg' "$1"
+}
+
 while IFS= read -r file; do
     rebrand_urls "${file}"
     case "${file}" in
         *.sh) add_command_alias "${file}" ;;
+        *.yml) drop_upstream_docker_hub "${file}" ;;
     esac
 done < <(targets)

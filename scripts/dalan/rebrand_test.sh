@@ -30,6 +30,18 @@ cp "${root}/a.sh" "${root}/x-ui.sh"
 cat > "${root}/.github/workflows/r.yml" <<'TREE'
 images: ghcr.io/mhsanaei/3x-ui
 ldflags: -X github.com/mhsanaei/3x-ui/v3/internal/config.buildCommit=abc
+          images: |
+            hsanaeii/3x-ui
+            ghcr.io/mhsanaei/3x-ui
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
 TREE
 
 out="$(bash "${here}/check-brand.sh" "${root}" 2>&1)" && fail "check passed on an unbranded tree"
@@ -48,6 +60,11 @@ lacks "${root}/a.sh" "rm -f /usr/bin/dalan"
 has "${root}/a.sh" "echo https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh"
 has "${root}/.github/workflows/r.yml" "images: ghcr.io/parsada/dalan"
 has "${root}/.github/workflows/r.yml" "-X github.com/mhsanaei/3x-ui/v3/internal/config.buildCommit=abc"
+lacks "${root}/.github/workflows/r.yml" "hsanaeii/3x-ui"
+lacks "${root}/.github/workflows/r.yml" "Login to Docker Hub"
+lacks "${root}/.github/workflows/r.yml" "DOCKER_HUB_TOKEN"
+has "${root}/.github/workflows/r.yml" "      - name: Login to GHCR"
+has "${root}/.github/workflows/r.yml" "        uses: docker/login-action@v4"
 lacks "${root}/a.sh" "MHSanaei/3x-ui"
 
 bash "${here}/check-brand.sh" "${root}" || fail "check failed on a rebranded tree"
@@ -61,5 +78,9 @@ after="$(cd "${root}" && find . -type f -exec sha256sum {} + | sort)"
 echo 'curl https://raw.githubusercontent.com/MHSanaei/3x-ui/main/x.sh' > "${root}/new.sh"
 out="$(bash "${here}/check-brand.sh" "${root}" 2>&1)" && fail "check passed with a new upstream URL"
 [[ "${out}" == *"new.sh"* ]] || fail "check did not name new.sh: ${out}"
+
+printf 'images: hsanaeii/3x-ui\n' > "${root}/.github/workflows/hub.yml"
+out="$(bash "${here}/check-brand.sh" "${root}" 2>&1)" && fail "check passed with the upstream Docker Hub image"
+[[ "${out}" == *"hub.yml"* ]] || fail "check did not name hub.yml: ${out}"
 
 echo "rebrand_test: OK"

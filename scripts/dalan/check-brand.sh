@@ -3,7 +3,7 @@
 set -euo pipefail
 
 root="${1:-$(git rev-parse --show-toplevel)}"
-pattern='(raw\.githubusercontent\.com|api\.github\.com/repos|github\.com|ghcr\.io)/mhsanaei/3x-ui'
+pattern='(raw\.githubusercontent\.com|api\.github\.com/repos|github\.com|ghcr\.io)/mhsanaei/3x-ui|hsanaeii/3x-ui|DOCKER_HUB_'
 
 files=()
 while IFS= read -r file; do
