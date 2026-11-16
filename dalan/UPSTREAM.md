@@ -41,7 +41,7 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 | `install.sh` | `XUI_ENROL` step before the final summary, added by `scripts/dalan/rebrand.sh` |
 | `Dockerfile`, `DockerEntrypoint.sh` | copy and source `DockerPrepare.sh` (platform `PORT`, `DALAN_*` variables); `main.go` also starts the front door (`internal/frontdoor`) |
 | `.github/workflows/ci.yml` | shellcheck list includes `DockerPrepare.sh` and `deploy/test/container-prepare.sh` |
-| `internal/web/web.go` | starts BackPack tunnels after Xray in `startTask`, stops them before Xray in the stop path |
+| `internal/web/web.go` | starts BackPack and Rakhsh tunnels after Xray in `startTask`, stops them before Xray in the stop path |
 | `internal/database/db.go`, `migrate_data.go` | `ServerTunnel` and `NodeEnrolment` in the model lists |
 | `tools/openapigen/main.go` | `ServerTunnel`, `NodeEnrolment` and the `enrolment` package in `StructAllow` |
 | `frontend/src/routes/panelRoutes.tsx`, `CommandPalette.tsx` | Tunnels route and its palette keywords |

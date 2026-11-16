@@ -1103,6 +1103,7 @@ export interface ServerTunnel {
   options: Record<string, unknown>;
   parentId: number;
   port: number;
+  rakhshPeerPublic: string;
   realityPublicKey: string;
   relayPort: number;
   role: string;

@@ -2,11 +2,13 @@ package tunnel
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"strings"
 	"testing"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 )
 
 func realityPortal(t *testing.T) model.ServerTunnel {
@@ -305,5 +307,165 @@ func TestADirectTunnelNeedsBackpackAndAKnownCarrier(t *testing.T) {
 				t.Fatalf("NewPortal accepted a direct tunnel with %s", name)
 			}
 		})
+	}
+}
+
+func rakhshSpec() PortalSpec {
+	return PortalSpec{
+		Name: "rk1", Address: "203.0.113.10", Port: 7000, Engine: model.TunnelEngineRakhsh, Transport: "wss",
+		ForwardPorts: []string{"443=127.0.0.1:2096"}, Options: map[string]any{"sni": "www.example.com"},
+	}
+}
+
+func TestARakhshPortalAndItsBridgePinEachOthersKeys(t *testing.T) {
+	for _, mode := range []string{model.TunnelModeReverse, model.TunnelModeDirect} {
+		t.Run(mode, func(t *testing.T) {
+			spec := rakhshSpec()
+			spec.Mode = mode
+			portal, err := NewPortal(spec)
+			if err != nil {
+				t.Fatalf("NewPortal: %v", err)
+			}
+			if portal.Engine != model.TunnelEngineRakhsh || portal.Mode != mode || portal.Transport != "wss" {
+				t.Fatalf("portal = engine %q mode %q carrier %q", portal.Engine, portal.Mode, portal.Transport)
+			}
+			if portal.RelayPort < backpack.RelayPortMin || portal.RelayPort > backpack.RelayPortMax {
+				t.Fatalf("relay port %d is outside the relay range: a Rakhsh tunnel reaches Xray through it in both modes", portal.RelayPort)
+			}
+			link, err := SetupLink(portal)
+			if err != nil {
+				t.Fatalf("SetupLink: %v", err)
+			}
+			if !strings.Contains(decodeLink(t, link), `"v":4`) {
+				t.Fatalf("a Rakhsh link must be version 4: %s", decodeLink(t, link))
+			}
+			bridge, err := ParseSetupLink(link)
+			if err != nil {
+				t.Fatalf("ParseSetupLink: %v", err)
+			}
+			portalPublic, _ := rakhsh.PublicKey(portal.RakhshSecret)
+			bridgePublic, _ := rakhsh.PublicKey(bridge.RakhshSecret)
+			if bridge.RakhshPeerPublic != portalPublic || portal.RakhshPeerPublic != bridgePublic {
+				t.Fatalf("keys do not pin each other: bridge pins %q (portal is %q), portal pins %q (bridge is %q)",
+					bridge.RakhshPeerPublic, portalPublic, portal.RakhshPeerPublic, bridgePublic)
+			}
+			if bridge.Engine != model.TunnelEngineRakhsh || bridge.Mode != mode || bridge.RelayPort != portal.RelayPort || bridge.UUID != portal.UUID {
+				t.Fatalf("bridge = %+v does not match its portal", bridge)
+			}
+			text, err := rakhsh.RenderConfig(bridge, "")
+			if err != nil {
+				t.Fatalf("the parsed bridge does not render: %v", err)
+			}
+			for _, want := range []string{`peer_public = "` + portalPublic + `"`, `static_secret = "` + bridge.RakhshSecret + `"`} {
+				if !strings.Contains(text, want) {
+					t.Errorf("bridge config lacks %s:\n%s", want, text)
+				}
+			}
+			again, _ := SetupLink(portal)
+			if again != link {
+				t.Fatal("the same portal gave a different link the second time, so a re-shown link would not pair with the first")
+			}
+		})
+	}
+}
+
+func TestRakhshLinkNeverCarriesPortalSecret(t *testing.T) {
+	portal, err := NewPortal(rakhshSpec())
+	if err != nil {
+		t.Fatal(err)
+	}
+	link, _ := SetupLink(portal)
+	if strings.Contains(decodeLink(t, link), portal.RakhshSecret) {
+		t.Fatal("the setup link carries the portal's secret key")
+	}
+}
+
+func TestNewPortalRefusesARakhshTunnelThatCannotWork(t *testing.T) {
+	cases := map[string]func(*PortalSpec){
+		"no carrier":      func(s *PortalSpec) { s.Transport = "" },
+		"unknown carrier": func(s *PortalSpec) { s.Transport = "smoke" },
+		"xray security":   func(s *PortalSpec) { s.Security, s.ServerName = model.TunnelSecurityReality, "www.example.com" },
+		"unknown option":  func(s *PortalSpec) { s.Options = map[string]any{"bogus": 1} },
+		"unknown mode":    func(s *PortalSpec) { s.Mode = "mesh" },
+		"bad forward":     func(s *PortalSpec) { s.ForwardPorts = []string{`443=127.0.0.1:2096"`} },
+		"no layer-3 room": func(s *PortalSpec) { s.Options = map[string]any{"l3_addr": "10.77.0.3/30"} },
+	}
+	for name, mutate := range cases {
+		t.Run(name, func(t *testing.T) {
+			spec := rakhshSpec()
+			mutate(&spec)
+			if _, err := NewPortal(spec); err == nil {
+				t.Fatalf("NewPortal accepted a Rakhsh tunnel with %s", name)
+			}
+		})
+	}
+}
+
+func TestParseSetupLinkRefusesARakhshLinkItCannotUse(t *testing.T) {
+	portal, err := NewPortal(rakhshSpec())
+	if err != nil {
+		t.Fatal(err)
+	}
+	good, _ := SetupLink(portal)
+	var payload map[string]any
+	if err := json.Unmarshal([]byte(decodeLink(t, good)), &payload); err != nil {
+		t.Fatal(err)
+	}
+	cases := []struct {
+		name    string
+		mutate  func(map[string]any)
+		wantErr string
+	}{
+		{"xray fields", func(p map[string]any) { p["publicKey"], p["shortId"] = "abc", "def" }, "Xray"},
+		{"no bridge secret", func(p map[string]any) { delete(p, "rakhshSecret") }, "secret key"},
+		{"no portal public key", func(p map[string]any) { delete(p, "rakhshPeer") }, "peer public key"},
+		{"unknown carrier", func(p map[string]any) { p["transport"] = "smoke" }, "carrier"},
+		{"relay outside the range", func(p map[string]any) { p["relayPort"] = 80 }, "relay port"},
+		{"unknown mode", func(p map[string]any) { p["mode"] = "mesh" }, "mode"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			changed := map[string]any{}
+			for k, v := range payload {
+				changed[k] = v
+			}
+			c.mutate(changed)
+			raw, _ := json.Marshal(changed)
+			link := "dalan://tunnel/" + base64.RawURLEncoding.EncodeToString(raw)
+			if _, err := ParseSetupLink(link); err == nil || !strings.Contains(err.Error(), c.wantErr) {
+				t.Fatalf("ParseSetupLink error = %v, want one mentioning %q", err, c.wantErr)
+			}
+		})
+	}
+	future := map[string]any{"v": 9, "name": "a", "address": "203.0.113.10", "port": 8443, "uuid": portal.UUID}
+	raw, _ := json.Marshal(future)
+	if _, err := ParseSetupLink("dalan://tunnel/" + base64.RawURLEncoding.EncodeToString(raw)); err == nil || !strings.Contains(err.Error(), "versions 1 to 4") {
+		t.Fatalf("a version 9 link gave %v, want one that says this panel understands versions 1 to 4", err)
+	}
+}
+
+func TestARakhshLinkLeavesTheEntryServersBindAddressBehind(t *testing.T) {
+	spec := rakhshSpec()
+	spec.Options = map[string]any{"sni": "www.example.com", "bind": "192.0.2.5"}
+	portal, err := NewPortal(spec)
+	if err != nil {
+		t.Fatalf("NewPortal: %v", err)
+	}
+	link, err := SetupLink(portal)
+	if err != nil {
+		t.Fatalf("SetupLink: %v", err)
+	}
+	bridge, err := ParseSetupLink(link)
+	if err != nil {
+		t.Fatalf("ParseSetupLink: %v", err)
+	}
+	if _, has := bridge.Options["bind"]; has {
+		t.Fatalf("bind names an address of the entry server and would fail to start on the exit server: %v", bridge.Options)
+	}
+	if bridge.Options["sni"] != "www.example.com" {
+		t.Fatalf("shared options must still travel: %v", bridge.Options)
+	}
+	if portal.Options["bind"] != "192.0.2.5" {
+		t.Fatalf("the entry end keeps its own bind: %v", portal.Options)
 	}
 }

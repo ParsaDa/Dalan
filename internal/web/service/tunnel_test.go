@@ -14,6 +14,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
 )
 
 func newTunnelDB(t *testing.T) *TunnelService {
@@ -168,7 +169,7 @@ func TestStatusProbesAnEntryTunnelAndRefusesAnExitTunnel(t *testing.T) {
 }
 
 // fakeBackpack stands in for the engine: it writes the status file BackPack would, then waits.
-func fakeBackpack(t *testing.T) *backpack.Supervisor {
+func fakeBackpack(t *testing.T) *engine.Supervisor {
 	t.Helper()
 	binary := filepath.Join(t.TempDir(), "backpack")
 	script := `#!/bin/sh
@@ -179,7 +180,7 @@ exec sleep 600
 	if err := os.WriteFile(binary, []byte(script), 0o755); err != nil {
 		t.Fatalf("write fake engine: %v", err)
 	}
-	sup := &backpack.Supervisor{Binary: binary, Dir: t.TempDir()}
+	sup := backpack.NewSupervisor(binary, t.TempDir())
 	previous := tunnelEngines
 	tunnelEngines = sup
 	t.Cleanup(func() {
@@ -239,7 +240,7 @@ func TestABackpackTunnelRunsItsEngineAndReportsTheEnginesStatus(t *testing.T) {
 func TestABackpackTunnelWithoutTheEngineIsCreatedAndSaysWhatIsMissing(t *testing.T) {
 	svc := newTunnelDB(t)
 	previous := tunnelEngines
-	tunnelEngines = &backpack.Supervisor{Binary: filepath.Join(t.TempDir(), "backpack"), Dir: t.TempDir()}
+	tunnelEngines = backpack.NewSupervisor(filepath.Join(t.TempDir(), "backpack"), t.TempDir())
 	t.Cleanup(func() { tunnelEngines = previous })
 
 	portal, err := svc.CreatePortal(backpackPortalSpec(), nil)
@@ -250,7 +251,7 @@ func TestABackpackTunnelWithoutTheEngineIsCreatedAndSaysWhatIsMissing(t *testing
 	if err != nil || status.Connected || !strings.Contains(status.Error, "not installed") {
 		t.Fatalf("Status = %+v, %v; want not connected, saying the engine is not installed", status, err)
 	}
-	if info := svc.EngineInfo(); info.Installed || info.Version != "" || info.Pinned != backpack.PinnedVersion {
+	if info, _ := svc.EngineInfo("backpack"); info.Installed || info.Version != "" || info.Pinned != backpack.PinnedVersion {
 		t.Fatalf("EngineInfo = %+v, want not installed and no installed version and the pinned one on offer", info)
 	}
 }

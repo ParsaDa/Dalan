@@ -143,6 +143,7 @@ func run(root, outDir string) error {
 		{
 			Path:        resolveRel(root, "internal/tunnel/backpack"),
 			StructAllow: setOf("Option"),
+			AliasAllow:  setOf(),
 		},
 		{
 			Path:        resolveRel(root, "internal/tuic"),

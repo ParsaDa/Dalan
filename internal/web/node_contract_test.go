@@ -425,8 +425,11 @@ func TestMasterNodeTunnelContract(t *testing.T) {
 			if err != nil || len(dialed) != 1 || !dialed[0].Reachable {
 				t.Fatalf("DialPorts = %+v (%v), want the open port reached from the node", dialed, err)
 			}
-			if _, err := master.FetchEngineRelease(ctx, "not-a-version"); err == nil || !strings.Contains(err.Error(), "version") {
+			if _, err := master.FetchEngineRelease(ctx, "backpack", "not-a-version"); err == nil || !strings.Contains(err.Error(), "version") {
 				t.Fatalf("FetchEngineRelease = %v, want the node's own refusal of the version", err)
+			}
+			if _, err := master.FetchEngineRelease(ctx, "rakhsh", "not-a-version"); err == nil || !strings.Contains(err.Error(), "Rakhsh") {
+				t.Fatalf("FetchEngineRelease for rakhsh = %v, want the node's refusal naming Rakhsh, which shows the engine travelled", err)
 			}
 			if err := master.DeleteTunnel(ctx, imported.Id); err != nil {
 				t.Fatalf("DeleteTunnel: %v", err)
@@ -453,7 +456,7 @@ func TestMasterNodeTunnelContract(t *testing.T) {
 		if _, err := master.DialPorts(context.Background(), "127.0.0.1", []int{8443}); err == nil {
 			t.Fatal("a node-sync token was allowed to make the node dial out")
 		}
-		if _, err := master.FetchEngineRelease(context.Background(), "v1.8.5"); err == nil {
+		if _, err := master.FetchEngineRelease(context.Background(), "backpack", "v1.8.5"); err == nil {
 			t.Fatal("a node-sync token was allowed to make the node download an engine")
 		}
 	})

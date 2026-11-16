@@ -169,7 +169,7 @@ func newFakeTunnelNode(t *testing.T) (*fakeTunnelNode, *model.Node) {
 				Offset  int    `json:"offset"`
 			}
 			_ = json.NewDecoder(r.Body).Decode(&body)
-			chunk, err := (&TunnelService{}).EngineReleaseChunk(body.Version, body.Offset)
+			chunk, err := (&TunnelService{}).EngineReleaseChunk("backpack", body.Version, body.Offset)
 			if err != nil {
 				_, _ = fmt.Fprintf(w, `{"success":false,"msg":%q}`, err.Error())
 				return

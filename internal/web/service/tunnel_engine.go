@@ -4,32 +4,118 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"runtime"
 	"sync"
 	"time"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 )
 
 // engineSettleTimeout is how long an updated engine has to bring its tunnels back; it exceeds the
 // engine's 30 second status interval.
 var engineSettleTimeout = 75 * time.Second
 
-// engineSource fetches a BackPack release; an empty version means the newest one.
-type engineSource func(ctx context.Context, version, arch string) (backpack.Release, error)
+// externalEngine is what the panel needs to run, install and watch an engine that runs as its own process.
+type externalEngine struct {
+	id, label  string
+	supervisor func() *engine.Supervisor
+	pinned     string
+	arch       func() (string, error)
+	latest     func(ctx context.Context, client *http.Client) (string, error)
+	fetch      func(ctx context.Context, client *http.Client, version, arch string) (engine.Release, error)
+	place      func(rel engine.Release, version, arch, dest string) error
+	rollback   func(dest string) error
+	installed  func(dest string) string
+	// connected says whether the engine currently reports this tunnel as connected.
+	connected func(dir string, t model.ServerTunnel) bool
+}
 
-func directEngineSource(ctx context.Context, version, arch string) (backpack.Release, error) {
+func backpackEngine() externalEngine {
+	return externalEngine{
+		id: model.TunnelEngineBackpack, label: "BackPack",
+		supervisor: func() *engine.Supervisor { return tunnelEngines },
+		pinned:     backpack.PinnedVersion,
+		arch:       backpackArch,
+		latest: func(ctx context.Context, client *http.Client) (string, error) {
+			return backpack.LatestVersion(ctx, client, backpack.APIBaseURL)
+		},
+		fetch: func(ctx context.Context, client *http.Client, version, arch string) (engine.Release, error) {
+			return backpack.Fetch(ctx, client, backpack.ReleaseBaseURL, version, arch)
+		},
+		place:     backpack.Place,
+		rollback:  backpack.Rollback,
+		installed: backpack.InstalledVersion,
+		connected: func(dir string, t model.ServerTunnel) bool {
+			snap, err := backpack.ReadSnapshot(dir, t.Name)
+			return err == nil && snap.Connected
+		},
+	}
+}
+
+func rakhshEngine() externalEngine {
+	return externalEngine{
+		id: model.TunnelEngineRakhsh, label: "Rakhsh",
+		supervisor: func() *engine.Supervisor { return rakhshEngines },
+		pinned:     rakhsh.PinnedVersion,
+		arch:       func() (string, error) { return runtime.GOARCH, nil },
+		latest: func(ctx context.Context, client *http.Client) (string, error) {
+			return rakhsh.LatestVersion(ctx, client, rakhsh.APIBaseURL)
+		},
+		fetch: func(ctx context.Context, client *http.Client, version, arch string) (engine.Release, error) {
+			return rakhsh.Fetch(ctx, client, rakhsh.ReleaseBaseURL, version, arch)
+		},
+		place:     rakhsh.Place,
+		rollback:  rakhsh.Rollback,
+		installed: rakhsh.InstalledVersion,
+		connected: func(dir string, t model.ServerTunnel) bool {
+			ctx, cancel := context.WithTimeout(context.Background(), rakhshStatusTimeout)
+			defer cancel()
+			st, err := rakhsh.ReadStatus(ctx, rakhshEngines.Binary, rakhsh.ControlSocket(dir, t.Name))
+			return err == nil && st.Connected
+		},
+	}
+}
+
+const rakhshStatusTimeout = 5 * time.Second
+
+var errEngineHasNoBinary = errors.New("this tunnel engine runs inside the panel and has no engine to manage")
+
+// externalEngineFor finds an engine by its id; an empty id means BackPack, as before there was a second one.
+func externalEngineFor(id string) (externalEngine, error) {
+	switch id {
+	case "", model.TunnelEngineBackpack:
+		return backpackEngine(), nil
+	case model.TunnelEngineRakhsh:
+		return rakhshEngine(), nil
+	}
+	return externalEngine{}, fmt.Errorf("tunnel engine %q: %w", id, errEngineHasNoBinary)
+}
+
+func allExternalEngines() []externalEngine { return []externalEngine{backpackEngine(), rakhshEngine()} }
+
+// engineSource fetches a release of one engine; an empty version means the newest one.
+type engineSource func(ctx context.Context, id, version, arch string) (engine.Release, error)
+
+func directEngineSource(ctx context.Context, id, version, arch string) (engine.Release, error) {
+	kind, err := externalEngineFor(id)
+	if err != nil {
+		return engine.Release{}, err
+	}
 	client := (&SettingService{}).NewProxiedHTTPClient(engineInstallTimeout)
 	if version == "" {
-		latest, err := backpack.LatestVersion(ctx, client, backpack.APIBaseURL)
+		latest, err := kind.latest(ctx, client)
 		if err != nil {
-			return backpack.Release{}, err
+			return engine.Release{}, err
 		}
 		version = latest
 	}
-	return backpack.Fetch(ctx, client, backpack.ReleaseBaseURL, version, arch)
+	return kind.fetch(ctx, client, version, arch)
 }
 
 // nodeEngineSource is where this server gets a release it passes on to a main panel; tests replace it.
@@ -39,7 +125,7 @@ const engineDownloadKeep = 10 * time.Minute
 
 type engineDownload struct {
 	done    chan struct{}
-	release backpack.Release
+	release engine.Release
 	err     error
 	started time.Time
 }
@@ -49,31 +135,36 @@ var (
 	engineDownloads   = map[string]*engineDownload{}
 )
 
-// EngineReleaseChunk serves a BackPack release to a main panel in parts. The first call starts the
+// EngineReleaseChunk serves a release of one engine to a main panel in parts. The first call starts the
 // download and answers Pending until it is done, so no single call outlasts the link between the panels.
-func (s *TunnelService) EngineReleaseChunk(version string, offset int) (backpack.Chunk, error) {
-	if err := checkEngineVersion(version); err != nil {
-		return backpack.Chunk{}, err
-	}
-	arch, err := engineArch()
+func (s *TunnelService) EngineReleaseChunk(id, version string, offset int) (engine.Chunk, error) {
+	kind, err := externalEngineFor(id)
 	if err != nil {
-		return backpack.Chunk{}, err
+		return engine.Chunk{}, err
+	}
+	if err := checkEngineVersion(kind, version); err != nil {
+		return engine.Chunk{}, err
+	}
+	arch, err := kind.arch()
+	if err != nil {
+		return engine.Chunk{}, err
 	}
 
+	key := kind.id + "/" + version
 	engineDownloadsMu.Lock()
-	for key, d := range engineDownloads {
+	for k, d := range engineDownloads {
 		if time.Since(d.started) > engineDownloadKeep {
-			delete(engineDownloads, key)
+			delete(engineDownloads, k)
 		}
 	}
-	d, ok := engineDownloads[version]
+	d, ok := engineDownloads[key]
 	if !ok {
 		d = &engineDownload{done: make(chan struct{}), started: time.Now()}
-		engineDownloads[version] = d
+		engineDownloads[key] = d
 		go func() {
 			ctx, cancel := context.WithTimeout(context.Background(), engineInstallTimeout)
 			defer cancel()
-			d.release, d.err = nodeEngineSource(ctx, version, arch)
+			d.release, d.err = nodeEngineSource(ctx, kind.id, version, arch)
 			close(d.done)
 		}()
 	}
@@ -82,13 +173,13 @@ func (s *TunnelService) EngineReleaseChunk(version string, offset int) (backpack
 	select {
 	case <-d.done:
 	default:
-		return backpack.Chunk{Pending: true}, nil
+		return engine.Chunk{Pending: true}, nil
 	}
 	if d.err != nil {
 		engineDownloadsMu.Lock()
-		delete(engineDownloads, version)
+		delete(engineDownloads, key)
 		engineDownloadsMu.Unlock()
-		return backpack.Chunk{}, d.err
+		return engine.Chunk{}, d.err
 	}
 	return d.release.ChunkAt(offset), nil
 }
@@ -96,32 +187,36 @@ func (s *TunnelService) EngineReleaseChunk(version string, offset int) (backpack
 var engineVersionPattern = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
 
 // checkEngineVersion lets an empty version (the newest) or a plain vX.Y.Z tag through; the tag becomes part of a URL.
-func checkEngineVersion(version string) error {
+func checkEngineVersion(kind externalEngine, version string) error {
 	if version != "" && !engineVersionPattern.MatchString(version) {
-		return fmt.Errorf("%q is not a BackPack version such as v1.8.5", version)
+		return fmt.Errorf("%q is not a %s version such as v1.8.5", version, kind.label)
 	}
 	return nil
 }
 
-// UpdateEngine installs a BackPack release (empty means the newest). With a node it is downloaded there
-// and sent over the management channel, for a server that cannot reach GitHub.
-func (s *TunnelService) UpdateEngine(ctx context.Context, nodeID int, version string) error {
-	if err := checkEngineVersion(version); err != nil {
+// UpdateEngine installs a release of one engine (empty version means the newest). With a node it is downloaded
+// there and sent over the management channel, for a server that cannot reach GitHub.
+func (s *TunnelService) UpdateEngine(ctx context.Context, nodeID int, id, version string) error {
+	kind, err := externalEngineFor(id)
+	if err != nil {
+		return err
+	}
+	if err := checkEngineVersion(kind, version); err != nil {
 		return err
 	}
 	if nodeID == 0 {
-		return s.updateEngineFrom(ctx, directEngineSource, version)
+		return s.updateEngineFrom(ctx, kind, directEngineSource, version)
 	}
 	remote, err := s.remoteFor(nodeID)
 	if err != nil {
 		return err
 	}
-	return s.updateEngineFrom(ctx, func(ctx context.Context, version, _ string) (backpack.Release, error) {
-		return remote.FetchEngineRelease(ctx, version)
+	return s.updateEngineFrom(ctx, kind, func(ctx context.Context, id, version, _ string) (engine.Release, error) {
+		return remote.FetchEngineRelease(ctx, id, version)
 	}, version)
 }
 
-func engineArch() (string, error) {
+func backpackArch() (string, error) {
 	arch := runtime.GOARCH
 	switch arch {
 	case "amd64", "arm64", "386", "s390x":
@@ -130,28 +225,27 @@ func engineArch() (string, error) {
 	return "", fmt.Errorf("BackPack publishes no build for %s", arch)
 }
 
-func (s *TunnelService) connectedBackpackTunnels() []string {
+func (s *TunnelService) connectedTunnels(kind externalEngine) []string {
 	tunnels, err := s.GetAll()
 	if err != nil {
 		return nil
 	}
+	dir := kind.supervisor().Dir
 	var names []string
-	for i := range tunnels {
-		if tunnels[i].Engine != "backpack" || !tunnels[i].Enable {
-			continue
-		}
-		if snap, err := backpack.ReadSnapshot(tunnelEngines.Dir, tunnels[i].Name); err == nil && snap.Connected {
-			names = append(names, tunnels[i].Name)
+	for _, t := range tunnels {
+		if t.Engine == kind.id && t.Enable && kind.connected(dir, t) {
+			names = append(names, t.Name)
 		}
 	}
 	return names
 }
 
-func (s *TunnelService) waitConnected(names []string, within time.Duration) bool {
+func (s *TunnelService) waitConnected(kind externalEngine, names []string, within time.Duration) bool {
+	dir := kind.supervisor().Dir
 	for deadline := time.Now().Add(within); ; time.Sleep(200 * time.Millisecond) {
 		all := true
 		for _, name := range names {
-			if snap, err := backpack.ReadSnapshot(tunnelEngines.Dir, name); err != nil || !snap.Connected {
+			if !kind.connected(dir, model.ServerTunnel{Name: name}) {
 				all = false
 				break
 			}
@@ -167,12 +261,12 @@ func (s *TunnelService) waitConnected(names []string, within time.Duration) bool
 
 // updateEngineFrom installs the release src returns and restarts the tunnels on it. When tunnels that
 // were connected do not reconnect in time, the engine it replaced is put back.
-func (s *TunnelService) updateEngineFrom(ctx context.Context, src engineSource, version string) error {
-	arch, err := engineArch()
+func (s *TunnelService) updateEngineFrom(ctx context.Context, kind externalEngine, src engineSource, version string) error {
+	arch, err := kind.arch()
 	if err != nil {
 		return err
 	}
-	rel, err := src(ctx, version, arch)
+	rel, err := src(ctx, kind.id, version, arch)
 	if err != nil {
 		return err
 	}
@@ -180,30 +274,31 @@ func (s *TunnelService) updateEngineFrom(ctx context.Context, src engineSource, 
 		version = rel.Version
 	}
 	if version == "" {
-		return errors.New("the release source did not say which BackPack version it sent")
+		return fmt.Errorf("the release source did not say which %s version it sent", kind.label)
 	}
-	binary := tunnelEngines.Binary
-	if s.EngineInfo().Installed && backpack.InstalledVersion(binary) == version {
+	supervisor := kind.supervisor()
+	binary := supervisor.Binary
+	if info, _ := s.EngineInfo(kind.id); info.Installed && kind.installed(binary) == version {
 		return nil
 	}
 
-	connected := s.connectedBackpackTunnels()
-	if err := backpack.Place(rel, version, arch, binary); err != nil {
+	connected := s.connectedTunnels(kind)
+	if err := kind.place(rel, version, arch, binary); err != nil {
 		return err
 	}
-	tunnelEngines.StopAll()
+	supervisor.StopAll()
 	reconcileErr := s.ReconcileEngines()
-	if len(connected) == 0 || s.waitConnected(connected, engineSettleTimeout) {
+	if len(connected) == 0 || s.waitConnected(kind, connected, engineSettleTimeout) {
 		return reconcileErr
 	}
 
-	logger.Warningf("BackPack %s did not bring %v back; rolling back", version, connected)
-	if err := backpack.Rollback(binary); err != nil {
-		return fmt.Errorf("BackPack %s did not reconnect its tunnels and the earlier engine could not be restored: %w", version, err)
+	logger.Warningf("%s %s did not bring %v back; rolling back", kind.label, version, connected)
+	if err := kind.rollback(binary); err != nil {
+		return fmt.Errorf("%s %s did not reconnect its tunnels and the earlier engine could not be restored: %w", kind.label, version, err)
 	}
-	tunnelEngines.StopAll()
+	supervisor.StopAll()
 	if err := s.ReconcileEngines(); err != nil {
-		logger.Warning("BackPack tunnels after rollback:", err)
+		logger.Warningf("%s tunnels after rollback: %v", kind.label, err)
 	}
-	return fmt.Errorf("BackPack %s did not reconnect %d tunnel(s) within %s; rolled back to the previous engine", version, len(connected), engineSettleTimeout)
+	return fmt.Errorf("%s %s did not reconnect %d tunnel(s) within %s; rolled back to the previous engine", kind.label, version, len(connected), engineSettleTimeout)
 }

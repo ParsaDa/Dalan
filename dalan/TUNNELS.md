@@ -32,11 +32,13 @@ Xray restarts on each server within 30 seconds and the exit server connects.
 - For traffic that arrives through a tunnel, the exit server refuses private and loopback destinations. Users cannot reach the exit server's own network.
 - Deleting a tunnel on one server does not delete it on the other.
 
-## Two engines
+## Three engines
 
 **Xray (built in)** is the default. It needs nothing installed, works everywhere Dalan runs, and routes whole inbounds of the entry server through the tunnel.
 
 **BackPack** is for links that are filtered hard or lose packets. It is a separate program that Dalan installs and runs for you. Like an Xray tunnel it appears in Xray as an outbound named `tunnel-<name>` that routing rules, balancers and inbound routes can use. It can also open raw ports on the entry server and carry them to the exit server.
+
+**Rakhsh** is a Rust tunnel core that Dalan installs the same way. It carries several lanes at once over one or more links (each link has its own carrier and address), encrypts every record, can resume a broken session and offers many carriers, from `tcp`, `wss` and `quic` to raw ones. See "A Rakhsh tunnel" below.
 
 ### A BackPack tunnel
 
@@ -58,6 +60,22 @@ Every enabled entry tunnel is listed read-only under **Xray → Outbounds** and 
 Dalan keeps one BackPack process per tunnel, restarts it if it exits, and stops it when the tunnel is disabled or deleted. A BackPack tunnel shows **Connected** on both servers, taken from what the engine itself reports; it has no latency figure.
 
 Some BackPack transports need root or raw packets (`pck`, `xdi`) and do not work in containers.
+
+### A Rakhsh tunnel
+
+1. On both servers open **Tunnels**. If a notice says the Rakhsh engine is not installed, press **Install Rakhsh** (the pinned release is `v0.1.0`, checked against the checksums published with it). A server that cannot reach GitHub can use **Download through node** or have the `rakhsh` binary copied into the panel's `bin` folder by hand.
+2. On the **entry** server, **New tunnel**, choose **Rakhsh**, pick **Reverse** or **Direct**, a *carrier* and optional *forwarded ports*, then open **Advanced options**.
+3. Copy the setup link and import it on the exit server. The link carries the Noise keys and the tunnel secret, so treat it like a password and never post it anywhere.
+
+- *Carrier*: `tcp`, `tls`, `ws`, `wss`, `quic`, `quicv2`, `kcp` and the `shabdiz-udp`/`shabdiz-tcp` carriers work as normal sockets. `faketcp`, `icmp`, `spoof`, `l2tcp` and the other raw carriers forge or wrap packets: they need root on **both** servers, do not work in most containers, and need `peer_ip` (the panel makes the field required when you pick one): enter the address of the server that dials, that is the exit server in a reverse tunnel and the entry server in a direct one. The dialling end is given the listening server's address by itself, the exit end swaps `spoof_src_ip` and `spoof_peer_src`, and `bind` stays on the server where you set it.
+- *Forwarded ports*: `listen=target`, for example `443=127.0.0.1:2096`; add `/udp` after the target for UDP. A bare `443` is refused. Traffic of whole inbounds uses *Inbounds* instead, as with BackPack.
+- *Reverse* (default): the exit server dials the entry server. *Direct*: the entry server dials the exit server; set `l3_addr` to also get a routed layer-3 device (needs root). Only a reverse tunnel can be an Xray outbound.
+- *Links*: each entry has its own carrier, address and, if wanted, settings only that link overrides (`sni`, `ws_path`, `edge_ip` and similar). Links are tried in the order given, so a blocked carrier can fall back to the next. `link_policy` chooses failover or spread.
+- *Advanced options*: every setting the panel can write, grouped as Rakhsh groups them (encryption and resume, tunnel, links, pacing, raw carriers, layer 3, limits). Settings that only make sense on the entry end (`limit_*`, `quota_*`) are hidden when you edit an exit end.
+
+A Rakhsh tunnel shows **Connected** with how many of its lanes are up (`3 of 4 lanes`) and the loss the engine measures, both read from the engine's own status socket. When no lane is up the **Down** tag shows the engine's reason on hover.
+
+What it does not do: Dalan does not switch carriers by measured packet loss (the engine's own link policy is all there is), the engine's router sections (`rules`, `fleet`, the OpenVPN helper) are not exposed, and Dalan has not yet run Rakhsh on real servers or across a filtered link. Its own tests ran a real pair on loopback over `tcp` and `wss` only.
 
 ### Reverse and direct
 
@@ -144,18 +162,20 @@ Every 15 seconds the panel measures each member (a real request through an Xray 
 
 The **Traffic** column of an entry tunnel shows what has passed through it, up and down, since Xray last started. The panel switches Xray's outbound statistics on for the generated config by itself; nothing needs changing in the Xray settings. BackPack direct tunnels show nothing there; a BackPack reverse tunnel shows what its outbound carried.
 
-## Installing and updating the BackPack engine
+## Installing and updating the engines
 
-On the Tunnels page, **Install BackPack** and **Update engine** fetch the newest BackPack release (**Install** the one this Dalan version pins). The release is checked against the checksums published with it before it replaces the engine, and the engine it replaces is kept. After an update, tunnels that were connected must reconnect within about 75 seconds; if they do not, the earlier engine is put back and the update fails with that reason.
+On the Tunnels page, **Install BackPack**, **Install Rakhsh** and each engine's **Update engine** fetch the newest release of that engine (**Install** the one this Dalan version pins: BackPack 1.9.0, Rakhsh 0.1.0). The page shows one bar per engine that a tunnel on it uses. The release is checked against the checksums published with it before it replaces the engine, and the engine it replaces is kept. After an update, tunnels that were connected must reconnect within about 75 seconds; if they do not, the earlier engine is put back and the update fails with that reason.
 
 A server in Iran usually cannot reach GitHub. Pick **Download through node** first: the node abroad downloads the release and sends it to this panel through the management tunnel in 512 KiB parts, so nothing depends on GitHub being reachable from here. The node needs this Dalan version. The checksums come from the same node, so this protects against a damaged download, not against a node that is itself compromised.
 
 ## Engine output
 
-Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>: ...`; when it exits, the last lines are repeated with the restart notice.
+Everything a BackPack or Rakhsh process prints goes to the panel log as `BackPack <tunnel>: ...` or `Rakhsh <tunnel>: ...`; when it exits, the last lines are repeated with the restart notice.
 
 ## Not built yet
 
+- Loss-aware switching between carriers or tunnels (planned for a later version).
+- Rakhsh's router sections and a possible fourth engine.
 - A direct tunnel as an Xray outbound, and a direct tunnel through a CDN (neither is possible with a layer-3 link).
 - BackPack's `spoof` carrier and its Naive and Xray helper sections.
 - One shared port for the management tunnels of all nodes.

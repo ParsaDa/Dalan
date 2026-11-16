@@ -37,6 +37,10 @@ Attach a **volume at `/etc/x-ui`**. Without one the database starts empty at eve
 
 The link lives 30 minutes, so create the command right before deploying. If joining fails the container still starts and tries again at the next start with the same link, until it expires.
 
+## Tunnel engines in a container
+
+BackPack and Rakhsh are installed on demand into the panel's `bin` folder, which is inside the container: put a volume under it too, or reinstall the engine after each deploy. Rakhsh's raw carriers (`faketcp`, `icmp`, `spoof`, `l2tcp`, the `shabdiz-*` layer-3 ones) and any layer-3 device need root and raw sockets, which most platforms do not give a container. Use `tcp`, `tls`, `ws`, `wss` or `quic` there; behind a platform that ends TLS, `ws` is the one that fits the front door's single HTTP port.
+
 ## Orbit and AWS
 
 The same image and variables apply. On AWS (ECS, App Runner, Lightsail containers) set the service port to the one the platform passes as `PORT`, or set `DALAN_FRONT_PORT` yourself, and mount persistent storage at `/etc/x-ui`.

@@ -2009,7 +2009,7 @@ export const sections: readonly Section[] = [
         method: 'GET',
         path: '/panel/api/tunnels/status/:id',
         summary:
-          'Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. Only the entry end can be tested.',
+          'Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. A Rakhsh tunnel is judged by its lanes instead: connected while at least one lane is up, with lanesUp, targetLanes, latencyMs and lossPct from the engine. Only the entry end can be tested.',
         params: [{ name: 'id', in: 'path', type: 'number', desc: 'Tunnel ID.' }],
         response:
           '{\n  "success": true,\n  "obj": {\n    "connected": true,\n    "latencyMs": 182,\n    "exitIp": "203.0.113.77",\n    "exitLoc": "DE",\n    "error": ""\n  }\n}',
@@ -2018,15 +2018,35 @@ export const sections: readonly Section[] = [
         method: 'GET',
         path: '/panel/api/tunnels/engine',
         summary:
-          'Whether the BackPack engine binary is on this server, which release is installed (empty when it was placed by hand), and the release this Dalan version installs by default.',
+          'Whether an engine binary (BackPack or Rakhsh) is on this server, which release is installed (empty when it was placed by hand), and the release this Dalan version installs by default.',
+        params: [
+          {
+            name: 'engine',
+            in: 'query',
+            type: 'string',
+            desc: 'backpack or rakhsh. Defaults to backpack.',
+            optional: true,
+            defaultValue: 'backpack',
+          },
+        ],
         response:
-          '{\n  "success": true,\n  "obj": {\n    "installed": true,\n    "version": "v1.9.0",\n    "pinned": "v1.9.0"\n  }\n}',
+          '{\n  "success": true,\n  "obj": {\n    "engine": "backpack",\n    "installed": true,\n    "version": "v1.9.0",\n    "pinned": "v1.9.0"\n  }\n}',
       },
       {
         method: 'GET',
         path: '/panel/api/tunnels/options',
         summary:
-          'Every BackPack setting the panel can write, for reverse and direct tunnels: key, kind, which end reads it, group, allowed values and a hint in English (hintEn) and Persian (hintFa). Send values under options of add or update, keyed as listed here.',
+          'Every setting of one engine (BackPack or Rakhsh) the panel can write, for reverse and direct tunnels: key, kind, which end reads it, group, allowed values and a hint in English (hintEn) and Persian (hintFa). Send values under options of add or update, keyed as listed here.',
+        params: [
+          {
+            name: 'engine',
+            in: 'query',
+            type: 'string',
+            desc: 'backpack or rakhsh. Defaults to backpack.',
+            optional: true,
+            defaultValue: 'backpack',
+          },
+        ],
         responseSchema: 'Option',
         responseSchemaArray: true,
       },
@@ -2034,14 +2054,15 @@ export const sections: readonly Section[] = [
         method: 'POST',
         path: '/panel/api/tunnels/engine/install',
         summary:
-          'Download the pinned BackPack release for this CPU, verify it against the checksums published with it, put it in the panel bin folder and start the BackPack tunnels. Uses the panel proxy settings. Can take a few minutes.',
+          'Download the pinned release of an engine (BackPack by default, or Rakhsh with engine "rakhsh") for this CPU, verify it against the checksums published with it, put it in the panel bin folder and start that engine\'s tunnels. Uses the panel proxy settings. Can take a few minutes.',
+        body: '{\n  "engine": "backpack"\n}',
       },
       {
         method: 'POST',
         path: '/panel/api/tunnels/engine/update',
         summary:
-          'Install a BackPack release (empty version means the newest) and restart the BackPack tunnels on it. With nodeId the release is downloaded by that node and sent over the management channel, for a server that cannot reach GitHub. The release is verified against its published checksums. When tunnels that were connected do not reconnect within about 75 seconds, the earlier engine is put back and the call fails. Can take several minutes.',
-        body: '{\n  "nodeId": 0,\n  "version": ""\n}',
+          "Install a release of an engine (engine is backpack or rakhsh; empty version means the newest) and restart that engine's tunnels on it. With nodeId the release is downloaded by that node and sent over the management channel, for a server that cannot reach GitHub. The release is verified against its published checksums. When tunnels that were connected do not reconnect within about 75 seconds, the earlier engine is put back and the call fails. Can take several minutes.",
+        body: '{\n  "nodeId": 0,\n  "engine": "backpack",\n  "version": ""\n}',
         response:
           '{\n  "success": true,\n  "obj": {\n    "installed": true,\n    "version": "v1.9.0",\n    "pinned": "v1.9.0"\n  }\n}',
       },
@@ -2049,8 +2070,8 @@ export const sections: readonly Section[] = [
         method: 'POST',
         path: '/panel/api/tunnels/engine/release',
         summary:
-          'Node side of an engine update through a node: the first call starts downloading a BackPack release and answers pending until it is done, then each call returns the part of the archive that starts at offset (the checksums come with the first part). Needs an admin or node-admin token.',
-        body: '{\n  "version": "",\n  "offset": 0\n}',
+          'Node side of an engine update through a node: the first call starts downloading a release of the engine named in engine (BackPack or Rakhsh) and answers pending until it is done, then each call returns the part of the archive that starts at offset (the checksums come with the first part). Needs an admin or node-admin token.',
+        body: '{\n  "engine": "backpack",\n  "version": "",\n  "offset": 0\n}',
         response:
           '{\n  "success": true,\n  "obj": {\n    "pending": false,\n    "version": "v1.9.0",\n    "size": 8421376,\n    "data": "H4sIAAAA",\n    "sums": "ZTNiMGM0NDI5OGZj"\n  }\n}',
       },
@@ -2058,7 +2079,7 @@ export const sections: readonly Section[] = [
         method: 'POST',
         path: '/panel/api/tunnels/add',
         summary:
-          'Create the entry end of a tunnel on this server. Secrets are generated by the panel. With the default engine (xray), routeInbounds lists the local inbound tags whose traffic leaves through the tunnel. With engine "backpack", send transport, forwardPorts (for example "443=127.0.0.1:2096") and optionally fallbackTransports, acceptUdp and options (see /options) instead of security, serverName and routeInbounds. With mode "direct" (BackPack only) the entry end dials the exit end over a layer-3 link: send options.carrier (udp, pck, quic, sni, xdi or spoof) and forwardPorts, and the panel picks the tunnel addresses; this mode needs root and /dev/net/tun on both servers, and the tunnel is not an Xray outbound. Send nodeId to also create the dialling end on that node through its management channel; exitOutbound then names the outbound traffic leaves from there. If the node does not take its end, nothing is created.',
+          'Create the entry end of a tunnel on this server. Secrets are generated by the panel. With the default engine (xray), routeInbounds lists the local inbound tags whose traffic leaves through the tunnel. With engine "rakhsh", send transport (the carrier, such as wss or quic), forwardPorts and options (see /options?engine=rakhsh); the entry end gets a relay port like BackPack, so the tunnel is also an Xray outbound, and the setup link carries the exit end secret key. With engine "backpack", send transport, forwardPorts (for example "443=127.0.0.1:2096") and optionally fallbackTransports, acceptUdp and options (see /options) instead of security, serverName and routeInbounds. With mode "direct" and engine "rakhsh" the entry end dials the exit end, which listens, and the tunnel stays an Xray outbound; options.l3_addr adds a routed tun device and needs root. With mode "direct" and engine "backpack" the entry end dials the exit end over a layer-3 link: send options.carrier (udp, pck, quic, sni, xdi or spoof) and forwardPorts, and the panel picks the tunnel addresses; this mode needs root and /dev/net/tun on both servers, and the tunnel is not an Xray outbound. Send nodeId to also create the dialling end on that node through its management channel; exitOutbound then names the outbound traffic leaves from there. If the node does not take its end, nothing is created.',
         body: '{\n  "name": "de1",\n  "address": "203.0.113.10",\n  "port": 8443,\n  "security": "reality",\n  "serverName": "www.example.com",\n  "routeInbounds": ["inbound-443"]\n}',
         responseSchema: 'ServerTunnel',
       },

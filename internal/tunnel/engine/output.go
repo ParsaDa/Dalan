@@ -1,4 +1,5 @@
-package backpack
+// Package engine holds what every external tunnel engine shares: the process supervisor and release handling.
+package engine
 
 import (
 	"bytes"
@@ -70,7 +71,7 @@ func (o *outputLog) finish() string {
 func (s *Supervisor) outputFor(name string) *outputLog {
 	emit := s.LogLine
 	if emit == nil {
-		emit = func(tunnel, line string) { logger.Infof("BackPack %s: %s", tunnel, line) }
+		emit = func(tunnel, line string) { logger.Infof("%s %s: %s", s.Name, tunnel, line) }
 	}
 	return &outputLog{emit: func(line string) { emit(name, line) }}
 }

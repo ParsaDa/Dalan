@@ -10,6 +10,7 @@ import type {
   TunnelOption,
 } from '@/api/queries/useTunnels';
 import TunnelOptionFields, { cleanOptions } from './TunnelOptionFields';
+import { isRawCarrier, needsPeerIp } from './rakhshCarriers';
 
 interface Props {
   tunnel: ServerTunnel;
@@ -36,6 +37,10 @@ export default function TunnelEditModal({
 
   const portal = tunnel.role === 'portal';
   const backpack = tunnel.engine === 'backpack';
+  const rakhsh = tunnel.engine === 'rakhsh';
+  const transport = Form.useWatch('transport', form) ?? tunnel.transport;
+  const links = Form.useWatch(['options', 'links'], form) as { carrier?: string }[] | undefined;
+  const rakhshNeedsPeerIp = needsPeerIp([transport, ...(links ?? []).map((l) => l.carrier)]);
   const mode: TunnelMode = tunnel.mode === 'direct' ? 'direct' : 'reverse';
 
   const submit = async () => {
@@ -48,19 +53,25 @@ export default function TunnelEditModal({
             address: (values.address ?? '').trim(),
             port: values.port,
             routeInbounds: values.routeInbounds ?? [],
-            ...(backpack
+            ...(rakhsh
               ? {
-                  transport: mode === 'direct' ? '' : values.transport,
-                  fallbackTransports: values.fallbackTransports ?? [],
+                  transport: values.transport,
                   forwardPorts: values.forwardPorts ?? [],
-                  acceptUdp: values.acceptUdp ?? false,
                   options: cleanOptions(values.options),
                 }
-              : { serverName: (values.serverName ?? '').trim() }),
+              : backpack
+                ? {
+                    transport: mode === 'direct' ? '' : values.transport,
+                    fallbackTransports: values.fallbackTransports ?? [],
+                    forwardPorts: values.forwardPorts ?? [],
+                    acceptUdp: values.acceptUdp ?? false,
+                    options: cleanOptions(values.options),
+                  }
+                : { serverName: (values.serverName ?? '').trim() }),
           }
         : {
             exitOutbound: (values.exitOutbound ?? '').trim(),
-            ...(backpack ? { options: cleanOptions(values.options) } : {}),
+            ...(backpack || rakhsh ? { options: cleanOptions(values.options) } : {}),
           };
       if (await onSubmit(tunnel.id, body)) onClose();
     } finally {
@@ -106,7 +117,33 @@ export default function TunnelEditModal({
             >
               <InputNumber min={1} max={65535} style={{ width: '100%' }} />
             </Form.Item>
-            {backpack ? (
+            {rakhsh ? (
+              <>
+                <Form.Item name="transport" label={t('pages.tunnels.transport')}>
+                  <Select options={transports} />
+                </Form.Item>
+                {isRawCarrier(transport) && (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    title={t('pages.tunnels.rakhshRawHint')}
+                    style={{ marginBottom: 12 }}
+                  />
+                )}
+                <Form.Item
+                  name="forwardPorts"
+                  label={t('pages.tunnels.forwardPorts')}
+                  extra={t('pages.tunnels.rakhshForwardPortsHint')}
+                >
+                  <Select
+                    mode="tags"
+                    open={false}
+                    tagRender={selectTagRender}
+                    tokenSeparators={[' ', ',']}
+                  />
+                </Form.Item>
+              </>
+            ) : backpack ? (
               <>
                 {mode === 'reverse' && (
                   <>
@@ -159,7 +196,7 @@ export default function TunnelEditModal({
                 </Form.Item>
               )
             )}
-            {mode === 'reverse' && (
+            {(mode === 'reverse' || rakhsh) && (
               <Form.Item
                 name="routeInbounds"
                 label={t('pages.tunnels.routeInbounds')}
@@ -188,6 +225,14 @@ export default function TunnelEditModal({
             options={options}
             mode={mode}
             skip={mode === 'direct' ? ['local_ip', 'peer_ip'] : []}
+          />
+        )}
+        {rakhsh && (
+          <TunnelOptionFields
+            options={options}
+            mode={mode}
+            forRole={portal ? 'portal' : 'bridge'}
+            pinned={rakhshNeedsPeerIp ? ['peer_ip'] : []}
           />
         )}
       </Form>

@@ -17,7 +17,7 @@ func Routable(t model.ServerTunnel) bool {
 	if !t.Enable || t.Role != model.TunnelRolePortal || t.ManagePort > 0 {
 		return false
 	}
-	return t.Engine != model.TunnelEngineBackpack || t.RelayPort > 0
+	return !model.ExternalEngine(t.Engine) || t.RelayPort > 0
 }
 
 // ActiveMember is the pool's member that carries traffic: the stored active one while it still

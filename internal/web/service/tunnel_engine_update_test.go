@@ -16,16 +16,17 @@ import (
 	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
 )
 
 // engineRelease builds a release whose engine writes the given connected state for its tunnel.
-func engineRelease(t *testing.T, connected bool) backpack.Release {
+func engineRelease(t *testing.T, connected bool) engine.Release {
 	t.Helper()
 	return engineReleaseWithPadding(t, connected, 0)
 }
 
 // engineReleaseWithPadding adds incompressible bytes so the archive spans several transfer parts.
-func engineReleaseWithPadding(t *testing.T, connected bool, padding int) backpack.Release {
+func engineReleaseWithPadding(t *testing.T, connected bool, padding int) engine.Release {
 	t.Helper()
 	script := `#!/bin/sh
 name=$(basename "$2" .toml)
@@ -49,11 +50,11 @@ exec sleep 600
 	gz.Close()
 	sum := sha256.Sum256(buf.Bytes())
 	sums := hex.EncodeToString(sum[:]) + "  backpack_linux_" + runtime.GOARCH + ".tar.gz\n"
-	return backpack.Release{Archive: buf.Bytes(), Sums: []byte(sums)}
+	return engine.Release{Archive: buf.Bytes(), Sums: []byte(sums)}
 }
 
-func releaseFrom(rel backpack.Release) engineSource {
-	return func(context.Context, string, string) (backpack.Release, error) { return rel, nil }
+func releaseFrom(rel engine.Release) engineSource {
+	return func(context.Context, string, string, string) (engine.Release, error) { return rel, nil }
 }
 
 func TestAnEngineUpdateThatReconnectsTheTunnelsStaysInstalled(t *testing.T) {
@@ -65,7 +66,7 @@ func TestAnEngineUpdateThatReconnectsTheTunnelsStaysInstalled(t *testing.T) {
 	}
 	waitForStatus(t, svc, portal.Id, true)
 
-	if err := svc.updateEngineFrom(context.Background(), releaseFrom(engineRelease(t, true)), "v2.0.0"); err != nil {
+	if err := svc.updateEngineFrom(context.Background(), backpackEngine(), releaseFrom(engineRelease(t, true)), "v2.0.0"); err != nil {
 		t.Fatalf("updateEngineFrom: %v", err)
 	}
 	if got := backpack.InstalledVersion(sup.Binary); got != "v2.0.0" {
@@ -87,7 +88,7 @@ func TestAnEngineUpdateWhoseTunnelsDoNotComeBackIsRolledBack(t *testing.T) {
 	waitForStatus(t, svc, portal.Id, true)
 	before, _ := os.ReadFile(sup.Binary)
 
-	err = svc.updateEngineFrom(context.Background(), releaseFrom(engineRelease(t, false)), "v2.0.0")
+	err = svc.updateEngineFrom(context.Background(), backpackEngine(), releaseFrom(engineRelease(t, false)), "v2.0.0")
 	if err == nil || !strings.Contains(err.Error(), "rolled back") {
 		t.Fatalf("updateEngineFrom error = %v, want one saying the update was rolled back", err)
 	}
@@ -98,10 +99,10 @@ func TestAnEngineUpdateWhoseTunnelsDoNotComeBackIsRolledBack(t *testing.T) {
 }
 
 // serveReleaseFromNode makes the node side of an engine transfer answer with rel instead of going to GitHub.
-func serveReleaseFromNode(t *testing.T, rel backpack.Release) {
+func serveReleaseFromNode(t *testing.T, rel engine.Release) {
 	t.Helper()
 	previous := nodeEngineSource
-	nodeEngineSource = func(context.Context, string, string) (backpack.Release, error) { return rel, nil }
+	nodeEngineSource = func(context.Context, string, string, string) (engine.Release, error) { return rel, nil }
 	engineDownloadsMu.Lock()
 	engineDownloads = map[string]*engineDownload{}
 	engineDownloadsMu.Unlock()
@@ -119,7 +120,7 @@ func TestAnEngineCanBeInstalledThroughANodeInPartsWhenThisServerCannotReachGitHu
 	}
 	serveReleaseFromNode(t, rel)
 
-	if err := svc.UpdateEngine(context.Background(), node.Id, ""); err != nil {
+	if err := svc.UpdateEngine(context.Background(), node.Id, "backpack", ""); err != nil {
 		t.Fatalf("UpdateEngine through the node: %v", err)
 	}
 	if got := backpack.InstalledVersion(sup.Binary); got != "v2.0.0" {
@@ -132,15 +133,15 @@ func TestANodeThatCannotDownloadTheEngineSaysWhy(t *testing.T) {
 	fakeBackpack(t)
 	_, node := newFakeTunnelNode(t)
 	previous := nodeEngineSource
-	nodeEngineSource = func(context.Context, string, string) (backpack.Release, error) {
-		return backpack.Release{}, errors.New("the node cannot reach GitHub")
+	nodeEngineSource = func(context.Context, string, string, string) (engine.Release, error) {
+		return engine.Release{}, errors.New("the node cannot reach GitHub")
 	}
 	engineDownloadsMu.Lock()
 	engineDownloads = map[string]*engineDownload{}
 	engineDownloadsMu.Unlock()
 	t.Cleanup(func() { nodeEngineSource = previous })
 
-	if err := svc.UpdateEngine(context.Background(), node.Id, "v3.0.0"); err == nil || !strings.Contains(err.Error(), "GitHub") {
+	if err := svc.UpdateEngine(context.Background(), node.Id, "backpack", "v3.0.0"); err == nil || !strings.Contains(err.Error(), "GitHub") {
 		t.Fatalf("UpdateEngine when the node cannot download = %v, want the node's reason", err)
 	}
 }
@@ -148,10 +149,10 @@ func TestANodeThatCannotDownloadTheEngineSaysWhy(t *testing.T) {
 func TestOnlyAPlainBackpackVersionIsAsked(t *testing.T) {
 	svc := &TunnelService{}
 	for _, version := range []string{"../../x", "v1.8.5/../../evil", "latest", "v1"} {
-		if _, err := svc.EngineReleaseChunk(version, 0); err == nil || !strings.Contains(err.Error(), "version") {
+		if _, err := svc.EngineReleaseChunk("backpack", version, 0); err == nil || !strings.Contains(err.Error(), "version") {
 			t.Errorf("EngineReleaseChunk(%q) error = %v, want a refusal of the version", version, err)
 		}
-		if err := svc.UpdateEngine(context.Background(), 0, version); err == nil || !strings.Contains(err.Error(), "version") {
+		if err := svc.UpdateEngine(context.Background(), 0, "backpack", version); err == nil || !strings.Contains(err.Error(), "version") {
 			t.Errorf("UpdateEngine(%q) error = %v, want a refusal of the version", version, err)
 		}
 	}

@@ -277,3 +277,59 @@ func TestTunnelRoutesServeTheOptionCatalogAndEditATunnelInPlace(t *testing.T) {
 		t.Fatalf("update with an unknown option: success=%v msg=%q, want a refusal naming it", refused.Success, refused.Msg)
 	}
 }
+
+func TestTunnelRoutesServeEachEnginesOptionsAndInfoAndRefuseAnUnknownEngine(t *testing.T) {
+	engine := newTunnelEngine(t)
+
+	catalog := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/options?engine=rakhsh", nil)
+	var options []struct {
+		Key  string `json:"key"`
+		Role string `json:"role"`
+	}
+	if err := json.Unmarshal(catalog.Obj, &options); err != nil || !catalog.Success {
+		t.Fatalf("rakhsh options = %s (%v), want the catalog", catalog.Obj, err)
+	}
+	keys := map[string]bool{}
+	for _, o := range options {
+		keys[o.Key] = true
+	}
+	if !keys["l3_addr"] || !keys["sni"] || keys["nodelay"] {
+		t.Fatalf("rakhsh catalog has l3_addr=%v sni=%v nodelay=%v, want Rakhsh's own options and none of BackPack's", keys["l3_addr"], keys["sni"], keys["nodelay"])
+	}
+
+	info := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/engine?engine=rakhsh", nil)
+	var got struct {
+		Engine    string `json:"engine"`
+		Installed bool   `json:"installed"`
+		Pinned    string `json:"pinned"`
+	}
+	if err := json.Unmarshal(info.Obj, &got); err != nil || got.Engine != "rakhsh" || got.Installed || got.Pinned != "v0.1.0" {
+		t.Fatalf("rakhsh engine info = %s (%v), want not installed, offering v0.1.0", info.Obj, err)
+	}
+
+	for _, path := range []string{"/panel/api/tunnels/options?engine=xray", "/panel/api/tunnels/engine?engine=xray"} {
+		if refused := doHostReq(t, engine, http.MethodGet, path, nil); refused.Success {
+			t.Fatalf("GET %s succeeded, want a refusal: Xray has no engine to manage", path)
+		}
+	}
+}
+
+func TestTunnelRoutesCreateARakhshTunnelWithoutEverListingItsSecret(t *testing.T) {
+	engine := newTunnelEngine(t)
+
+	added := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+		"name": "rk1", "address": "203.0.113.10", "port": 7000, "engine": "rakhsh", "transport": "wss",
+		"forwardPorts": []string{"443=127.0.0.1:2096"}, "options": map[string]any{"sni": "www.example.com"},
+	})
+	var portal model.ServerTunnel
+	if err := json.Unmarshal(added.Obj, &portal); err != nil || !added.Success {
+		t.Fatalf("add failed: %s (%v)", added.Msg, err)
+	}
+	if portal.Engine != "rakhsh" || portal.Transport != "wss" || portal.Options["sni"] != "www.example.com" || portal.RelayPort == 0 {
+		t.Fatalf("stored tunnel = %+v, want the Rakhsh settings from the request and a relay port", portal)
+	}
+	raw := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/list", nil)
+	if strings.Contains(string(raw.Obj), "rakhshSecret") || strings.Contains(string(raw.Obj), "RakhshSecret") {
+		t.Fatalf("the list carries the portal's secret key: %s", raw.Obj)
+	}
+}

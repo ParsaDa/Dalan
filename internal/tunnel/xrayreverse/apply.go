@@ -53,7 +53,7 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 			continue
 		}
 		if t.ParentId > 0 {
-			if t.Engine == model.TunnelEngineBackpack || !hasRider(riders, t) {
+			if model.ExternalEngine(t.Engine) || !hasRider(riders, t) {
 				continue
 			}
 			changed = true
@@ -63,7 +63,7 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 			})
 			continue
 		}
-		if t.Engine == model.TunnelEngineBackpack {
+		if model.ExternalEngine(t.Engine) {
 			if t.RelayPort == 0 {
 				continue
 			}
@@ -164,7 +164,7 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 func ridersByParent(tunnels []model.ServerTunnel) map[int][]model.ServerTunnel {
 	parents := map[int]bool{}
 	for _, t := range tunnels {
-		if t.Enable && t.Role == model.TunnelRolePortal && t.Engine != model.TunnelEngineBackpack &&
+		if t.Enable && t.Role == model.TunnelRolePortal && !model.ExternalEngine(t.Engine) &&
 			t.ParentId == 0 && t.ManagePort == 0 {
 			parents[t.Id] = true
 		}

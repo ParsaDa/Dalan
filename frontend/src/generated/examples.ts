@@ -1204,6 +1204,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "options": {},
     "parentId": 0,
     "port": 8443,
+    "rakhshPeerPublic": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
     "realityPublicKey": "",
     "relayPort": 63500,
     "role": "portal",

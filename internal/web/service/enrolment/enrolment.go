@@ -251,10 +251,10 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 	if err := db.First(&portal, row.TunnelId).Error; err != nil {
 		return nil, ErrGone
 	}
-	// A BackPack tunnel is already set up on the node, so the channel is a forward on it, not a tunnel to import.
-	onBackpack := portal.ParentId > 0 && portal.Engine == model.TunnelEngineBackpack
+	// A BackPack or Rakhsh tunnel is already set up on the node, so the channel is a forward on it, not a tunnel to import.
+	onExternal := portal.ParentId > 0 && model.ExternalEngine(portal.Engine)
 	var setup string
-	if !onBackpack {
+	if !onExternal {
 		if setup, err = tunnel.SetupLink(portal); err != nil {
 			return nil, err
 		}
@@ -284,12 +284,12 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 	if err := db.Model(&model.NodeEnrolment{}).Where("id = ?", row.Id).Update("node_id", node.Id).Error; err != nil {
 		return nil, err
 	}
-	if onBackpack {
+	if onExternal {
 		if err := db.Model(&model.ServerTunnel{}).Where("id = ?", portal.Id).Update("manage_target", info.Port).Error; err != nil {
 			return nil, err
 		}
 		if err := s.tunnels.ReconcileEngines(); err != nil {
-			logger.Warning("enrolments: applying the node's forward to its BackPack tunnel:", err)
+			logger.Warning("enrolments: applying the node's forward to its tunnel:", err)
 		}
 	}
 	grant := enrol.Grant{Tunnel: setup}

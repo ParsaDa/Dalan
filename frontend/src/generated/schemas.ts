@@ -4862,6 +4862,10 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": 8443,
         "type": "integer"
       },
+      "rakhshPeerPublic": {
+        "example": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
+        "type": "string"
+      },
       "realityPublicKey": {
         "type": "string"
       },
@@ -4926,6 +4930,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "options",
       "parentId",
       "port",
+      "rakhshPeerPublic",
       "realityPublicKey",
       "relayPort",
       "role",

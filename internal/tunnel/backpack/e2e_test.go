@@ -55,8 +55,8 @@ func TestARealEngineCarriesAForwardedPortFromThePortalToTheBridge(t *testing.T) 
 	bridgeEnd := portalEnd
 	bridgeEnd.Role, bridgeEnd.ForwardPorts = model.TunnelRoleBridge, nil
 
-	portal := &Supervisor{Binary: binary, Dir: t.TempDir()}
-	bridge := &Supervisor{Binary: binary, Dir: t.TempDir()}
+	portal := NewSupervisor(binary, t.TempDir())
+	bridge := NewSupervisor(binary, t.TempDir())
 	t.Cleanup(portal.StopAll)
 	t.Cleanup(bridge.StopAll)
 	if err := portal.Reconcile([]model.ServerTunnel{portalEnd}); err != nil {
