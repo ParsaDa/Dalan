@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
 )
 
 // fakeEngine stands in for the BackPack binary: it records its pid and config path, then waits.
@@ -24,14 +25,15 @@ func fakeEngine(t *testing.T) string {
 	return path
 }
 
-func newSupervisor(t *testing.T) *Supervisor {
+func newSupervisor(t *testing.T) *engine.Supervisor {
 	t.Helper()
-	s := &Supervisor{Binary: fakeEngine(t), Dir: t.TempDir(), RestartDelay: 50 * time.Millisecond}
+	s := NewSupervisor(fakeEngine(t), t.TempDir())
+	s.RestartDelay = 50 * time.Millisecond
 	t.Cleanup(s.StopAll)
 	return s
 }
 
-func starts(t *testing.T, s *Supervisor, want int) []string {
+func starts(t *testing.T, s *engine.Supervisor, want int) []string {
 	t.Helper()
 	var lines []string
 	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); time.Sleep(20 * time.Millisecond) {
@@ -100,7 +102,8 @@ func TestReconcileStartsAnEngineGivenByARelativePath(t *testing.T) {
 	if err := os.Rename(fakeEngine(t), filepath.Join(folder, "backpack")); err != nil {
 		t.Skipf("cannot place the stand-in engine beside the package: %v", err)
 	}
-	s := &Supervisor{Binary: filepath.Join(folder, "backpack"), Dir: t.TempDir(), RestartDelay: 50 * time.Millisecond}
+	s := NewSupervisor(filepath.Join(folder, "backpack"), t.TempDir())
+	s.RestartDelay = 50 * time.Millisecond
 	t.Cleanup(s.StopAll)
 
 	if err := s.Reconcile([]model.ServerTunnel{bridge("de1", "tcp")}); err != nil {
@@ -162,7 +165,7 @@ func TestACrashedEngineIsStartedAgain(t *testing.T) {
 }
 
 func TestReconcileSaysWhenTheEngineIsNotInstalled(t *testing.T) {
-	s := &Supervisor{Binary: filepath.Join(t.TempDir(), "backpack"), Dir: t.TempDir()}
+	s := NewSupervisor(filepath.Join(t.TempDir(), "backpack"), t.TempDir())
 	err := s.Reconcile([]model.ServerTunnel{bridge("de1", "tcp")})
 	if !errors.Is(err, ErrNotInstalled) {
 		t.Fatalf("Reconcile error = %v, want ErrNotInstalled", err)
@@ -180,13 +183,12 @@ func TestAnEnginesOutputReachesThePanelLogAndTheLastLinesAccompanyACrash(t *test
 	}
 	var mu sync.Mutex
 	var lines []string
-	s := &Supervisor{
-		Binary: binary, Dir: t.TempDir(), RestartDelay: time.Hour,
-		LogLine: func(tunnel, line string) {
-			mu.Lock()
-			defer mu.Unlock()
-			lines = append(lines, tunnel+": "+line)
-		},
+	s := NewSupervisor(binary, t.TempDir())
+	s.RestartDelay = time.Hour
+	s.LogLine = func(tunnel, line string) {
+		mu.Lock()
+		defer mu.Unlock()
+		lines = append(lines, tunnel+": "+line)
 	}
 	t.Cleanup(s.StopAll)
 	if err := s.Reconcile([]model.ServerTunnel{bridge("de1", "tcp")}); err != nil {

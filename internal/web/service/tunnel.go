@@ -22,10 +22,10 @@ import (
 )
 
 // tunnelEngines runs the BackPack processes of this panel; tests replace it with one on a fake engine.
-var tunnelEngines = &backpack.Supervisor{
-	Binary: filepath.Join(config.GetBinFolderPath(), "backpack"),
-	Dir:    filepath.Join(config.GetDBFolderPath(), "tunnels"),
-}
+var tunnelEngines = backpack.NewSupervisor(
+	filepath.Join(config.GetBinFolderPath(), "backpack"),
+	filepath.Join(config.GetDBFolderPath(), "tunnels"),
+)
 
 const engineInstallTimeout = 5 * time.Minute
 
