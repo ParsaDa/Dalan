@@ -3,12 +3,16 @@ import { z } from 'zod';
 
 import { HttpUtil } from '@/utils';
 import { parseMsg } from '@/utils/zodValidate';
-import { ServerTunnelSchema, type ServerTunnel } from '@/generated/zod';
+import { OptionSchema, ServerTunnelSchema, type ServerTunnel } from '@/generated/zod';
 
 export type { ServerTunnel };
+export type TunnelMode = 'reverse' | 'direct';
+export type TunnelOptionValues = Record<string, unknown>;
 
 const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
-const TUNNELS_KEY = ['tunnels'] as const;
+export const TUNNELS_KEY = ['tunnels'] as const;
+// A tunnel's entry outbound is named tunnel-<name> in the Xray config.
+const TUNNEL_OUTBOUND_PREFIX = 'tunnel-';
 // The API sends null for an empty tag list; the table and form want an array.
 const stringList = z.array(z.string()).nullish();
 const TunnelListSchema = z.array(
@@ -16,8 +20,12 @@ const TunnelListSchema = z.array(
     routeInbounds: stringList,
     forwardPorts: stringList,
     fallbackTransports: stringList,
+    options: z.record(z.string(), z.unknown()).nullish(),
   }),
 );
+// Only choice options carry a list of values; the API sends null for the rest.
+const TunnelOptionListSchema = z.array(OptionSchema.extend({ choices: stringList }));
+export type TunnelOption = z.infer<typeof TunnelOptionListSchema>[number];
 
 export type NewPortalValues =
   | {
@@ -40,8 +48,34 @@ export type NewPortalValues =
       forwardPorts: string[];
       acceptUdp: boolean;
       routeInbounds: string[];
+      mode: TunnelMode;
+      options: TunnelOptionValues;
       nodeId?: number;
     };
+
+export interface TunnelEditValues {
+  address?: string;
+  port?: number;
+  serverName?: string;
+  transport?: string;
+  fallbackTransports?: string[];
+  forwardPorts?: string[];
+  acceptUdp?: boolean;
+  options?: TunnelOptionValues;
+  routeInbounds?: string[];
+  exitOutbound?: string;
+}
+
+export function withLiveTraffic(
+  tunnels: ServerTunnel[],
+  rows: { tag?: string; up?: number; down?: number }[],
+): ServerTunnel[] {
+  const byTag = new Map(rows.map((r) => [r.tag, r]));
+  return tunnels.map((t) => {
+    const row = byTag.get(TUNNEL_OUTBOUND_PREFIX + t.name);
+    return row ? { ...t, up: row.up ?? 0, down: row.down ?? 0 } : t;
+  });
+}
 
 async function fetchTunnels(): Promise<ServerTunnel[]> {
   const msg = await HttpUtil.get('/panel/api/tunnels/list', undefined, { silent: true });
@@ -52,6 +86,7 @@ async function fetchTunnels(): Promise<ServerTunnel[]> {
     routeInbounds: t.routeInbounds ?? [],
     forwardPorts: t.forwardPorts ?? [],
     fallbackTransports: t.fallbackTransports ?? [],
+    options: t.options ?? {},
   }));
 }
 
@@ -80,6 +115,11 @@ export function useTunnelMutations() {
   const importLink = useMutation({
     mutationFn: (values: { link: string; exitOutbound: string }) =>
       HttpUtil.post('/panel/api/tunnels/import', values, JSON_HEADERS),
+    onSuccess: refresh,
+  });
+  const update = useMutation({
+    mutationFn: ({ id, values }: { id: number; values: TunnelEditValues }) =>
+      HttpUtil.post(`/panel/api/tunnels/update/${id}`, values, JSON_HEADERS),
     onSuccess: refresh,
   });
   const setEnable = useMutation({
@@ -118,6 +158,7 @@ export function useTunnelMutations() {
     installingEngine: installEngine.isPending || updateEngine.isPending,
     create: create.mutateAsync,
     importLink: importLink.mutateAsync,
+    update: update.mutateAsync,
     setEnable: setEnable.mutateAsync,
     remove: remove.mutateAsync,
   };
@@ -170,6 +211,20 @@ export function useTunnelEngine() {
       const msg = await HttpUtil.get('/panel/api/tunnels/engine', undefined, { silent: true });
       if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the tunnel engine');
       return parseMsg(msg, EngineInfoSchema, 'tunnels/engine').obj ?? null;
+    },
+  });
+}
+
+// The catalog changes only with a Dalan release, so it is fetched once per page visit.
+export function useTunnelOptions() {
+  return useQuery({
+    queryKey: ['tunnel-options'],
+    staleTime: Infinity,
+    queryFn: async () => {
+      const msg = await HttpUtil.get('/panel/api/tunnels/options', undefined, { silent: true });
+      if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the tunnel options');
+      const options = parseMsg(msg, TunnelOptionListSchema, 'tunnels/options').obj ?? [];
+      return options.map((o) => ({ ...o, choices: o.choices ?? [] }));
     },
   });
 }

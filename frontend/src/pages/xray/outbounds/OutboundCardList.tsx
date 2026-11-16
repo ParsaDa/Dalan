@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { Button, Dropdown, Tag, Tooltip } from 'antd';
 import {
   RetweetOutlined,
@@ -10,6 +11,7 @@ import {
   ThunderboltOutlined,
   LoadingOutlined,
   ExportOutlined,
+  NodeIndexOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
 } from '@ant-design/icons';
@@ -148,6 +150,8 @@ export default function OutboundCardList({
                 <span className="tag-name">{record.tag}</span>
               </Tooltip>
               <Tag color="green">{record.protocol}</Tag>
+              {record.tunnelEngine && <Tag>{record.tunnelEngine}</Tag>}
+              {record.tunnelEngine && <Tag color="cyan">{t('pages.tunnels.modeReverse')}</Tag>}
               {[Protocols.VMess, Protocols.VLESS, Protocols.Trojan, Protocols.Shadowsocks].includes(
                 record.protocol as never,
               ) && (
@@ -159,62 +163,68 @@ export default function OutboundCardList({
                 </>
               )}
             </div>
-            <Dropdown
-              trigger={['click']}
-              menu={{
-                items: [
-                  ...(index > 0
-                    ? [
-                        {
-                          key: 'top',
-                          label: (
-                            <>
-                              <VerticalAlignTopOutlined aria-hidden />{' '}
-                              {t('pages.xray.outbound.moveToTop')}
-                            </>
-                          ),
-                          onClick: () => setFirst(index),
-                        },
-                      ]
-                    : []),
-                  {
-                    key: 'edit',
-                    label: (
-                      <>
-                        <EditOutlined aria-hidden /> {t('edit')}
-                      </>
-                    ),
-                    onClick: () => openEdit(index),
-                  },
-                  {
-                    key: 'reset',
-                    label: (
-                      <>
-                        <RetweetOutlined aria-hidden /> {t('pages.inbounds.resetTraffic')}
-                      </>
-                    ),
-                    onClick: () => onResetTraffic(record.tag || ''),
-                  },
-                  {
-                    key: 'del',
-                    danger: true,
-                    label: (
-                      <>
-                        <DeleteOutlined aria-hidden /> {t('delete')}
-                      </>
-                    ),
-                    onClick: () => confirmDelete(index),
-                  },
-                ],
-              }}
-            >
-              <Button
-                shape="circle"
-                size="small"
-                icon={<MoreOutlined aria-hidden />}
-                aria-label={t('more')}
-              />
-            </Dropdown>
+            {record.tunnelEngine ? (
+              <Link to="/tunnels" aria-label={t('pages.xray.outbound.manageTunnel')}>
+                <NodeIndexOutlined aria-hidden />
+              </Link>
+            ) : (
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  items: [
+                    ...(index > 0
+                      ? [
+                          {
+                            key: 'top',
+                            label: (
+                              <>
+                                <VerticalAlignTopOutlined aria-hidden />{' '}
+                                {t('pages.xray.outbound.moveToTop')}
+                              </>
+                            ),
+                            onClick: () => setFirst(index),
+                          },
+                        ]
+                      : []),
+                    {
+                      key: 'edit',
+                      label: (
+                        <>
+                          <EditOutlined aria-hidden /> {t('edit')}
+                        </>
+                      ),
+                      onClick: () => openEdit(index),
+                    },
+                    {
+                      key: 'reset',
+                      label: (
+                        <>
+                          <RetweetOutlined aria-hidden /> {t('pages.inbounds.resetTraffic')}
+                        </>
+                      ),
+                      onClick: () => onResetTraffic(record.tag || ''),
+                    },
+                    {
+                      key: 'del',
+                      danger: true,
+                      label: (
+                        <>
+                          <DeleteOutlined aria-hidden /> {t('delete')}
+                        </>
+                      ),
+                      onClick: () => confirmDelete(index),
+                    },
+                  ],
+                }}
+              >
+                <Button
+                  shape="circle"
+                  size="small"
+                  icon={<MoreOutlined aria-hidden />}
+                  aria-label={t('more')}
+                />
+              </Dropdown>
+            )}
           </div>
           {outboundAddresses(record).length > 0 && (
             <div className="address-list">

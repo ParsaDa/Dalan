@@ -87,7 +87,7 @@ func TestParseSetupLinkRejectsLinksItCannotUse(t *testing.T) {
 		{"another scheme", "backpack://abc", "not a Dalan tunnel link"},
 		{"not base64", "dalan://tunnel/%%%", "not a Dalan tunnel link"},
 		{"not JSON", encode("hello"), "not a Dalan tunnel link"},
-		{"newer format", encode(`{"v":3,"name":"a","address":"203.0.113.10","port":8443,"uuid":"8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10","security":"none"}`), "version 3"},
+		{"newer format", encode(`{"v":9,"name":"a","address":"203.0.113.10","port":8443,"uuid":"8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10","security":"none"}`), "version 9"},
 		{"missing uuid", encode(`{"v":1,"name":"a","address":"203.0.113.10","port":8443,"security":"none"}`), "uuid"},
 		{"bad name", encode(`{"v":1,"name":"A B","address":"203.0.113.10","port":8443,"uuid":"8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10","security":"none"}`), "name"},
 	}
@@ -206,5 +206,104 @@ func TestABackpackTunnelGetsARelayPortTheBridgeSharesAndXrayTunnelsDoNot(t *test
 	}
 	if xray := realityPortal(t); xray.RelayPort != 0 {
 		t.Fatalf("an Xray tunnel got RelayPort %d, want none", xray.RelayPort)
+	}
+}
+
+func TestOptionsTravelInTheLinkAndMakeItANewerVersion(t *testing.T) {
+	spec := backpackSpec()
+	spec.Options = map[string]any{"nodelay": true, "edge_ip": "198.51.100.7", "keepalive_period": float64(20)}
+	portal, err := NewPortal(spec)
+	if err != nil {
+		t.Fatalf("NewPortal: %v", err)
+	}
+	link, err := SetupLink(portal)
+	if err != nil {
+		t.Fatalf("SetupLink: %v", err)
+	}
+	if !strings.Contains(decodeLink(t, link), `"v":3`) {
+		t.Fatalf("link = %s, want version 3 because it carries options", decodeLink(t, link))
+	}
+	bridge, err := ParseSetupLink(link)
+	if err != nil {
+		t.Fatalf("ParseSetupLink: %v", err)
+	}
+	if bridge.Options["edge_ip"] != "198.51.100.7" || bridge.Options["nodelay"] != true || bridge.Options["keepalive_period"] != float64(20) {
+		t.Fatalf("bridge options = %v, want the portal's", bridge.Options)
+	}
+}
+
+func decodeLink(t *testing.T, link string) string {
+	t.Helper()
+	raw, err := base64.RawURLEncoding.DecodeString(strings.TrimPrefix(link, "dalan://tunnel/"))
+	if err != nil {
+		t.Fatalf("decode link: %v", err)
+	}
+	return string(raw)
+}
+
+func TestNewPortalRefusesOptionsItCannotWriteAndOptionsOnXrayTunnels(t *testing.T) {
+	spec := backpackSpec()
+	spec.Options = map[string]any{"no_such_option": true}
+	if _, err := NewPortal(spec); err == nil {
+		t.Fatal("NewPortal accepted an option the engine does not read")
+	}
+	xray := PortalSpec{
+		Name: "x1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+		Options: map[string]any{"nodelay": true},
+	}
+	if _, err := NewPortal(xray); err == nil || !strings.Contains(err.Error(), "BackPack") {
+		t.Fatalf("NewPortal(Xray with options) error = %v, want one saying options belong to BackPack", err)
+	}
+}
+
+func directSpec() PortalSpec {
+	return PortalSpec{
+		Name: "gm1", Address: "203.0.113.20", Port: 9000, Engine: model.TunnelEngineBackpack, Mode: model.TunnelModeDirect,
+		ForwardPorts: []string{"27015"}, AcceptUDP: true, Options: map[string]any{"carrier": "udp", "fec_data": float64(10), "fec_parity": float64(2)},
+	}
+}
+
+func TestADirectPortalGetsAnAddressPairAndItsBridgeGetsTheMirror(t *testing.T) {
+	portal, err := NewPortal(directSpec())
+	if err != nil {
+		t.Fatalf("NewPortal: %v", err)
+	}
+	local, _ := portal.Options["local_ip"].(string)
+	peer, _ := portal.Options["peer_ip"].(string)
+	if portal.Mode != model.TunnelModeDirect || portal.RelayPort != 0 || portal.Transport != "" ||
+		!strings.HasPrefix(local, "10.10.") || !strings.HasSuffix(local, ".1/30") || !strings.HasSuffix(peer, ".2") {
+		t.Fatalf("portal = %+v, want a direct tunnel with a /30 pair, no relay port and no transport", portal)
+	}
+	link, err := SetupLink(portal)
+	if err != nil {
+		t.Fatalf("SetupLink: %v", err)
+	}
+	bridge, err := ParseSetupLink(link)
+	if err != nil {
+		t.Fatalf("ParseSetupLink: %v", err)
+	}
+	prefix := strings.TrimSuffix(local, ".1/30")
+	if bridge.Mode != model.TunnelModeDirect || bridge.Role != model.TunnelRoleBridge ||
+		bridge.Options["local_ip"] != prefix+".2/30" || bridge.Options["peer_ip"] != prefix+".1" ||
+		bridge.Options["carrier"] != "udp" || bridge.Options["fec_data"] != float64(10) || len(bridge.ForwardPorts) != 0 {
+		t.Fatalf("bridge = %+v, want the mirrored addresses and the shared carrier and error correction", bridge)
+	}
+}
+
+func TestADirectTunnelNeedsBackpackAndAKnownCarrier(t *testing.T) {
+	cases := map[string]func(*PortalSpec){
+		"xray engine":     func(s *PortalSpec) { s.Engine = model.TunnelEngineXray; s.Security = model.TunnelSecurityNone },
+		"no carrier":      func(s *PortalSpec) { delete(s.Options, "carrier") },
+		"unknown carrier": func(s *PortalSpec) { s.Options["carrier"] = "smoke" },
+		"reverse option":  func(s *PortalSpec) { s.Options["edge_ip"] = "198.51.100.7" },
+	}
+	for name, mutate := range cases {
+		t.Run(name, func(t *testing.T) {
+			spec := directSpec()
+			mutate(&spec)
+			if _, err := NewPortal(spec); err == nil {
+				t.Fatalf("NewPortal accepted a direct tunnel with %s", name)
+			}
+		})
 	}
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 
 	"github.com/gin-gonic/gin"
@@ -28,6 +29,7 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.GET("/link/:id", a.link)
 	g.GET("/status/:id", a.status)
 	g.GET("/engine", a.engine)
+	g.GET("/options", a.options)
 	g.GET("/pools/list", a.poolList)
 
 	g.POST("/add", a.add)
@@ -35,6 +37,7 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.POST("/engine/install", a.installEngine)
 	g.POST("/engine/update", a.updateEngine)
 	g.POST("/engine/release", a.engineRelease)
+	g.POST("/update/:id", a.update)
 	g.POST("/setEnable/:id", a.setEnable)
 	g.POST("/del/:id", a.del)
 	g.POST("/dial", a.dial)
@@ -152,11 +155,13 @@ func (a *TunnelController) add(c *gin.Context) {
 		ServerName    string   `json:"serverName"`
 		RouteInbounds []string `json:"routeInbounds"`
 
-		Engine             string   `json:"engine"`
-		Transport          string   `json:"transport"`
-		FallbackTransports []string `json:"fallbackTransports"`
-		ForwardPorts       []string `json:"forwardPorts"`
-		AcceptUDP          bool     `json:"acceptUdp"`
+		Engine             string         `json:"engine"`
+		Transport          string         `json:"transport"`
+		FallbackTransports []string       `json:"fallbackTransports"`
+		ForwardPorts       []string       `json:"forwardPorts"`
+		AcceptUDP          bool           `json:"acceptUdp"`
+		Mode               string         `json:"mode"`
+		Options            map[string]any `json:"options"`
 
 		NodeId       int    `json:"nodeId"`
 		ExitOutbound string `json:"exitOutbound"`
@@ -168,7 +173,7 @@ func (a *TunnelController) add(c *gin.Context) {
 	spec := tunnel.PortalSpec{
 		Name: req.Name, Address: req.Address, Port: req.Port, Security: req.Security, ServerName: req.ServerName,
 		Engine: req.Engine, Transport: req.Transport, FallbackTransports: req.FallbackTransports,
-		ForwardPorts: req.ForwardPorts, AcceptUDP: req.AcceptUDP,
+		ForwardPorts: req.ForwardPorts, AcceptUDP: req.AcceptUDP, Mode: req.Mode, Options: req.Options,
 	}
 	var (
 		portal *model.ServerTunnel
@@ -184,6 +189,30 @@ func (a *TunnelController) add(c *gin.Context) {
 		return
 	}
 	jsonMsgObj(c, I18nWeb(c, "pages.tunnels.toasts.add"), portal, nil)
+}
+
+// options lists every BackPack setting the panel can write, for both tunnel modes.
+func (a *TunnelController) options(c *gin.Context) {
+	jsonObj(c, backpack.Catalog, nil)
+}
+
+func (a *TunnelController) update(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.update"), err)
+		return
+	}
+	var edit service.TunnelEdit
+	if err := c.ShouldBindJSON(&edit); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.update"), err)
+		return
+	}
+	updated, err := a.tunnelService.Update(id, edit)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.update"), err)
+		return
+	}
+	jsonMsgObj(c, I18nWeb(c, "pages.tunnels.toasts.update"), updated, nil)
 }
 
 func (a *TunnelController) importLink(c *gin.Context) {

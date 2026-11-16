@@ -40,7 +40,7 @@ Xray restarts on each server within 30 seconds and the exit server connects.
 
 ### A BackPack tunnel
 
-1. On both servers open **Tunnels**. If a notice says the BackPack engine is not installed, press **Install BackPack**. Dalan downloads the pinned BackPack release, checks it against the checksums published with it, and puts it in the panel's `bin` folder. A server that cannot reach GitHub needs the `backpack` binary copied into that folder by hand.
+1. On both servers open **Tunnels**. If a notice says the BackPack engine is not installed, press **Install BackPack**. Dalan downloads the pinned BackPack release (1.9.0), checks it against the checksums published with it, and puts it in the panel's `bin` folder. A server that cannot reach GitHub needs the `backpack` binary copied into that folder by hand.
 2. On the **exit** server, create the inbound users will use, for example VLESS on port 2096.
 3. On the **entry** server, **New tunnel**, choose **BackPack**:
    - *Transport*: how the tunnel looks on the wire (`wssmux`, `tcpmux`, `quic`, `kcp`, ...).
@@ -58,6 +58,23 @@ Every enabled entry tunnel is listed read-only under **Xray → Outbounds** and 
 Dalan keeps one BackPack process per tunnel, restarts it if it exits, and stops it when the tunnel is disabled or deleted. A BackPack tunnel shows **Connected** on both servers, taken from what the engine itself reports; it has no latency figure.
 
 Some BackPack transports need root or raw packets (`pck`, `xdi`) and do not work in containers.
+
+### Reverse and direct
+
+Every tunnel is labelled **Reverse** or **Direct** in the Tunnels page (the Xray ones are always reverse), and in the Outbounds table.
+
+- **Reverse** (the default): the exit server dials the entry server, so the entry server never needs to reach the exit server. It passes filtering that only blocks inbound connections, works with CDN transports (`ws`, `wss`) and carries Xray traffic.
+- **Direct** (BackPack layer 3, BackPack 1.9.0 and newer): the entry server dials the exit server and they exchange IP packets through an encrypted GRE link. It is for games and anything that needs the lowest ping, because the packets are not wrapped in a TCP stream. Choose **BackPack**, then **Direct**, then a *carrier* (`udp`, `pck`, `quic`, `sni` or `xdi`) and the ports to forward (`27015`, or `27015=10.10.7.2:27015`, with *Accept UDP* for UDP games). The panel picks a private `/30` in `10.10.0.0/16` for the link and shows nothing about it; the two ends get mirrored addresses.
+
+A direct tunnel needs root and `/dev/net/tun` on **both** servers, so it does not work in most containers. Its carriers are UDP, raw packets or QUIC, which a CDN does not pass: for a CDN use a reverse tunnel with `ws`/`wss`. A direct tunnel is **not** an Xray outbound (there is no loopback relay in it), so it is not offered in Routing; it carries only the forwarded ports. It shows **Connected** when its link interface (`dl<id>`) is up; the exit server must be reachable on the tunnel's port.
+
+### Options
+
+**Advanced options** in the form lists every BackPack setting the panel can write, grouped as BackPack groups them: logging, limits, performance (`nodelay`, `keepalive_period`, ...), multiplexing, failover, CDN (`edge_ip` and friends, for `ws`/`wss` behind a CDN), and for direct tunnels the carrier and link-quality settings (`mtu`, `fec_data`, `fec_parity`, `bandwidth_mbps`, ...). A field left empty is not written, so the engine keeps its default. The setting travels in the setup link, and each end writes the ones that apply to its role. A few BackPack keys are not offered: the Naive and Xray helper sections, the monitor page and spoofed source addresses (`spoof` carrier).
+
+### Editing
+
+The pencil in the tunnel list changes a tunnel without deleting it. On an entry end you can change the address, port, transport, forwarded ports, options and routed inbounds; the name, secrets, engine and mode stay. When this panel made the other end on a node, the change is sent to the node first and nothing changes if the node refuses. On an exit end only the exit outbound and the options can change; to change a shared setting of a tunnel made by pasting a link, edit the entry end and import its new link on the exit server, which then updates that end instead of failing. A tunnel that carries a node's management cannot have its address, port or transport changed.
 
 ## Status
 
@@ -125,7 +142,7 @@ Every 15 seconds the panel measures each member (a real request through an Xray 
 
 ## Traffic per tunnel
 
-The **Traffic** column of an entry tunnel shows what has passed through it, up and down, since Xray last started. The panel switches Xray's outbound statistics on for the generated config by itself; nothing needs changing in the Xray settings. BackPack tunnels show nothing there: the engine counts its own bytes.
+The **Traffic** column of an entry tunnel shows what has passed through it, up and down, since Xray last started. The panel switches Xray's outbound statistics on for the generated config by itself; nothing needs changing in the Xray settings. BackPack direct tunnels show nothing there; a BackPack reverse tunnel shows what its outbound carried.
 
 ## Installing and updating the BackPack engine
 
@@ -139,5 +156,7 @@ Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>
 
 ## Not built yet
 
+- A direct tunnel as an Xray outbound, and a direct tunnel through a CDN (neither is possible with a layer-3 link).
+- BackPack's `spoof` carrier and its Naive and Xray helper sections.
 - One shared port for the management tunnels of all nodes.
 - Xray tunnels over transports other than REALITY on TCP.

@@ -4239,6 +4239,72 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "Option": {
+    "description": "Option is one BackPack setting the panel can write: its key, shape and a hint in both languages.",
+    "properties": {
+      "choices": {
+        "example": [
+          "info",
+          "debug"
+        ],
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "group": {
+        "example": "cdn",
+        "type": "string"
+      },
+      "hintEn": {
+        "example": "Dial this CDN edge address while presenting the tunnel's hostname.",
+        "type": "string"
+      },
+      "hintFa": {
+        "example": "اتصال مستقیم به این آدرس لبهٔ CDN.",
+        "type": "string"
+      },
+      "key": {
+        "example": "edge_ip",
+        "type": "string"
+      },
+      "kind": {
+        "example": "string",
+        "type": "string"
+      },
+      "max": {
+        "example": 0,
+        "format": "int64",
+        "type": "integer"
+      },
+      "min": {
+        "example": 0,
+        "format": "int64",
+        "type": "integer"
+      },
+      "mode": {
+        "example": "reverse",
+        "type": "string"
+      },
+      "role": {
+        "example": "bridge",
+        "type": "string"
+      }
+    },
+    "required": [
+      "choices",
+      "group",
+      "hintEn",
+      "hintFa",
+      "key",
+      "kind",
+      "max",
+      "min",
+      "mode",
+      "role"
+    ],
+    "type": "object"
+  },
   "OutboundTraffics": {
     "description": "OutboundTraffics tracks traffic statistics for Xray outbound connections.",
     "properties": {
@@ -4768,6 +4834,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": 0,
         "type": "integer"
       },
+      "mode": {
+        "description": "Mode is \"reverse\" (the exit server dials the entry server) or \"direct\" (the entry server dials the\nexit server, a BackPack layer-3 link). An empty value reads as reverse.",
+        "example": "reverse",
+        "type": "string"
+      },
       "name": {
         "example": "de1",
         "type": "string"
@@ -4776,6 +4847,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "description": "NodeId (portal) names the node whose panel holds the other end, set when this panel created both ends.",
         "example": 0,
         "type": "integer"
+      },
+      "options": {
+        "additionalProperties": {},
+        "description": "Options are BackPack settings beyond the fields above, keyed as the engine spells them; each end\nwrites the ones that apply to its role.",
+        "type": "object"
       },
       "parentId": {
         "description": "ParentId (management portal) is the tunnel whose port and REALITY identity this channel shares.",
@@ -4844,8 +4920,10 @@ export const SCHEMAS: Record<string, unknown> = {
       "forwardPorts",
       "id",
       "managePort",
+      "mode",
       "name",
       "nodeId",
+      "options",
       "parentId",
       "port",
       "realityPublicKey",

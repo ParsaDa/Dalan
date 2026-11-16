@@ -154,6 +154,8 @@ test('carries a node on an existing tunnel without asking for an address of its 
     acceptUdp: false,
     relayPort: 0,
     managePort: 0,
+    mode: 'reverse',
+    options: null,
     parentId: 0,
   };
   vi.spyOn(HttpUtil, 'get').mockImplementation(

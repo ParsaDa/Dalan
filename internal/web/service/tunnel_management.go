@@ -80,25 +80,34 @@ func (s *TunnelService) CreateManagementPortal(spec tunnel.PortalSpec) (*model.S
 const nodeCallTimeout = 20 * time.Second
 
 func (s *TunnelService) remoteFor(nodeID int) (*runtime.Remote, error) {
+	remote, _, err := s.remoteAndNode(nodeID)
+	return remote, err
+}
+
+func (s *TunnelService) remoteAndNode(nodeID int) (*runtime.Remote, *model.Node, error) {
 	node, err := (&NodeService{}).GetById(nodeID)
 	if err != nil || node == nil {
-		return nil, fmt.Errorf("node %d does not exist", nodeID)
+		return nil, nil, fmt.Errorf("node %d does not exist", nodeID)
 	}
 	if !node.Enable {
-		return nil, fmt.Errorf("node %q is disabled", node.Name)
+		return nil, nil, fmt.Errorf("node %q is disabled", node.Name)
 	}
 	mgr := runtime.GetManager()
 	if mgr == nil {
-		return nil, errors.New("runtime manager unavailable")
+		return nil, nil, errors.New("runtime manager unavailable")
 	}
-	return mgr.RemoteFor(node)
+	remote, err := mgr.RemoteFor(node)
+	return remote, node, err
 }
 
 // CreateOnNode makes both ends of a tunnel from this panel: the listening end here and the dialling end on a node.
 func (s *TunnelService) CreateOnNode(nodeID int, spec tunnel.PortalSpec, routeInbounds []string, exitOutbound string) (*model.ServerTunnel, error) {
-	remote, err := s.remoteFor(nodeID)
+	remote, node, err := s.remoteAndNode(nodeID)
 	if err != nil {
 		return nil, err
+	}
+	if spec.Mode == model.TunnelModeDirect && strings.TrimSpace(spec.Address) == "" {
+		spec.Address = node.Address
 	}
 	portal, err := s.CreatePortal(spec, routeInbounds)
 	if err != nil {
@@ -155,6 +164,9 @@ func (s *TunnelService) CreateManagementRider(parentId int, name string) (*model
 	}
 	if parent.Role != model.TunnelRolePortal || parent.ManagePort > 0 || parent.ParentId > 0 {
 		return nil, errors.New("a node's management can only ride on the entry end of an ordinary tunnel")
+	}
+	if parent.Mode == model.TunnelModeDirect {
+		return nil, errors.New("a direct tunnel cannot carry a node's management")
 	}
 	rider := model.ServerTunnel{
 		Name: name, Role: model.TunnelRolePortal, Engine: parent.Engine, Enable: true,

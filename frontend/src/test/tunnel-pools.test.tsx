@@ -25,6 +25,8 @@ const entry = (id: number, name: string, extra: Record<string, unknown> = {}) =>
   forwardPorts: [],
   acceptUdp: false,
   managePort: 0,
+  mode: 'reverse',
+  options: {},
   parentId: 0,
   nodeId: 0,
   relayPort: 0,

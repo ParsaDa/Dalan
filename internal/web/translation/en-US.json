@@ -2201,7 +2201,8 @@
         "server": "Server",
         "city": "City",
         "allCities": "All Cities",
-        "moveToTop": "Move to top"
+        "moveToTop": "Move to top",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "Subscriptions",
@@ -2247,9 +2248,7 @@
         "toastRefreshed": "Refreshed",
         "toastRefreshFailed": "Refresh failed",
         "toastDeleted": "Deleted",
-        "toastDeleteFailed": "Delete failed",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "Delete failed"
       },
       "pia": {
         "menu": "PIA",
@@ -2530,7 +2529,7 @@
     },
     "tunnels": {
       "title": "Tunnels",
-      "subtitle": "Reverse tunnels between this server and your other servers. The exit server opens the connection toward the entry server.",
+      "subtitle": "Tunnels between this server and your other servers. Reverse: the exit server opens the connection toward the entry server. Direct: the entry server dials the exit server over a layer-3 link, for games.",
       "newPortal": "New tunnel",
       "importLink": "Import link",
       "empty": "No tunnels yet",
@@ -2605,7 +2604,33 @@
       "engineVersion": "BackPack engine {version}",
       "engineVersionUnknown": "(installed by hand)",
       "updateEngine": "Update engine",
-      "engineViaNode": "Download through node"
+      "engineViaNode": "Download through node",
+      "mode": "Mode",
+      "modeReverse": "Reverse",
+      "modeDirect": "Direct",
+      "modeReverseHint": "The exit server dials the entry server. Works through filtering and behind a CDN, and carries Xray traffic.",
+      "modeDirectHint": "Layer 3 (BackPack): the entry server dials the exit server over a datagram carrier. Lowest ping, for games. Needs root and /dev/net/tun on both servers; cannot pass a CDN and is not an Xray outbound.",
+      "directAddressHint": "Address of the exit server. Leave it empty when you pick a node below.",
+      "directPortHint": "The port the exit server listens on for the link.",
+      "advancedOptions": "Advanced options",
+      "optionDefault": "Default",
+      "optionOn": "On",
+      "optionOff": "Off",
+      "optionGroups": {
+        "general": "General",
+        "carrier": "Carrier",
+        "cdn": "CDN",
+        "connection": "Connection",
+        "failover": "Failover",
+        "limits": "Limits",
+        "mux": "Multiplexing",
+        "performance": "Performance",
+        "quality": "Link quality",
+        "server": "Server"
+      },
+      "editTunnel": "Edit tunnel",
+      "editReachesNode": "The change is also sent to the node that holds the other end.",
+      "optionRequired": "This setting is required."
     },
     "enrolments": {
       "title": "Add node with a command",

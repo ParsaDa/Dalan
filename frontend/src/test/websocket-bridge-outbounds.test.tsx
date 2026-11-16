@@ -49,3 +49,55 @@ describe('websocket bridge outbounds handler', () => {
     expect(queryClient.getQueryData(keys.xray.outboundsTraffic())).toBeUndefined();
   });
 });
+
+describe('websocket bridge tunnel traffic', () => {
+  let originalWS: typeof WebSocket;
+
+  beforeEach(() => {
+    originalWS = globalThis.WebSocket;
+    class FakeWebSocket {
+      static readonly CONNECTING = 0;
+      static readonly OPEN = 1;
+      static readonly CLOSING = 2;
+      static readonly CLOSED = 3;
+      readyState = FakeWebSocket.CONNECTING;
+      addEventListener() {}
+      removeEventListener() {}
+      close() {}
+      send() {}
+    }
+    globalThis.WebSocket = FakeWebSocket as unknown as typeof WebSocket;
+  });
+
+  afterEach(() => {
+    globalThis.WebSocket = originalWS;
+  });
+
+  it('moves a tunnel row to the bytes its entry outbound just carried', () => {
+    const queryClient = new QueryClient();
+    queryClient.setQueryData(
+      ['tunnels'],
+      [
+        { id: 1, name: 'de1', up: 0, down: 0 },
+        { id: 2, name: 'nl1', up: 5, down: 6 },
+      ],
+    );
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+    renderHook(() => useWebSocketBridge(), { wrapper });
+
+    const client = getSharedWebSocketClient() as unknown as ListenerMap;
+    for (const handler of client.listeners.get('outbounds') ?? []) {
+      handler([
+        { tag: 'direct', up: 1, down: 2 },
+        { tag: 'tunnel-de1', up: 100, down: 200 },
+      ]);
+    }
+
+    expect(queryClient.getQueryData(['tunnels'])).toEqual([
+      { id: 1, name: 'de1', up: 100, down: 200 },
+      { id: 2, name: 'nl1', up: 5, down: 6 },
+    ]);
+  });
+});

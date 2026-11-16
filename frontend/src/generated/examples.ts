@@ -1053,6 +1053,21 @@ export const EXAMPLES: Record<string, unknown> = {
     "xrayState": "running",
     "xrayVersion": "25.10.31"
   },
+  "Option": {
+    "choices": [
+      "info",
+      "debug"
+    ],
+    "group": "cdn",
+    "hintEn": "Dial this CDN edge address while presenting the tunnel's hostname.",
+    "hintFa": "اتصال مستقیم به این آدرس لبهٔ CDN.",
+    "key": "edge_ip",
+    "kind": "string",
+    "max": 0,
+    "min": 0,
+    "mode": "reverse",
+    "role": "bridge"
+  },
   "OutboundTraffics": {
     "down": 0,
     "id": 0,
@@ -1183,8 +1198,10 @@ export const EXAMPLES: Record<string, unknown> = {
     ],
     "id": 1,
     "managePort": 0,
+    "mode": "reverse",
     "name": "de1",
     "nodeId": 0,
+    "options": {},
     "parentId": 0,
     "port": 8443,
     "realityPublicKey": "",

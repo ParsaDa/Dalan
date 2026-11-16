@@ -7,6 +7,9 @@ const (
 	TunnelEngineXray     = "xray"
 	TunnelEngineBackpack = "backpack"
 
+	TunnelModeReverse = "reverse"
+	TunnelModeDirect  = "direct"
+
 	TunnelSecurityNone    = "none"
 	TunnelSecurityReality = "reality"
 )
@@ -37,6 +40,13 @@ type ServerTunnel struct {
 	AcceptUDP    bool     `json:"acceptUdp" gorm:"column:accept_udp"`
 	// RelayPort is the loopback port both ends of a BackPack tunnel use to carry Xray traffic; zero means none.
 	RelayPort int `json:"relayPort" gorm:"column:relay_port;default:0" example:"63500"`
+
+	// Mode is "reverse" (the exit server dials the entry server) or "direct" (the entry server dials the
+	// exit server, a BackPack layer-3 link). An empty value reads as reverse.
+	Mode string `json:"mode" gorm:"default:reverse" example:"reverse"`
+	// Options are BackPack settings beyond the fields above, keyed as the engine spells them; each end
+	// writes the ones that apply to its role.
+	Options map[string]any `json:"options" gorm:"serializer:json;column:options"`
 
 	// RouteInbounds (portal) lists the local inbound tags whose traffic leaves through this tunnel.
 	RouteInbounds []string `json:"routeInbounds" gorm:"serializer:json;column:route_inbounds"`
