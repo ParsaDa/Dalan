@@ -127,8 +127,8 @@ func TestTunnelRoutesCreateABackpackTunnelAndReportTheEngine(t *testing.T) {
 		Version   string `json:"version"`
 		Pinned    string `json:"pinned"`
 	}
-	if err := json.Unmarshal(info.Obj, &got); err != nil || got.Installed || got.Version != "" || got.Pinned != "v1.8.5" {
-		t.Fatalf("engine info = %s (%v), want not installed, offering v1.8.5", info.Obj, err)
+	if err := json.Unmarshal(info.Obj, &got); err != nil || got.Installed || got.Version != "" || got.Pinned != "v1.9.0" {
+		t.Fatalf("engine info = %s (%v), want not installed, offering v1.9.0", info.Obj, err)
 	}
 }
 

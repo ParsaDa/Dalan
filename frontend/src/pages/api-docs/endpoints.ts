@@ -2020,7 +2020,7 @@ export const sections: readonly Section[] = [
         summary:
           'Whether the BackPack engine binary is on this server, which release is installed (empty when it was placed by hand), and the release this Dalan version installs by default.',
         response:
-          '{\n  "success": true,\n  "obj": {\n    "installed": true,\n    "version": "v1.8.5",\n    "pinned": "v1.8.5"\n  }\n}',
+          '{\n  "success": true,\n  "obj": {\n    "installed": true,\n    "version": "v1.9.0",\n    "pinned": "v1.9.0"\n  }\n}',
       },
       {
         method: 'GET',
@@ -2043,7 +2043,7 @@ export const sections: readonly Section[] = [
           'Install a BackPack release (empty version means the newest) and restart the BackPack tunnels on it. With nodeId the release is downloaded by that node and sent over the management channel, for a server that cannot reach GitHub. The release is verified against its published checksums. When tunnels that were connected do not reconnect within about 75 seconds, the earlier engine is put back and the call fails. Can take several minutes.',
         body: '{\n  "nodeId": 0,\n  "version": ""\n}',
         response:
-          '{\n  "success": true,\n  "obj": {\n    "installed": true,\n    "version": "v1.9.0",\n    "pinned": "v1.8.5"\n  }\n}',
+          '{\n  "success": true,\n  "obj": {\n    "installed": true,\n    "version": "v1.9.0",\n    "pinned": "v1.9.0"\n  }\n}',
       },
       {
         method: 'POST',

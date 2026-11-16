@@ -33,8 +33,8 @@ const engineInstallTimeout = 5 * time.Minute
 // it was placed by hand) and which one Dalan installs by default.
 type EngineInfo struct {
 	Installed bool   `json:"installed" example:"true"`
-	Version   string `json:"version" example:"v1.8.5"`
-	Pinned    string `json:"pinned" example:"v1.8.5"`
+	Version   string `json:"version" example:"v1.9.0"`
+	Pinned    string `json:"pinned" example:"v1.9.0"`
 }
 
 // TunnelService stores the tunnel ends this panel owns and schedules Xray to pick up changes.
