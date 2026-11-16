@@ -40,6 +40,8 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 | #5 | Tunnel status: real request through the tunnel, latency and exit location |
 | #6 | BackPack engine: config rendering, process supervisor, verified installer, status, UI |
 | #7 | 0.3.0 |
+| #13 | 0.4.0: tunnels as outbounds, spare-tunnel pools, route test, engine update through a node, container front door |
+| #14 | 0.4.5: reverse/direct label, direct layer-3 tunnels, all BackPack 1.9.0 options, edit in place, live tunnel traffic |
 
 Merged in PR #9 (0.3.1): reverse node enrolment and the management channel, item 1 of the list below. Design: `dalan/plans/2026-11-15-node-enrolment-design.md`. Operator guide: "Nodes that dial in" in `dalan/TUNNELS.md`.
 
@@ -89,7 +91,7 @@ Verified by automated tests that run in CI:
 - Service, controller and page behaviour; installer against a local release server (good checksum, wrong checksum, missing checksum, failed download keeps the current engine); supervisor with a stand-in engine.
 
 Verified once by hand, not in CI:
-- A real BackPack v1.8.5 binary (0.4.0; not repeated for v1.9.0) (built from that tag with `CGO_ENABLED=0`) on both ends carries a forwarded TCP port: `DALAN_BACKPACK_E2E_BINARY=/path/to/backpack go test ./internal/tunnel/backpack/`.
+- A real BackPack v1.8.5 binary (built from that tag with `CGO_ENABLED=0`, not repeated for v1.9.0) on both ends carries a forwarded TCP port: `DALAN_BACKPACK_E2E_BINARY=/path/to/backpack go test ./internal/tunnel/backpack/`.
 - A real install of v0.1.0 on a server by the owner: panel came up, `dalan` command works.
 
 **Not verified — waiting on the owner's tests:**
@@ -118,7 +120,7 @@ Verified once by hand, not in CI:
 
 ## What is left, in order
 
-1. **Real-server tests of 0.4.0** (owner): tunnels as outbounds, pools, route test, engine update through a node, install-and-enrol, and the Docker image on Railway. Nothing here has run on real servers; the Docker image was not built in the sandbox (no daemon), CI builds it on the tag.
+1. **Real-server tests of 0.4.0 and 0.4.5** (owner): tunnels as outbounds, pools, route test, engine update through a node, install-and-enrol, and the Docker image on Railway. Nothing here has run on real servers; the Docker image was not built in the sandbox (no daemon), CI builds it on the tag.
 2. **Direct tunnel gaps**: not an Xray outbound, cannot cross a CDN (UDP/raw/ICMP carriers), the `spoof` carrier and BackPack's Naive/Xray helper sections are not offered. The **backup server** (design §7.7) is cancelled for now. Pool balancer tags are not offered in the Routing page's balancer picker (they can be typed as `pool-<name>`); BackPack members of a pool report no latency and only replace a tunnel that is down.
 3. **One shared port for all management tunnels**, and Xray tunnels over transports other than REALITY/TCP.
 4. **Node tabs**: the owner's idea — each enrolled node gets a tab in the main panel that shows that node's whole management panel (the main panel already has the node's API token and a path to it through the management tunnel; needs request forwarding plus a node-scoped UI). Fits the UI redesign.
