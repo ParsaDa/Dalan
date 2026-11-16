@@ -51,13 +51,13 @@ type Option struct {
 	Role    string   `json:"role" example:"bridge"`
 	Mode    string   `json:"mode" example:"reverse"`
 	Group   string   `json:"group" example:"cdn"`
-	Choices []string `json:"choices" example:"info"`
+	Choices []string `json:"choices" example:"[\"info\",\"debug\"]"`
 	Min     int64    `json:"min" example:"0"`
 	Max     int64    `json:"max" example:"0"`
 	HintEn  string   `json:"hintEn" example:"Dial this CDN edge address while presenting the tunnel's hostname."`
 	HintFa  string   `json:"hintFa" example:"به‌جای نام دامنه، مستقیم به این آدرس لبهٔ CDN وصل می‌شود."`
 
-	pattern *regexp.Regexp
+	pattern *regexp.Regexp `json:"-"`
 }
 
 // Catalog lists every setting the panel offers, in the order a config file writes them. A key that the

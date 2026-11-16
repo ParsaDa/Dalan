@@ -46,6 +46,7 @@ describe('OutboundsTab tunnel rows', () => {
     const tunnelRow = tableRows[1] as HTMLElement;
     expect(tunnelRow.textContent).toContain('tunnel-de1');
     expect(tunnelRow.textContent).toContain('2.00 KB');
+    expect(tunnelRow.textContent).toContain('Reverse');
     expect(tunnelRow.querySelector('button[aria-label="Edit"]')).toBeNull();
     expect(tunnelRow.querySelector('button[aria-label="More"]')).toBeNull();
     const check = tunnelRow.querySelector('button[aria-label="Check"]') as HTMLButtonElement;
@@ -63,6 +64,7 @@ describe('OutboundsTab tunnel rows', () => {
     const cards = document.querySelectorAll('.outbound-card');
     expect(cards.length).toBe(2);
     expect(cards[1].textContent).toContain('tunnel-de1');
+    expect(cards[1].textContent).toContain('Reverse');
     expect(cards[1].querySelector('button[aria-label="More"]')).toBeNull();
   });
 });

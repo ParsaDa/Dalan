@@ -3,9 +3,11 @@ import { z } from 'zod';
 
 import { HttpUtil } from '@/utils';
 import { parseMsg } from '@/utils/zodValidate';
-import { ServerTunnelSchema, type ServerTunnel } from '@/generated/zod';
+import { OptionSchema, ServerTunnelSchema, type ServerTunnel } from '@/generated/zod';
 
 export type { ServerTunnel };
+export type TunnelMode = 'reverse' | 'direct';
+export type TunnelOptionValues = Record<string, unknown>;
 
 const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
 export const TUNNELS_KEY = ['tunnels'] as const;
@@ -18,8 +20,12 @@ const TunnelListSchema = z.array(
     routeInbounds: stringList,
     forwardPorts: stringList,
     fallbackTransports: stringList,
+    options: z.record(z.string(), z.unknown()).nullish(),
   }),
 );
+// Only choice options carry a list of values; the API sends null for the rest.
+const TunnelOptionListSchema = z.array(OptionSchema.extend({ choices: stringList }));
+export type TunnelOption = z.infer<typeof TunnelOptionListSchema>[number];
 
 export type NewPortalValues =
   | {
@@ -42,8 +48,23 @@ export type NewPortalValues =
       forwardPorts: string[];
       acceptUdp: boolean;
       routeInbounds: string[];
+      mode: TunnelMode;
+      options: TunnelOptionValues;
       nodeId?: number;
     };
+
+export interface TunnelEditValues {
+  address?: string;
+  port?: number;
+  serverName?: string;
+  transport?: string;
+  fallbackTransports?: string[];
+  forwardPorts?: string[];
+  acceptUdp?: boolean;
+  options?: TunnelOptionValues;
+  routeInbounds?: string[];
+  exitOutbound?: string;
+}
 
 export function withLiveTraffic(
   tunnels: ServerTunnel[],
@@ -65,6 +86,7 @@ async function fetchTunnels(): Promise<ServerTunnel[]> {
     routeInbounds: t.routeInbounds ?? [],
     forwardPorts: t.forwardPorts ?? [],
     fallbackTransports: t.fallbackTransports ?? [],
+    options: t.options ?? {},
   }));
 }
 
@@ -93,6 +115,11 @@ export function useTunnelMutations() {
   const importLink = useMutation({
     mutationFn: (values: { link: string; exitOutbound: string }) =>
       HttpUtil.post('/panel/api/tunnels/import', values, JSON_HEADERS),
+    onSuccess: refresh,
+  });
+  const update = useMutation({
+    mutationFn: ({ id, values }: { id: number; values: TunnelEditValues }) =>
+      HttpUtil.post(`/panel/api/tunnels/update/${id}`, values, JSON_HEADERS),
     onSuccess: refresh,
   });
   const setEnable = useMutation({
@@ -131,6 +158,7 @@ export function useTunnelMutations() {
     installingEngine: installEngine.isPending || updateEngine.isPending,
     create: create.mutateAsync,
     importLink: importLink.mutateAsync,
+    update: update.mutateAsync,
     setEnable: setEnable.mutateAsync,
     remove: remove.mutateAsync,
   };
@@ -183,6 +211,20 @@ export function useTunnelEngine() {
       const msg = await HttpUtil.get('/panel/api/tunnels/engine', undefined, { silent: true });
       if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the tunnel engine');
       return parseMsg(msg, EngineInfoSchema, 'tunnels/engine').obj ?? null;
+    },
+  });
+}
+
+// The catalog changes only with a Dalan release, so it is fetched once per page visit.
+export function useTunnelOptions() {
+  return useQuery({
+    queryKey: ['tunnel-options'],
+    staleTime: Infinity,
+    queryFn: async () => {
+      const msg = await HttpUtil.get('/panel/api/tunnels/options', undefined, { silent: true });
+      if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the tunnel options');
+      const options = parseMsg(msg, TunnelOptionListSchema, 'tunnels/options').obj ?? [];
+      return options.map((o) => ({ ...o, choices: o.choices ?? [] }));
     },
   });
 }

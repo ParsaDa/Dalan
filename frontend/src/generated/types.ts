@@ -970,7 +970,6 @@ export interface Option {
   max: number;
   min: number;
   mode: string;
-  pattern?: Regexp | null;
   role: string;
 }
 

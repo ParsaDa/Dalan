@@ -4269,7 +4269,10 @@
         "description": "Option is one BackPack setting the panel can write: its key, shape and a hint in both languages.",
         "properties": {
           "choices": {
-            "example": "info",
+            "example": [
+              "info",
+              "debug"
+            ],
             "items": {
               "type": "string"
             },
@@ -4308,9 +4311,6 @@
           "mode": {
             "example": "reverse",
             "type": "string"
-          },
-          "pattern": {
-            "nullable": true
           },
           "role": {
             "example": "bridge",
@@ -13920,8 +13920,8 @@
                   "success": true,
                   "obj": {
                     "installed": true,
-                    "version": "v1.8.5",
-                    "pinned": "v1.8.5"
+                    "version": "v1.9.0",
+                    "pinned": "v1.9.0"
                   }
                 }
               }
@@ -13963,7 +13963,10 @@
                   "success": true,
                   "obj": [
                     {
-                      "choices": "info",
+                      "choices": [
+                        "info",
+                        "debug"
+                      ],
                       "group": "cdn",
                       "hintEn": "Dial this CDN edge address while presenting the tunnel's hostname.",
                       "hintFa": "به‌جای نام دامنه، مستقیم به این آدرس لبهٔ CDN وصل می‌شود.",
@@ -13972,7 +13975,6 @@
                       "max": 0,
                       "min": 0,
                       "mode": "reverse",
-                      "pattern": null,
                       "role": "bridge"
                     }
                   ]
@@ -14056,7 +14058,7 @@
                   "obj": {
                     "installed": true,
                     "version": "v1.9.0",
-                    "pinned": "v1.8.5"
+                    "pinned": "v1.9.0"
                   }
                 }
               }

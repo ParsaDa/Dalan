@@ -24,10 +24,18 @@ import {
   message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { CopyOutlined, DeleteOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  CopyOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  ImportOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 
 import { useTheme } from '@/hooks/useTheme';
 import PortTest from './PortTest';
+import TunnelEditModal from './TunnelEditModal';
+import TunnelOptionFields, { TunnelOptionField, cleanOptions } from './TunnelOptionFields';
 import TunnelPools from './TunnelPools';
 import { useNodesQuery } from '@/api/queries/useNodesQuery';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
@@ -35,10 +43,14 @@ import {
   fetchSetupLink,
   useTunnelEngine,
   useTunnelMutations,
+  useTunnelOptions,
   useTunnelStatus,
   useTunnelsQuery,
   type NewPortalValues,
   type ServerTunnel,
+  type TunnelEditValues,
+  type TunnelMode,
+  type TunnelOptionValues,
 } from '@/api/queries/useTunnels';
 import AppSidebar from '@/layouts/AppSidebar';
 import { selectTagRender } from '@/components/form/SelectTag';
@@ -74,6 +86,8 @@ interface PortalFormValues {
   fallbackTransports?: string[];
   forwardPorts?: string[];
   acceptUdp?: boolean;
+  mode: TunnelMode;
+  options?: TunnelOptionValues;
 }
 
 function TunnelStatusCell({ tunnel }: { tunnel: ServerTunnel }) {
@@ -119,8 +133,18 @@ export default function TunnelsPage() {
   }, [messageApi]);
 
   const { tunnels, loading, fetched, fetchError, refetch } = useTunnelsQuery();
-  const { create, importLink, setEnable, remove, installEngine, updateEngine, installingEngine } =
-    useTunnelMutations();
+  const {
+    create,
+    importLink,
+    update,
+    setEnable,
+    remove,
+    installEngine,
+    updateEngine,
+    installingEngine,
+  } = useTunnelMutations();
+  const { data: catalog = [] } = useTunnelOptions();
+  const [editing, setEditing] = useState<ServerTunnel | null>(null);
   const { data: engineInfo } = useTunnelEngine();
   const { data: inboundOptions = [] } = useInboundOptions();
   const { nodes } = useNodesQuery();
@@ -133,8 +157,11 @@ export default function TunnelsPage() {
   const [importForm] = Form.useForm<{ link: string; exitOutbound?: string }>();
   const security = Form.useWatch('security', portalForm);
   const engine = Form.useWatch('engine', portalForm);
+  const mode = Form.useWatch('mode', portalForm) ?? 'reverse';
   const chosenNode = Form.useWatch('nodeId', portalForm);
   const chosenAddress = Form.useWatch('address', portalForm);
+  const direct = engine === 'backpack' && mode === 'direct';
+  const carrierOption = catalog.find((o) => o.mode === 'direct' && o.key === 'carrier');
   const usesBackpack = tunnels.some((tunnel) => tunnel.engine === 'backpack');
 
   const inboundTagOptions = useMemo(
@@ -192,7 +219,7 @@ export default function TunnelsPage() {
     try {
       const common = {
         name: values.name,
-        address: values.address.trim(),
+        address: (values.address ?? '').trim(),
         port: values.port,
         ...(values.nodeId ? { nodeId: values.nodeId } : {}),
       };
@@ -201,11 +228,13 @@ export default function TunnelsPage() {
           ? {
               ...common,
               engine: 'backpack',
-              transport: values.transport,
-              fallbackTransports: values.fallbackTransports ?? [],
+              transport: direct ? '' : values.transport,
+              fallbackTransports: direct ? [] : (values.fallbackTransports ?? []),
               forwardPorts: values.forwardPorts ?? [],
               acceptUdp: values.acceptUdp ?? false,
-              routeInbounds: values.routeInbounds ?? [],
+              routeInbounds: direct ? [] : (values.routeInbounds ?? []),
+              mode: values.mode,
+              options: cleanOptions(values.options),
             }
           : {
               ...common,
@@ -243,6 +272,9 @@ export default function TunnelsPage() {
     }
   };
 
+  const saveEdit = async (id: number, values: TunnelEditValues) =>
+    report(await update({ id, values }));
+
   const copyLink = async (id: number) => {
     try {
       const link = await fetchSetupLink(id);
@@ -273,6 +305,13 @@ export default function TunnelsPage() {
         <Space>
           <Typography.Text strong>{name}</Typography.Text>
           {row.engine === 'backpack' && <Tag>{t('pages.tunnels.engineBackpack')}</Tag>}
+          {!row.managePort && (
+            <Tag color={row.mode === 'direct' ? 'purple' : 'cyan'}>
+              {row.mode === 'direct'
+                ? t('pages.tunnels.modeDirect')
+                : t('pages.tunnels.modeReverse')}
+            </Tag>
+          )}
         </Space>
       ),
     },
@@ -293,7 +332,7 @@ export default function TunnelsPage() {
     {
       title: t('pages.tunnels.traffic'),
       render: (_, row) =>
-        row.role === 'portal' && !row.managePort
+        row.role === 'portal' && !row.managePort && row.mode !== 'direct'
           ? `↑ ${SizeFormatter.sizeFormat(row.up)} · ↓ ${SizeFormatter.sizeFormat(row.down)}`
           : '',
     },
@@ -323,9 +362,18 @@ export default function TunnelsPage() {
             ),
     },
     {
-      width: 110,
+      width: 150,
       render: (_, row) => (
         <Space>
+          {!row.managePort && (
+            <Button
+              type="text"
+              icon={<EditOutlined aria-hidden />}
+              aria-label={`${t('edit')} ${row.name}`}
+              title={t('edit')}
+              onClick={() => setEditing(row)}
+            />
+          )}
           {row.role === 'portal' && (
             <Button
               type="text"
@@ -483,6 +531,7 @@ export default function TunnelsPage() {
           layout="vertical"
           initialValues={{
             engine: 'xray',
+            mode: 'reverse',
             security: 'reality',
             port: 8443,
             routeInbounds: [],
@@ -502,14 +551,15 @@ export default function TunnelsPage() {
           <Form.Item
             name="address"
             label={t('pages.tunnels.address')}
-            extra={t('pages.tunnels.addressHint')}
-            rules={[{ required: true, whitespace: true }]}
+            extra={direct ? t('pages.tunnels.directAddressHint') : t('pages.tunnels.addressHint')}
+            rules={[{ required: !(direct && chosenNode), whitespace: true }]}
           >
             <Input placeholder="203.0.113.10" autoComplete="off" />
           </Form.Item>
           <Form.Item
             name="port"
             label={t('pages.tunnels.port')}
+            extra={direct ? t('pages.tunnels.directPortHint') : undefined}
             rules={[{ required: true, type: 'number', min: 1, max: 65535 }]}
           >
             <InputNumber min={1} max={65535} style={{ width: '100%' }} />
@@ -522,6 +572,24 @@ export default function TunnelsPage() {
               ]}
             />
           </Form.Item>
+          {engine === 'backpack' && (
+            <Form.Item
+              name="mode"
+              label={t('pages.tunnels.mode')}
+              extra={
+                mode === 'direct'
+                  ? t('pages.tunnels.modeDirectHint')
+                  : t('pages.tunnels.modeReverseHint')
+              }
+            >
+              <Radio.Group
+                options={[
+                  { value: 'reverse', label: t('pages.tunnels.modeReverse') },
+                  { value: 'direct', label: t('pages.tunnels.modeDirect') },
+                ]}
+              />
+            </Form.Item>
+          )}
           {nodes.length > 0 && (
             <Form.Item
               name="nodeId"
@@ -536,7 +604,7 @@ export default function TunnelsPage() {
               />
             </Form.Item>
           )}
-          {chosenNode ? (
+          {chosenNode && !direct ? (
             <PortTest
               nodeId={chosenNode}
               address={chosenAddress ?? ''}
@@ -545,21 +613,27 @@ export default function TunnelsPage() {
           ) : null}
           {engine === 'backpack' ? (
             <>
-              <Form.Item name="transport" label={t('pages.tunnels.transport')}>
-                <Select options={BACKPACK_TRANSPORTS} />
-              </Form.Item>
-              <Form.Item
-                name="fallbackTransports"
-                label={t('pages.tunnels.fallbackTransports')}
-                extra={t('pages.tunnels.fallbackTransportsHint')}
-              >
-                <Select
-                  mode="multiple"
-                  options={BACKPACK_TRANSPORTS}
-                  tagRender={selectTagRender}
-                  allowClear
-                />
-              </Form.Item>
+              {direct ? (
+                carrierOption && <TunnelOptionField option={carrierOption} required />
+              ) : (
+                <>
+                  <Form.Item name="transport" label={t('pages.tunnels.transport')}>
+                    <Select options={BACKPACK_TRANSPORTS} />
+                  </Form.Item>
+                  <Form.Item
+                    name="fallbackTransports"
+                    label={t('pages.tunnels.fallbackTransports')}
+                    extra={t('pages.tunnels.fallbackTransportsHint')}
+                  >
+                    <Select
+                      mode="multiple"
+                      options={BACKPACK_TRANSPORTS}
+                      tagRender={selectTagRender}
+                      allowClear
+                    />
+                  </Form.Item>
+                </>
+              )}
               <Form.Item
                 name="forwardPorts"
                 label={t('pages.tunnels.forwardPorts')}
@@ -579,6 +653,11 @@ export default function TunnelsPage() {
               >
                 <Switch />
               </Form.Item>
+              <TunnelOptionFields
+                options={catalog}
+                mode={mode}
+                skip={direct ? ['carrier', 'local_ip', 'peer_ip'] : []}
+              />
             </>
           ) : (
             <>
@@ -602,20 +681,34 @@ export default function TunnelsPage() {
               )}
             </>
           )}
-          <Form.Item
-            name="routeInbounds"
-            label={t('pages.tunnels.routeInbounds')}
-            extra={t('pages.tunnels.routeInboundsHint')}
-          >
-            <Select
-              mode="multiple"
-              options={inboundTagOptions}
-              tagRender={selectTagRender}
-              allowClear
-            />
-          </Form.Item>
+          {!direct && (
+            <Form.Item
+              name="routeInbounds"
+              label={t('pages.tunnels.routeInbounds')}
+              extra={t('pages.tunnels.routeInboundsHint')}
+            >
+              <Select
+                mode="multiple"
+                options={inboundTagOptions}
+                tagRender={selectTagRender}
+                allowClear
+              />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
+
+      {editing && (
+        <TunnelEditModal
+          key={editing.id}
+          tunnel={editing}
+          options={catalog}
+          transports={BACKPACK_TRANSPORTS}
+          inboundTagOptions={inboundTagOptions}
+          onSubmit={saveEdit}
+          onClose={() => setEditing(null)}
+        />
+      )}
 
       <Modal
         title={t('pages.tunnels.importLink')}

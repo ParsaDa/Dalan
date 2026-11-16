@@ -1033,7 +1033,6 @@ export const OptionSchema = z.object({
   max: z.number().int(),
   min: z.number().int(),
   mode: z.string(),
-  pattern: z.lazy(() => RegexpSchema).nullable().optional(),
   role: z.string(),
 });
 export type Option = z.infer<typeof OptionSchema>;

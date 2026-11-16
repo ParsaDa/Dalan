@@ -151,6 +151,7 @@ export default function OutboundCardList({
               </Tooltip>
               <Tag color="green">{record.protocol}</Tag>
               {record.tunnelEngine && <Tag>{record.tunnelEngine}</Tag>}
+              {record.tunnelEngine && <Tag color="cyan">{t('pages.tunnels.modeReverse')}</Tag>}
               {[Protocols.VMess, Protocols.VLESS, Protocols.Trojan, Protocols.Shadowsocks].includes(
                 record.protocol as never,
               ) && (

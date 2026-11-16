@@ -1054,7 +1054,10 @@ export const EXAMPLES: Record<string, unknown> = {
     "xrayVersion": "25.10.31"
   },
   "Option": {
-    "choices": "info",
+    "choices": [
+      "info",
+      "debug"
+    ],
     "group": "cdn",
     "hintEn": "Dial this CDN edge address while presenting the tunnel's hostname.",
     "hintFa": "به‌جای نام دامنه، مستقیم به این آدرس لبهٔ CDN وصل می‌شود.",
@@ -1063,7 +1066,6 @@ export const EXAMPLES: Record<string, unknown> = {
     "max": 0,
     "min": 0,
     "mode": "reverse",
-    "pattern": null,
     "role": "bridge"
   },
   "OutboundTraffics": {

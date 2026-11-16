@@ -188,6 +188,7 @@ export function useOutboundColumns({
             <div className="protocol-line">
               <Tag color="green">{record.protocol}</Tag>
               {record.tunnelEngine && <Tag>{record.tunnelEngine}</Tag>}
+              {record.tunnelEngine && <Tag color="cyan">{t('pages.tunnels.modeReverse')}</Tag>}
               {[Protocols.VMess, Protocols.VLESS, Protocols.Trojan, Protocols.Shadowsocks].some(
                 (id) => isOutboundProtocol(record, id),
               ) && (

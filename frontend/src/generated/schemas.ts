@@ -4243,7 +4243,10 @@ export const SCHEMAS: Record<string, unknown> = {
     "description": "Option is one BackPack setting the panel can write: its key, shape and a hint in both languages.",
     "properties": {
       "choices": {
-        "example": "info",
+        "example": [
+          "info",
+          "debug"
+        ],
         "items": {
           "type": "string"
         },
@@ -4282,9 +4285,6 @@ export const SCHEMAS: Record<string, unknown> = {
       "mode": {
         "example": "reverse",
         "type": "string"
-      },
-      "pattern": {
-        "nullable": true
       },
       "role": {
         "example": "bridge",
