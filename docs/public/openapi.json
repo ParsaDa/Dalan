@@ -4788,6 +4788,11 @@
           "realityPublicKey": {
             "type": "string"
           },
+          "relayPort": {
+            "description": "RelayPort is the loopback port both ends of a BackPack tunnel use to carry Xray traffic; zero means none.",
+            "example": 63500,
+            "type": "integer"
+          },
           "role": {
             "example": "portal",
             "type": "string"
@@ -4834,6 +4839,7 @@
           "name",
           "port",
           "realityPublicKey",
+          "relayPort",
           "role",
           "routeInbounds",
           "security",
@@ -13610,6 +13616,7 @@
                       "name": "de1",
                       "port": 8443,
                       "realityPublicKey": "",
+                      "relayPort": 63500,
                       "role": "portal",
                       "routeInbounds": [
                         ""
@@ -13856,6 +13863,7 @@
                     "name": "de1",
                     "port": 8443,
                     "realityPublicKey": "",
+                    "relayPort": 63500,
                     "role": "portal",
                     "routeInbounds": [
                       ""
@@ -13932,6 +13940,7 @@
                     "name": "de1",
                     "port": 8443,
                     "realityPublicKey": "",
+                    "relayPort": 63500,
                     "role": "portal",
                     "routeInbounds": [
                       ""

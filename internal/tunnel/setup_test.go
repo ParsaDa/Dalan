@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 )
 
 func realityPortal(t *testing.T) model.ServerTunnel {
@@ -139,7 +140,7 @@ func TestABackpackPortalAndItsLinkCarryTheEngineSettings(t *testing.T) {
 	}
 }
 
-func TestBackpackPortalsNeedATransportAndForwardedPorts(t *testing.T) {
+func TestBackpackPortalsNeedAKnownTransportAndEngine(t *testing.T) {
 	cases := []struct {
 		name    string
 		mutate  func(*PortalSpec)
@@ -147,7 +148,6 @@ func TestBackpackPortalsNeedATransportAndForwardedPorts(t *testing.T) {
 	}{
 		{"unknown transport", func(s *PortalSpec) { s.Transport = "smoke" }, "transport"},
 		{"unknown fallback", func(s *PortalSpec) { s.FallbackTransports = []string{"smoke"} }, "transport"},
-		{"no forwarded ports", func(s *PortalSpec) { s.ForwardPorts = nil }, "forwarded port"},
 		{"unknown engine", func(s *PortalSpec) { s.Engine = "gost" }, "engine"},
 	}
 	for _, c := range cases {
@@ -180,5 +180,31 @@ func TestBackpackLinksUseANewerLinkVersionThanXrayLinks(t *testing.T) {
 	xrayLink, _ := SetupLink(realityPortal(t))
 	if version(backpackLink) != "2" || version(xrayLink) != "1" {
 		t.Fatalf("link versions: backpack=%s xray=%s, want 2 and 1", version(backpackLink), version(xrayLink))
+	}
+}
+
+func TestABackpackTunnelGetsARelayPortTheBridgeSharesAndXrayTunnelsDoNot(t *testing.T) {
+	spec := backpackSpec()
+	spec.ForwardPorts = nil
+	portal, err := NewPortal(spec)
+	if err != nil {
+		t.Fatalf("NewPortal without forwarded ports: %v", err)
+	}
+	if portal.RelayPort < backpack.RelayPortMin || portal.RelayPort > backpack.RelayPortMax {
+		t.Fatalf("RelayPort = %d, want one in %d-%d", portal.RelayPort, backpack.RelayPortMin, backpack.RelayPortMax)
+	}
+	link, err := SetupLink(portal)
+	if err != nil {
+		t.Fatalf("SetupLink: %v", err)
+	}
+	bridge, err := ParseSetupLink(link)
+	if err != nil {
+		t.Fatalf("ParseSetupLink: %v", err)
+	}
+	if bridge.RelayPort != portal.RelayPort {
+		t.Fatalf("bridge RelayPort = %d, want the portal's %d", bridge.RelayPort, portal.RelayPort)
+	}
+	if xray := realityPortal(t); xray.RelayPort != 0 {
+		t.Fatalf("an Xray tunnel got RelayPort %d, want none", xray.RelayPort)
 	}
 }

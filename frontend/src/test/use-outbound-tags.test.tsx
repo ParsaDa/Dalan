@@ -64,4 +64,20 @@ describe('outbound tag pickers', () => {
     await waitFor(() => expect(result.current.data).toBeDefined());
     expect(result.current.data).toEqual(['direct', 'blocked', 'warp']);
   });
+
+  it('offers a tunnel as an exit next to the panel outbounds', async () => {
+    const payload = {
+      xraySetting: { outbounds: [{ tag: 'direct', protocol: 'freedom' }] },
+      tunnelOutbounds: [{ tag: 'tunnel-de1', name: 'de1', engine: 'backpack' }],
+    };
+    vi.spyOn(HttpUtil, 'post').mockResolvedValue(new Msg(true, '', JSON.stringify(payload)));
+
+    const flat = renderHook(() => useOutboundTags(), { wrapper: wrapperFor() });
+    const grouped = renderHook(() => useOutboundTagGroups(), { wrapper: wrapperFor() });
+
+    await waitFor(() => expect(flat.result.current.data).toBeDefined());
+    await waitFor(() => expect(grouped.result.current.data).toBeDefined());
+    expect(flat.result.current.data).toEqual(['direct', 'tunnel-de1']);
+    expect(grouped.result.current.data?.outbounds).toEqual(['direct', 'tunnel-de1']);
+  });
 });

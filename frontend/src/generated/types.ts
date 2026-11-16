@@ -1083,6 +1083,7 @@ export interface ServerTunnel {
   name: string;
   port: number;
   realityPublicKey: string;
+  relayPort: number;
   role: string;
   routeInbounds: string[];
   security: string;

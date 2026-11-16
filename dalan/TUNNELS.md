@@ -36,7 +36,7 @@ Xray restarts on each server within 30 seconds and the exit server connects.
 
 **Xray (built in)** is the default. It needs nothing installed, works everywhere Dalan runs, and routes whole inbounds of the entry server through the tunnel.
 
-**BackPack** is for links that are filtered hard or lose packets. It is a separate program that Dalan installs and runs for you. It works differently: instead of routing inbounds, it opens ports on the entry server and carries them to the exit server.
+**BackPack** is for links that are filtered hard or lose packets. It is a separate program that Dalan installs and runs for you. Like an Xray tunnel it appears in Xray as an outbound named `tunnel-<name>` that routing rules, balancers and inbound routes can use. It can also open raw ports on the entry server and carry them to the exit server.
 
 ### A BackPack tunnel
 
@@ -45,10 +45,15 @@ Xray restarts on each server within 30 seconds and the exit server connects.
 3. On the **entry** server, **New tunnel**, choose **BackPack**:
    - *Transport*: how the tunnel looks on the wire (`wssmux`, `tcpmux`, `quic`, `kcp`, ...).
    - *Fallback transports*: tried in order when the main one is blocked.
-   - *Forwarded ports*: `443=127.0.0.1:2096` opens 443 on the entry server and delivers it to port 2096 on the exit server.
+   - *Inbounds*: the entry-server inbounds whose traffic leaves through the tunnel.
+   - *Forwarded ports* (optional): `443=127.0.0.1:2096` opens 443 on the entry server and delivers it to port 2096 on the exit server as a raw pipe.
 4. Copy the setup link and import it on the exit server.
 
-Users then connect to the entry server on port 443 and reach the inbound on the exit server.
+With *Inbounds*, users keep connecting to the entry server and their traffic exits from the exit server. Dalan carries it over a loopback SOCKS relay pair, one port from 63400-64399 on each end, bound to 127.0.0.1 and protected by a password derived from the tunnel token.
+
+With *Forwarded ports*, users connect to the entry server on port 443 and reach the inbound on the exit server; the traffic is not routed, so they get the entry server's address.
+
+Every enabled entry tunnel is listed read-only under **Xray → Outbounds** and can be chosen in **Routing** and **Balancers**.
 
 Dalan keeps one BackPack process per tunnel, restarts it if it exits, and stops it when the tunnel is disabled or deleted. A BackPack tunnel shows **Connected** on both servers, taken from what the engine itself reports; it has no latency figure.
 

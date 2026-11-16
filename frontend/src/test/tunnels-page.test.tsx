@@ -229,7 +229,28 @@ test('creates a BackPack entry tunnel with its transport and forwarded ports', a
         fallbackTransports: [],
         forwardPorts: ['443=127.0.0.1:2096'],
         acceptUdp: false,
+        routeInbounds: [],
       },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('creates a BackPack entry tunnel without any forwarded port', async () => {
+  openTunnels();
+  await screen.findByText('de1');
+
+  fireEvent.click(screen.getByRole('button', { name: 'New tunnel' }));
+  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'bp3' } });
+  fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
+  fireEvent.click(screen.getByRole('radio', { name: 'BackPack' }));
+  await screen.findByLabelText('Forwarded ports');
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/add',
+      expect.objectContaining({ name: 'bp3', engine: 'backpack', forwardPorts: [] }),
       { headers: { 'Content-Type': 'application/json' } },
     ),
   );

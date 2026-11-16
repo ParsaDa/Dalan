@@ -159,6 +159,7 @@ export default function TunnelsPage() {
               fallbackTransports: values.fallbackTransports ?? [],
               forwardPorts: values.forwardPorts ?? [],
               acceptUdp: values.acceptUdp ?? false,
+              routeInbounds: values.routeInbounds ?? [],
             }
           : {
               ...common,
@@ -264,9 +265,9 @@ export default function TunnelsPage() {
       render: (_, row) =>
         row.role !== 'portal'
           ? row.exitOutbound || 'direct'
-          : (row.engine === 'backpack' ? row.forwardPorts : row.routeInbounds).map((item) => (
-              <Tag key={item}>{item}</Tag>
-            )),
+          : [...(row.engine === 'backpack' ? row.forwardPorts : []), ...row.routeInbounds].map(
+              (item) => <Tag key={item}>{item}</Tag>,
+            ),
     },
     {
       width: 110,
@@ -462,7 +463,6 @@ export default function TunnelsPage() {
                 name="forwardPorts"
                 label={t('pages.tunnels.forwardPorts')}
                 extra={t('pages.tunnels.forwardPortsHint')}
-                rules={[{ required: true, type: 'array', min: 1 }]}
               >
                 <Select
                   mode="tags"
@@ -499,20 +499,20 @@ export default function TunnelsPage() {
                   <Input placeholder="www.example.com" autoComplete="off" />
                 </Form.Item>
               )}
-              <Form.Item
-                name="routeInbounds"
-                label={t('pages.tunnels.routeInbounds')}
-                extra={t('pages.tunnels.routeInboundsHint')}
-              >
-                <Select
-                  mode="multiple"
-                  options={inboundTagOptions}
-                  tagRender={selectTagRender}
-                  allowClear
-                />
-              </Form.Item>
             </>
           )}
+          <Form.Item
+            name="routeInbounds"
+            label={t('pages.tunnels.routeInbounds')}
+            extra={t('pages.tunnels.routeInboundsHint')}
+          >
+            <Select
+              mode="multiple"
+              options={inboundTagOptions}
+              tagRender={selectTagRender}
+              allowClear
+            />
+          </Form.Item>
         </Form>
       </Modal>
 

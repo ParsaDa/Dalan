@@ -13,6 +13,7 @@ import {
   XraySettingsValueSchema,
   type OutboundTestResult,
   type OutboundTrafficRow,
+  type TunnelOutbound,
 } from '@/schemas/xray';
 
 const DEFAULT_TEST_URL = 'https://www.google.com/generate_204';
@@ -78,6 +79,7 @@ export interface UseXraySettingResult {
   clientReverseTags: string[];
   subscriptionOutbounds: unknown[];
   subscriptionOutboundTags: string[];
+  tunnelOutbounds: TunnelOutbound[];
   outboundsTraffic: OutboundTrafficRow[];
   outboundTestStates: Record<number, OutboundTestState>;
   subscriptionTestStates: Record<string, OutboundTestState>;
@@ -159,6 +161,7 @@ export function useXraySetting(): UseXraySettingResult {
     [config],
   );
   const subscriptionOutboundTags = useMemo(() => config?.subscriptionOutboundTags || [], [config]);
+  const tunnelOutbounds = useMemo(() => config?.tunnelOutbounds || [], [config]);
   const [outboundTestStates, setOutboundTestStates] = useState<Record<number, OutboundTestState>>(
     {},
   );
@@ -514,6 +517,7 @@ export function useXraySetting(): UseXraySettingResult {
       clientReverseTags,
       subscriptionOutbounds,
       subscriptionOutboundTags,
+      tunnelOutbounds,
       outboundsTraffic,
       outboundTestStates,
       subscriptionTestStates,
@@ -542,6 +546,7 @@ export function useXraySetting(): UseXraySettingResult {
       clientReverseTags,
       subscriptionOutbounds,
       subscriptionOutboundTags,
+      tunnelOutbounds,
       outboundsTraffic,
       outboundTestStates,
       subscriptionTestStates,

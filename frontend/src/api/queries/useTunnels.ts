@@ -38,6 +38,7 @@ export type NewPortalValues =
       fallbackTransports: string[];
       forwardPorts: string[];
       acceptUdp: boolean;
+      routeInbounds: string[];
     };
 
 async function fetchTunnels(): Promise<ServerTunnel[]> {

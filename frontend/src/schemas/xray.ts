@@ -46,6 +46,14 @@ export const XraySettingsValueSchema = z
   })
   .loose();
 
+export const TunnelOutboundSchema = z.object({
+  tag: z.string(),
+  name: z.string(),
+  engine: z.string(),
+});
+
+export type TunnelOutbound = z.infer<typeof TunnelOutboundSchema>;
+
 export const XrayConfigPayloadSchema = z
   .object({
     xraySetting: XraySettingsValueSchema,
@@ -57,6 +65,7 @@ export const XrayConfigPayloadSchema = z
     // balancers / routing rules.
     subscriptionOutbounds: z.array(z.unknown()).optional(),
     subscriptionOutboundTags: z.array(z.string()).optional(),
+    tunnelOutbounds: z.array(TunnelOutboundSchema).optional(),
     geodataSources: z.array(z.object({ url: z.string(), file: z.string() })).optional(),
   })
   .loose();

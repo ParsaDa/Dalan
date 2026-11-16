@@ -62,6 +62,8 @@ import { originalOutboundIndex } from './outbounds-tab-helpers';
 import { useOutboundColumns } from './useOutboundColumns';
 import OutboundCardList from './OutboundCardList';
 import SubscriptionOutbounds from './SubscriptionOutbounds';
+import TunnelOutbounds from './TunnelOutbounds';
+import type { TunnelOutbound } from '@/schemas/xray';
 
 const defaultOutboundSubscriptionUserAgent = '3x-ui-outbound-sub/1.0';
 
@@ -92,6 +94,7 @@ interface OutboundsTabProps {
   inboundTags: string[];
   subscriptionOutbounds?: unknown[];
   subscriptionOutboundTags?: string[];
+  tunnelOutbounds?: TunnelOutbound[];
   isMobile: boolean;
   onResetTraffic: (tag: string) => void;
   onTest: (index: number, mode: string) => void;
@@ -113,6 +116,7 @@ export default function OutboundsTab({
   inboundTags: _inboundTags,
   subscriptionOutbounds,
   subscriptionOutboundTags,
+  tunnelOutbounds,
   isMobile,
   onResetTraffic,
   onTest,
@@ -696,6 +700,11 @@ export default function OutboundsTab({
           content={exportContent}
           fileName="outbounds.json"
           json
+        />
+
+        <TunnelOutbounds
+          tunnelOutbounds={tunnelOutbounds || []}
+          outboundsTraffic={outboundsTraffic}
         />
 
         {/* Subscription outbounds (read-only, merged at runtime) */}

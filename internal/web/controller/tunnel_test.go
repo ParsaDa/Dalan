@@ -108,11 +108,15 @@ func TestTunnelRoutesCreateABackpackTunnelAndReportTheEngine(t *testing.T) {
 		t.Fatalf("stored tunnel = %+v, want the BackPack settings from the request", portal)
 	}
 
-	refused := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+	routed := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
 		"name": "bp2", "address": "203.0.113.10", "port": 9444, "engine": "backpack", "transport": "wssmux",
 	})
-	if refused.Success || !strings.Contains(refused.Msg, "forwarded port") {
-		t.Fatalf("a BackPack tunnel with no forwarded port: success=%v msg=%q", refused.Success, refused.Msg)
+	var routable model.ServerTunnel
+	if err := json.Unmarshal(routed.Obj, &routable); err != nil || !routed.Success {
+		t.Fatalf("a BackPack tunnel with no forwarded port: success=%v msg=%q (%v)", routed.Success, routed.Msg, err)
+	}
+	if routable.RelayPort < 63400 || routable.RelayPort > 64399 {
+		t.Fatalf("relay port = %d, want one in 63400-64399 so the tunnel can be routed to", routable.RelayPort)
 	}
 
 	info := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/engine", nil)

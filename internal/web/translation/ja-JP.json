@@ -2126,7 +2126,9 @@
         "toastRefreshed": "更新しました",
         "toastRefreshFailed": "更新に失敗しました",
         "toastDeleted": "削除しました",
-        "toastDeleteFailed": "削除に失敗しました"
+        "toastDeleteFailed": "削除に失敗しました",
+        "tunnelsTitle": "Tunnels (read-only)",
+        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
       },
       "pia": {
         "menu": "PIA",
@@ -2567,7 +2569,7 @@
       "fallbackTransports": "Fallback transports",
       "fallbackTransportsHint": "Tried in order when the main transport is blocked.",
       "forwardPorts": "Forwarded ports",
-      "forwardPortsHint": "Ports opened on this server and carried to the other server, for example 443=127.0.0.1:2096. Press Enter after each one.",
+      "forwardPortsHint": "Optional. Raw ports opened on this server and carried to the other server, for example 443=127.0.0.1:2096. To send inbound traffic out through this tunnel, use the inbounds field below instead. Press Enter after each one.",
       "acceptUdp": "Carry UDP too",
       "engineMissing": "The BackPack engine is not installed on this server, so BackPack tunnels cannot run.",
       "engineMissingHint": "If this server cannot reach GitHub, copy the backpack binary into the panel's bin folder by hand.",

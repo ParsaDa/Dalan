@@ -107,3 +107,44 @@ func TestReadSnapshotReportsConnectionAndTraffic(t *testing.T) {
 		t.Fatal("ReadSnapshot of a tunnel that never wrote one returned no error")
 	}
 }
+
+func TestRenderConfigOpensTheRelayPortOnLoopbackOnlyAndNeedsNoOtherPort(t *testing.T) {
+	portal := model.ServerTunnel{
+		Name: "de1", Role: model.TunnelRolePortal, Engine: model.TunnelEngineBackpack,
+		Address: "203.0.113.10", Port: 8443, UUID: "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10",
+		Transport: "tcpmux", RelayPort: 63500,
+	}
+	got, err := RenderConfig(portal)
+	if err != nil {
+		t.Fatalf("RenderConfig with a relay and no forwarded port: %v", err)
+	}
+	if !strings.Contains(got, `ports = ["127.0.0.1:63500=127.0.0.1:63500"]`) {
+		t.Fatalf("config =\n%s\nwant the relay forwarded on 127.0.0.1 only", got)
+	}
+
+	portal.ForwardPorts = []string{"443=127.0.0.1:2096"}
+	got, _ = RenderConfig(portal)
+	if !strings.Contains(got, `ports = ["443=127.0.0.1:2096", "127.0.0.1:63500=127.0.0.1:63500"]`) {
+		t.Fatalf("config =\n%s\nwant the operator's ports first and the relay last", got)
+	}
+
+	portal.Role = model.TunnelRoleBridge
+	got, _ = RenderConfig(portal)
+	if strings.Contains(got, "63500") {
+		t.Fatalf("bridge config mentions the relay port; only the entry end forwards it:\n%s", got)
+	}
+}
+
+func TestRelayCredentialsFollowTheTunnelTokenAndAreNotTheToken(t *testing.T) {
+	a := model.ServerTunnel{UUID: "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"}
+	b := model.ServerTunnel{UUID: "11111111-5c1b-4f0e-9a51-2f6d1c7b9e10"}
+	userA, passA := RelayCredentials(a)
+	userA2, passA2 := RelayCredentials(a)
+	_, passB := RelayCredentials(b)
+	if userA == "" || passA == "" || userA != userA2 || passA != passA2 {
+		t.Fatalf("credentials for one token differ between calls: %q/%q vs %q/%q", userA, passA, userA2, passA2)
+	}
+	if passA == passB || passA == a.UUID {
+		t.Fatalf("password %q must differ per tunnel and from the tunnel token", passA)
+	}
+}

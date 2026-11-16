@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -8,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/dbtest"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
@@ -279,5 +281,120 @@ func TestAManagementTunnelIsNotProbedAndCannotBeDeletedFromTheTunnelList(t *test
 	}
 	if hasTag(inboundTags(t), "tunnel-node-de1-manage") {
 		t.Fatalf("the management inbound survived DeleteManagement")
+	}
+}
+
+func outboundTags(t *testing.T) []string {
+	t.Helper()
+	cfg, err := (&XrayService{}).GetXrayConfig()
+	if err != nil {
+		t.Fatalf("GetXrayConfig: %v", err)
+	}
+	var outbounds []struct {
+		Tag string `json:"tag"`
+	}
+	if err := json.Unmarshal(cfg.OutboundConfigs, &outbounds); err != nil {
+		t.Fatalf("outbounds: %v", err)
+	}
+	tags := make([]string, 0, len(outbounds))
+	for _, o := range outbounds {
+		tags = append(tags, o.Tag)
+	}
+	return tags
+}
+
+func TestABackpackTunnelIsARoutableXrayOutboundAndNeedsNoForwardedPort(t *testing.T) {
+	svc := newTunnelDB(t)
+	fakeBackpack(t)
+	spec := backpackPortalSpec()
+	spec.ForwardPorts = nil
+	portal, err := svc.CreatePortal(spec, []string{"in-443"})
+	if err != nil {
+		t.Fatalf("CreatePortal: %v", err)
+	}
+	if portal.RelayPort == 0 {
+		t.Fatal("the BackPack portal has no relay port")
+	}
+	if tags := outboundTags(t); !hasTag(tags, "tunnel-bp1") {
+		t.Fatalf("outbounds = %v, want the BackPack tunnel as tunnel-bp1", tags)
+	}
+}
+
+func TestARelayPortAlreadyUsedByATunnelOrAnInboundIsRefused(t *testing.T) {
+	svc := newTunnelDB(t)
+	fakeBackpack(t)
+	portal, err := svc.CreatePortal(backpackPortalSpec(), nil)
+	if err != nil {
+		t.Fatalf("CreatePortal: %v", err)
+	}
+	link, err := svc.SetupLink(portal.Id)
+	if err != nil {
+		t.Fatalf("SetupLink: %v", err)
+	}
+	clash, err := tunnel.ParseSetupLink(link)
+	if err != nil {
+		t.Fatalf("ParseSetupLink: %v", err)
+	}
+	clash.Name = "bp2"
+	if err := svc.create(&clash); err == nil || !strings.Contains(err.Error(), "already used") {
+		t.Fatalf("creating a tunnel whose relay port belongs to tunnel bp1: err = %v, want 'already used'", err)
+	}
+
+	taken := &model.Inbound{UserId: 1, Tag: "in-taken", Enable: true, Listen: "0.0.0.0", Port: 63555, Protocol: model.VLESS, Settings: `{"clients":[]}`}
+	if err := database.GetDB().Create(taken).Error; err != nil {
+		t.Fatalf("create inbound: %v", err)
+	}
+	clash.Name, clash.RelayPort = "bp3", 63555
+	if err := svc.create(&clash); err == nil || !strings.Contains(err.Error(), "already used") {
+		t.Fatalf("creating a tunnel whose relay port is an inbound's port: err = %v, want 'already used'", err)
+	}
+}
+
+func TestRoutableOutboundsListOnlyEnabledEntryTunnelsRoutingCanUse(t *testing.T) {
+	svc := newTunnelDB(t)
+	fakeBackpack(t)
+	xrayPortal, err := svc.CreatePortal(tunnel.PortalSpec{
+		Name: "x1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+	}, nil)
+	if err != nil {
+		t.Fatalf("CreatePortal xray: %v", err)
+	}
+	bpSpec := backpackPortalSpec()
+	bpSpec.Port = 8444
+	if _, err := svc.CreatePortal(bpSpec, nil); err != nil {
+		t.Fatalf("CreatePortal backpack: %v", err)
+	}
+	if _, err := svc.CreateManagementPortal(tunnel.PortalSpec{
+		Name: "node-de1", Address: "203.0.113.10", Port: 8445, Security: model.TunnelSecurityNone,
+	}); err != nil {
+		t.Fatalf("CreateManagementPortal: %v", err)
+	}
+	off, err := svc.CreatePortal(tunnel.PortalSpec{
+		Name: "off1", Address: "203.0.113.10", Port: 8446, Security: model.TunnelSecurityNone,
+	}, nil)
+	if err != nil {
+		t.Fatalf("CreatePortal off: %v", err)
+	}
+	if err := svc.SetEnable(off.Id, false); err != nil {
+		t.Fatalf("SetEnable: %v", err)
+	}
+	bridge := model.ServerTunnel{
+		Name: "exit1", Role: model.TunnelRoleBridge, Engine: model.TunnelEngineXray, Enable: true,
+		Address: "203.0.113.10", Port: 8447, UUID: xrayPortal.UUID, Security: model.TunnelSecurityNone,
+	}
+	if err := svc.create(&bridge); err != nil {
+		t.Fatalf("create bridge: %v", err)
+	}
+
+	got, err := svc.RoutableOutbounds()
+	if err != nil {
+		t.Fatalf("RoutableOutbounds: %v", err)
+	}
+	var tags []string
+	for _, o := range got {
+		tags = append(tags, o.Tag+"/"+o.Engine)
+	}
+	if want := "tunnel-x1/xray,tunnel-bp1/backpack"; strings.Join(tags, ",") != want {
+		t.Fatalf("routable outbounds = %v, want %s", tags, want)
 	}
 }

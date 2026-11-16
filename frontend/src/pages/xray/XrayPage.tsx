@@ -24,6 +24,7 @@ import type { XraySettingsValue } from '@/hooks/useXraySetting';
 import AppSidebar from '@/layouts/AppSidebar';
 import { JsonEditor } from '@/components/form';
 import { setMessageInstance } from '@/utils/messageBus';
+import { injectedOutboundTags } from '@/lib/xray/injected-outbound-tags';
 
 import { BasicsTab } from './basics';
 import { propagateOutboundTagRename } from './basics/helpers';
@@ -67,6 +68,7 @@ export default function XrayPage() {
     clientReverseTags,
     subscriptionOutbounds,
     subscriptionOutboundTags,
+    tunnelOutbounds,
     outboundsTraffic,
     outboundTestStates,
     subscriptionTestStates,
@@ -80,6 +82,10 @@ export default function XrayPage() {
     resetToDefault,
   } = xs;
 
+  const injectedTags = useMemo(
+    () => injectedOutboundTags({ subscriptionOutboundTags, tunnelOutbounds }),
+    [subscriptionOutboundTags, tunnelOutbounds],
+  );
   const [warpOpen, setWarpOpen] = useState(false);
   const [nordOpen, setNordOpen] = useState(false);
   const [piaOpen, setPiaOpen] = useState(false);
@@ -229,7 +235,7 @@ export default function XrayPage() {
             setTemplateSettings={setTemplateSettings}
             inboundTags={inboundTags}
             clientReverseTags={clientReverseTags}
-            subscriptionOutboundTags={subscriptionOutboundTags}
+            subscriptionOutboundTags={injectedTags}
             isMobile={isMobile}
           />
         );
@@ -244,7 +250,8 @@ export default function XrayPage() {
             testingAll={testingAll}
             inboundTags={inboundTags}
             subscriptionOutbounds={subscriptionOutbounds}
-            subscriptionOutboundTags={subscriptionOutboundTags}
+            tunnelOutbounds={tunnelOutbounds}
+            subscriptionOutboundTags={injectedTags}
             isMobile={isMobile}
             onResetTraffic={resetOutboundsTraffic}
             onTest={onTestOutbound}
@@ -262,7 +269,7 @@ export default function XrayPage() {
             templateSettings={templateSettings}
             setTemplateSettings={setTemplateSettings}
             clientReverseTags={clientReverseTags}
-            subscriptionOutboundTags={subscriptionOutboundTags}
+            subscriptionOutboundTags={injectedTags}
             isMobile={isMobile}
           />
         );

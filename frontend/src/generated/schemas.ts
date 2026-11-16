@@ -4762,6 +4762,11 @@ export const SCHEMAS: Record<string, unknown> = {
       "realityPublicKey": {
         "type": "string"
       },
+      "relayPort": {
+        "description": "RelayPort is the loopback port both ends of a BackPack tunnel use to carry Xray traffic; zero means none.",
+        "example": 63500,
+        "type": "integer"
+      },
       "role": {
         "example": "portal",
         "type": "string"
@@ -4808,6 +4813,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "name",
       "port",
       "realityPublicKey",
+      "relayPort",
       "role",
       "routeInbounds",
       "security",

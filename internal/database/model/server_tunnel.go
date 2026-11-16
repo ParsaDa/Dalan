@@ -35,6 +35,8 @@ type ServerTunnel struct {
 	// ForwardPorts (portal) are ports opened on this server and carried to the other end, like "443=127.0.0.1:2096".
 	ForwardPorts []string `json:"forwardPorts" gorm:"serializer:json;column:forward_ports"`
 	AcceptUDP    bool     `json:"acceptUdp" gorm:"column:accept_udp"`
+	// RelayPort is the loopback port both ends of a BackPack tunnel use to carry Xray traffic; zero means none.
+	RelayPort int `json:"relayPort" gorm:"column:relay_port;default:0" example:"63500"`
 
 	// RouteInbounds (portal) lists the local inbound tags whose traffic leaves through this tunnel.
 	RouteInbounds []string `json:"routeInbounds" gorm:"serializer:json;column:route_inbounds"`

@@ -16,6 +16,7 @@ import { HttpUtil, LanguageManager } from '@/utils';
 import { onNumber } from '@/utils/onNumber';
 import { DefaultSettingTag, SettingListItem } from '@/components/ui';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { injectedOutboundTags } from '@/lib/xray/injected-outbound-tags';
 import { catTabLabel } from './catTabLabel';
 import { sanitizePath } from './uriPath';
 import SecretInput from './SecretInput';
@@ -92,12 +93,7 @@ export default function GeneralTab({ allSetting, updateSetting }: GeneralTabProp
           const tag = rec.tag;
           if (typeof tag === 'string' && tag) tags.add(tag);
         }
-        const subTags = Array.isArray(payload.subscriptionOutboundTags)
-          ? payload.subscriptionOutboundTags
-          : [];
-        for (const tag of subTags) {
-          if (typeof tag === 'string' && tag) tags.add(tag);
-        }
+        for (const tag of injectedOutboundTags(payload)) tags.add(tag);
         const balancerTags: string[] = [];
         const routing = (template.routing || {}) as Record<string, unknown>;
         const balancers = Array.isArray(routing.balancers) ? routing.balancers : [];

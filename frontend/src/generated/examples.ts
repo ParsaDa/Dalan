@@ -1183,6 +1183,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "name": "de1",
     "port": 8443,
     "realityPublicKey": "",
+    "relayPort": 63500,
     "role": "portal",
     "routeInbounds": [
       ""

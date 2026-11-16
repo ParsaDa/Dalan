@@ -40,6 +40,32 @@ type TunnelService struct {
 	xrayService XrayService
 }
 
+// TunnelOutbound is an entry tunnel as Xray routing sees it: an outbound that rules and balancers can target.
+type TunnelOutbound struct {
+	Tag    string `json:"tag" example:"tunnel-de1"`
+	Name   string `json:"name" example:"de1"`
+	Engine string `json:"engine" example:"xray"`
+}
+
+// RoutableOutbounds lists the enabled entry tunnels that exist as outbounds in the generated Xray config.
+func (s *TunnelService) RoutableOutbounds() ([]TunnelOutbound, error) {
+	tunnels, err := s.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]TunnelOutbound, 0, len(tunnels))
+	for _, t := range tunnels {
+		if !t.Enable || t.Role != model.TunnelRolePortal || t.ManagePort > 0 {
+			continue
+		}
+		if t.Engine == model.TunnelEngineBackpack && t.RelayPort == 0 {
+			continue
+		}
+		out = append(out, TunnelOutbound{Tag: xrayreverse.PortalOutboundTag(t.Name), Name: t.Name, Engine: t.Engine})
+	}
+	return out, nil
+}
+
 func (s *TunnelService) GetAll() ([]model.ServerTunnel, error) {
 	var tunnels []model.ServerTunnel
 	err := database.GetDB().Order("id asc").Find(&tunnels).Error
@@ -71,6 +97,11 @@ func (s *TunnelService) create(t *model.ServerTunnel) error {
 			return err
 		}
 	}
+	if t.RelayPort > 0 {
+		if err := s.checkRelayPortFree(t.RelayPort); err != nil {
+			return err
+		}
+	}
 	if err := db.Create(t).Error; err != nil {
 		return err
 	}
@@ -97,17 +128,43 @@ func (s *TunnelService) checkPortFree(port int) error {
 	return nil
 }
 
+var errRelayPortTaken = errors.New("relay port is already used on this server")
+
+// A relay port is a loopback listener on both ends, so it cannot share a port with an inbound or another relay.
+func (s *TunnelService) checkRelayPortFree(port int) error {
+	db := database.GetDB()
+	var count int64
+	if err := db.Model(&model.ServerTunnel{}).Where("relay_port = ?", port).Count(&count).Error; err != nil {
+		return err
+	}
+	if count == 0 {
+		if err := db.Model(&model.Inbound{}).Where("node_id IS NULL AND port = ?", port).Count(&count).Error; err != nil {
+			return err
+		}
+	}
+	if count > 0 {
+		return fmt.Errorf("relay port %d: %w", port, errRelayPortTaken)
+	}
+	return nil
+}
+
 // CreatePortal makes the listening end of a tunnel; routeInbounds are the local inbound tags that leave through it.
 func (s *TunnelService) CreatePortal(spec tunnel.PortalSpec, routeInbounds []string) (*model.ServerTunnel, error) {
-	portal, err := tunnel.NewPortal(spec)
-	if err != nil {
-		return nil, err
+	for attempt := 0; ; attempt++ {
+		portal, err := tunnel.NewPortal(spec)
+		if err != nil {
+			return nil, err
+		}
+		portal.RouteInbounds = routeInbounds
+		err = s.create(&portal)
+		if errors.Is(err, errRelayPortTaken) && attempt < 5 {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return &portal, nil
 	}
-	portal.RouteInbounds = routeInbounds
-	if err := s.create(&portal); err != nil {
-		return nil, err
-	}
-	return &portal, nil
 }
 
 // Import makes the dialing end of a tunnel from the other panel's setup link.
