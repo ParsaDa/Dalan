@@ -2583,7 +2583,8 @@
         "link": "دریافت لینک راه‌اندازی",
         "status": "تست تانل",
         "installEngine": "نصب موتور BackPack",
-        "routeTest": "تست مسیر انجام نشد"
+        "routeTest": "تست مسیر انجام نشد",
+        "updateEngine": "به‌روزرسانی موتور BackPack"
       },
       "nodeEnd": "ساخت سر دیگر تانل روی یک نود",
       "nodeEndHint": "این پنل سمت خروج را هم روی نود انتخاب‌شده می‌سازد و دیگر لازم نیست چیزی کپی و پیست شود. با حذف تانل هر دو سمت حذف می‌شود.",
@@ -2600,7 +2601,11 @@
       "poolTunnelsHint": "تانل‌های ورودی به ترتیب اولویت؛ اولی در ابتدا ترافیک را حمل می‌کند.",
       "poolNeedsTwo": "دست‌کم دو تانل انتخاب کنید.",
       "testPorts": "تست پورت‌ها",
-      "traffic": "ترافیک"
+      "traffic": "ترافیک",
+      "engineVersion": "موتور BackPack {version}",
+      "engineVersionUnknown": "(نصب دستی)",
+      "updateEngine": "به‌روزرسانی موتور",
+      "engineViaNode": "دانلود از طریق نود"
     },
     "enrolments": {
       "title": "افزودن نود با دستور",

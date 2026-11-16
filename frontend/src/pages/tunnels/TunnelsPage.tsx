@@ -119,12 +119,13 @@ export default function TunnelsPage() {
   }, [messageApi]);
 
   const { tunnels, loading, fetched, fetchError, refetch } = useTunnelsQuery();
-  const { create, importLink, setEnable, remove, installEngine, installingEngine } =
+  const { create, importLink, setEnable, remove, installEngine, updateEngine, installingEngine } =
     useTunnelMutations();
   const { data: engineInfo } = useTunnelEngine();
   const { data: inboundOptions = [] } = useInboundOptions();
   const { nodes } = useNodesQuery();
 
+  const [engineNode, setEngineNode] = useState<number>();
   const [portalOpen, setPortalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -145,6 +146,22 @@ export default function TunnelsPage() {
           label: inbound.remark ? `${inbound.remark} (${inbound.tag})` : (inbound.tag as string),
         })),
     [inboundOptions],
+  );
+
+  const engineNodePicker = (
+    <Select
+      size="small"
+      allowClear
+      aria-label={t('pages.tunnels.engineViaNode')}
+      placeholder={t('pages.tunnels.engineViaNode')}
+      style={{ minWidth: 200 }}
+      value={engineNode}
+      onChange={setEngineNode}
+      options={nodes
+        .filter((node) => node.enable)
+        .map((node) => ({ value: node.id, label: node.name }))}
+      tagRender={selectTagRender}
+    />
   );
 
   const report = (msg: { success?: boolean; msg?: string } | null | undefined) => {
@@ -388,16 +405,40 @@ export default function TunnelsPage() {
                       title={t('pages.tunnels.engineMissing')}
                       description={t('pages.tunnels.engineMissingHint')}
                       action={
-                        <Button
-                          size="small"
-                          loading={installingEngine}
-                          onClick={async () => report(await installEngine())}
-                        >
-                          {t('pages.tunnels.installEngine')}
-                        </Button>
+                        <Space>
+                          {engineNodePicker}
+                          <Button
+                            size="small"
+                            loading={installingEngine}
+                            onClick={async () =>
+                              report(
+                                await (engineNode ? updateEngine(engineNode) : installEngine()),
+                              )
+                            }
+                          >
+                            {t('pages.tunnels.installEngine')}
+                          </Button>
+                        </Space>
                       }
                       style={{ marginBottom: 12 }}
                     />
+                  )}
+                  {usesBackpack && engineInfo?.installed && (
+                    <Space style={{ marginBottom: 12 }} wrap>
+                      <Typography.Text type="secondary">
+                        {t('pages.tunnels.engineVersion', {
+                          version: engineInfo.version || t('pages.tunnels.engineVersionUnknown'),
+                        })}
+                      </Typography.Text>
+                      {engineNodePicker}
+                      <Button
+                        size="small"
+                        loading={installingEngine}
+                        onClick={async () => report(await updateEngine(engineNode ?? 0))}
+                      >
+                        {t('pages.tunnels.updateEngine')}
+                      </Button>
+                    </Space>
                   )}
                   {tunnels.some((tunnel) => tunnel.role === 'portal') && (
                     <Alert

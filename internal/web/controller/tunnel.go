@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"strconv"
 	"time"
 
@@ -32,6 +33,8 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.POST("/add", a.add)
 	g.POST("/import", a.importLink)
 	g.POST("/engine/install", a.installEngine)
+	g.POST("/engine/update", a.updateEngine)
+	g.POST("/engine/release", a.engineRelease)
 	g.POST("/setEnable/:id", a.setEnable)
 	g.POST("/del/:id", a.del)
 	g.POST("/dial", a.dial)
@@ -40,7 +43,10 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.POST("/pools/del/:id", a.poolDel)
 }
 
-const dialTimeout = 5 * time.Second
+const (
+	dialTimeout         = 5 * time.Second
+	engineUpdateTimeout = 8 * time.Minute
+)
 
 // dial runs on the node during a route test: it tries each port from this server's side.
 func (a *TunnelController) dial(c *gin.Context) {
@@ -242,6 +248,42 @@ func (a *TunnelController) status(c *gin.Context) {
 
 func (a *TunnelController) engine(c *gin.Context) {
 	jsonObj(c, a.tunnelService.EngineInfo(), nil)
+}
+
+func (a *TunnelController) updateEngine(c *gin.Context) {
+	var req struct {
+		NodeId  int    `json:"nodeId"`
+		Version string `json:"version"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), engineUpdateTimeout)
+	defer cancel()
+	err := a.tunnelService.UpdateEngine(ctx, req.NodeId, req.Version)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
+		return
+	}
+	jsonObj(c, a.tunnelService.EngineInfo(), nil)
+}
+
+func (a *TunnelController) engineRelease(c *gin.Context) {
+	var req struct {
+		Version string `json:"version"`
+		Offset  int    `json:"offset"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
+		return
+	}
+	chunk, err := a.tunnelService.EngineReleaseChunk(req.Version, req.Offset)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
+		return
+	}
+	jsonObj(c, chunk, nil)
 }
 
 func (a *TunnelController) installEngine(c *gin.Context) {

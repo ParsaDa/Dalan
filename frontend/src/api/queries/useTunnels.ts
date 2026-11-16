@@ -100,9 +100,22 @@ export function useTunnelMutations() {
     },
   });
 
+  const updateEngine = useMutation({
+    mutationFn: (nodeId: number) =>
+      HttpUtil.post(
+        '/panel/api/tunnels/engine/update',
+        { nodeId, version: '' },
+        { headers: { 'Content-Type': 'application/json' } },
+      ),
+    onSuccess: (msg) => {
+      if (msg?.success) queryClient.invalidateQueries({ queryKey: TUNNELS_KEY });
+    },
+  });
+
   return {
     installEngine: installEngine.mutateAsync,
-    installingEngine: installEngine.isPending,
+    updateEngine: updateEngine.mutateAsync,
+    installingEngine: installEngine.isPending || updateEngine.isPending,
     create: create.mutateAsync,
     importLink: importLink.mutateAsync,
     setEnable: setEnable.mutateAsync,
@@ -144,7 +157,11 @@ export function useTunnelStatus(id: number, enabled: boolean) {
   });
 }
 
-const EngineInfoSchema = z.object({ installed: z.boolean(), version: z.string() });
+const EngineInfoSchema = z.object({
+  installed: z.boolean(),
+  version: z.string(),
+  pinned: z.string(),
+});
 
 export function useTunnelEngine() {
   return useQuery({

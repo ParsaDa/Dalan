@@ -126,6 +126,12 @@ Every 15 seconds the panel measures each member (a real request through an Xray 
 
 The **Traffic** column of an entry tunnel shows what has passed through it, up and down, since Xray last started. The panel switches Xray's outbound statistics on for the generated config by itself; nothing needs changing in the Xray settings. BackPack tunnels show nothing there: the engine counts its own bytes.
 
+## Installing and updating the BackPack engine
+
+On the Tunnels page, **Install BackPack** and **Update engine** fetch the newest BackPack release (**Install** the one this Dalan version pins). The release is checked against the checksums published with it before it replaces the engine, and the engine it replaces is kept. After an update, tunnels that were connected must reconnect within about 75 seconds; if they do not, the earlier engine is put back and the update fails with that reason.
+
+A server in Iran usually cannot reach GitHub. Pick **Download through node** first: the node abroad downloads the release and sends it to this panel through the management tunnel in 512 KiB parts, so nothing depends on GitHub being reachable from here. The node needs this Dalan version. The checksums come from the same node, so this protects against a damaged download, not against a node that is itself compromised.
+
 ## Engine output
 
 Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>: ...`; when it exits, the last lines are repeated with the restart notice.
@@ -135,4 +141,3 @@ Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>
 - Installing Dalan and enrolling a node in one command.
 - One shared port for the management tunnels of all nodes.
 - Xray tunnels over transports other than REALITY on TCP.
-- Updating the BackPack engine from the panel after it is installed.

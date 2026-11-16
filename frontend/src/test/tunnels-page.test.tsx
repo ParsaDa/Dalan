@@ -65,7 +65,11 @@ beforeEach(() => {
   vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
     if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
     if (url === '/panel/api/tunnels/engine')
-      return new Msg(true, '', { installed: engineInstalled, version: 'v1.8.5' });
+      return new Msg(true, '', {
+        installed: engineInstalled,
+        version: engineInstalled ? 'v1.8.5' : '',
+        pinned: 'v1.8.5',
+      });
     if (url === '/panel/api/tunnels/status/3')
       return new Msg(true, '', {
         connected: true,
@@ -193,6 +197,48 @@ test('offers to install the BackPack engine when a BackPack tunnel has none', as
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith('/panel/api/tunnels/engine/install'),
+  );
+});
+
+test('shows the installed BackPack engine release and updates it from this server', async () => {
+  listed = [backpackPortal];
+  openTunnels();
+  expect(await screen.findByText('BackPack engine v1.8.5')).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Update engine' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/engine/update',
+      { nodeId: 0, version: '' },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('installs the BackPack engine through a node when this server cannot reach GitHub', async () => {
+  listed = [backpackPortal];
+  engineInstalled = false;
+  vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
+    if (url === '/panel/api/nodes/list')
+      return new Msg(true, '', [{ id: 9, name: 'nl1', enable: true }]);
+    if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
+    if (url === '/panel/api/tunnels/engine')
+      return new Msg(true, '', { installed: false, version: '', pinned: 'v1.8.5' });
+    return new Msg(true, '', []);
+  });
+  openTunnels();
+
+  fireEvent.mouseDown(await screen.findByLabelText('Download through node'));
+  fireEvent.click(await screen.findByText('nl1'));
+  fireEvent.click(screen.getByRole('button', { name: 'Install BackPack' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/engine/update',
+      { nodeId: 9, version: '' },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
   );
 });
 

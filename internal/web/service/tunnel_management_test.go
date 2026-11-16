@@ -152,6 +152,18 @@ func newFakeTunnelNode(t *testing.T) (*fakeTunnelNode, *model.Node) {
 				return
 			}
 			reply(results)
+		case r.Method == http.MethodPost && r.URL.Path == "/panel/api/tunnels/engine/release":
+			var body struct {
+				Version string `json:"version"`
+				Offset  int    `json:"offset"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			chunk, err := (&TunnelService{}).EngineReleaseChunk(body.Version, body.Offset)
+			if err != nil {
+				_, _ = fmt.Fprintf(w, `{"success":false,"msg":%q}`, err.Error())
+				return
+			}
+			reply(chunk)
 		case r.Method == http.MethodGet && r.URL.Path == "/panel/api/tunnels/list":
 			list := []model.ServerTunnel{}
 			for id, name := range f.ends {

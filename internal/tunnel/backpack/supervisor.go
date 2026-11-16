@@ -145,6 +145,8 @@ func (s *Supervisor) watch(name string, e *engine) {
 
 func (s *Supervisor) stopLocked(name string, e *engine) {
 	delete(s.engines, name)
+	// A stopped engine's status file goes stale at once and would read as connected for up to 30 seconds.
+	defer func() { _ = os.Remove(snapshotPath(s.Dir, name)) }()
 	_ = e.cmd.Process.Signal(syscall.SIGTERM)
 	select {
 	case <-e.exited:

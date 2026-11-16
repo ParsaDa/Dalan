@@ -125,9 +125,10 @@ func TestTunnelRoutesCreateABackpackTunnelAndReportTheEngine(t *testing.T) {
 	var got struct {
 		Installed bool   `json:"installed"`
 		Version   string `json:"version"`
+		Pinned    string `json:"pinned"`
 	}
-	if err := json.Unmarshal(info.Obj, &got); err != nil || got.Installed || got.Version != "v1.8.5" {
-		t.Fatalf("engine info = %s (%v), want not installed, v1.8.5", info.Obj, err)
+	if err := json.Unmarshal(info.Obj, &got); err != nil || got.Installed || got.Version != "" || got.Pinned != "v1.8.5" {
+		t.Fatalf("engine info = %s (%v), want not installed, offering v1.8.5", info.Obj, err)
 	}
 }
 

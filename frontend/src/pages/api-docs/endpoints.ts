@@ -2018,15 +2018,33 @@ export const sections: readonly Section[] = [
         method: 'GET',
         path: '/panel/api/tunnels/engine',
         summary:
-          'Whether the BackPack engine binary is on this server, and the BackPack release this Dalan version installs.',
+          'Whether the BackPack engine binary is on this server, which release is installed (empty when it was placed by hand), and the release this Dalan version installs by default.',
         response:
-          '{\n  "success": true,\n  "obj": {\n    "installed": false,\n    "version": "v1.8.5"\n  }\n}',
+          '{\n  "success": true,\n  "obj": {\n    "installed": true,\n    "version": "v1.8.5",\n    "pinned": "v1.8.5"\n  }\n}',
       },
       {
         method: 'POST',
         path: '/panel/api/tunnels/engine/install',
         summary:
           'Download the pinned BackPack release for this CPU, verify it against the checksums published with it, put it in the panel bin folder and start the BackPack tunnels. Uses the panel proxy settings. Can take a few minutes.',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnels/engine/update',
+        summary:
+          'Install a BackPack release (empty version means the newest) and restart the BackPack tunnels on it. With nodeId the release is downloaded by that node and sent over the management channel, for a server that cannot reach GitHub. The release is verified against its published checksums. When tunnels that were connected do not reconnect within about 75 seconds, the earlier engine is put back and the call fails. Can take several minutes.',
+        body: '{\n  "nodeId": 0,\n  "version": ""\n}',
+        response:
+          '{\n  "success": true,\n  "obj": {\n    "installed": true,\n    "version": "v1.9.0",\n    "pinned": "v1.8.5"\n  }\n}',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnels/engine/release',
+        summary:
+          'Node side of an engine update through a node: the first call starts downloading a BackPack release and answers pending until it is done, then each call returns the part of the archive that starts at offset (the checksums come with the first part). Needs an admin or node-admin token.',
+        body: '{\n  "version": "",\n  "offset": 0\n}',
+        response:
+          '{\n  "success": true,\n  "obj": {\n    "pending": false,\n    "version": "v1.9.0",\n    "size": 8421376,\n    "data": "H4sIAAAA",\n    "sums": "ZTNiMGM0NDI5OGZj"\n  }\n}',
       },
       {
         method: 'POST',

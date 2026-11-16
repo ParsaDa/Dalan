@@ -13811,7 +13811,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Whether the BackPack engine binary is on this server, and the BackPack release this Dalan version installs.",
+        "summary": "Whether the BackPack engine binary is on this server, which release is installed (empty when it was placed by hand), and the release this Dalan version installs by default.",
         "operationId": "get_panel_api_tunnels_engine",
         "responses": {
           "200": {
@@ -13833,8 +13833,9 @@
                 "example": {
                   "success": true,
                   "obj": {
-                    "installed": false,
-                    "version": "v1.8.5"
+                    "installed": true,
+                    "version": "v1.8.5",
+                    "pinned": "v1.8.5"
                   }
                 }
               }
@@ -13865,6 +13866,112 @@
                       "type": "string"
                     },
                     "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/engine/update": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Install a BackPack release (empty version means the newest) and restart the BackPack tunnels on it. With nodeId the release is downloaded by that node and sent over the management channel, for a server that cannot reach GitHub. The release is verified against its published checksums. When tunnels that were connected do not reconnect within about 75 seconds, the earlier engine is put back and the call fails. Can take several minutes.",
+        "operationId": "post_panel_api_tunnels_engine_update",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "nodeId": 0,
+                "version": ""
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "installed": true,
+                    "version": "v1.9.0",
+                    "pinned": "v1.8.5"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/engine/release": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Node side of an engine update through a node: the first call starts downloading a BackPack release and answers pending until it is done, then each call returns the part of the archive that starts at offset (the checksums come with the first part). Needs an admin or node-admin token.",
+        "operationId": "post_panel_api_tunnels_engine_release",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "version": "",
+                "offset": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "pending": false,
+                    "version": "v1.9.0",
+                    "size": 8421376,
+                    "data": "H4sIAAAA",
+                    "sums": "ZTNiMGM0NDI5OGZj"
                   }
                 }
               }

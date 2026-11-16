@@ -3,11 +3,14 @@ package runtime
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/json_util"
 )
 
@@ -57,4 +60,55 @@ func (r *Remote) DialPorts(ctx context.Context, host string, ports []int) ([]tun
 		return nil, fmt.Errorf("decode dial results: %w", err)
 	}
 	return list, nil
+}
+
+// FetchEngineRelease makes the node download a BackPack release (empty version: the newest) and
+// fetches it in parts, since one call may not run longer than the request timeout.
+func (r *Remote) FetchEngineRelease(ctx context.Context, version string) (backpack.Release, error) {
+	var rel backpack.Release
+	for {
+		chunk, err := r.engineChunk(ctx, version, len(rel.Archive))
+		if err != nil {
+			return backpack.Release{}, err
+		}
+		if chunk.Pending {
+			select {
+			case <-ctx.Done():
+				return backpack.Release{}, ctx.Err()
+			case <-time.After(engineChunkPoll):
+			}
+			continue
+		}
+		if len(rel.Archive) == 0 {
+			rel.Version, rel.Sums = chunk.Version, chunk.Sums
+		}
+		if chunk.Size > maxEngineArchive || len(rel.Archive)+len(chunk.Data) > chunk.Size {
+			return backpack.Release{}, errors.New("the node sent a release larger than it announced")
+		}
+		rel.Archive = append(rel.Archive, chunk.Data...)
+		if len(rel.Archive) == chunk.Size {
+			return rel, nil
+		}
+		if len(chunk.Data) == 0 {
+			return backpack.Release{}, errors.New("the node stopped sending the release part way")
+		}
+	}
+}
+
+const (
+	engineChunkPoll  = time.Second
+	maxEngineArchive = 200 << 20
+)
+
+func (r *Remote) engineChunk(ctx context.Context, version string, offset int) (backpack.Chunk, error) {
+	env, err := r.do(ctx, http.MethodPost, "panel/api/tunnels/engine/release",
+		map[string]any{"version": version, "offset": offset})
+	if err != nil {
+		return backpack.Chunk{}, err
+	}
+	var chunk backpack.Chunk
+	if err := json.Unmarshal(env.Obj, &chunk); err != nil {
+		return backpack.Chunk{}, fmt.Errorf("decode engine release: %w", err)
+	}
+	return chunk, nil
 }

@@ -7,7 +7,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -30,10 +29,12 @@ var tunnelEngines = &backpack.Supervisor{
 
 const engineInstallTimeout = 5 * time.Minute
 
-// EngineInfo says whether the BackPack engine is on this server and which release Dalan installs.
+// EngineInfo says whether the BackPack engine is on this server, which release is there (empty when
+// it was placed by hand) and which one Dalan installs by default.
 type EngineInfo struct {
 	Installed bool   `json:"installed" example:"true"`
 	Version   string `json:"version" example:"v1.8.5"`
+	Pinned    string `json:"pinned" example:"v1.8.5"`
 }
 
 // TunnelService stores the tunnel ends this panel owns and schedules Xray to pick up changes.
@@ -326,24 +327,14 @@ func (s *TunnelService) StopEngines() { tunnelEngines.StopAll() }
 
 func (s *TunnelService) EngineInfo() EngineInfo {
 	_, err := os.Stat(tunnelEngines.Binary)
-	return EngineInfo{Installed: err == nil, Version: backpack.PinnedVersion}
+	return EngineInfo{Installed: err == nil, Version: backpack.InstalledVersion(tunnelEngines.Binary), Pinned: backpack.PinnedVersion}
 }
 
 // InstallEngine downloads the pinned BackPack release through the panel's own proxy settings and starts its tunnels.
 func (s *TunnelService) InstallEngine() error {
-	arch := runtime.GOARCH
-	switch arch {
-	case "amd64", "arm64", "386", "s390x":
-	default:
-		return fmt.Errorf("BackPack publishes no build for %s", arch)
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), engineInstallTimeout)
 	defer cancel()
-	client := (&SettingService{}).NewProxiedHTTPClient(engineInstallTimeout)
-	if err := backpack.Install(ctx, client, backpack.ReleaseBaseURL, backpack.PinnedVersion, arch, tunnelEngines.Binary); err != nil {
-		return err
-	}
-	return s.ReconcileEngines()
+	return s.updateEngineFrom(ctx, directEngineSource, backpack.PinnedVersion)
 }
 
 func (s *TunnelService) backpackStatus(t *model.ServerTunnel) tunnel.Status {
