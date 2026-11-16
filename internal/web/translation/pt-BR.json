@@ -2606,7 +2606,10 @@
         "list": "Load enrolments",
         "add": "Create node enrolment",
         "del": "Cancel enrolment"
-      }
+      },
+      "tunnel": "Tunnel that carries it",
+      "tunnelNew": "A new tunnel only for this node",
+      "tunnelHint": "Pick an existing tunnel to manage the node over it. Nothing else is opened: same address, port and disguise, and the node needs no second tunnel."
     }
   },
   "tgbot": {

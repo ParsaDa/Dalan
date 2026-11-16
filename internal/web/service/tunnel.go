@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/config"
@@ -92,7 +93,7 @@ func (s *TunnelService) create(t *model.ServerTunnel) error {
 	if count > 0 {
 		return fmt.Errorf("a tunnel with the name %q already exists", t.Name)
 	}
-	if t.Role == model.TunnelRolePortal {
+	if t.Role == model.TunnelRolePortal && t.ParentId == 0 {
 		if err := s.checkPortFree(t.Port); err != nil {
 			return err
 		}
@@ -207,6 +208,13 @@ func (s *TunnelService) Delete(id int) error {
 	if t.ManagePort > 0 && t.Role == model.TunnelRolePortal {
 		return errManagementTunnel
 	}
+	var carried []string
+	if err := database.GetDB().Model(&model.ServerTunnel{}).Where("parent_id = ?", id).Pluck("name", &carried).Error; err != nil {
+		return err
+	}
+	if len(carried) > 0 {
+		return fmt.Errorf("this tunnel carries the management of %s; remove that node first", strings.Join(carried, ", "))
+	}
 	if err := database.GetDB().Delete(&model.ServerTunnel{}, id).Error; err != nil {
 		return err
 	}
@@ -249,7 +257,7 @@ func (s *TunnelService) ReconcileEngines() error {
 	if err != nil {
 		return err
 	}
-	return tunnelEngines.Reconcile(tunnels)
+	return tunnelEngines.Reconcile(backpack.WithManagement(tunnels))
 }
 
 // StopEngines stops every BackPack process this panel started.

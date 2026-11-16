@@ -2079,8 +2079,8 @@ export const sections: readonly Section[] = [
         method: 'POST',
         path: '/panel/api/enrolments/add',
         summary:
-          'Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored.',
-        body: '{\n  "name": "de1",\n  "panelUrl": "https://panel.example.com:2053/",\n  "address": "203.0.113.10",\n  "port": 8443,\n  "security": "reality",\n  "serverName": "www.example.com"\n}',
+          'Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored. Set tunnelId to an existing entry tunnel to manage the node over it instead; address, port and security are then taken from that tunnel.',
+        body: '{\n  "name": "de1",\n  "panelUrl": "https://panel.example.com:2053/",\n  "address": "203.0.113.10",\n  "port": 8443,\n  "security": "reality",\n  "serverName": "www.example.com",\n  "tunnelId": 0\n}',
         responseSchema: 'Invitation',
       },
       {

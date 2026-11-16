@@ -1081,6 +1081,7 @@ export interface ServerTunnel {
   id: number;
   managePort: number;
   name: string;
+  parentId: number;
   port: number;
   realityPublicKey: string;
   relayPort: number;

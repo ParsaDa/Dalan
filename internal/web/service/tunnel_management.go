@@ -10,6 +10,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -69,6 +70,31 @@ func (s *TunnelService) CreateManagementPortal(spec tunnel.PortalSpec) (*model.S
 		return nil, err
 	}
 	return &portal, nil
+}
+
+// CreateManagementRider opens a node's management channel on an existing tunnel: same port and
+// identity, a client and a loopback port of its own, so no second address gets exposed.
+func (s *TunnelService) CreateManagementRider(parentId int, name string) (*model.ServerTunnel, error) {
+	parent, err := s.get(parentId)
+	if err != nil {
+		return nil, err
+	}
+	if parent.Role != model.TunnelRolePortal || parent.ManagePort > 0 || parent.ParentId > 0 {
+		return nil, errors.New("a node's management can only ride on the entry end of an ordinary tunnel")
+	}
+	rider := model.ServerTunnel{
+		Name: name, Role: model.TunnelRolePortal, Engine: parent.Engine, Enable: true,
+		Address: parent.Address, Port: parent.Port, UUID: uuid.NewString(), Security: parent.Security,
+		ServerName: parent.ServerName, RealityPublicKey: parent.RealityPublicKey, ShortId: parent.ShortId,
+		ParentId: parent.Id,
+	}
+	if rider.ManagePort, err = s.freeManagePort(); err != nil {
+		return nil, err
+	}
+	if err := s.create(&rider); err != nil {
+		return nil, err
+	}
+	return &rider, nil
 }
 
 // ImportManagementBridge stores the dialling end that delivers to this panel's port, replacing any earlier one.

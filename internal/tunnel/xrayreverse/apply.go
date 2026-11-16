@@ -46,9 +46,21 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 	existing, _ := routing["rules"].([]any)
 	var rules []any
 	changed := false
+	riders := ridersByParent(tunnels)
 
 	for _, t := range tunnels {
 		if !t.Enable {
+			continue
+		}
+		if t.ParentId > 0 {
+			if t.Engine == model.TunnelEngineBackpack || !hasRider(riders, t) {
+				continue
+			}
+			changed = true
+			cfg.InboundConfigs = append(cfg.InboundConfigs, manageInbound(t))
+			rules = append(rules, map[string]any{
+				"type": "field", "inboundTag": []string{manageInboundTag(t.Name)}, "outboundTag": PortalOutboundTag(t.Name),
+			})
 			continue
 		}
 		if t.Engine == model.TunnelEngineBackpack {
@@ -84,7 +96,7 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 		changed = true
 		switch t.Role {
 		case model.TunnelRolePortal:
-			inbound, err := portalInbound(t)
+			inbound, err := portalInbound(t, riders[t.Id])
 			if err != nil {
 				return err
 			}
@@ -143,14 +155,39 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 	return nil
 }
 
-func portalInbound(t model.ServerTunnel) (xray.InboundConfig, error) {
-	settings, err := json.Marshal(map[string]any{
-		"decryption": "none",
-		"clients": []any{map[string]any{
-			"id": t.UUID, "email": PortalOutboundTag(t.Name),
-			"reverse": map[string]any{"tag": PortalOutboundTag(t.Name)},
-		}},
-	})
+// ridersByParent groups the management channels that share an enabled Xray tunnel's port.
+func ridersByParent(tunnels []model.ServerTunnel) map[int][]model.ServerTunnel {
+	parents := map[int]bool{}
+	for _, t := range tunnels {
+		if t.Enable && t.Role == model.TunnelRolePortal && t.Engine != model.TunnelEngineBackpack &&
+			t.ParentId == 0 && t.ManagePort == 0 {
+			parents[t.Id] = true
+		}
+	}
+	riders := map[int][]model.ServerTunnel{}
+	for _, t := range tunnels {
+		if t.Enable && t.Role == model.TunnelRolePortal && t.ManagePort > 0 && parents[t.ParentId] {
+			riders[t.ParentId] = append(riders[t.ParentId], t)
+		}
+	}
+	return riders
+}
+
+func hasRider(riders map[int][]model.ServerTunnel, t model.ServerTunnel) bool {
+	for _, r := range riders[t.ParentId] {
+		if r.Id == t.Id {
+			return true
+		}
+	}
+	return false
+}
+
+func portalInbound(t model.ServerTunnel, riders []model.ServerTunnel) (xray.InboundConfig, error) {
+	clients := []any{reverseClient(t)}
+	for _, r := range riders {
+		clients = append(clients, reverseClient(r))
+	}
+	settings, err := json.Marshal(map[string]any{"decryption": "none", "clients": clients})
 	if err != nil {
 		return xray.InboundConfig{}, err
 	}
@@ -171,6 +208,13 @@ func portalInbound(t model.ServerTunnel) (xray.InboundConfig, error) {
 		Listen: json_util.RawMessage(`"0.0.0.0"`), Port: t.Port, Protocol: "vless",
 		Settings: settings, StreamSettings: streamJSON, Tag: portalInboundTag(t.Name),
 	}, nil
+}
+
+func reverseClient(t model.ServerTunnel) map[string]any {
+	return map[string]any{
+		"id": t.UUID, "email": PortalOutboundTag(t.Name),
+		"reverse": map[string]any{"tag": PortalOutboundTag(t.Name)},
+	}
 }
 
 func bridgeOutbound(t model.ServerTunnel) map[string]any {

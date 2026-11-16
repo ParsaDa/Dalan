@@ -16,6 +16,7 @@ export const EnrolmentFormSchema = z.object({
   port: z.number().int().min(1).max(65535),
   security: z.enum(['reality', 'none']),
   serverName: z.string().trim(),
+  tunnelId: z.number().int().min(0),
 });
 
 export type EnrolmentFormValues = z.infer<typeof EnrolmentFormSchema>;

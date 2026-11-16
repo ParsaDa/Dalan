@@ -47,6 +47,9 @@ type Spec struct {
 	Port       int    `json:"port" example:"8443"`
 	Security   string `json:"security" example:"reality"`
 	ServerName string `json:"serverName" example:"www.example.com"`
+	// TunnelId, when set, carries the node's management on that existing entry tunnel; the address
+	// and security fields are then taken from it.
+	TunnelId int `json:"tunnelId,omitempty" example:"0"`
 }
 
 // Invitation is a new enrolment with the link that is shown once and never stored.
@@ -121,10 +124,15 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 	if err != nil {
 		return nil, err
 	}
-	portal, err := s.tunnels.CreateManagementPortal(tunnel.PortalSpec{
-		Name: tunnelNamePrefix + name, Address: spec.Address, Port: spec.Port,
-		Security: spec.Security, ServerName: spec.ServerName,
-	})
+	var portal *model.ServerTunnel
+	if spec.TunnelId > 0 {
+		portal, err = s.tunnels.CreateManagementRider(spec.TunnelId, tunnelNamePrefix+name)
+	} else {
+		portal, err = s.tunnels.CreateManagementPortal(tunnel.PortalSpec{
+			Name: tunnelNamePrefix + name, Address: spec.Address, Port: spec.Port,
+			Security: spec.Security, ServerName: spec.ServerName,
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -203,9 +211,13 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 	if err := db.First(&portal, row.TunnelId).Error; err != nil {
 		return nil, ErrGone
 	}
-	setup, err := tunnel.SetupLink(portal)
-	if err != nil {
-		return nil, err
+	// A BackPack tunnel is already set up on the node, so the channel is a forward on it, not a tunnel to import.
+	onBackpack := portal.ParentId > 0 && portal.Engine == model.TunnelEngineBackpack
+	var setup string
+	if !onBackpack {
+		if setup, err = tunnel.SetupLink(portal); err != nil {
+			return nil, err
+		}
 	}
 
 	// The conditional update is the single point where a link is spent; a concurrent second request loses here.
@@ -231,6 +243,14 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 	}
 	if err := db.Model(&model.NodeEnrolment{}).Where("id = ?", row.Id).Update("node_id", node.Id).Error; err != nil {
 		return nil, err
+	}
+	if onBackpack {
+		if err := db.Model(&model.ServerTunnel{}).Where("id = ?", portal.Id).Update("manage_target", info.Port).Error; err != nil {
+			return nil, err
+		}
+		if err := s.tunnels.ReconcileEngines(); err != nil {
+			logger.Warning("enrolments: applying the node's forward to its BackPack tunnel:", err)
+		}
 	}
 	return sealReply(enrol.Grant{Tunnel: setup})
 }
@@ -292,7 +312,7 @@ func (s *Service) Join(ctx context.Context, rawLink string) error {
 	grant, err := enrol.Redeem(ctx, client, link, enrol.NodeInfo{
 		Token: link.Token, Port: port, BasePath: basePath, Scheme: scheme, APIToken: token.Token,
 	})
-	if err == nil {
+	if err == nil && grant.Tunnel != "" {
 		_, err = s.tunnels.ImportManagementBridge(grant.Tunnel, port)
 	}
 	if err != nil {

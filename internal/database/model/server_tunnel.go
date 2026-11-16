@@ -46,4 +46,8 @@ type ServerTunnel struct {
 	// ManagePort marks a management tunnel. Portal: the loopback port opened here. Bridge: this
 	// server's panel port, the only place the tunnel's traffic may go. Zero is an ordinary tunnel.
 	ManagePort int `json:"managePort" gorm:"column:manage_port;default:0" example:"0"`
+	// ParentId (management portal) is the tunnel whose port and REALITY identity this channel shares.
+	ParentId int `json:"parentId" gorm:"column:parent_id;default:0" example:"0"`
+	// ManageTarget is the node panel port a BackPack parent delivers its management forward to.
+	ManageTarget int `json:"-" gorm:"column:manage_target;default:0"`
 }

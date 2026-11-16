@@ -4781,6 +4781,11 @@
             "example": "de1",
             "type": "string"
           },
+          "parentId": {
+            "description": "ParentId (management portal) is the tunnel whose port and REALITY identity this channel shares.",
+            "example": 0,
+            "type": "integer"
+          },
           "port": {
             "example": 8443,
             "type": "integer"
@@ -4837,6 +4842,7 @@
           "id",
           "managePort",
           "name",
+          "parentId",
           "port",
           "realityPublicKey",
           "relayPort",
@@ -13614,6 +13620,7 @@
                       "id": 1,
                       "managePort": 0,
                       "name": "de1",
+                      "parentId": 0,
                       "port": 8443,
                       "realityPublicKey": "",
                       "relayPort": 63500,
@@ -13861,6 +13868,7 @@
                     "id": 1,
                     "managePort": 0,
                     "name": "de1",
+                    "parentId": 0,
                     "port": 8443,
                     "realityPublicKey": "",
                     "relayPort": 63500,
@@ -13938,6 +13946,7 @@
                     "id": 1,
                     "managePort": 0,
                     "name": "de1",
+                    "parentId": 0,
                     "port": 8443,
                     "realityPublicKey": "",
                     "relayPort": 63500,
@@ -14106,7 +14115,7 @@
         "tags": [
           "Node enrolment"
         ],
-        "summary": "Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored.",
+        "summary": "Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored. Set tunnelId to an existing entry tunnel to manage the node over it instead; address, port and security are then taken from that tunnel.",
         "operationId": "post_panel_api_enrolments_add",
         "requestBody": {
           "required": true,
@@ -14121,7 +14130,8 @@
                 "address": "203.0.113.10",
                 "port": 8443,
                 "security": "reality",
-                "serverName": "www.example.com"
+                "serverName": "www.example.com",
+                "tunnelId": 0
               }
             }
           }

@@ -1149,6 +1149,7 @@ export const ServerTunnelSchema = z.object({
   id: z.number().int(),
   managePort: z.number().int(),
   name: z.string(),
+  parentId: z.number().int(),
   port: z.number().int(),
   realityPublicKey: z.string(),
   relayPort: z.number().int(),

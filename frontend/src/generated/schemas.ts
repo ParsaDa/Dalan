@@ -4755,6 +4755,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "de1",
         "type": "string"
       },
+      "parentId": {
+        "description": "ParentId (management portal) is the tunnel whose port and REALITY identity this channel shares.",
+        "example": 0,
+        "type": "integer"
+      },
       "port": {
         "example": 8443,
         "type": "integer"
@@ -4811,6 +4816,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "id",
       "managePort",
       "name",
+      "parentId",
       "port",
       "realityPublicKey",
       "relayPort",

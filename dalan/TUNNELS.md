@@ -83,6 +83,8 @@ Both servers need Dalan.
    | Port | A free port on this server for this node's tunnel; open it in the firewall |
    | Security, Server name (SNI) | As for any tunnel; REALITY is recommended |
 
+   Instead of a new tunnel you can pick **Tunnel that carries it**: an existing entry tunnel. The node is then managed over that tunnel, with the same address, port and disguise and nothing new to open. On an Xray tunnel the node gets a second client on the tunnel's own port; on a BackPack tunnel (which the node must already have) the panel adds a loopback forward to the node's panel port. A tunnel that carries a node cannot be deleted until that node is removed; if it goes down, the node's management goes down with it.
+
 2. Press **Create command** and copy the command. It is shown once, works once and expires after 30 minutes.
 3. On the node, run it:
 
@@ -98,11 +100,15 @@ What to know:
 - On the node, whatever arrives through this tunnel can reach the node's own panel port and nothing else.
 - The enrolment itself needs the main panel's web port to be reachable from the node, once. Afterwards only the tunnel port is used. The exchange is encrypted with a key inside the command, so it is safe even when the panel is served over plain HTTP.
 - The command gives the main panel an API token of the node. Treat the command like a password until it is used.
-- Each node needs its own tunnel port on the main panel.
+- A node with its own tunnel needs its own tunnel port on the main panel; a node carried by an existing tunnel needs none.
 - Deleting the node in the main panel closes its tunnel there. On the node, the tunnel `node-<name>` stays until it is deleted in the node's Tunnels page or the node joins another main panel.
 - Running `dalan enrol` again with a new command moves the node to that main panel; the earlier panel's token stops working.
 - If the node's panel is set to listen on one specific IP, clear that setting first: the tunnel delivers to `127.0.0.1`.
 - A waiting enrolment can be cancelled in the same dialog.
+
+## Engine output
+
+Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>: ...`; when it exits, the last lines are repeated with the restart notice.
 
 ## Not built yet
 

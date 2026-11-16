@@ -227,3 +227,91 @@ func TestABackpackTunnelWithoutARelayPortAndADisabledOneChangeNothing(t *testing
 			cfg.OutboundConfigs, len(cfg.InboundConfigs), cfg.RouterConfig)
 	}
 }
+
+func ridingPair(t *testing.T) (parent, rider model.ServerTunnel) {
+	t.Helper()
+	parent, err := tunnel.NewPortal(tunnel.PortalSpec{
+		Name: "tr1", Address: "203.0.113.10", Port: 8443,
+		Security: model.TunnelSecurityReality, ServerName: "www.example.com",
+	})
+	if err != nil {
+		t.Fatalf("NewPortal: %v", err)
+	}
+	parent.Id = 7
+	rider = model.ServerTunnel{
+		Id: 8, Name: "node-de1", Role: model.TunnelRolePortal, Engine: model.TunnelEngineXray, Enable: true,
+		Address: parent.Address, Port: parent.Port, UUID: "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10",
+		Security: parent.Security, ServerName: parent.ServerName, RealityPublicKey: parent.RealityPublicKey,
+		ShortId: parent.ShortId, ManagePort: 61005, ParentId: parent.Id,
+	}
+	return parent, rider
+}
+
+func TestNodeManagementRidesAsASecondClientOnTheTunnelsOwnPort(t *testing.T) {
+	parent, rider := ridingPair(t)
+	cfg := &xray.Config{OutboundConfigs: []byte(`[{"tag":"direct","protocol":"freedom"}]`)}
+	if err := Apply(cfg, []model.ServerTunnel{parent, rider}); err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+	buildWithXray(t, cfg)
+
+	var vless, manage int
+	var clients []map[string]any
+	for _, in := range cfg.InboundConfigs {
+		switch in.Tag {
+		case "tunnel-tr1-link":
+			vless++
+			var settings struct {
+				Clients []map[string]any `json:"clients"`
+			}
+			if err := json.Unmarshal(in.Settings, &settings); err != nil {
+				t.Fatalf("settings: %v", err)
+			}
+			clients = settings.Clients
+		case "tunnel-node-de1-manage":
+			manage++
+			if in.Port != 61005 {
+				t.Fatalf("management listener port = %d, want 61005", in.Port)
+			}
+		}
+		if in.Port == parent.Port && in.Tag != "tunnel-tr1-link" {
+			t.Fatalf("inbound %q also listens on the tunnel's port %d", in.Tag, in.Port)
+		}
+	}
+	if vless != 1 || manage != 1 {
+		t.Fatalf("tunnel inbounds = %d, management listeners = %d, want 1 and 1", vless, manage)
+	}
+	if len(clients) != 2 || clients[1]["id"] != rider.UUID {
+		t.Fatalf("clients on the tunnel's inbound = %v, want the tunnel's own and the management one (%s)", clients, rider.UUID)
+	}
+	reverse, _ := clients[1]["reverse"].(map[string]any)
+	if reverse["tag"] != "tunnel-node-de1" {
+		t.Fatalf("management client reverse tag = %v, want tunnel-node-de1", reverse["tag"])
+	}
+	var routed bool
+	for _, r := range parsedRules(t, cfg) {
+		if r["outboundTag"] == "tunnel-node-de1" {
+			routed = true
+		}
+	}
+	if !routed {
+		t.Fatal("nothing routes the management listener into the management client's tunnel")
+	}
+}
+
+func TestManagementRidingOnADisabledOrMissingTunnelAddsNothing(t *testing.T) {
+	parent, rider := ridingPair(t)
+	parent.Enable = false
+	for name, tunnels := range map[string][]model.ServerTunnel{
+		"disabled parent": {parent, rider}, "missing parent": {rider},
+	} {
+		cfg := &xray.Config{OutboundConfigs: []byte(`[{"tag":"direct","protocol":"freedom"}]`)}
+		if err := Apply(cfg, tunnels); err != nil {
+			t.Fatalf("%s: Apply: %v", name, err)
+		}
+		if len(cfg.InboundConfigs) != 0 {
+			t.Fatalf("%s: %d inbounds added, want none", name, len(cfg.InboundConfigs))
+		}
+		buildWithXray(t, cfg)
+	}
+}

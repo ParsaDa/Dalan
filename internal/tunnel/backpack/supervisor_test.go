@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -169,4 +170,38 @@ func TestReconcileSaysWhenTheEngineIsNotInstalled(t *testing.T) {
 	if err := s.Reconcile(nil); err != nil {
 		t.Fatalf("with no BackPack tunnels a missing engine is not an error, got %v", err)
 	}
+}
+
+func TestAnEnginesOutputReachesThePanelLogAndTheLastLinesAccompanyACrash(t *testing.T) {
+	binary := filepath.Join(t.TempDir(), "backpack")
+	script := "#!/bin/sh\necho \"listening on 8443\"\necho \"dial failed: refused\" >&2\nexit 3\n"
+	if err := os.WriteFile(binary, []byte(script), 0o755); err != nil {
+		t.Fatalf("write fake engine: %v", err)
+	}
+	var mu sync.Mutex
+	var lines []string
+	s := &Supervisor{
+		Binary: binary, Dir: t.TempDir(), RestartDelay: time.Hour,
+		LogLine: func(tunnel, line string) {
+			mu.Lock()
+			defer mu.Unlock()
+			lines = append(lines, tunnel+": "+line)
+		},
+	}
+	t.Cleanup(s.StopAll)
+	if err := s.Reconcile([]model.ServerTunnel{bridge("de1", "tcp")}); err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+	want := []string{"de1: listening on 8443", "de1: dial failed: refused"}
+	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); time.Sleep(20 * time.Millisecond) {
+		mu.Lock()
+		got := strings.Join(lines, "|")
+		mu.Unlock()
+		if strings.Contains(got, want[0]) && strings.Contains(got, want[1]) {
+			return
+		}
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	t.Fatalf("engine output reached the log as %q, want both of %q", lines, want)
 }

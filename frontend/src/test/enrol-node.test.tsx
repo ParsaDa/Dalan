@@ -113,3 +113,46 @@ test('lists only the enrolments still waiting and cancels one', async () => {
   fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
   await waitFor(() => expect(HttpUtil.post).toHaveBeenCalledWith('/panel/api/enrolments/del/2'));
 });
+
+test('carries a node on an existing tunnel without asking for an address of its own', async () => {
+  const portal = {
+    id: 4,
+    name: 'tr1',
+    role: 'portal',
+    engine: 'xray',
+    enable: true,
+    address: '203.0.113.10',
+    port: 8443,
+    uuid: '8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10',
+    security: 'none',
+    serverName: '',
+    realityPublicKey: '',
+    shortId: '',
+    routeInbounds: null,
+    exitOutbound: '',
+    transport: '',
+    fallbackTransports: null,
+    forwardPorts: null,
+    acceptUdp: false,
+    relayPort: 0,
+    managePort: 0,
+    parentId: 0,
+  };
+  vi.spyOn(HttpUtil, 'get').mockImplementation(
+    async (url) => new Msg(true, '', url === '/panel/api/tunnels/list' ? [portal] : listed),
+  );
+  fireEvent.change(await openDialog(), { target: { value: 'tr2' } });
+  fireEvent.mouseDown(await screen.findByLabelText('Tunnel that carries it'));
+  fireEvent.click(await screen.findByText('tr1 · 203.0.113.10:8443'));
+
+  expect(screen.queryByLabelText('Address')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/enrolments/add',
+      { name: 'tr2', panelUrl: `${window.location.origin}/`, tunnelId: 4 },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
