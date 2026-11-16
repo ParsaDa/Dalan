@@ -4265,6 +4265,72 @@
         ],
         "type": "object"
       },
+      "Option": {
+        "description": "Option is one BackPack setting the panel can write: its key, shape and a hint in both languages.",
+        "properties": {
+          "choices": {
+            "example": "info",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "group": {
+            "example": "cdn",
+            "type": "string"
+          },
+          "hintEn": {
+            "example": "Dial this CDN edge address while presenting the tunnel's hostname.",
+            "type": "string"
+          },
+          "hintFa": {
+            "example": "به‌جای نام دامنه، مستقیم به این آدرس لبهٔ CDN وصل می‌شود.",
+            "type": "string"
+          },
+          "key": {
+            "example": "edge_ip",
+            "type": "string"
+          },
+          "kind": {
+            "example": "string",
+            "type": "string"
+          },
+          "max": {
+            "example": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "min": {
+            "example": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "mode": {
+            "example": "reverse",
+            "type": "string"
+          },
+          "pattern": {
+            "nullable": true
+          },
+          "role": {
+            "example": "bridge",
+            "type": "string"
+          }
+        },
+        "required": [
+          "choices",
+          "group",
+          "hintEn",
+          "hintFa",
+          "key",
+          "kind",
+          "max",
+          "min",
+          "mode",
+          "role"
+        ],
+        "type": "object"
+      },
       "OutboundTraffics": {
         "description": "OutboundTraffics tracks traffic statistics for Xray outbound connections.",
         "properties": {
@@ -4794,6 +4860,11 @@
             "example": 0,
             "type": "integer"
           },
+          "mode": {
+            "description": "Mode is \"reverse\" (the exit server dials the entry server) or \"direct\" (the entry server dials the\nexit server, a BackPack layer-3 link). An empty value reads as reverse.",
+            "example": "reverse",
+            "type": "string"
+          },
           "name": {
             "example": "de1",
             "type": "string"
@@ -4802,6 +4873,11 @@
             "description": "NodeId (portal) names the node whose panel holds the other end, set when this panel created both ends.",
             "example": 0,
             "type": "integer"
+          },
+          "options": {
+            "additionalProperties": {},
+            "description": "Options are BackPack settings beyond the fields above, keyed as the engine spells them; each end\nwrites the ones that apply to its role.",
+            "type": "object"
           },
           "parentId": {
             "description": "ParentId (management portal) is the tunnel whose port and REALITY identity this channel shares.",
@@ -4870,8 +4946,10 @@
           "forwardPorts",
           "id",
           "managePort",
+          "mode",
           "name",
           "nodeId",
+          "options",
           "parentId",
           "port",
           "realityPublicKey",
@@ -5328,7 +5406,7 @@
     },
     {
       "name": "Tunnels",
-      "description": "Reverse tunnels between this panel and other servers. The entry end (portal) listens; the exit end (bridge) dials it, so the connection is always opened from the exit server. All endpoints under /panel/api/tunnels."
+      "description": "Tunnels between this panel and other servers. A reverse tunnel (the default): the entry end (portal) listens and the exit end (bridge) dials it, so the connection is always opened from the exit server. A direct tunnel (BackPack layer 3, mode \"direct\"): the entry end dials the exit end, for games and other low-latency traffic. All endpoints under /panel/api/tunnels."
     },
     {
       "name": "Node enrolment",
@@ -13691,8 +13769,10 @@
                       ],
                       "id": 1,
                       "managePort": 0,
+                      "mode": "reverse",
                       "name": "de1",
                       "nodeId": 0,
+                      "options": {},
                       "parentId": 0,
                       "port": 8443,
                       "realityPublicKey": "",
@@ -13850,6 +13930,59 @@
         }
       }
     },
+    "/panel/api/tunnels/options": {
+      "get": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Every BackPack setting the panel can write, for reverse and direct tunnels: key, kind, which end reads it, group, allowed values and a hint in English (hintEn) and Persian (hintFa). Send values under options of add or update, keyed as listed here.",
+        "operationId": "get_panel_api_tunnels_options",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Option"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "choices": "info",
+                      "group": "cdn",
+                      "hintEn": "Dial this CDN edge address while presenting the tunnel's hostname.",
+                      "hintFa": "به‌جای نام دامنه، مستقیم به این آدرس لبهٔ CDN وصل می‌شود.",
+                      "key": "edge_ip",
+                      "kind": "string",
+                      "max": 0,
+                      "min": 0,
+                      "mode": "reverse",
+                      "pattern": null,
+                      "role": "bridge"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/tunnels/engine/install": {
       "post": {
         "tags": [
@@ -13991,7 +14124,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Create the entry end of a tunnel on this server. Secrets are generated by the panel. With the default engine (xray), routeInbounds lists the local inbound tags whose traffic leaves through the tunnel. With engine \"backpack\", send transport, forwardPorts (for example \"443=127.0.0.1:2096\") and optionally fallbackTransports and acceptUdp instead of security, serverName and routeInbounds. Send nodeId to also create the dialling end on that node through its management channel; exitOutbound then names the outbound traffic leaves from there. If the node does not take its end, nothing is created.",
+        "summary": "Create the entry end of a tunnel on this server. Secrets are generated by the panel. With the default engine (xray), routeInbounds lists the local inbound tags whose traffic leaves through the tunnel. With engine \"backpack\", send transport, forwardPorts (for example \"443=127.0.0.1:2096\") and optionally fallbackTransports, acceptUdp and options (see /options) instead of security, serverName and routeInbounds. With mode \"direct\" (BackPack only) the entry end dials the exit end over a layer-3 link: send options.carrier (udp, pck, quic, sni, xdi or spoof) and forwardPorts, and the panel picks the tunnel addresses; this mode needs root and /dev/net/tun on both servers, and the tunnel is not an Xray outbound. Send nodeId to also create the dialling end on that node through its management channel; exitOutbound then names the outbound traffic leaves from there. If the node does not take its end, nothing is created.",
         "operationId": "post_panel_api_tunnels_add",
         "requestBody": {
           "required": true,
@@ -14049,8 +14182,111 @@
                     ],
                     "id": 1,
                     "managePort": 0,
+                    "mode": "reverse",
                     "name": "de1",
                     "nodeId": 0,
+                    "options": {},
+                    "parentId": 0,
+                    "port": 8443,
+                    "realityPublicKey": "",
+                    "relayPort": 63500,
+                    "role": "portal",
+                    "routeInbounds": [
+                      ""
+                    ],
+                    "security": "reality",
+                    "serverName": "www.example.com",
+                    "shortId": "a1b2c3d4",
+                    "transport": "wssmux",
+                    "up": 1048576,
+                    "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/update/{id}": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Change a tunnel in place. On an entry end send the shared settings (address, port, transport, fallbackTransports, forwardPorts, acceptUdp, options, routeInbounds, or serverName on a REALITY tunnel); when this panel made the other end on a node, the node is sent its end first and a refusal there changes nothing. On an exit end only exitOutbound and options are read. The name, role, engine, mode and secrets never change.",
+        "operationId": "post_panel_api_tunnels_update_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Tunnel ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "address": "203.0.113.10",
+                "port": 8443,
+                "transport": "wssmux",
+                "forwardPorts": [
+                  "443=127.0.0.1:2096"
+                ],
+                "options": {
+                  "nodelay": true
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/ServerTunnel"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "acceptUdp": false,
+                    "address": "203.0.113.10",
+                    "down": 5242880,
+                    "enable": true,
+                    "engine": "xray",
+                    "exitOutbound": "direct",
+                    "fallbackTransports": [
+                      ""
+                    ],
+                    "forwardPorts": [
+                      ""
+                    ],
+                    "id": 1,
+                    "managePort": 0,
+                    "mode": "reverse",
+                    "name": "de1",
+                    "nodeId": 0,
+                    "options": {},
                     "parentId": 0,
                     "port": 8443,
                     "realityPublicKey": "",
@@ -14078,7 +14314,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Create the exit end of a tunnel from the setup link of an entry server. exitOutbound is the local outbound traffic leaves from; empty means direct.",
+        "summary": "Create the exit end of a tunnel from the setup link of an entry server. exitOutbound is the local outbound traffic leaves from; empty means direct. A link for a tunnel name that is already an exit end here updates that end in place and keeps its exit outbound unless a new one is sent.",
         "operationId": "post_panel_api_tunnels_import",
         "requestBody": {
           "required": true,
@@ -14130,8 +14366,10 @@
                     ],
                     "id": 1,
                     "managePort": 0,
+                    "mode": "reverse",
                     "name": "de1",
                     "nodeId": 0,
+                    "options": {},
                     "parentId": 0,
                     "port": 8443,
                     "realityPublicKey": "",

@@ -960,6 +960,20 @@ export interface NodeView {
   xrayVersion: string;
 }
 
+export interface Option {
+  choices: string[];
+  group: string;
+  hintEn: string;
+  hintFa: string;
+  key: string;
+  kind: string;
+  max: number;
+  min: number;
+  mode: string;
+  pattern?: Regexp | null;
+  role: string;
+}
+
 export interface OutboundTraffics {
   down: number;
   id: number;
@@ -1084,8 +1098,10 @@ export interface ServerTunnel {
   forwardPorts: string[];
   id: number;
   managePort: number;
+  mode: string;
   name: string;
   nodeId: number;
+  options: Record<string, unknown>;
   parentId: number;
   port: number;
   realityPublicKey: string;

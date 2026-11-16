@@ -1023,6 +1023,21 @@ export const NodeViewSchema = z.object({
 });
 export type NodeView = z.infer<typeof NodeViewSchema>;
 
+export const OptionSchema = z.object({
+  choices: z.array(z.string()),
+  group: z.string(),
+  hintEn: z.string(),
+  hintFa: z.string(),
+  key: z.string(),
+  kind: z.string(),
+  max: z.number().int(),
+  min: z.number().int(),
+  mode: z.string(),
+  pattern: z.lazy(() => RegexpSchema).nullable().optional(),
+  role: z.string(),
+});
+export type Option = z.infer<typeof OptionSchema>;
+
 export const OutboundTrafficsSchema = z.object({
   down: z.number().int(),
   id: z.number().int(),
@@ -1154,8 +1169,10 @@ export const ServerTunnelSchema = z.object({
   forwardPorts: z.array(z.string()),
   id: z.number().int(),
   managePort: z.number().int(),
+  mode: z.string(),
   name: z.string(),
   nodeId: z.number().int(),
+  options: z.record(z.string(), z.unknown()),
   parentId: z.number().int(),
   port: z.number().int(),
   realityPublicKey: z.string(),

@@ -141,6 +141,10 @@ func run(root, outDir string) error {
 			AliasAllow:  setOf("BlockerCode"),
 		},
 		{
+			Path:        resolveRel(root, "internal/tunnel/backpack"),
+			StructAllow: setOf("Option"),
+		},
+		{
 			Path:        resolveRel(root, "internal/tuic"),
 			StructAllow: setOf("TuicServerSettings", "TuicClientSettings"),
 		},
