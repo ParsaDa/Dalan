@@ -33,6 +33,7 @@ const rakhshCatalog = [
   option('limit', { group: 'limits', role: 'portal' }),
 ];
 const backpackCatalog = [
+  option('sni', { group: 'carrier' }),
   option('keepalive_period', { kind: 'int', mode: 'reverse', group: 'performance', min: 1 }),
 ];
 
@@ -138,6 +139,10 @@ test('choosing Rakhsh loads Rakhsh options and drops the options of the engine i
   fireEvent.click(await screen.findByText('Advanced options'));
   fireEvent.click(await screen.findByText('Performance'));
   fireEvent.change(await screen.findByLabelText('keepalive_period'), { target: { value: '30' } });
+  fireEvent.click(await screen.findByText('Carrier'));
+  fireEvent.change(await screen.findByLabelText('sni'), {
+    target: { value: 'typed-for-backpack' },
+  });
 
   fireEvent.click(screen.getByRole('radio', { name: 'Rakhsh' }));
   expect(await screen.findByText('l3_addr')).toBeTruthy();

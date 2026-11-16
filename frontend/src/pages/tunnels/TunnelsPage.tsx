@@ -539,10 +539,9 @@ export default function TunnelsPage() {
           onValuesChange={(changed: Partial<PortalFormValues>) => {
             // Each engine reads its own settings, so the ones typed for the other engine must not travel along.
             if (!changed.engine) return;
-            portalForm.setFieldsValue({
-              options: {},
-              transport: changed.engine === 'rakhsh' ? 'tcp' : 'tcpmux',
-            });
+            // setFieldsValue merges objects, so only setFieldValue can empty the options.
+            portalForm.setFieldValue('options', {});
+            portalForm.setFieldValue('transport', changed.engine === 'rakhsh' ? 'tcp' : 'tcpmux');
           }}
           initialValues={{
             engine: 'xray',
