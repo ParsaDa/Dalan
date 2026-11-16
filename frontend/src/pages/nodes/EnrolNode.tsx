@@ -85,6 +85,11 @@ export default function EnrolNode() {
     if (created) setInvitation(created);
   });
 
+  const copyInstallCommand = async () => {
+    if (invitation && (await ClipboardManager.copyText(invitation.installCommand)))
+      messageApi.success(t('pages.enrolments.copied'));
+  };
+
   const copyCommand = async () => {
     if (invitation && (await ClipboardManager.copyText(invitation.command))) {
       messageApi.success(t('pages.enrolments.copied'));
@@ -128,6 +133,15 @@ export default function EnrolNode() {
             </Typography.Paragraph>
             <Button icon={<CopyOutlined aria-hidden />} onClick={copyCommand}>
               {t('pages.enrolments.copy')}
+            </Button>
+            <Typography.Paragraph type="secondary" style={{ marginTop: 16 }}>
+              {t('pages.enrolments.installTitle')}
+            </Typography.Paragraph>
+            <Typography.Paragraph code style={{ direction: 'ltr', wordBreak: 'break-all' }}>
+              {invitation.installCommand}
+            </Typography.Paragraph>
+            <Button icon={<CopyOutlined aria-hidden />} onClick={copyInstallCommand}>
+              {t('pages.enrolments.copyInstall')}
             </Button>
           </>
         ) : (

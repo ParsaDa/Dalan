@@ -95,6 +95,10 @@ func TestRedeemingAnEnrolmentRegistersTheNodeOnItsManagementPort(t *testing.T) {
 	if !strings.Contains(created.Command, created.Link) {
 		t.Fatalf("command %q does not carry the link", created.Command)
 	}
+	wantInstall := "XUI_ENROL='" + created.Link + "' bash <(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)"
+	if created.InstallCommand != wantInstall {
+		t.Fatalf("install command = %q, want %q", created.InstallCommand, wantInstall)
+	}
 
 	grant, err := redeem(t, svc, link, enrol.NodeInfo{
 		Token: link.Token, Port: 2053, BasePath: "/x/", Scheme: "https", APIToken: "node-token-1",

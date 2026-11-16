@@ -3505,6 +3505,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": 1,
         "type": "integer"
       },
+      "installCommand": {
+        "description": "InstallCommand installs Dalan on a fresh server and joins this panel in one go.",
+        "example": "XUI_ENROL='dalan://enrol/eyJ2IjoxfQ' bash \u003c(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)",
+        "type": "string"
+      },
       "link": {
         "example": "dalan://enrol/eyJ2IjoxfQ",
         "type": "string"
@@ -3518,6 +3523,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "command",
       "expiresAt",
       "id",
+      "installCommand",
       "link",
       "name"
     ],

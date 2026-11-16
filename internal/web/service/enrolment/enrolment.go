@@ -62,7 +62,11 @@ type Invitation struct {
 	ExpiresAt int64  `json:"expiresAt" example:"1700001800"`
 	Link      string `json:"link" example:"dalan://enrol/eyJ2IjoxfQ"`
 	Command   string `json:"command" example:"dalan enrol 'dalan://enrol/eyJ2IjoxfQ'"`
+	// InstallCommand installs Dalan on a fresh server and joins this panel in one go.
+	InstallCommand string `json:"installCommand" example:"XUI_ENROL='dalan://enrol/eyJ2IjoxfQ' bash <(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)"`
 }
+
+const installScriptURL = "https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh"
 
 // Service runs enrolments: Create, Redeem and the clean-up on the main panel, Join on the node.
 type Service struct {
@@ -166,6 +170,7 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 	return &Invitation{
 		Id: row.Id, Name: row.Name, ExpiresAt: row.ExpiresAt,
 		Link: offer.Link, Command: "dalan enrol '" + offer.Link + "'",
+		InstallCommand: "XUI_ENROL='" + offer.Link + "' bash <(curl -Ls " + installScriptURL + ")",
 	}, nil
 }
 

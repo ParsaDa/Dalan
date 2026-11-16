@@ -857,6 +857,7 @@ export const InvitationSchema = z.object({
   command: z.string(),
   expiresAt: z.number().int(),
   id: z.number().int(),
+  installCommand: z.string(),
   link: z.string(),
   name: z.string(),
 });

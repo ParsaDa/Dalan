@@ -2633,7 +2633,9 @@
       "tunnelNew": "A new tunnel only for this node",
       "tunnelHint": "Pick an existing tunnel to manage the node over it. Nothing else is opened: same address, port and disguise, and the node needs no second tunnel.",
       "withTunnel": "Also make a tunnel for this node’s traffic",
-      "withTunnelHint": "Makes an ordinary tunnel named after the node on the same port, so its traffic can be routed through it. The management channel rides on it, so no second address is exposed."
+      "withTunnelHint": "Makes an ordinary tunnel named after the node on the same port, so its traffic can be routed through it. The management channel rides on it, so no second address is exposed.",
+      "installTitle": "On a server without Dalan, this installs it and joins this panel in one go:",
+      "copyInstall": "Copy install command"
     }
   },
   "tgbot": {

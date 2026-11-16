@@ -804,6 +804,7 @@ export interface Invitation {
   command: string;
   expiresAt: number;
   id: number;
+  installCommand: string;
   link: string;
   name: string;
 }

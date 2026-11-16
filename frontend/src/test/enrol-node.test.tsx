@@ -6,6 +6,8 @@ import { ClipboardManager, HttpUtil, Msg } from '@/utils';
 import { renderWithProviders } from './test-utils';
 
 const command = "dalan enrol 'dalan://enrol/abc'";
+const installCommand =
+  "XUI_ENROL='dalan://enrol/abc' bash <(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)";
 const waiting = { id: 2, name: 'nl1', expiresAt: 1900000000, usedAt: 0, tunnelId: 5, nodeId: 0 };
 const joined = {
   id: 1,
@@ -28,6 +30,7 @@ beforeEach(() => {
           expiresAt: 1900000000,
           link: 'dalan://enrol/abc',
           command,
+          installCommand,
         })
       : new Msg(true, '', null),
   );
@@ -42,6 +45,20 @@ async function openDialog() {
   fireEvent.click(screen.getByRole('button', { name: 'Add node with a command' }));
   return screen.findByLabelText('Node name');
 }
+
+test('offers a command that installs Dalan on a fresh server and joins this panel in one go', async () => {
+  vi.spyOn(ClipboardManager, 'copyText').mockResolvedValue(true);
+  fireEvent.change(await openDialog(), { target: { value: 'tr1' } });
+  fireEvent.change(screen.getByLabelText('Server name (SNI)'), {
+    target: { value: 'www.example.org' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
+
+  expect(await screen.findByText(installCommand)).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Copy install command' }));
+
+  await waitFor(() => expect(ClipboardManager.copyText).toHaveBeenCalledWith(installCommand));
+});
 
 test('creates an enrolment for this panel and shows the one-time command to copy', async () => {
   vi.spyOn(ClipboardManager, 'copyText').mockResolvedValue(true);

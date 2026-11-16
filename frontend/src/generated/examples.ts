@@ -897,6 +897,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "command": "dalan enrol 'dalan://enrol/eyJ2IjoxfQ'",
     "expiresAt": 1700001800,
     "id": 1,
+    "installCommand": "XUI_ENROL='dalan://enrol/eyJ2IjoxfQ' bash \u003c(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)",
     "link": "dalan://enrol/eyJ2IjoxfQ",
     "name": "de1"
   },

@@ -100,6 +100,7 @@ What to know:
 
 - The node is listed with the address `127.0.0.1` and a port between 61000 and 61999. That port exists only on the main panel's loopback and leads through the tunnel to the node's panel.
 - On the node, whatever arrives through this tunnel can reach the node's own panel port and nothing else.
+- On a server without Dalan, run the second command of the dialog (`XUI_ENROL='dalan://enrol/…' bash <(curl -Ls …/install.sh)`): it installs Dalan and then joins this panel. If joining fails the install still finishes, and `x-ui enrol '<link>'` can be run again until the command expires.
 - The enrolment itself needs the main panel's web port to be reachable from the node, once. Afterwards only the tunnel port is used. The exchange is encrypted with a key inside the command, so it is safe even when the panel is served over plain HTTP.
 - The command gives the main panel an API token of the node. Treat the command like a password until it is used.
 - A node with its own tunnel needs its own tunnel port on the main panel; a node carried by an existing tunnel needs none.
@@ -138,6 +139,5 @@ Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>
 
 ## Not built yet
 
-- Installing Dalan and enrolling a node in one command.
 - One shared port for the management tunnels of all nodes.
 - Xray tunnels over transports other than REALITY on TCP.
