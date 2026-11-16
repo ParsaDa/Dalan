@@ -42,7 +42,7 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 | #7 | 0.3.0 |
 | #13 | 0.4.0: tunnels as outbounds, spare-tunnel pools, route test, engine update through a node, container front door |
 | #14 | 0.4.5: reverse/direct label, direct layer-3 tunnels, all BackPack 1.9.0 options, edit in place, live tunnel traffic |
-| next | 0.5.0: the Rakhsh engine (third engine, all its options) |
+| #15 | 0.5.0: the Rakhsh engine (third engine, all its options) |
 
 Merged in PR #9 (0.3.1): reverse node enrolment and the management channel, item 1 of the list below. Design: `dalan/plans/2026-11-15-node-enrolment-design.md`. Operator guide: "Nodes that dial in" in `dalan/TUNNELS.md`.
 
@@ -76,7 +76,7 @@ Merged in PR #9 (0.3.1): reverse node enrolment and the management channel, item
 ### Where the tunnel code is
 
 - `internal/database/model/server_tunnel.go` — `ServerTunnel`, one end of a tunnel. Roles `portal` (entry, listens) and `bridge` (exit, dials). Engines `xray`, `backpack`, `rakhsh`.
-- `internal/tunnel/setup.go` — `NewPortal`, `SetupLink`, `ParseSetupLink`. Link format `dalan://tunnel/<base64url JSON>`; version 1 = Xray, version 2 = BackPack, version 3 = BackPack with options or direct mode. The REALITY private key never enters a link.
+- `internal/tunnel/setup.go` — `NewPortal`, `SetupLink`, `ParseSetupLink`. Link format `dalan://tunnel/<base64url JSON>`; version 1 = Xray, version 2 = BackPack, version 3 = BackPack with options or direct mode, version 4 = Rakhsh. The REALITY private key never enters a link; a Rakhsh link leaves `bind` out because it names an address of one server.
 - `internal/tunnel/xrayreverse/apply.go` — injects enabled Xray tunnels into the *generated* Xray config (never the stored template). Portal: VLESS inbound whose client has `reverse.tag`, plus a routing rule sending the chosen inbound tags to outbound `tunnel-<name>`, plus a loopback probe inbound on `62900 + id%500`. Bridge: VLESS outbound with `reverse.tag` and a rule sending its traffic to the exit outbound.
 - `internal/tunnel/probe.go` — one GET through the probe port; reports latency, exit IP and country (Cloudflare trace).
 - `internal/tunnel/rakhsh/` — see "What 0.5.0 adds"; the engine-neutral supervisor, installer and management forward live in `internal/tunnel/engine/`.
