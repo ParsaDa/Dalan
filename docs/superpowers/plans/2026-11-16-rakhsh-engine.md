@@ -34,10 +34,12 @@
 ### Task 1: Engine constant, key columns, key pairs
 
 **Files:**
+
 - Modify: `internal/database/model/server_tunnel.go`, `internal/database/db.go` (migration notes), `internal/tunnel/xrayreverse/apply.go`, `internal/tunnel/xrayreverse/pool.go`
 - Create: `internal/tunnel/rakhsh/keys.go`, `internal/tunnel/rakhsh/keys_test.go`
 
 **Interfaces:**
+
 - Produces: `model.TunnelEngineRakhsh = "rakhsh"`; `model.ExternalEngine(engine string) bool` (true for backpack and rakhsh); `ServerTunnel.RakhshSecret string` (`json:"-"`, column `rakhsh_secret`) and `ServerTunnel.RakhshPeerPublic string` (column `rakhsh_peer_public`, JSON `rakhshPeerPublic`); `rakhsh.GenerateKeyPair() (secret, public string, err error)`; `rakhsh.PublicKey(secret string) (string, error)`.
 
 - [ ] **Step 1: Write the failing tests.** `TestGenerateKeyPairDerivesPublic`: pair decodes to two 32-byte values and `PublicKey(secret)` equals `public`; two calls differ. `TestPublicKeyRejectsBadSecret`: non-base64 and 31-byte input return errors containing "secret". `TestExternalEngine` table: xray false, backpack true, rakhsh true. `TestRoutableCountsRakhshRelay`: a rakhsh portal with `RelayPort 63500` is Routable, with 0 is not.
@@ -49,10 +51,12 @@
 ### Task 2: Option catalog and validation
 
 **Files:**
+
 - Create: `internal/tunnel/rakhsh/options.go`, `internal/tunnel/rakhsh/options_test.go`
 - Modify: `tools/openapigen/main.go` (allow `rakhsh.Option`)
 
 **Interfaces:**
+
 - Produces: `rakhsh.Option` (same fields and JSON as `backpack.Option`, plus `KindLinks = "links"`), `rakhsh.Catalog []Option`, `rakhsh.OptionsFor(mode string) []Option`, `rakhsh.ValidateOptions(mode string, options map[string]any) error`, `rakhsh.Carriers []string` (the carrier names of the spec), `rakhsh.RawCarriers []string` (need root).
 - Option values: `links` is `[]any` of `map[string]any` with `carrier`, `addr` and any per-link override key from the catalog (`sni`, `ws_path`, `ws_credential`, `decoy`, `edge_ip`, `tls_fingerprint`, `cert_path`, `key_path`, `quic_mask`, `quic_version`, `reliability`).
 
@@ -65,9 +69,11 @@
 ### Task 3: Render the configuration
 
 **Files:**
+
 - Create: `internal/tunnel/rakhsh/config.go`, `internal/tunnel/rakhsh/config_test.go`
 
 **Interfaces:**
+
 - Consumes: Task 1 fields and `ValidateOptions`.
 - Produces: `rakhsh.RenderConfig(t model.ServerTunnel, controlSocket string) (string, error)`; `rakhsh.ControlSocket(dir, name string) string`; `rakhsh.RelayForward(port int) string` returning the `[[forward]]` pair for the loopback relay.
 
@@ -80,10 +86,12 @@
 ### Task 4: Shared supervisor, Rakhsh status, installer
 
 **Files:**
+
 - Create: `internal/tunnel/engine/supervisor.go` (+ test moved from `backpack/supervisor_test.go`), `internal/tunnel/engine/output.go`, `internal/tunnel/rakhsh/status.go`, `internal/tunnel/rakhsh/install.go` and tests
 - Modify: `internal/tunnel/backpack/supervisor.go`, `internal/tunnel/backpack/output.go` (thin wrappers over `engine`)
 
 **Interfaces:**
+
 - Produces: `engine.Supervisor{Name string; Binary, Dir string; RestartDelay time.Duration; LogLine func(tunnel, line string); Wants func(model.ServerTunnel) bool; Render func(model.ServerTunnel) (string, error); Args func(configPath string) []string}` with `Reconcile([]model.ServerTunnel) error` and `StopAll()`; `backpack.NewSupervisor(binary, dir string) *engine.Supervisor` keeping today's behaviour; `rakhsh.NewSupervisor(binary, dir string) *engine.Supervisor` running `<binary> run -c <config>`; `rakhsh.Status{Connected bool; LanesUp, TargetLanes int; RTTMs *float64; LossPct float64; Peer string}`; `rakhsh.ReadStatus(ctx, binary, socket string) (Status, error)` (runs `status --socket S --json`); `rakhsh.Fetch/Place/Rollback/InstalledVersion/PinnedVersion` with `backpack`'s semantics and the asset names above.
 
 - [ ] **Step 1: Write failing tests.** Move the existing supervisor tests to the `engine` package unchanged (they must stay green for `backpack.NewSupervisor`); add: a Rakhsh supervisor with a stand-in script restarts on config change; `ReadStatus` against a stand-in binary printing a captured real `status --json` sample (taken from `Snapshot` in `src/status.rs`) returns `Connected` only when `lanes_up > 0`; a missing binary returns `ErrNotInstalled`; installer tests against a local release server: good checksum installs, bad and missing checksum refuse, a failed download keeps the current binary.
@@ -95,9 +103,11 @@
 ### Task 5: Setup link version 4
 
 **Files:**
+
 - Modify: `internal/tunnel/setup.go`, `internal/tunnel/setup_test.go`
 
 **Interfaces:**
+
 - Consumes: Tasks 1–3. Produces: `PortalSpec.Engine = "rakhsh"` accepted; `NewPortal` generates both key pairs, token (UUID field), relay port, keeps `RakhshSecret`/`RakhshPeerPublic` for the portal; `SetupLink` emits version 4 for Rakhsh with the bridge secret and portal public key; `ParseSetupLink` returns a bridge with `RakhshSecret` = bridge secret and `RakhshPeerPublic` = portal public.
 
 - [ ] **Step 1: Write failing tests.** Round trip for reverse and direct Rakhsh tunnels: the parsed bridge renders a valid config whose `peer_public` equals the portal's public key and whose `static_secret` is the bridge's, and the portal's `peer_public` equals the public key of the link's bridge secret. `TestRakhshLinkNeverCarriesPortalSecret`: decoded link JSON does not contain the portal secret. Rejections: Rakhsh with transport empty, unknown carrier, a Xray-only field set, version 4 with an Xray engine, version 9 still unknown.
@@ -109,10 +119,12 @@
 ### Task 6: Service, edit, node, controller wiring
 
 **Files:**
+
 - Modify: `internal/web/service/tunnel.go`, `tunnel_edit.go`, `tunnel_engine.go`, `tunnel_management.go`, `internal/web/controller/tunnel.go`, `internal/web/service/enrolment/enrolment.go` (if it special-cases BackPack), `internal/web/web.go` (stop path), `frontend/src/pages/api-docs/endpoints.ts`
 - Tests: `tunnel_test.go`, `tunnel_edit_test.go`, `tunnel_management_test.go`, controller `tunnel_test.go`
 
 **Interfaces:**
+
 - Consumes: Tasks 1–5. Produces: `GET /panel/api/tunnels/options?engine=backpack|rakhsh` (default backpack, unchanged response for it); `TunnelService.EngineInfo()` returning one entry per external engine (`EngineInfo` gains `Engine string`; the list endpoint keeps the BackPack shape for compatibility and adds `engines`); `ReconcileEngines` reconciling both supervisors; `Status` using `rakhsh.ReadStatus`; `Update` validating via `rakhsh.RenderConfig`; `InstallEngine(engine)` and `UpdateEngine(ctx, nodeID, engine, version)` per engine.
 
 - [ ] **Step 1: Write failing tests.** Create a Rakhsh portal through the controller and read it back: no `rakhshSecret` anywhere in the list JSON; options endpoint returns the Rakhsh catalog for `engine=rakhsh` and BackPack's for the default; status with a stand-in engine reports connected only with lanes up and an exact error when the binary is missing; editing the exit end keeps `RakhshSecret`/`RakhshPeerPublic`/token; editing the entry end pushes the new link to the fake node first and a refusing node changes nothing; deleting removes both ends; two Rakhsh tunnels get different control sockets; a Rakhsh tunnel with a relay port appears as outbound `tunnel-<name>` through `GetXrayConfig`.
@@ -124,11 +136,13 @@
 ### Task 7: Frontend
 
 **Files:**
+
 - Modify: `frontend/src/pages/tunnels/TunnelsPage.tsx`, `TunnelEditModal.tsx`, `TunnelOptionFields.tsx`, `frontend/src/api/queries/useTunnels.ts`, `frontend/src/schemas/*` as needed
 - Create: `frontend/src/pages/tunnels/TunnelLinksField.tsx`
 - Tests: `frontend/src/test/tunnels-page.test.tsx`, new `rakhsh-tunnels.test.tsx`; translations in all 14 files
 
 **Interfaces:**
+
 - Consumes: Task 6 endpoints. Produces: engine selector option "Rakhsh"; option form driven by `useTunnelOptions(engine)`; `TunnelLinksField` (rows of carrier, address, per-link overrides; add/remove); engine install/update buttons per engine; a "needs root" hint on raw carriers.
 
 - [ ] **Step 1: Write failing tests.** Choosing Rakhsh loads its options (request carries `engine=rakhsh`); required and raw-carrier hints show; adding two links submits them in order inside `options.links`; the edit modal shows the stored links and submits changes; switching engine clears options of the other engine; a Rakhsh row shows Reverse/Direct tag and an Edit button.
@@ -140,6 +154,7 @@
 ### Task 8: Real binary test, docs, version
 
 **Files:**
+
 - Create: `internal/tunnel/rakhsh/e2e_test.go`
 - Modify: `dalan/TUNNELS.md`, `dalan/HANDOFF.md`, `dalan/UPSTREAM.md`, `dalan/CONTAINER.md`, `internal/config/dalan_version`, `Dockerfile`/`DockerInit.sh` only if the image should bundle Rakhsh (it does not: installed on demand like BackPack)
 
