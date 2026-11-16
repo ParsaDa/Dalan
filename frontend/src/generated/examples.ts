@@ -1060,7 +1060,7 @@ export const EXAMPLES: Record<string, unknown> = {
     ],
     "group": "cdn",
     "hintEn": "Dial this CDN edge address while presenting the tunnel's hostname.",
-    "hintFa": "به‌جای نام دامنه، مستقیم به این آدرس لبهٔ CDN وصل می‌شود.",
+    "hintFa": "اتصال مستقیم به این آدرس لبهٔ CDN.",
     "key": "edge_ip",
     "kind": "string",
     "max": 0,

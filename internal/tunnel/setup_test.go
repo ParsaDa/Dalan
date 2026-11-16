@@ -247,8 +247,10 @@ func TestNewPortalRefusesOptionsItCannotWriteAndOptionsOnXrayTunnels(t *testing.
 	if _, err := NewPortal(spec); err == nil {
 		t.Fatal("NewPortal accepted an option the engine does not read")
 	}
-	xray := PortalSpec{Name: "x1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
-		Options: map[string]any{"nodelay": true}}
+	xray := PortalSpec{
+		Name: "x1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+		Options: map[string]any{"nodelay": true},
+	}
 	if _, err := NewPortal(xray); err == nil || !strings.Contains(err.Error(), "BackPack") {
 		t.Fatalf("NewPortal(Xray with options) error = %v, want one saying options belong to BackPack", err)
 	}

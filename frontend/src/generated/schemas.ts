@@ -4261,7 +4261,7 @@ export const SCHEMAS: Record<string, unknown> = {
         "type": "string"
       },
       "hintFa": {
-        "example": "به‌جای نام دامنه، مستقیم به این آدرس لبهٔ CDN وصل می‌شود.",
+        "example": "اتصال مستقیم به این آدرس لبهٔ CDN.",
         "type": "string"
       },
       "key": {
