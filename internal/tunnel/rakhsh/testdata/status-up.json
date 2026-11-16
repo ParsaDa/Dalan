@@ -1,0 +1,54 @@
+{
+  "version": "0.1.0",
+  "pid": 6612,
+  "host": "vm",
+  "role": "entry",
+  "carrier": "wss",
+  "encryption": "full",
+  "resume": true,
+  "uptime_secs": 240,
+  "target_lanes": 4,
+  "lanes_up": 3,
+  "lanes_established": 3,
+  "reconnects": 0,
+  "streams": 0,
+  "tx_bps": 1200000,
+  "rx_bps": 9000000,
+  "peak_tx_bps": 0,
+  "peak_rx_bps": 0,
+  "tx_total": 0,
+  "rx_total": 0,
+  "cpu_pct": 0.0,
+  "rss_mb": 22.0,
+  "sys_cpu_pct": 0.0,
+  "sys_mem_pct": 6.3,
+  "load": [
+    0.33,
+    0.56,
+    0.52
+  ],
+  "resume_stats": {
+    "streams": 0,
+    "resent_chunks": 0
+  },
+  "quotas": [],
+  "links": [
+    {
+      "id": 1,
+      "label": "wss 203.0.113.10:7000",
+      "up_secs": 240,
+      "rtt_ms": 48.5,
+      "jitter_ms": 3.1,
+      "loss_pct": 0.4
+    },
+    {
+      "id": 2,
+      "label": "quic 203.0.113.10:7443",
+      "up_secs": 240,
+      "rtt_ms": 61.0,
+      "jitter_ms": 5.0,
+      "loss_pct": 1.2
+    }
+  ],
+  "ts": 1794855753
+}

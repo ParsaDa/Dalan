@@ -1,0 +1,37 @@
+{
+  "version": "0.1.0",
+  "pid": 6612,
+  "host": "vm",
+  "role": "entry",
+  "carrier": "wss",
+  "encryption": "full",
+  "resume": true,
+  "uptime_secs": 3,
+  "target_lanes": 4,
+  "lanes_up": 0,
+  "lanes_established": 0,
+  "reconnects": 0,
+  "streams": 0,
+  "tx_bps": 0,
+  "rx_bps": 0,
+  "peak_tx_bps": 0,
+  "peak_rx_bps": 0,
+  "tx_total": 0,
+  "rx_total": 0,
+  "cpu_pct": 0.0,
+  "rss_mb": 22.0,
+  "sys_cpu_pct": 0.0,
+  "sys_mem_pct": 6.3,
+  "load": [
+    0.33,
+    0.56,
+    0.52
+  ],
+  "resume_stats": {
+    "streams": 0,
+    "resent_chunks": 0
+  },
+  "quotas": [],
+  "links": [],
+  "ts": 1794855753
+}
