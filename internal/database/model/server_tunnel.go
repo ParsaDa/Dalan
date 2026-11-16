@@ -50,6 +50,9 @@ type ServerTunnel struct {
 	ParentId int `json:"parentId" gorm:"column:parent_id;default:0" example:"0"`
 	// NodeId (portal) names the node whose panel holds the other end, set when this panel created both ends.
 	NodeId int `json:"nodeId" gorm:"column:node_id;default:0" example:"0"`
+	// Up and Down are bytes that left and came back through the entry outbound; read from the stats, never stored.
+	Up   int64 `json:"up" gorm:"-" example:"1048576"`
+	Down int64 `json:"down" gorm:"-" example:"5242880"`
 	// ManageTarget is the node panel port a BackPack parent delivers its management forward to.
 	ManageTarget int `json:"-" gorm:"column:manage_target;default:0"`
 }

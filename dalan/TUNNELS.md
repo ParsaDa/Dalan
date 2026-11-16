@@ -122,13 +122,16 @@ In **Tunnels → New tunnel**, after choosing a node under **Create the other en
 
 Every 15 seconds the panel measures each member (a real request through an Xray tunnel, the engine's own connected state for BackPack). Traffic moves to another member only when that member has been the better choice three checks in a row: the tunnel in use is down, or a measured tunnel is at least 50 ms and 30% faster. One bad check changes nothing. The move needs no Xray restart, and the choice is remembered across restarts. A BackPack member reports no latency, so it takes over only from a tunnel that is down. A tunnel that belongs to a pool cannot be deleted before the pool.
 
+## Traffic per tunnel
+
+The **Traffic** column of an entry tunnel shows what has passed through it, up and down, since Xray last started. The panel switches Xray's outbound statistics on for the generated config by itself; nothing needs changing in the Xray settings. BackPack tunnels show nothing there: the engine counts its own bytes.
+
 ## Engine output
 
 Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>: ...`; when it exits, the last lines are repeated with the restart notice.
 
 ## Not built yet
 
-- Traffic totals per tunnel in the panel.
 - Installing Dalan and enrolling a node in one command.
 - One shared port for the management tunnels of all nodes.
 - Xray tunnels over transports other than REALITY on TCP.

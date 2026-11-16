@@ -1074,6 +1074,7 @@ export interface ServerSettings {
 export interface ServerTunnel {
   acceptUdp: boolean;
   address: string;
+  down: number;
   enable: boolean;
   engine: string;
   exitOutbound: string;
@@ -1093,6 +1094,7 @@ export interface ServerTunnel {
   serverName: string;
   shortId: string;
   transport: string;
+  up: number;
   uuid: string;
 }
 

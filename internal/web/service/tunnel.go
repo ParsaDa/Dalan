@@ -64,6 +64,29 @@ func (s *TunnelService) RoutableOutbounds() ([]TunnelOutbound, error) {
 	return out, nil
 }
 
+// ListWithTraffic returns every tunnel with the bytes its entry outbound has carried.
+func (s *TunnelService) ListWithTraffic() ([]model.ServerTunnel, error) {
+	tunnels, err := s.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	var rows []model.OutboundTraffics
+	if err := database.GetDB().Where("tag LIKE ?", xrayreverse.PortalOutboundTag("")+"%").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	byTag := make(map[string]model.OutboundTraffics, len(rows))
+	for _, r := range rows {
+		byTag[r.Tag] = r
+	}
+	for i := range tunnels {
+		if t := &tunnels[i]; xrayreverse.Routable(*t) {
+			r := byTag[xrayreverse.PortalOutboundTag(t.Name)]
+			t.Up, t.Down = r.Up, r.Down
+		}
+	}
+	return tunnels, nil
+}
+
 func (s *TunnelService) GetAll() ([]model.ServerTunnel, error) {
 	var tunnels []model.ServerTunnel
 	err := database.GetDB().Order("id asc").Find(&tunnels).Error

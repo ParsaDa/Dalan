@@ -139,6 +139,11 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 	if !changed {
 		return nil
 	}
+	if hasEntry(tunnels) {
+		if err := enableOutboundStats(cfg); err != nil {
+			return err
+		}
+	}
 
 	// Tunnel rules go first so an operator's catch-all rule cannot swallow tunnel traffic.
 	routing["rules"] = append(rules, existing...)
@@ -295,4 +300,38 @@ func relayInbound(t model.ServerTunnel) xray.InboundConfig {
 		Listen: json_util.RawMessage(`"127.0.0.1"`), Port: t.RelayPort, Protocol: "socks",
 		Settings: settings, Tag: relayInboundTag(t.Name),
 	}
+}
+
+func hasEntry(tunnels []model.ServerTunnel) bool {
+	for _, t := range tunnels {
+		if Routable(t) {
+			return true
+		}
+	}
+	return false
+}
+
+// enableOutboundStats turns on the counters behind a tunnel's traffic totals; the stored template is untouched.
+func enableOutboundStats(cfg *xray.Config) error {
+	policy := map[string]any{}
+	if len(cfg.Policy) > 0 {
+		if err := json.Unmarshal(cfg.Policy, &policy); err != nil {
+			return fmt.Errorf("tunnels: policy section is unparsable: %w", err)
+		}
+	}
+	system, _ := policy["system"].(map[string]any)
+	if system == nil {
+		system = map[string]any{}
+	}
+	if system["statsOutboundUplink"] == true && system["statsOutboundDownlink"] == true {
+		return nil
+	}
+	system["statsOutboundUplink"], system["statsOutboundDownlink"] = true, true
+	policy["system"] = system
+	raw, err := json.Marshal(policy)
+	if err != nil {
+		return err
+	}
+	cfg.Policy = json_util.RawMessage(raw)
+	return nil
 }

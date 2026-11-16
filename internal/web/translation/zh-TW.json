@@ -2599,7 +2599,8 @@
       "poolTunnels": "Tunnels",
       "poolTunnelsHint": "Entry tunnels in order of preference; the first one carries the traffic to begin with.",
       "poolNeedsTwo": "Pick at least two tunnels.",
-      "testPorts": "Test ports"
+      "testPorts": "Test ports",
+      "traffic": "Traffic"
     },
     "enrolments": {
       "title": "Add node with a command",

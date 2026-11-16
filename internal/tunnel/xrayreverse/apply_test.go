@@ -399,3 +399,34 @@ func TestAPoolFallsBackToTheFirstWorkingMemberAndIgnoresTunnelsItCannotUse(t *te
 		t.Fatalf("a pool with no usable member changed the routing: %s", empty.RouterConfig)
 	}
 }
+
+func TestAnEntryTunnelSwitchesOutboundStatsOnSoItsTrafficCanBeCounted(t *testing.T) {
+	policy := `{"levels":{"0":{"statsUserUplink":true}},"system":{"statsInboundUplink":true,"statsOutboundUplink":false,"statsOutboundDownlink":false}}`
+	cfg := &xray.Config{OutboundConfigs: []byte(`[{"tag":"direct","protocol":"freedom"}]`), Policy: []byte(policy)}
+	if err := Apply(cfg, []model.ServerTunnel{poolTunnel(t, "a", 8443)}); err != nil {
+		t.Fatal(err)
+	}
+	var got struct {
+		Levels map[string]map[string]bool `json:"levels"`
+		System map[string]bool            `json:"system"`
+	}
+	if err := json.Unmarshal(cfg.Policy, &got); err != nil {
+		t.Fatalf("policy: %v", err)
+	}
+	if !got.System["statsOutboundUplink"] || !got.System["statsOutboundDownlink"] || !got.System["statsInboundUplink"] {
+		t.Fatalf("system policy = %v, want outbound stats on and the rest kept", got.System)
+	}
+	if !got.Levels["0"]["statsUserUplink"] {
+		t.Fatalf("levels = %v, want the operator's level policy kept", got.Levels)
+	}
+
+	exit := poolTunnel(t, "b", 8444)
+	exit.Role = model.TunnelRoleBridge
+	untouched := &xray.Config{OutboundConfigs: []byte(`[{"tag":"direct","protocol":"freedom"}]`), Policy: []byte(policy)}
+	if err := Apply(untouched, []model.ServerTunnel{exit}); err != nil {
+		t.Fatal(err)
+	}
+	if string(untouched.Policy) != policy {
+		t.Fatalf("an exit end changed the policy: %s", untouched.Policy)
+	}
+}

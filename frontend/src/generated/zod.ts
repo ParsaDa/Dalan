@@ -1142,6 +1142,7 @@ export type ServerSettings = z.infer<typeof ServerSettingsSchema>;
 export const ServerTunnelSchema = z.object({
   acceptUdp: z.boolean(),
   address: z.string(),
+  down: z.number().int(),
   enable: z.boolean(),
   engine: z.string(),
   exitOutbound: z.string(),
@@ -1161,6 +1162,7 @@ export const ServerTunnelSchema = z.object({
   serverName: z.string(),
   shortId: z.string(),
   transport: z.string(),
+  up: z.number().int(),
   uuid: z.string(),
 });
 export type ServerTunnel = z.infer<typeof ServerTunnelSchema>;

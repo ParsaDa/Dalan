@@ -42,7 +42,7 @@ import {
 } from '@/api/queries/useTunnels';
 import AppSidebar from '@/layouts/AppSidebar';
 import { selectTagRender } from '@/components/form/SelectTag';
-import { ClipboardManager } from '@/utils';
+import { ClipboardManager, SizeFormatter } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,30}$/;
@@ -272,6 +272,13 @@ export default function TunnelsPage() {
     {
       title: t('pages.tunnels.status'),
       render: (_, row) => <TunnelStatusCell tunnel={row} />,
+    },
+    {
+      title: t('pages.tunnels.traffic'),
+      render: (_, row) =>
+        row.role === 'portal' && !row.managePort
+          ? `↑ ${SizeFormatter.sizeFormat(row.up)} · ↓ ${SizeFormatter.sizeFormat(row.down)}`
+          : '',
     },
     {
       title: t('pages.tunnels.address'),

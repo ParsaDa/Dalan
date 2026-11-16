@@ -4722,6 +4722,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "203.0.113.10",
         "type": "string"
       },
+      "down": {
+        "example": 5242880,
+        "format": "int64",
+        "type": "integer"
+      },
       "enable": {
         "example": true,
         "type": "boolean"
@@ -4811,6 +4816,12 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "wssmux",
         "type": "string"
       },
+      "up": {
+        "description": "Up and Down are bytes that left and came back through the entry outbound; read from the stats, never stored.",
+        "example": 1048576,
+        "format": "int64",
+        "type": "integer"
+      },
       "uuid": {
         "example": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10",
         "type": "string"
@@ -4819,6 +4830,7 @@ export const SCHEMAS: Record<string, unknown> = {
     "required": [
       "acceptUdp",
       "address",
+      "down",
       "enable",
       "engine",
       "exitOutbound",
@@ -4838,6 +4850,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "serverName",
       "shortId",
       "transport",
+      "up",
       "uuid"
     ],
     "type": "object"

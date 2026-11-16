@@ -28,6 +28,8 @@ const entry = (id: number, name: string, extra: Record<string, unknown> = {}) =>
   parentId: 0,
   nodeId: 0,
   relayPort: 0,
+  up: 0,
+  down: 0,
   ...extra,
 });
 const tunnels = [

@@ -141,3 +141,28 @@ func TestAPoolReachesTheGeneratedXrayConfig(t *testing.T) {
 		t.Fatalf("routing = %s, want a pool-main balancer on tunnel-a", cfg.RouterConfig)
 	}
 }
+
+func TestTheTunnelListCarriesWhatPassedThroughEachEntryTunnel(t *testing.T) {
+	svc := newTunnelDB(t)
+	twoEntryTunnels(t, svc)
+	if err := database.GetDB().Create([]model.OutboundTraffics{
+		{Tag: "tunnel-a", Up: 100, Down: 2000, Total: 2100},
+		{Tag: "tunnel-b-dial", Up: 5, Down: 6, Total: 11},
+	}).Error; err != nil {
+		t.Fatal(err)
+	}
+	list, err := svc.ListWithTraffic()
+	if err != nil {
+		t.Fatalf("ListWithTraffic: %v", err)
+	}
+	got := map[string][2]int64{}
+	for _, row := range list {
+		got[row.Name] = [2]int64{row.Up, row.Down}
+	}
+	if got["a"] != [2]int64{100, 2000} {
+		t.Fatalf("a = %v, want its own outbound's counters", got["a"])
+	}
+	if got["b"] != [2]int64{0, 0} {
+		t.Fatalf("b = %v, want zero: only the entry outbound counts, not the dialling one", got["b"])
+	}
+}

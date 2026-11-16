@@ -1170,6 +1170,7 @@ export const EXAMPLES: Record<string, unknown> = {
   "ServerTunnel": {
     "acceptUdp": false,
     "address": "203.0.113.10",
+    "down": 5242880,
     "enable": true,
     "engine": "xray",
     "exitOutbound": "direct",
@@ -1195,6 +1196,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "serverName": "www.example.com",
     "shortId": "a1b2c3d4",
     "transport": "wssmux",
+    "up": 1048576,
     "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
   },
   "Setting": {

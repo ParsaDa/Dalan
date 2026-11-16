@@ -115,7 +115,7 @@ func (a *TunnelController) poolDel(c *gin.Context) {
 }
 
 func (a *TunnelController) list(c *gin.Context) {
-	tunnels, err := a.tunnelService.GetAll()
+	tunnels, err := a.tunnelService.ListWithTraffic()
 	if err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.list"), err)
 		return

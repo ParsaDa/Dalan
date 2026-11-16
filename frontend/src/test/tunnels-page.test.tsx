@@ -340,3 +340,10 @@ test('tests which ports the chosen node can reach and fills in the one that is c
   fireEvent.click(await screen.findByRole('button', { name: '8443 · 96 ms' }));
   expect((screen.getByLabelText('Port') as HTMLInputElement).value).toBe('8443');
 });
+
+test('shows how much has passed through an entry tunnel', async () => {
+  listed = [{ ...portal, up: 1536, down: 5 * 1024 * 1024 }, bridge];
+  openTunnels();
+
+  expect(await screen.findByText('↑ 1.50 KB · ↓ 5.00 MB')).toBeTruthy();
+});
