@@ -282,14 +282,24 @@ func TestRenderConfigGivesEachRawEndTheOtherEndsAddress(t *testing.T) {
 		name, role, mode string
 		want, absent     []string
 	}{
-		{"reverse entry listens and is told who dials in", model.TunnelRolePortal, model.TunnelModeReverse,
-			[]string{`peer_ip = "198.51.100.9"`, `spoof_src_ip = "192.0.2.1"`, `spoof_peer_src = "192.0.2.2"`, `spoof_peer_ip = "198.51.100.9"`}, nil},
-		{"reverse exit dials the entry's own address and swaps the forged pair", model.TunnelRoleBridge, model.TunnelModeReverse,
-			[]string{`peer_ip = "203.0.113.10"`, `spoof_src_ip = "192.0.2.2"`, `spoof_peer_src = "192.0.2.1"`}, []string{"198.51.100.9"}},
-		{"direct entry dials the exit's address", model.TunnelRolePortal, model.TunnelModeDirect,
-			[]string{`peer_ip = "203.0.113.10"`, `spoof_src_ip = "192.0.2.1"`, `spoof_peer_src = "192.0.2.2"`}, []string{"198.51.100.9"}},
-		{"direct exit listens and is told who dials in", model.TunnelRoleBridge, model.TunnelModeDirect,
-			[]string{`peer_ip = "198.51.100.9"`, `spoof_src_ip = "192.0.2.2"`, `spoof_peer_src = "192.0.2.1"`, `spoof_peer_ip = "198.51.100.9"`}, nil},
+		{
+			name: "reverse entry listens and is told who dials in", role: model.TunnelRolePortal, mode: model.TunnelModeReverse,
+			want: []string{`peer_ip = "198.51.100.9"`, `spoof_src_ip = "192.0.2.1"`, `spoof_peer_src = "192.0.2.2"`, `spoof_peer_ip = "198.51.100.9"`},
+		},
+		{
+			name: "reverse exit dials the entry's own address and swaps the forged pair", role: model.TunnelRoleBridge, mode: model.TunnelModeReverse,
+			want:   []string{`peer_ip = "203.0.113.10"`, `spoof_src_ip = "192.0.2.2"`, `spoof_peer_src = "192.0.2.1"`},
+			absent: []string{"198.51.100.9"},
+		},
+		{
+			name: "direct entry dials the exit's address", role: model.TunnelRolePortal, mode: model.TunnelModeDirect,
+			want:   []string{`peer_ip = "203.0.113.10"`, `spoof_src_ip = "192.0.2.1"`, `spoof_peer_src = "192.0.2.2"`},
+			absent: []string{"198.51.100.9"},
+		},
+		{
+			name: "direct exit listens and is told who dials in", role: model.TunnelRoleBridge, mode: model.TunnelModeDirect,
+			want: []string{`peer_ip = "198.51.100.9"`, `spoof_src_ip = "192.0.2.2"`, `spoof_peer_src = "192.0.2.1"`, `spoof_peer_ip = "198.51.100.9"`},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := RenderConfig(rawTunnel(tc.role, tc.mode), "")
