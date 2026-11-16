@@ -32,12 +32,15 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 | `frontend/public/manifest.webmanifest` | app name |
 | `.github/workflows/claude-issue-analyst.yml`, `claude-pr-review.yml`, `docs-deploy.yml` | skipped outside the upstream repository |
 | `README.md`, `README.fa_IR.md` | top section |
-| `Makefile` | `brand-check` target in `verify`; `node-e2e` also builds an Xray core for the enrolment test |
+| `Makefile` | `brand-check` target in `verify` (also runs `deploy/test/container-prepare.sh`); `node-e2e` also builds an Xray core for the enrolment test |
 | `internal/web/service/xray.go` | one block before the final `dropRefusedScript` calls in `GetXrayConfig` injects tunnels |
 | `internal/web/controller/api.go` | registers `/tunnels` and `/enrolments` (the latter also adds the public `dalan/enrol` route) |
 | `internal/web/controller/node.go` | `del` closes the management tunnel of a deleted node |
 | `main.go` | `enrol` command (its code is in `enrol_cmd.go`) and its help line |
 | `x-ui.sh` | `enrol` case, added by `scripts/dalan/rebrand.sh` |
+| `install.sh` | `XUI_ENROL` step before the final summary, added by `scripts/dalan/rebrand.sh` |
+| `Dockerfile`, `DockerEntrypoint.sh` | copy and source `DockerPrepare.sh` (platform `PORT`, `DALAN_*` variables); `main.go` also starts the front door (`internal/frontdoor`) |
+| `.github/workflows/ci.yml` | shellcheck list includes `DockerPrepare.sh` and `deploy/test/container-prepare.sh` |
 | `internal/web/web.go` | starts BackPack tunnels after Xray in `startTask`, stops them before Xray in the stop path |
 | `internal/database/db.go`, `migrate_data.go` | `ServerTunnel` and `NodeEnrolment` in the model lists |
 | `tools/openapigen/main.go` | `ServerTunnel`, `NodeEnrolment` and the `enrolment` package in `StructAllow` |
