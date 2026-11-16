@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -146,7 +147,7 @@ func newFakeTunnelNode(t *testing.T) (*fakeTunnelNode, *model.Node) {
 				Ports []int  `json:"ports"`
 			}
 			_ = json.NewDecoder(r.Body).Decode(&body)
-			results, err := tunnel.DialPorts(body.Host, body.Ports, time.Second)
+			results, err := tunnel.DialPorts(context.Background(), body.Host, body.Ports, time.Second)
 			if err != nil {
 				_, _ = fmt.Fprintf(w, `{"success":false,"msg":%q}`, err.Error())
 				return

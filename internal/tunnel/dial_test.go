@@ -1,6 +1,7 @@
 package tunnel
 
 import (
+	"context"
 	"net"
 	"testing"
 	"time"
@@ -21,7 +22,7 @@ func TestDialPortsSeparatesAnOpenPortFromAClosedOne(t *testing.T) {
 	closedListener, closed := listenOnFreePort(t)
 	_ = closedListener.Close()
 
-	results, err := DialPorts("127.0.0.1", []int{closed, open}, time.Second)
+	results, err := DialPorts(context.Background(), "127.0.0.1", []int{closed, open}, time.Second)
 	if err != nil {
 		t.Fatalf("DialPorts: %v", err)
 	}
@@ -44,12 +45,12 @@ func TestDialPortsRefusesWhatCannotBeAPortListOrIsTooLong(t *testing.T) {
 	cases := map[string][]int{"none": nil, "zero": {0}, "above 65535": {70000}, "too many": tooMany, "repeated": {8443, 8443}}
 	for name, ports := range cases {
 		t.Run(name, func(t *testing.T) {
-			if _, err := DialPorts("127.0.0.1", ports, time.Second); err == nil {
+			if _, err := DialPorts(context.Background(), "127.0.0.1", ports, time.Second); err == nil {
 				t.Fatalf("DialPorts(%v) accepted the list", ports)
 			}
 		})
 	}
-	if _, err := DialPorts("", []int{8443}, time.Second); err == nil {
+	if _, err := DialPorts(context.Background(), "", []int{8443}, time.Second); err == nil {
 		t.Fatal("an empty host was accepted")
 	}
 }

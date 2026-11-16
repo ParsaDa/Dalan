@@ -58,7 +58,7 @@ func (a *TunnelController) dial(c *gin.Context) {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.routeTest"), err)
 		return
 	}
-	results, err := tunnel.DialPorts(req.Host, req.Ports, dialTimeout)
+	results, err := tunnel.DialPorts(c.Request.Context(), req.Host, req.Ports, dialTimeout)
 	if err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.routeTest"), err)
 		return

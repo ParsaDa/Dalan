@@ -1,6 +1,7 @@
 package tunnel
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -39,7 +40,7 @@ func ValidatePorts(ports []int) error {
 }
 
 // DialPorts opens a TCP connection to each port of host in parallel and reports how each went.
-func DialPorts(host string, ports []int, timeout time.Duration) ([]PortResult, error) {
+func DialPorts(ctx context.Context, host string, ports []int, timeout time.Duration) ([]PortResult, error) {
 	if host == "" {
 		return nil, errors.New("a route test needs the address to dial")
 	}
@@ -54,7 +55,8 @@ func DialPorts(host string, ports []int, timeout time.Duration) ([]PortResult, e
 			defer wg.Done()
 			results[i] = PortResult{Port: port}
 			start := time.Now()
-			conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, strconv.Itoa(port)), timeout)
+			dialer := net.Dialer{Timeout: timeout}
+			conn, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(host, strconv.Itoa(port)))
 			if err != nil {
 				results[i].Error = err.Error()
 				return
