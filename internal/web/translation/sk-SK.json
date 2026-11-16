@@ -2201,7 +2201,8 @@
         "server": "Server",
         "city": "Mesto",
         "allCities": "Všetky mestá",
-        "moveToTop": "Presunúť na začiatok"
+        "moveToTop": "Presunúť na začiatok",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "Odbery konfigurácií",
@@ -2247,9 +2248,7 @@
         "toastRefreshed": "Obnovené",
         "toastRefreshFailed": "Obnovenie zlyhalo",
         "toastDeleted": "Odstránené",
-        "toastDeleteFailed": "Odstránenie zlyhalo",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "Odstránenie zlyhalo"
       },
       "pia": {
         "menu": "PIA",

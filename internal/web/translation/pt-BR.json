@@ -2080,7 +2080,8 @@
         "server": "Servidor",
         "city": "Cidade",
         "allCities": "Todas as Cidades",
-        "moveToTop": "Mover para o topo"
+        "moveToTop": "Mover para o topo",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "Assinaturas",
@@ -2126,9 +2127,7 @@
         "toastRefreshed": "Atualizado",
         "toastRefreshFailed": "Falha na atualização",
         "toastDeleted": "Excluído",
-        "toastDeleteFailed": "Falha ao excluir",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "Falha ao excluir"
       },
       "pia": {
         "menu": "PIA",

@@ -2080,7 +2080,8 @@
         "server": "الخادم",
         "city": "المدينة",
         "allCities": "كل المدن",
-        "moveToTop": "نقل إلى الأعلى"
+        "moveToTop": "نقل إلى الأعلى",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "الاشتراكات",
@@ -2126,9 +2127,7 @@
         "toastRefreshed": "تم التحديث",
         "toastRefreshFailed": "فشل التحديث",
         "toastDeleted": "تم الحذف",
-        "toastDeleteFailed": "فشل الحذف",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "فشل الحذف"
       },
       "pia": {
         "menu": "PIA",

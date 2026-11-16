@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router';
 import { Button, Dropdown, Tag, Tooltip } from 'antd';
 import {
   RetweetOutlined,
@@ -13,6 +14,7 @@ import {
   ArrowDownOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -77,85 +79,100 @@ export function useOutboundColumns({
         key: 'action',
         align: 'center',
         width: 100,
-        render: (_v, _record, index) => (
+        render: (_v, record, index) => (
           <div className="action-cell">
             <span className="row-index">{index + 1}</span>
-            <div className="action-buttons">
-              <Button
-                shape="circle"
-                size="small"
-                icon={<EditOutlined aria-hidden />}
-                aria-label={t('edit')}
-                onClick={() => openEdit(index)}
-              />
-              <Dropdown
-                trigger={['click']}
-                menu={{
-                  items: [
-                    ...(index > 0
-                      ? [
-                          {
-                            key: 'top',
-                            label: (
-                              <>
-                                <VerticalAlignTopOutlined aria-hidden />{' '}
-                                {t('pages.xray.outbound.moveToTop')}
-                              </>
-                            ),
-                            onClick: () => setFirst(index),
-                          },
-                        ]
-                      : []),
-                    {
-                      key: 'up',
-                      label: (
-                        <>
-                          <ArrowUpOutlined aria-hidden /> {t('pages.inbounds.form.moveUp')}
-                        </>
-                      ),
-                      disabled: index === 0,
-                      onClick: () => moveUp(index),
-                    },
-                    {
-                      key: 'down',
-                      label: (
-                        <>
-                          <ArrowDownOutlined aria-hidden /> {t('pages.inbounds.form.moveDown')}
-                        </>
-                      ),
-                      disabled: index === rows.length - 1,
-                      onClick: () => moveDown(index),
-                    },
-                    {
-                      key: 'reset',
-                      label: (
-                        <>
-                          <RetweetOutlined aria-hidden /> {t('pages.inbounds.resetTraffic')}
-                        </>
-                      ),
-                      onClick: () => onResetTraffic(rows[index].tag || ''),
-                    },
-                    {
-                      key: 'del',
-                      danger: true,
-                      label: (
-                        <>
-                          <DeleteOutlined aria-hidden /> {t('delete')}
-                        </>
-                      ),
-                      onClick: () => confirmDelete(index),
-                    },
-                  ],
-                }}
-              >
+            {record.tunnelEngine ? (
+              <div className="action-buttons">
+                <Tooltip title={t('pages.xray.outbound.manageTunnel')}>
+                  <Link to="/tunnels" aria-label={t('pages.xray.outbound.manageTunnel')}>
+                    <Button
+                      shape="circle"
+                      size="small"
+                      icon={<NodeIndexOutlined aria-hidden />}
+                      tabIndex={-1}
+                    />
+                  </Link>
+                </Tooltip>
+              </div>
+            ) : (
+              <div className="action-buttons">
                 <Button
                   shape="circle"
                   size="small"
-                  icon={<MoreOutlined aria-hidden />}
-                  aria-label={t('more')}
+                  icon={<EditOutlined aria-hidden />}
+                  aria-label={t('edit')}
+                  onClick={() => openEdit(index)}
                 />
-              </Dropdown>
-            </div>
+                <Dropdown
+                  trigger={['click']}
+                  menu={{
+                    items: [
+                      ...(index > 0
+                        ? [
+                            {
+                              key: 'top',
+                              label: (
+                                <>
+                                  <VerticalAlignTopOutlined aria-hidden />{' '}
+                                  {t('pages.xray.outbound.moveToTop')}
+                                </>
+                              ),
+                              onClick: () => setFirst(index),
+                            },
+                          ]
+                        : []),
+                      {
+                        key: 'up',
+                        label: (
+                          <>
+                            <ArrowUpOutlined aria-hidden /> {t('pages.inbounds.form.moveUp')}
+                          </>
+                        ),
+                        disabled: index === 0,
+                        onClick: () => moveUp(index),
+                      },
+                      {
+                        key: 'down',
+                        label: (
+                          <>
+                            <ArrowDownOutlined aria-hidden /> {t('pages.inbounds.form.moveDown')}
+                          </>
+                        ),
+                        disabled: index === rows.length - 1,
+                        onClick: () => moveDown(index),
+                      },
+                      {
+                        key: 'reset',
+                        label: (
+                          <>
+                            <RetweetOutlined aria-hidden /> {t('pages.inbounds.resetTraffic')}
+                          </>
+                        ),
+                        onClick: () => onResetTraffic(rows[index].tag || ''),
+                      },
+                      {
+                        key: 'del',
+                        danger: true,
+                        label: (
+                          <>
+                            <DeleteOutlined aria-hidden /> {t('delete')}
+                          </>
+                        ),
+                        onClick: () => confirmDelete(index),
+                      },
+                    ],
+                  }}
+                >
+                  <Button
+                    shape="circle"
+                    size="small"
+                    icon={<MoreOutlined aria-hidden />}
+                    aria-label={t('more')}
+                  />
+                </Dropdown>
+              </div>
+            )}
           </div>
         ),
       },
@@ -170,6 +187,7 @@ export function useOutboundColumns({
             </Tooltip>
             <div className="protocol-line">
               <Tag color="green">{record.protocol}</Tag>
+              {record.tunnelEngine && <Tag>{record.tunnelEngine}</Tag>}
               {[Protocols.VMess, Protocols.VLESS, Protocols.Trojan, Protocols.Shadowsocks].some(
                 (id) => isOutboundProtocol(record, id),
               ) && (

@@ -2080,7 +2080,8 @@
         "server": "Sunucu",
         "city": "Şehir",
         "allCities": "Tüm Şehirler",
-        "moveToTop": "En üste taşı"
+        "moveToTop": "En üste taşı",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "Abonelikler",
@@ -2126,9 +2127,7 @@
         "toastRefreshed": "Yenilendi",
         "toastRefreshFailed": "Yenileme başarısız",
         "toastDeleted": "Silindi",
-        "toastDeleteFailed": "Silme işlemi başarısız",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "Silme işlemi başarısız"
       },
       "pia": {
         "menu": "PIA",

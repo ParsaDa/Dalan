@@ -62,7 +62,6 @@ import { originalOutboundIndex } from './outbounds-tab-helpers';
 import { useOutboundColumns } from './useOutboundColumns';
 import OutboundCardList from './OutboundCardList';
 import SubscriptionOutbounds from './SubscriptionOutbounds';
-import TunnelOutbounds from './TunnelOutbounds';
 import type { TunnelOutbound } from '@/schemas/xray';
 
 const defaultOutboundSubscriptionUserAgent = '3x-ui-outbound-sub/1.0';
@@ -181,6 +180,19 @@ export default function OutboundsTab({
         .map((o, i) => ({ ...o, key: i }))
         .filter((o) => !isBalancerLoopbackTag(o.tag || '')),
     [outbounds],
+  );
+  // Tunnel rows follow the stored outbounds, so a stored outbound's row index is still its array index.
+  const displayRows = useMemo<OutboundRow[]>(
+    () => [
+      ...rows,
+      ...(tunnelOutbounds || []).map((o, i) => ({
+        key: -(i + 1),
+        tag: o.tag,
+        protocol: 'tunnel',
+        tunnelEngine: o.engine,
+      })),
+    ],
+    [rows, tunnelOutbounds],
   );
   const rowsRef = useRef<OutboundRow[]>([]);
   rowsRef.current = rows;
@@ -648,7 +660,7 @@ export default function OutboundsTab({
 
         {isMobile ? (
           <OutboundCardList
-            rows={rows}
+            rows={displayRows}
             testMode={testMode}
             outboundsTraffic={outboundsTraffic}
             outboundTestStates={outboundTestStates}
@@ -661,7 +673,7 @@ export default function OutboundsTab({
         ) : (
           <Table
             columns={columns}
-            dataSource={rows}
+            dataSource={displayRows}
             rowKey={(r) => r.key}
             pagination={false}
             size="small"
@@ -700,11 +712,6 @@ export default function OutboundsTab({
           content={exportContent}
           fileName="outbounds.json"
           json
-        />
-
-        <TunnelOutbounds
-          tunnelOutbounds={tunnelOutbounds || []}
-          outboundsTraffic={outboundsTraffic}
         />
 
         {/* Subscription outbounds (read-only, merged at runtime) */}

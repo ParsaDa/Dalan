@@ -2080,7 +2080,8 @@
         "server": "服务器",
         "city": "城市",
         "allCities": "所有城市",
-        "moveToTop": "移到顶部"
+        "moveToTop": "移到顶部",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "订阅",
@@ -2126,9 +2127,7 @@
         "toastRefreshed": "已刷新",
         "toastRefreshFailed": "刷新失败",
         "toastDeleted": "已删除",
-        "toastDeleteFailed": "删除失败",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "删除失败"
       },
       "pia": {
         "menu": "PIA",

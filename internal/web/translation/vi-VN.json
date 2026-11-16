@@ -2080,7 +2080,8 @@
         "server": "Máy chủ",
         "city": "Thành phố",
         "allCities": "Tất cả thành phố",
-        "moveToTop": "Chuyển lên đầu"
+        "moveToTop": "Chuyển lên đầu",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "Đăng ký",
@@ -2126,9 +2127,7 @@
         "toastRefreshed": "Đã cập nhật",
         "toastRefreshFailed": "Cập nhật thất bại",
         "toastDeleted": "Đã xóa",
-        "toastDeleteFailed": "Xóa thất bại",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "Xóa thất bại"
       },
       "pia": {
         "menu": "PIA",

@@ -2201,7 +2201,8 @@
         "server": "Server",
         "city": "City",
         "allCities": "All Cities",
-        "moveToTop": "Move to top"
+        "moveToTop": "Move to top",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "Subscriptions",
@@ -2247,9 +2248,7 @@
         "toastRefreshed": "Refreshed",
         "toastRefreshFailed": "Refresh failed",
         "toastDeleted": "Deleted",
-        "toastDeleteFailed": "Delete failed",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "Delete failed"
       },
       "pia": {
         "menu": "PIA",

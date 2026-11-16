@@ -2080,7 +2080,8 @@
         "server": "سرور",
         "city": "شهر",
         "allCities": "همه شهرها",
-        "moveToTop": "انتقال به بالا"
+        "moveToTop": "انتقال به بالا",
+        "manageTunnel": "از صفحهٔ تانل‌ها مدیریت می‌شود"
       },
       "outboundSub": {
         "manage": "سابسکریپشن‌ها",
@@ -2126,9 +2127,7 @@
         "toastRefreshed": "تازه‌سازی شد",
         "toastRefreshFailed": "تازه‌سازی ناموفق بود",
         "toastDeleted": "حذف شد",
-        "toastDeleteFailed": "حذف ناموفق بود",
-        "tunnelsTitle": "تانل‌ها (فقط خواندنی)",
-        "tunnelsDesc": "تانل‌های ورودی از صفحهٔ تانل‌ها. می‌تونی توی قانون‌های مسیریابی و بالانسرها ازشون به‌عنوان خروجی استفاده کنی."
+        "toastDeleteFailed": "حذف ناموفق بود"
       },
       "pia": {
         "menu": "PIA",

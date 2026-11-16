@@ -2080,7 +2080,8 @@
         "server": "Сервер",
         "city": "Місто",
         "allCities": "Усі міста",
-        "moveToTop": "Перемістити вгору"
+        "moveToTop": "Перемістити вгору",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "Підписки",
@@ -2126,9 +2127,7 @@
         "toastRefreshed": "Оновлено",
         "toastRefreshFailed": "Не вдалося оновити",
         "toastDeleted": "Видалено",
-        "toastDeleteFailed": "Не вдалося видалити",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "Не вдалося видалити"
       },
       "pia": {
         "menu": "PIA",

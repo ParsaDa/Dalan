@@ -2080,7 +2080,8 @@
         "server": "Server",
         "city": "Kota",
         "allCities": "Semua Kota",
-        "moveToTop": "Pindahkan ke atas"
+        "moveToTop": "Pindahkan ke atas",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "Langganan",
@@ -2126,9 +2127,7 @@
         "toastRefreshed": "Disegarkan",
         "toastRefreshFailed": "Gagal menyegarkan",
         "toastDeleted": "Dihapus",
-        "toastDeleteFailed": "Gagal menghapus",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "Gagal menghapus"
       },
       "pia": {
         "menu": "PIA",

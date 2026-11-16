@@ -2080,7 +2080,8 @@
         "server": "サーバー",
         "city": "都市",
         "allCities": "すべての都市",
-        "moveToTop": "先頭に移動"
+        "moveToTop": "先頭に移動",
+        "manageTunnel": "Managed on the Tunnels page"
       },
       "outboundSub": {
         "manage": "サブスクリプション",
@@ -2126,9 +2127,7 @@
         "toastRefreshed": "更新しました",
         "toastRefreshFailed": "更新に失敗しました",
         "toastDeleted": "削除しました",
-        "toastDeleteFailed": "削除に失敗しました",
-        "tunnelsTitle": "Tunnels (read-only)",
-        "tunnelsDesc": "Entry tunnels from the Tunnels page. Use them as an exit in routing rules and balancers."
+        "toastDeleteFailed": "削除に失敗しました"
       },
       "pia": {
         "menu": "PIA",
