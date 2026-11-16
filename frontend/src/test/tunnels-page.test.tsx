@@ -20,6 +20,7 @@ const portal = {
   security: 'reality',
   serverName: 'www.example.com',
   realityPublicKey: 'pub',
+  rakhshPeerPublic: '',
   shortId: 'a1b2c3d4',
   routeInbounds: ['inbound-443'],
   exitOutbound: '',
@@ -219,7 +220,11 @@ test('offers to install the BackPack engine when a BackPack tunnel has none', as
   fireEvent.click(await screen.findByRole('button', { name: 'Install BackPack' }));
 
   await waitFor(() =>
-    expect(HttpUtil.post).toHaveBeenCalledWith('/panel/api/tunnels/engine/install'),
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/engine/install',
+      { engine: 'backpack' },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
   );
 });
 
@@ -233,7 +238,7 @@ test('shows the installed BackPack engine release and updates it from this serve
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
       '/panel/api/tunnels/engine/update',
-      { nodeId: 0, version: '' },
+      { nodeId: 0, engine: 'backpack', version: '' },
       { headers: { 'Content-Type': 'application/json' } },
     ),
   );
@@ -259,7 +264,7 @@ test('installs the BackPack engine through a node when this server cannot reach 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
       '/panel/api/tunnels/engine/update',
-      { nodeId: 9, version: '' },
+      { nodeId: 9, engine: 'backpack', version: '' },
       { headers: { 'Content-Type': 'application/json' } },
     ),
   );

@@ -7,6 +7,7 @@ import { OptionSchema, ServerTunnelSchema, type ServerTunnel } from '@/generated
 
 export type { ServerTunnel };
 export type TunnelMode = 'reverse' | 'direct';
+export type TunnelEngine = 'backpack' | 'rakhsh';
 export type TunnelOptionValues = Record<string, unknown>;
 
 const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
@@ -47,6 +48,18 @@ export type NewPortalValues =
       fallbackTransports: string[];
       forwardPorts: string[];
       acceptUdp: boolean;
+      routeInbounds: string[];
+      mode: TunnelMode;
+      options: TunnelOptionValues;
+      nodeId?: number;
+    }
+  | {
+      name: string;
+      address: string;
+      port: number;
+      engine: 'rakhsh';
+      transport: string;
+      forwardPorts: string[];
       routeInbounds: string[];
       mode: TunnelMode;
       options: TunnelOptionValues;
@@ -134,18 +147,19 @@ export function useTunnelMutations() {
   });
 
   const installEngine = useMutation({
-    mutationFn: () => HttpUtil.post('/panel/api/tunnels/engine/install'),
+    mutationFn: (engine: TunnelEngine) =>
+      HttpUtil.post('/panel/api/tunnels/engine/install', { engine }, JSON_HEADERS),
     onSuccess: (msg) => {
       if (msg?.success) queryClient.invalidateQueries({ queryKey: TUNNELS_KEY });
     },
   });
 
   const updateEngine = useMutation({
-    mutationFn: (nodeId: number) =>
+    mutationFn: ({ nodeId, engine }: { nodeId: number; engine: TunnelEngine }) =>
       HttpUtil.post(
         '/panel/api/tunnels/engine/update',
-        { nodeId, version: '' },
-        { headers: { 'Content-Type': 'application/json' } },
+        { nodeId, engine, version: '' },
+        JSON_HEADERS,
       ),
     onSuccess: (msg) => {
       if (msg?.success) queryClient.invalidateQueries({ queryKey: TUNNELS_KEY });
@@ -176,6 +190,10 @@ const TunnelStatusSchema = z.object({
   exitIp: z.string(),
   exitLoc: z.string(),
   error: z.string(),
+  // Only a Rakhsh tunnel reports lanes; other engines send zeros.
+  lanesUp: z.number().optional(),
+  targetLanes: z.number().optional(),
+  lossPct: z.number().optional(),
 });
 export type TunnelStatus = z.infer<typeof TunnelStatusSchema>;
 
@@ -199,29 +217,31 @@ export function useTunnelStatus(id: number, enabled: boolean) {
 }
 
 const EngineInfoSchema = z.object({
+  engine: z.string().optional(),
   installed: z.boolean(),
   version: z.string(),
   pinned: z.string(),
 });
 
-export function useTunnelEngine() {
+export function useTunnelEngine(engine: TunnelEngine) {
   return useQuery({
-    queryKey: [...TUNNELS_KEY, 'engine'],
+    queryKey: [...TUNNELS_KEY, 'engine', engine],
     queryFn: async () => {
-      const msg = await HttpUtil.get('/panel/api/tunnels/engine', undefined, { silent: true });
+      const msg = await HttpUtil.get('/panel/api/tunnels/engine', { engine }, { silent: true });
       if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the tunnel engine');
       return parseMsg(msg, EngineInfoSchema, 'tunnels/engine').obj ?? null;
     },
   });
 }
 
-// The catalog changes only with a Dalan release, so it is fetched once per page visit.
-export function useTunnelOptions() {
+// The catalog changes only with a Dalan release, so it is fetched once per engine and page visit.
+export function useTunnelOptions(engine: TunnelEngine, enabled = true) {
   return useQuery({
-    queryKey: ['tunnel-options'],
+    queryKey: ['tunnel-options', engine],
     staleTime: Infinity,
+    enabled,
     queryFn: async () => {
-      const msg = await HttpUtil.get('/panel/api/tunnels/options', undefined, { silent: true });
+      const msg = await HttpUtil.get('/panel/api/tunnels/options', { engine }, { silent: true });
       if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the tunnel options');
       const options = parseMsg(msg, TunnelOptionListSchema, 'tunnels/options').obj ?? [];
       return options.map((o) => ({ ...o, choices: o.choices ?? [] }));

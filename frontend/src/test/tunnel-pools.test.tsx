@@ -17,6 +17,7 @@ const entry = (id: number, name: string, extra: Record<string, unknown> = {}) =>
   security: 'none',
   serverName: '',
   realityPublicKey: '',
+  rakhshPeerPublic: '',
   shortId: '',
   routeInbounds: [],
   exitOutbound: '',
