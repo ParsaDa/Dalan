@@ -499,7 +499,7 @@ test('refuses to create a direct tunnel before a carrier is chosen', async () =>
   await screen.findByLabelText('carrier');
   fireEvent.click(screen.getByRole('button', { name: 'OK' }));
 
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  expect(await screen.findByText('This setting is required.')).toBeTruthy();
   expect(HttpUtil.post).not.toHaveBeenCalled();
 });
 

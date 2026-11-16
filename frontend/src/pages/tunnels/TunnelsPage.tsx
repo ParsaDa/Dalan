@@ -214,7 +214,8 @@ export default function TunnelsPage() {
   };
 
   const submitPortal = async () => {
-    const values = await portalForm.validateFields();
+    const values = await portalForm.validateFields().catch(() => null);
+    if (!values) return;
     setSaving(true);
     try {
       const common = {

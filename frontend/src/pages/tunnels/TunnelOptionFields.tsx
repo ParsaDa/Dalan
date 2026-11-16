@@ -100,7 +100,9 @@ export function TunnelOptionField({
         </Space>
       }
       extra={hint}
-      rules={required ? [{ required: true }] : undefined}
+      rules={
+        required ? [{ required: true, message: t('pages.tunnels.optionRequired') }] : undefined
+      }
     >
       <OptionControl option={option} />
     </Form.Item>

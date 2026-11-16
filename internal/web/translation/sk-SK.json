@@ -2629,7 +2629,8 @@
         "server": "Server"
       },
       "editTunnel": "Edit tunnel",
-      "editReachesNode": "The change is also sent to the node that holds the other end."
+      "editReachesNode": "The change is also sent to the node that holds the other end.",
+      "optionRequired": "This setting is required."
     },
     "enrolments": {
       "title": "Add node with a command",

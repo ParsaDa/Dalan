@@ -39,7 +39,8 @@ export default function TunnelEditModal({
   const mode: TunnelMode = tunnel.mode === 'direct' ? 'direct' : 'reverse';
 
   const submit = async () => {
-    const values = await form.validateFields();
+    const values = await form.validateFields().catch(() => null);
+    if (!values) return;
     setSaving(true);
     try {
       const body: TunnelEditValues = portal
