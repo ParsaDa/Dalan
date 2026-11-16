@@ -1119,6 +1119,8 @@
       "name": "名稱",
       "namePlaceholder": "例如：de-frankfurt-1",
       "addressPlaceholder": "panel.example.com 或 1.2.3.4",
+      "publicAddress": "Public address",
+      "publicAddressHint": "The address clients connect to. Set it when the panel reaches this node on 127.0.0.1 through a tunnel. Leave empty to use the address above.",
       "remark": "備註",
       "scheme": "協議",
       "address": "位址",

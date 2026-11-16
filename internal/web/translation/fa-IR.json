@@ -1119,6 +1119,8 @@
       "name": "نام",
       "namePlaceholder": "مثلاً de-frankfurt-1",
       "addressPlaceholder": "panel.example.com یا 1.2.3.4",
+      "publicAddress": "آدرس عمومی",
+      "publicAddressHint": "آدرسی که کلاینت‌ها به آن وصل می‌شوند. وقتی پنل نود را از راه تانل روی 127.0.0.1 می‌بیند، اینجا آدرس واقعی نود را بنویسید. خالی بگذارید تا از آدرس بالا استفاده شود.",
       "remark": "توضیحات",
       "scheme": "پروتکل",
       "address": "آدرس",

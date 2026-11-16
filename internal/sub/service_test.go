@@ -135,6 +135,18 @@ func TestResolveInboundAddress(t *testing.T) {
 		}
 	})
 
+	t.Run("a public address beats the address the panel reaches the node on", func(t *testing.T) {
+		id := 7
+		s := &SubService{
+			address:   reqHost,
+			nodesByID: map[int]*model.Node{7: {Id: 7, Address: "127.0.0.1", PublicAddress: "198.51.100.9"}},
+		}
+		ib := &model.Inbound{NodeID: &id}
+		if got := s.resolveInboundAddress(ib); got != "198.51.100.9" {
+			t.Fatalf("address = %q, want the node's public address 198.51.100.9", got)
+		}
+	})
+
 	t.Run("node id with no known node falls back to subscriber host", func(t *testing.T) {
 		id := 9
 		s := &SubService{address: reqHost, nodesByID: map[int]*model.Node{}}

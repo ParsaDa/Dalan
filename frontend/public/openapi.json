@@ -3785,6 +3785,10 @@
             "minimum": 1,
             "type": "integer"
           },
+          "publicAddress": {
+            "example": "203.0.113.9",
+            "type": "string"
+          },
           "remark": {
             "type": "string"
           },
@@ -3872,6 +3876,7 @@
           "panelVersion",
           "pinnedCertSha256",
           "port",
+          "publicAddress",
           "remark",
           "scheme",
           "status",
@@ -3976,6 +3981,9 @@
             "minimum": 1,
             "type": "integer"
           },
+          "publicAddress": {
+            "type": "string"
+          },
           "remark": {
             "type": "string"
           },
@@ -4008,6 +4016,7 @@
           "outboundTag",
           "pinnedCertSha256",
           "port",
+          "publicAddress",
           "remark",
           "scheme",
           "tlsVerifyMode"
@@ -4148,6 +4157,10 @@
             "example": 2053,
             "type": "integer"
           },
+          "publicAddress": {
+            "example": "203.0.113.9",
+            "type": "string"
+          },
           "remark": {
             "example": "Primary edge",
             "type": "string"
@@ -4227,6 +4240,7 @@
           "panelVersion",
           "pinnedCertSha256",
           "port",
+          "publicAddress",
           "remark",
           "scheme",
           "status",
@@ -11649,6 +11663,7 @@
                       "parentGuid": "",
                       "pinnedCertSha256": "",
                       "port": 2053,
+                      "publicAddress": "203.0.113.9",
                       "remark": "Primary edge",
                       "scheme": "https",
                       "status": "online",
@@ -11853,6 +11868,7 @@
                     "parentGuid": "",
                     "pinnedCertSha256": "",
                     "port": 2053,
+                    "publicAddress": "203.0.113.9",
                     "remark": "Primary edge",
                     "scheme": "https",
                     "status": "online",
@@ -12006,6 +12022,7 @@
                     "parentGuid": "",
                     "pinnedCertSha256": "",
                     "port": 2053,
+                    "publicAddress": "203.0.113.9",
                     "remark": "Primary edge",
                     "scheme": "https",
                     "status": "online",
@@ -17868,6 +17885,7 @@
                   "parentGuid": "",
                   "pinnedCertSha256": "",
                   "port": 2053,
+                  "publicAddress": "203.0.113.9",
                   "remark": "Primary edge",
                   "scheme": "https",
                   "status": "online",

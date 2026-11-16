@@ -43,6 +43,7 @@ function defaultValues(): NodeFormValues {
     remark: '',
     scheme: 'https',
     address: '',
+    publicAddress: '',
     port: 2053,
     basePath: '/',
     apiToken: '',
@@ -145,6 +146,7 @@ export default function NodeFormModal({
       remark: values.remark?.trim() || '',
       scheme: values.scheme,
       address: values.address.trim(),
+      publicAddress: values.publicAddress.trim(),
       port: values.port,
       basePath: values.basePath.trim() || '/',
       enable: values.enable,
@@ -309,6 +311,14 @@ export default function NodeFormModal({
                 </FormField>
               </Col>
             </Row>
+
+            <FormField
+              label={t('pages.nodes.publicAddress')}
+              name="publicAddress"
+              tooltip={t('pages.nodes.publicAddressHint')}
+            >
+              <Input placeholder={t('pages.nodes.addressPlaceholder')} />
+            </FormField>
 
             <Row gutter={16}>
               <Col xs={24} md={12}>

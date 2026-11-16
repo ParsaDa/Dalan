@@ -7,6 +7,7 @@ export const NodeRecordSchema = z
     remark: z.string().optional(),
     scheme: z.string().optional(),
     address: z.string().optional(),
+    publicAddress: z.string().optional(),
     port: z.number().optional(),
     basePath: z.string().optional(),
     apiToken: z.string().optional(),
@@ -70,6 +71,7 @@ export const NodeFormSchema = z
     remark: z.string().optional(),
     scheme: z.enum(['http', 'https']),
     address: z.string().trim().min(1, 'pages.nodes.toasts.fillRequired'),
+    publicAddress: z.string().trim().optional().default(''),
     port: z.number().int().min(1).max(65535),
     basePath: z.string(),
     // mTLS nodes authenticate via the client certificate, so the token is optional

@@ -3759,6 +3759,10 @@ export const SCHEMAS: Record<string, unknown> = {
         "minimum": 1,
         "type": "integer"
       },
+      "publicAddress": {
+        "example": "203.0.113.9",
+        "type": "string"
+      },
       "remark": {
         "type": "string"
       },
@@ -3846,6 +3850,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "panelVersion",
       "pinnedCertSha256",
       "port",
+      "publicAddress",
       "remark",
       "scheme",
       "status",
@@ -3950,6 +3955,9 @@ export const SCHEMAS: Record<string, unknown> = {
         "minimum": 1,
         "type": "integer"
       },
+      "publicAddress": {
+        "type": "string"
+      },
       "remark": {
         "type": "string"
       },
@@ -3982,6 +3990,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "outboundTag",
       "pinnedCertSha256",
       "port",
+      "publicAddress",
       "remark",
       "scheme",
       "tlsVerifyMode"
@@ -4122,6 +4131,10 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": 2053,
         "type": "integer"
       },
+      "publicAddress": {
+        "example": "203.0.113.9",
+        "type": "string"
+      },
       "remark": {
         "example": "Primary edge",
         "type": "string"
@@ -4201,6 +4214,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "panelVersion",
       "pinnedCertSha256",
       "port",
+      "publicAddress",
       "remark",
       "scheme",
       "status",

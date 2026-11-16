@@ -176,7 +176,8 @@ func validNodeInfo(info enrol.NodeInfo) bool {
 }
 
 // Redeem answers a node's sealed request: it registers the node behind its management port and returns the tunnel.
-func (s *Service) Redeem(body []byte) ([]byte, error) {
+// remoteIP is where the request came from; it becomes the node's public address for client links.
+func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 	s.purgeExpired()
 	id, err := enrol.RequestID(body)
 	if err != nil {
@@ -217,7 +218,7 @@ func (s *Service) Redeem(body []byte) ([]byte, error) {
 		return nil, ErrGone
 	}
 	node := &model.Node{
-		Name: row.Name, Scheme: info.Scheme, Address: "127.0.0.1", Port: portal.ManagePort,
+		Name: row.Name, Scheme: info.Scheme, Address: "127.0.0.1", PublicAddress: remoteIP, Port: portal.ManagePort,
 		BasePath: info.BasePath, ApiToken: info.APIToken, Enable: true, AllowPrivateAddress: true,
 		// The hop is loopback to loopback inside the tunnel, and the node's certificate names its public host.
 		TlsVerifyMode: "skip",
