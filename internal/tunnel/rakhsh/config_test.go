@@ -263,3 +263,70 @@ func TestRelayForwardIsALoopbackPair(t *testing.T) {
 		t.Errorf("got %q", got)
 	}
 }
+
+func rawTunnel(role, mode string) model.ServerTunnel {
+	t := portalTunnel()
+	if role == model.TunnelRoleBridge {
+		t = bridgeTunnel()
+	}
+	t.Mode, t.Transport = mode, "shabdiz-gre"
+	t.Options = map[string]any{
+		"peer_ip": "198.51.100.9", "spoof_src_ip": "192.0.2.1", "spoof_peer_src": "192.0.2.2", "spoof_peer_ip": "198.51.100.9",
+	}
+	t.Address = "203.0.113.10"
+	return t
+}
+
+func TestRenderConfigGivesEachRawEndTheOtherEndsAddress(t *testing.T) {
+	for _, tc := range []struct {
+		name, role, mode string
+		want, absent     []string
+	}{
+		{"reverse entry listens and is told who dials in", model.TunnelRolePortal, model.TunnelModeReverse,
+			[]string{`peer_ip = "198.51.100.9"`, `spoof_src_ip = "192.0.2.1"`, `spoof_peer_src = "192.0.2.2"`, `spoof_peer_ip = "198.51.100.9"`}, nil},
+		{"reverse exit dials the entry's own address and swaps the forged pair", model.TunnelRoleBridge, model.TunnelModeReverse,
+			[]string{`peer_ip = "203.0.113.10"`, `spoof_src_ip = "192.0.2.2"`, `spoof_peer_src = "192.0.2.1"`}, []string{"198.51.100.9"}},
+		{"direct entry dials the exit's address", model.TunnelRolePortal, model.TunnelModeDirect,
+			[]string{`peer_ip = "203.0.113.10"`, `spoof_src_ip = "192.0.2.1"`, `spoof_peer_src = "192.0.2.2"`}, []string{"198.51.100.9"}},
+		{"direct exit listens and is told who dials in", model.TunnelRoleBridge, model.TunnelModeDirect,
+			[]string{`peer_ip = "198.51.100.9"`, `spoof_src_ip = "192.0.2.2"`, `spoof_peer_src = "192.0.2.1"`, `spoof_peer_ip = "198.51.100.9"`}, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := RenderConfig(rawTunnel(tc.role, tc.mode), "")
+			if err != nil {
+				t.Fatal(err)
+			}
+			for _, line := range tc.want {
+				if !strings.Contains(got, line+"\n") {
+					t.Errorf("config lacks %q:\n%s", line, got)
+				}
+			}
+			for _, text := range tc.absent {
+				if strings.Contains(got, text) {
+					t.Errorf("config must not contain %q:\n%s", text, got)
+				}
+			}
+		})
+	}
+}
+
+func TestRenderConfigRefusesARawCarrierWithoutPeerIP(t *testing.T) {
+	tun := rawTunnel(model.TunnelRolePortal, model.TunnelModeReverse)
+	delete(tun.Options, "peer_ip")
+	_, err := RenderConfig(tun, "")
+	if want := `tunnel "r1": carrier "shabdiz-gre" needs the option peer_ip`; err == nil || err.Error() != want {
+		t.Fatalf("got %v; want %q", err, want)
+	}
+}
+
+func TestRenderConfigSwapsALoneForgedAddressToo(t *testing.T) {
+	tun := rawTunnel(model.TunnelRoleBridge, model.TunnelModeReverse)
+	tun.Options = map[string]any{"peer_ip": "198.51.100.9", "spoof_src_ip": "192.0.2.1"}
+	got, err := RenderConfig(tun, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got, "spoof_peer_src = \"192.0.2.1\"\n") || strings.Contains(got, "spoof_src_ip") {
+		t.Fatalf("the entry's lone spoof_src_ip must become the exit's spoof_peer_src:\n%s", got)
+	}
+}

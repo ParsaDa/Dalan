@@ -319,3 +319,52 @@ func TestALocalRakhshEditWithAnOptionTheEngineCannotReadIsRefusedAndStoresNothin
 		t.Fatalf("stored tunnel = %+v after a refused edit, want it untouched", row)
 	}
 }
+
+func directLayer3Spec(name string, port int, addr string) tunnel.PortalSpec {
+	spec := rakhshPortalSpec(name)
+	spec.Mode, spec.Port, spec.ForwardPorts = model.TunnelModeDirect, port, nil
+	spec.Options = map[string]any{"l3_addr": addr}
+	return spec
+}
+
+func TestARakhshLayer3AddressMayNotClashWithABackpackDirectPair(t *testing.T) {
+	svc := newTunnelDB(t)
+	fakeBackpack(t)
+	fakeRakhsh(t)
+	spec := directNodeSpecWithAddress()
+	spec.Name = "gm1"
+	spec.Options = map[string]any{"carrier": "udp", "local_ip": "10.10.5.1/30", "peer_ip": "10.10.5.2"}
+	if _, err := svc.CreatePortal(spec, nil); err != nil {
+		t.Fatalf("CreatePortal backpack: %v", err)
+	}
+	if _, err := svc.CreatePortal(directLayer3Spec("rk1", 7000, "10.10.5.1/30"), nil); err == nil || !strings.Contains(err.Error(), "10.10.5.1/30") {
+		t.Fatalf("a Rakhsh tunnel on the BackPack tunnel's address error = %v, want one naming the address", err)
+	}
+}
+
+func TestEditingARakhshEntryOntoAnotherTunnelsLayer3AddressIsRefused(t *testing.T) {
+	svc := newTunnelDB(t)
+	fakeRakhsh(t)
+	if _, err := svc.CreatePortal(directLayer3Spec("rk1", 7000, "10.20.0.1/24"), nil); err != nil {
+		t.Fatalf("CreatePortal rk1: %v", err)
+	}
+	second, err := svc.CreatePortal(directLayer3Spec("rk2", 7001, "10.30.0.1/24"), nil)
+	if err != nil {
+		t.Fatalf("CreatePortal rk2: %v", err)
+	}
+	edit := TunnelEdit{
+		Address: second.Address, Port: second.Port, Transport: second.Transport,
+		Options: map[string]any{"l3_addr": "10.20.0.1/24"},
+	}
+	if _, err := svc.Update(second.Id, edit); err == nil || !strings.Contains(err.Error(), "10.20.0.1/24") {
+		t.Fatalf("editing onto a taken layer-3 address error = %v, want one naming the address", err)
+	}
+	stored, _ := svc.get(second.Id)
+	if stored.Options["l3_addr"] != "10.30.0.1/24" {
+		t.Fatalf("the refused edit changed the stored address to %v", stored.Options["l3_addr"])
+	}
+	edit.Options = map[string]any{"l3_addr": "10.30.0.1/24", "sni": "www.example.com"}
+	if _, err := svc.Update(second.Id, edit); err != nil {
+		t.Fatalf("an edit that keeps the tunnel's own address was refused: %v", err)
+	}
+}

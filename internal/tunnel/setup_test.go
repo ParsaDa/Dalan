@@ -443,3 +443,29 @@ func TestParseSetupLinkRefusesARakhshLinkItCannotUse(t *testing.T) {
 		t.Fatalf("a version 9 link gave %v, want one that says this panel understands versions 1 to 4", err)
 	}
 }
+
+func TestARakhshLinkLeavesTheEntryServersBindAddressBehind(t *testing.T) {
+	spec := rakhshSpec()
+	spec.Options = map[string]any{"sni": "www.example.com", "bind": "192.0.2.5"}
+	portal, err := NewPortal(spec)
+	if err != nil {
+		t.Fatalf("NewPortal: %v", err)
+	}
+	link, err := SetupLink(portal)
+	if err != nil {
+		t.Fatalf("SetupLink: %v", err)
+	}
+	bridge, err := ParseSetupLink(link)
+	if err != nil {
+		t.Fatalf("ParseSetupLink: %v", err)
+	}
+	if _, has := bridge.Options["bind"]; has {
+		t.Fatalf("bind names an address of the entry server and would fail to start on the exit server: %v", bridge.Options)
+	}
+	if bridge.Options["sni"] != "www.example.com" {
+		t.Fatalf("shared options must still travel: %v", bridge.Options)
+	}
+	if portal.Options["bind"] != "192.0.2.5" {
+		t.Fatalf("the entry end keeps its own bind: %v", portal.Options)
+	}
+}

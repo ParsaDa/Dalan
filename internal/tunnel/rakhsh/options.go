@@ -3,6 +3,7 @@ package rakhsh
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"math"
 	"net"
 	"regexp"
@@ -152,8 +153,8 @@ var Catalog = []Option{
 		"Send buffer of the lane sockets, in bytes. The kernel decides when empty.",
 		"اندازهٔ بافر ارسال سوکت lane‌ها به بایت. اگر خالی باشد کرنل تصمیم می‌گیرد."),
 	textOption("bind", "tunnel", hostPattern,
-		"Source address for outgoing lanes; it must already exist on this server.",
-		"آدرس مبدأ برای lane‌های خروجی؛ باید روی این سرور وجود داشته باشد."),
+		"Source address for outgoing lanes; it must already exist on this server. It is not sent to the other end, so set it on each end that needs one.",
+		"آدرس مبدأ برای lane‌های خروجی؛ باید روی این سرور وجود داشته باشد. به سر دیگر فرستاده نمی‌شود، پس روی هر سری که لازم دارد جدا بگذارید."),
 
 	textOption("sni", "carrier", hostPattern,
 		"TLS server name and WebSocket Host header for tls, ws and wss; the listening side derives its certificate from it.",
@@ -237,8 +238,8 @@ var Catalog = []Option{
 		"بگذار حامل از روی لاسی که طرف مقابل گزارش می‌دهد نرخ خودش را پیدا کند."),
 
 	textOption("peer_ip", "raw", hostPattern,
-		"The peer's address on the wire; raw and shabdiz-gre/esp/ipip/6to4/l2 carriers need it on both ends. A host name works too.",
-		"آدرس طرف مقابل روی سیم؛ حامل‌های raw و shabdiz-gre/esp/ipip/6to4/l2 روی هر دو سر لازم دارند. نام میزبان هم می‌شود."),
+		"Needed by raw and shabdiz-gre/esp/ipip/6to4/l2 carriers: the address of the server that dials (the exit server in a reverse tunnel, the entry server in a direct one). The dialling end uses the other server's address by itself.",
+		"لازم برای حامل‌های raw و shabdiz-gre/esp/ipip/6to4/l2: آدرس سروری که وصل می‌شود (سرور خروجی در تونل reverse، سرور ورودی در direct). سر وصل‌شونده خودش آدرس سرور مقابل را می‌گذارد."),
 	choiceOption("reliability", "raw", []string{"quic", "kcp"},
 		"What runs over forged packets to recover from loss. The other end must match.",
 		"چه چیزی روی بسته‌های ساختگی برای جبران گم‌شدن اجرا شود. سر دیگر باید یکی باشد."),
@@ -264,8 +265,8 @@ var Catalog = []Option{
 		"Encrypt the raw link layer with the session's encryption. On by default; both ends must match.",
 		"لایهٔ لینک raw را با رمزنگاری نشست رمز کن. پیش‌فرض روشن؛ دو سر باید یکی باشند."),
 	textOption("spoof_src_ip", "raw", hostPattern,
-		"The source address to forge. This server's own when empty.",
-		"آدرس مبدأ جعلی. اگر خالی باشد آدرس خود این سرور."),
+		"The source address the entry server forges; this server's own when empty. The exit server uses it as the address to expect.",
+		"آدرس مبدأ جعلی که سرور ورودی می‌زند؛ اگر خالی باشد آدرس خود سرور. سرور خروجی آن را به‌عنوان آدرسِ مورد انتظار به کار می‌برد."),
 	textOption("spoof_src_pool", "raw", poolPattern,
 		"Comma-separated addresses to rotate through instead of one.",
 		"آدرس‌های جدا شده با ویرگول که به جای یکی بین آن‌ها چرخش می‌شود."),
@@ -273,8 +274,8 @@ var Catalog = []Option{
 		"The peer's address as it appears on the wire, if it differs from peer_ip.",
 		"آدرس طرف مقابل آنطور که روی سیم دیده می‌شود، اگر با peer_ip فرق دارد."),
 	textOption("spoof_peer_src", "raw", hostPattern,
-		"The source address the peer forges, so this end can recognise its packets.",
-		"آدرس مبدأ جعلی که طرف مقابل می‌زند تا این سر بسته‌هایش را بشناسد."),
+		"The source address the exit server forges, so the entry server can recognise its packets. The exit server swaps this and spoof_src_ip by itself.",
+		"آدرس مبدأ جعلی که سرور خروجی می‌زند تا سرور ورودی بسته‌هایش را بشناسد. سرور خروجی این و spoof_src_ip را خودش جابه‌جا می‌کند."),
 	intOption("spoof_sockbuf", "raw", 4096, 1<<30,
 		"The raw socket's buffer size in bytes. On a CPU-bound server a larger buffer can be slower.",
 		"اندازهٔ بافر سوکت raw به بایت. روی سرور محدود به CPU بافر بزرگ‌تر ممکن است کندتر باشد."),
@@ -533,4 +534,11 @@ func checkLinks(value any, options map[string]any) error {
 		}
 	}
 	return nil
+}
+
+// SharedOptions is what a setup link carries: bind names an address of one server, so it stays behind.
+func SharedOptions(options map[string]any) map[string]any {
+	shared := maps.Clone(options)
+	delete(shared, "bind")
+	return shared
 }

@@ -204,7 +204,7 @@ func (s *TunnelService) checkLinkAddressesFree(t *model.ServerTunnel, except int
 		return nil
 	}
 	var others []model.ServerTunnel
-	if err := database.GetDB().Where("id <> ? AND engine = ?", except, t.Engine).Find(&others).Error; err != nil {
+	if err := database.GetDB().Where("id <> ?", except).Find(&others).Error; err != nil {
 		return err
 	}
 	taken := map[string]bool{}

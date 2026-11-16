@@ -159,6 +159,9 @@ func renderConfig(t model.ServerTunnel, controlSocket string) (string, error) {
 	if err := ValidateOptions(mode, t.Options); err != nil {
 		return "", err
 	}
+	if slices.Contains(RawCarriers, t.Transport) && !hasKey(t.Options, "peer_ip") {
+		return "", fmt.Errorf("carrier %q needs the option peer_ip", t.Transport)
+	}
 	forwards, err := forwardsOf(t)
 	if err != nil {
 		return "", err
@@ -229,11 +232,25 @@ func forwardsOf(t model.ServerTunnel) ([]forward, error) {
 }
 
 // writeOptions writes the catalog's single-value options this end applies, in catalog order.
+// mirroredPair is stored as the entry end sees it; the exit end reads each of the two as the other.
+var mirroredPair = map[string]string{"spoof_src_ip": "spoof_peer_src", "spoof_peer_src": "spoof_src_ip"}
+
 func writeOptions(b *strings.Builder, t model.ServerTunnel) error {
 	for _, o := range Catalog {
-		value, ok := t.Options[o.Key]
+		stored := o.Key
+		if other, swapped := mirroredPair[o.Key]; swapped && t.Role == model.TunnelRoleBridge {
+			stored = other
+		}
+		value, ok := t.Options[stored]
 		if !ok || o.Kind == KindLinks || (o.Role == rolePortal && t.Role != model.TunnelRolePortal) {
 			continue
+		}
+		// The stored peer_ip is the dialling end's address, which only the listening end needs.
+		if dials(t) && o.Key == "spoof_peer_ip" {
+			continue
+		}
+		if dials(t) && o.Key == "peer_ip" {
+			value = t.Address
 		}
 		if o.Key == "l3_addr" && t.Role == model.TunnelRoleBridge {
 			mirrored, err := MirrorL3Addr(value.(string))

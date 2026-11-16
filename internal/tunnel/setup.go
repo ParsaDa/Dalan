@@ -294,7 +294,7 @@ func SetupLink(portal model.ServerTunnel) (string, error) {
 		}
 		payload.Version = setupLinkRakhsh
 		payload.Transport, payload.RelayPort = portal.Transport, portal.RelayPort
-		payload.Mode, payload.Options = portal.Mode, portal.Options
+		payload.Mode, payload.Options = portal.Mode, rakhsh.SharedOptions(portal.Options)
 		payload.RakhshSecret, payload.RakhshPeer = bridgeSecret, portalPublic
 	}
 	raw, err := json.Marshal(payload)

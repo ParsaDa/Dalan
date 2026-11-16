@@ -115,6 +115,9 @@ func (s *TunnelService) applyEntryEdit(old, next *model.ServerTunnel, edit Tunne
 		if _, err := rakhsh.RenderConfig(*next, ""); err != nil {
 			return err
 		}
+		if err := s.checkLinkAddressesFree(next, old.Id); err != nil {
+			return err
+		}
 	} else if next.Engine == model.TunnelEngineBackpack {
 		next.ForwardPorts, next.AcceptUDP = edit.ForwardPorts, edit.AcceptUDP
 		next.Options = maps.Clone(edit.Options)
