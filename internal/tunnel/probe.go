@@ -21,6 +21,10 @@ type Status struct {
 	ExitIP    string `json:"exitIp" example:"203.0.113.77"`
 	ExitLoc   string `json:"exitLoc" example:"DE"`
 	Error     string `json:"error" example:""`
+	// LanesUp, TargetLanes and LossPct come from a Rakhsh process; other engines leave them zero.
+	LanesUp     int     `json:"lanesUp" example:"3"`
+	TargetLanes int     `json:"targetLanes" example:"4"`
+	LossPct     float64 `json:"lossPct" example:"0.4"`
 }
 
 // ProbeVia sends one GET through the SOCKS port that is routed into a tunnel; a failure is a status, not an error.

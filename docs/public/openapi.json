@@ -4888,6 +4888,10 @@
             "example": 8443,
             "type": "integer"
           },
+          "rakhshPeerPublic": {
+            "example": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
+            "type": "string"
+          },
           "realityPublicKey": {
             "type": "string"
           },
@@ -4952,6 +4956,7 @@
           "options",
           "parentId",
           "port",
+          "rakhshPeerPublic",
           "realityPublicKey",
           "relayPort",
           "role",
@@ -13775,6 +13780,7 @@
                       "options": {},
                       "parentId": 0,
                       "port": 8443,
+                      "rakhshPeerPublic": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
                       "realityPublicKey": "",
                       "relayPort": 63500,
                       "role": "portal",
@@ -13846,7 +13852,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. Only the entry end can be tested.",
+        "summary": "Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. A Rakhsh tunnel is judged by its lanes instead: connected while at least one lane is up, with lanesUp, targetLanes, latencyMs and lossPct from the engine. Only the entry end can be tested.",
         "operationId": "get_panel_api_tunnels_status_id",
         "parameters": [
           {
@@ -13897,8 +13903,20 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Whether the BackPack engine binary is on this server, which release is installed (empty when it was placed by hand), and the release this Dalan version installs by default.",
+        "summary": "Whether an engine binary (BackPack or Rakhsh) is on this server, which release is installed (empty when it was placed by hand), and the release this Dalan version installs by default.",
         "operationId": "get_panel_api_tunnels_engine",
+        "parameters": [
+          {
+            "name": "engine",
+            "in": "query",
+            "required": false,
+            "description": "backpack or rakhsh. Defaults to backpack.",
+            "schema": {
+              "type": "string",
+              "default": "backpack"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -13919,6 +13937,7 @@
                 "example": {
                   "success": true,
                   "obj": {
+                    "engine": "backpack",
                     "installed": true,
                     "version": "v1.9.0",
                     "pinned": "v1.9.0"
@@ -13935,8 +13954,20 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Every BackPack setting the panel can write, for reverse and direct tunnels: key, kind, which end reads it, group, allowed values and a hint in English (hintEn) and Persian (hintFa). Send values under options of add or update, keyed as listed here.",
+        "summary": "Every setting of one engine (BackPack or Rakhsh) the panel can write, for reverse and direct tunnels: key, kind, which end reads it, group, allowed values and a hint in English (hintEn) and Persian (hintFa). Send values under options of add or update, keyed as listed here.",
         "operationId": "get_panel_api_tunnels_options",
+        "parameters": [
+          {
+            "name": "engine",
+            "in": "query",
+            "required": false,
+            "description": "backpack or rakhsh. Defaults to backpack.",
+            "schema": {
+              "type": "string",
+              "default": "backpack"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -13990,8 +14021,21 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Download the pinned BackPack release for this CPU, verify it against the checksums published with it, put it in the panel bin folder and start the BackPack tunnels. Uses the panel proxy settings. Can take a few minutes.",
+        "summary": "Download the pinned release of an engine (BackPack by default, or Rakhsh with engine \"rakhsh\") for this CPU, verify it against the checksums published with it, put it in the panel bin folder and start that engine's tunnels. Uses the panel proxy settings. Can take a few minutes.",
         "operationId": "post_panel_api_tunnels_engine_install",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "engine": "backpack"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful response",
@@ -14020,7 +14064,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Install a BackPack release (empty version means the newest) and restart the BackPack tunnels on it. With nodeId the release is downloaded by that node and sent over the management channel, for a server that cannot reach GitHub. The release is verified against its published checksums. When tunnels that were connected do not reconnect within about 75 seconds, the earlier engine is put back and the call fails. Can take several minutes.",
+        "summary": "Install a release of an engine (engine is backpack or rakhsh; empty version means the newest) and restart that engine's tunnels on it. With nodeId the release is downloaded by that node and sent over the management channel, for a server that cannot reach GitHub. The release is verified against its published checksums. When tunnels that were connected do not reconnect within about 75 seconds, the earlier engine is put back and the call fails. Can take several minutes.",
         "operationId": "post_panel_api_tunnels_engine_update",
         "requestBody": {
           "required": true,
@@ -14031,6 +14075,7 @@
               },
               "example": {
                 "nodeId": 0,
+                "engine": "backpack",
                 "version": ""
               }
             }
@@ -14072,7 +14117,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Node side of an engine update through a node: the first call starts downloading a BackPack release and answers pending until it is done, then each call returns the part of the archive that starts at offset (the checksums come with the first part). Needs an admin or node-admin token.",
+        "summary": "Node side of an engine update through a node: the first call starts downloading a release of the engine named in engine (BackPack or Rakhsh) and answers pending until it is done, then each call returns the part of the archive that starts at offset (the checksums come with the first part). Needs an admin or node-admin token.",
         "operationId": "post_panel_api_tunnels_engine_release",
         "requestBody": {
           "required": true,
@@ -14082,6 +14127,7 @@
                 "type": "object"
               },
               "example": {
+                "engine": "backpack",
                 "version": "",
                 "offset": 0
               }
@@ -14126,7 +14172,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Create the entry end of a tunnel on this server. Secrets are generated by the panel. With the default engine (xray), routeInbounds lists the local inbound tags whose traffic leaves through the tunnel. With engine \"backpack\", send transport, forwardPorts (for example \"443=127.0.0.1:2096\") and optionally fallbackTransports, acceptUdp and options (see /options) instead of security, serverName and routeInbounds. With mode \"direct\" (BackPack only) the entry end dials the exit end over a layer-3 link: send options.carrier (udp, pck, quic, sni, xdi or spoof) and forwardPorts, and the panel picks the tunnel addresses; this mode needs root and /dev/net/tun on both servers, and the tunnel is not an Xray outbound. Send nodeId to also create the dialling end on that node through its management channel; exitOutbound then names the outbound traffic leaves from there. If the node does not take its end, nothing is created.",
+        "summary": "Create the entry end of a tunnel on this server. Secrets are generated by the panel. With the default engine (xray), routeInbounds lists the local inbound tags whose traffic leaves through the tunnel. With engine \"rakhsh\", send transport (the carrier, such as wss or quic), forwardPorts and options (see /options?engine=rakhsh); the entry end gets a relay port like BackPack, so the tunnel is also an Xray outbound, and the setup link carries the exit end secret key. With engine \"backpack\", send transport, forwardPorts (for example \"443=127.0.0.1:2096\") and optionally fallbackTransports, acceptUdp and options (see /options) instead of security, serverName and routeInbounds. With mode \"direct\" and engine \"rakhsh\" the entry end dials the exit end, which listens, and the tunnel stays an Xray outbound; options.l3_addr adds a routed tun device and needs root. With mode \"direct\" and engine \"backpack\" the entry end dials the exit end over a layer-3 link: send options.carrier (udp, pck, quic, sni, xdi or spoof) and forwardPorts, and the panel picks the tunnel addresses; this mode needs root and /dev/net/tun on both servers, and the tunnel is not an Xray outbound. Send nodeId to also create the dialling end on that node through its management channel; exitOutbound then names the outbound traffic leaves from there. If the node does not take its end, nothing is created.",
         "operationId": "post_panel_api_tunnels_add",
         "requestBody": {
           "required": true,
@@ -14190,6 +14236,7 @@
                     "options": {},
                     "parentId": 0,
                     "port": 8443,
+                    "rakhshPeerPublic": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
                     "realityPublicKey": "",
                     "relayPort": 63500,
                     "role": "portal",
@@ -14291,6 +14338,7 @@
                     "options": {},
                     "parentId": 0,
                     "port": 8443,
+                    "rakhshPeerPublic": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
                     "realityPublicKey": "",
                     "relayPort": 63500,
                     "role": "portal",
@@ -14374,6 +14422,7 @@
                     "options": {},
                     "parentId": 0,
                     "port": 8443,
+                    "rakhshPeerPublic": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
                     "realityPublicKey": "",
                     "relayPort": 63500,
                     "role": "portal",

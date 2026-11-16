@@ -10,7 +10,7 @@ import (
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
-	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/json_util"
 )
 
@@ -62,19 +62,19 @@ func (r *Remote) DialPorts(ctx context.Context, host string, ports []int) ([]tun
 	return list, nil
 }
 
-// FetchEngineRelease makes the node download a BackPack release (empty version: the newest) and
+// FetchEngineRelease makes the node download a release of one engine (empty version: the newest) and
 // fetches it in parts, since one call may not run longer than the request timeout.
-func (r *Remote) FetchEngineRelease(ctx context.Context, version string) (backpack.Release, error) {
-	var rel backpack.Release
+func (r *Remote) FetchEngineRelease(ctx context.Context, engineID, version string) (engine.Release, error) {
+	var rel engine.Release
 	for {
-		chunk, err := r.engineChunk(ctx, version, len(rel.Archive))
+		chunk, err := r.engineChunk(ctx, engineID, version, len(rel.Archive))
 		if err != nil {
-			return backpack.Release{}, err
+			return engine.Release{}, err
 		}
 		if chunk.Pending {
 			select {
 			case <-ctx.Done():
-				return backpack.Release{}, ctx.Err()
+				return engine.Release{}, ctx.Err()
 			case <-time.After(engineChunkPoll):
 			}
 			continue
@@ -83,14 +83,14 @@ func (r *Remote) FetchEngineRelease(ctx context.Context, version string) (backpa
 			rel.Version, rel.Sums = chunk.Version, chunk.Sums
 		}
 		if chunk.Size > maxEngineArchive || len(rel.Archive)+len(chunk.Data) > chunk.Size {
-			return backpack.Release{}, errors.New("the node sent a release larger than it announced")
+			return engine.Release{}, errors.New("the node sent a release larger than it announced")
 		}
 		rel.Archive = append(rel.Archive, chunk.Data...)
 		if len(rel.Archive) == chunk.Size {
 			return rel, nil
 		}
 		if len(chunk.Data) == 0 {
-			return backpack.Release{}, errors.New("the node stopped sending the release part way")
+			return engine.Release{}, errors.New("the node stopped sending the release part way")
 		}
 	}
 }
@@ -100,15 +100,15 @@ const (
 	maxEngineArchive = 200 << 20
 )
 
-func (r *Remote) engineChunk(ctx context.Context, version string, offset int) (backpack.Chunk, error) {
+func (r *Remote) engineChunk(ctx context.Context, engineID, version string, offset int) (engine.Chunk, error) {
 	env, err := r.do(ctx, http.MethodPost, "panel/api/tunnels/engine/release",
-		map[string]any{"version": version, "offset": offset})
+		map[string]any{"engine": engineID, "version": version, "offset": offset})
 	if err != nil {
-		return backpack.Chunk{}, err
+		return engine.Chunk{}, err
 	}
-	var chunk backpack.Chunk
+	var chunk engine.Chunk
 	if err := json.Unmarshal(env.Obj, &chunk); err != nil {
-		return backpack.Chunk{}, fmt.Errorf("decode engine release: %w", err)
+		return engine.Chunk{}, fmt.Errorf("decode engine release: %w", err)
 	}
 	return chunk, nil
 }

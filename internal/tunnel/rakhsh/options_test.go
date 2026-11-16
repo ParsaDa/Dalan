@@ -1,11 +1,15 @@
 package rakhsh
 
 import (
+	"encoding/json"
 	"os"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
 	"testing"
+
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 )
 
 // Keys the typed tunnel fields or other Dalan features own; options never name them.
@@ -175,5 +179,27 @@ func TestRawCarriersAreCarriers(t *testing.T) {
 		if !slices.Contains(Carriers, c) {
 			t.Errorf("raw carrier %q is not in Carriers", c)
 		}
+	}
+}
+
+func TestAnOptionReadsToTheFrontendLikeABackpackOptionBecauseTheApiDocumentsOnlyOne(t *testing.T) {
+	keysOf := func(v any) []string {
+		raw, err := json.Marshal(v)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
+		var fields map[string]any
+		if err := json.Unmarshal(raw, &fields); err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		keys := make([]string, 0, len(fields))
+		for k := range fields {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		return keys
+	}
+	if got, want := keysOf(Option{}), keysOf(backpack.Option{}); !slices.Equal(got, want) {
+		t.Fatalf("Rakhsh option fields %v differ from BackPack's %v; the OpenAPI schema \"Option\" describes both", got, want)
 	}
 }

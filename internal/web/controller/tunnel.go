@@ -2,12 +2,14 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"strconv"
 	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 
 	"github.com/gin-gonic/gin"
@@ -191,9 +193,17 @@ func (a *TunnelController) add(c *gin.Context) {
 	jsonMsgObj(c, I18nWeb(c, "pages.tunnels.toasts.add"), portal, nil)
 }
 
-// options lists every BackPack setting the panel can write, for both tunnel modes.
+// options lists every setting of an engine the panel can write (the engine query is backpack or rakhsh,
+// backpack by default), for both tunnel modes.
 func (a *TunnelController) options(c *gin.Context) {
-	jsonObj(c, backpack.Catalog, nil)
+	switch c.DefaultQuery("engine", model.TunnelEngineBackpack) {
+	case model.TunnelEngineBackpack:
+		jsonObj(c, backpack.Catalog, nil)
+	case model.TunnelEngineRakhsh:
+		jsonObj(c, rakhsh.Catalog, nil)
+	default:
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.list"), errUnknownEngine)
+	}
 }
 
 func (a *TunnelController) update(c *gin.Context) {
@@ -275,13 +285,21 @@ func (a *TunnelController) status(c *gin.Context) {
 	jsonObj(c, status, nil)
 }
 
+var errUnknownEngine = errors.New("the engine query must be backpack or rakhsh")
+
 func (a *TunnelController) engine(c *gin.Context) {
-	jsonObj(c, a.tunnelService.EngineInfo(), nil)
+	info, err := a.tunnelService.EngineInfo(c.DefaultQuery("engine", model.TunnelEngineBackpack))
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
+		return
+	}
+	jsonObj(c, info, nil)
 }
 
 func (a *TunnelController) updateEngine(c *gin.Context) {
 	var req struct {
 		NodeId  int    `json:"nodeId"`
+		Engine  string `json:"engine"`
 		Version string `json:"version"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -290,16 +308,21 @@ func (a *TunnelController) updateEngine(c *gin.Context) {
 	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), engineUpdateTimeout)
 	defer cancel()
-	err := a.tunnelService.UpdateEngine(ctx, req.NodeId, req.Version)
+	if err := a.tunnelService.UpdateEngine(ctx, req.NodeId, req.Engine, req.Version); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
+		return
+	}
+	info, err := a.tunnelService.EngineInfo(req.Engine)
 	if err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
 		return
 	}
-	jsonObj(c, a.tunnelService.EngineInfo(), nil)
+	jsonObj(c, info, nil)
 }
 
 func (a *TunnelController) engineRelease(c *gin.Context) {
 	var req struct {
+		Engine  string `json:"engine"`
 		Version string `json:"version"`
 		Offset  int    `json:"offset"`
 	}
@@ -307,7 +330,7 @@ func (a *TunnelController) engineRelease(c *gin.Context) {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
 		return
 	}
-	chunk, err := a.tunnelService.EngineReleaseChunk(req.Version, req.Offset)
+	chunk, err := a.tunnelService.EngineReleaseChunk(req.Engine, req.Version, req.Offset)
 	if err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
 		return
@@ -316,5 +339,15 @@ func (a *TunnelController) engineRelease(c *gin.Context) {
 }
 
 func (a *TunnelController) installEngine(c *gin.Context) {
-	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.installEngine"), a.tunnelService.InstallEngine())
+	var req struct {
+		Engine string `json:"engine"`
+	}
+	// The body is optional: an empty one installs BackPack, as before there was a second engine.
+	if c.Request.ContentLength != 0 {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.installEngine"), err)
+			return
+		}
+	}
+	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.installEngine"), a.tunnelService.InstallEngine(req.Engine))
 }

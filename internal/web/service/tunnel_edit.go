@@ -12,6 +12,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 )
 
 // TunnelEdit holds the settings of a stored tunnel that can change. The entry end owns the shared ones (address,
@@ -68,6 +69,11 @@ func (s *TunnelService) Update(id int, edit TunnelEdit) (*model.ServerTunnel, er
 
 func applyExitEdit(old, next *model.ServerTunnel, edit TunnelEdit) error {
 	next.ExitOutbound = strings.TrimSpace(edit.ExitOutbound)
+	if next.Engine == model.TunnelEngineRakhsh {
+		next.Options = maps.Clone(edit.Options)
+		_, err := rakhsh.RenderConfig(*next, "")
+		return err
+	}
 	if next.Engine != model.TunnelEngineBackpack {
 		return nil
 	}
@@ -103,7 +109,13 @@ func (s *TunnelService) applyEntryEdit(old, next *model.ServerTunnel, edit Tunne
 		return fmt.Errorf("tunnel port %d is out of range", next.Port)
 	}
 	next.RouteInbounds = edit.RouteInbounds
-	if next.Engine == model.TunnelEngineBackpack {
+	if next.Engine == model.TunnelEngineRakhsh {
+		next.ForwardPorts, next.Options = edit.ForwardPorts, maps.Clone(edit.Options)
+		next.Transport = edit.Transport
+		if _, err := rakhsh.RenderConfig(*next, ""); err != nil {
+			return err
+		}
+	} else if next.Engine == model.TunnelEngineBackpack {
 		next.ForwardPorts, next.AcceptUDP = edit.ForwardPorts, edit.AcceptUDP
 		next.Options = maps.Clone(edit.Options)
 		if next.Mode != model.TunnelModeDirect {
@@ -173,10 +185,8 @@ func (s *TunnelService) updateDialingEnd(existing *model.ServerTunnel, fresh mod
 			return nil, err
 		}
 	}
-	if fresh.Mode == model.TunnelModeDirect {
-		if err := s.checkLinkAddressesFree(&fresh, existing.Id); err != nil {
-			return nil, err
-		}
+	if err := s.checkLinkAddressesFree(&fresh, existing.Id); err != nil {
+		return nil, err
 	}
 	if fresh.ExitOutbound == "" {
 		fresh.ExitOutbound = existing.ExitOutbound

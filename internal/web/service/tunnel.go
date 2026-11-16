@@ -16,22 +16,32 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
 
 	"gorm.io/gorm"
 )
 
-// tunnelEngines runs the BackPack processes of this panel; tests replace it with one on a fake engine.
-var tunnelEngines = backpack.NewSupervisor(
-	filepath.Join(config.GetBinFolderPath(), "backpack"),
-	filepath.Join(config.GetDBFolderPath(), "tunnels"),
+// tunnelEngines and rakhshEngines run the BackPack and Rakhsh processes of this panel; tests replace them
+// with ones on a fake engine.
+var (
+	tunnelEngines = backpack.NewSupervisor(
+		filepath.Join(config.GetBinFolderPath(), "backpack"),
+		filepath.Join(config.GetDBFolderPath(), "tunnels"),
+	)
+	rakhshEngines = rakhsh.NewSupervisor(
+		filepath.Join(config.GetBinFolderPath(), "rakhsh"),
+		filepath.Join(config.GetDBFolderPath(), "tunnels"),
+	)
 )
 
 const engineInstallTimeout = 5 * time.Minute
 
-// EngineInfo says whether the BackPack engine is on this server, which release is there (empty when
+// EngineInfo says whether an engine is on this server, which release is there (empty when
 // it was placed by hand) and which one Dalan installs by default.
 type EngineInfo struct {
+	Engine    string `json:"engine" example:"backpack"`
 	Installed bool   `json:"installed" example:"true"`
 	Version   string `json:"version" example:"v1.9.0"`
 	Pinned    string `json:"pinned" example:"v1.9.0"`
@@ -124,10 +134,8 @@ func (s *TunnelService) create(t *model.ServerTunnel) error {
 			return err
 		}
 	}
-	if t.Mode == model.TunnelModeDirect {
-		if err := s.checkLinkAddressesFree(t, 0); err != nil {
-			return err
-		}
+	if err := s.checkLinkAddressesFree(t, 0); err != nil {
+		return err
 	}
 	if err := db.Create(t).Error; err != nil {
 		return err
@@ -187,21 +195,57 @@ func (s *TunnelService) checkRelayPortFree(port int) error {
 	return nil
 }
 
-var errLinkAddressTaken = errors.New("tunnel link addresses are already used by another direct tunnel")
+var errLinkAddressTaken = errors.New("tunnel link addresses are already used by another tunnel")
 
-// Two direct tunnels on one server need different address pairs, or their interfaces would clash.
+// Two tunnels with their own interface on one server need different addresses, or their interfaces would clash.
 func (s *TunnelService) checkLinkAddressesFree(t *model.ServerTunnel, except int) error {
+	mine := linkAddresses(*t)
+	if len(mine) == 0 {
+		return nil
+	}
 	var others []model.ServerTunnel
-	if err := database.GetDB().Where("id <> ? AND mode = ?", except, model.TunnelModeDirect).Find(&others).Error; err != nil {
+	if err := database.GetDB().Where("id <> ? AND engine = ?", except, t.Engine).Find(&others).Error; err != nil {
 		return err
 	}
+	taken := map[string]bool{}
 	for _, o := range others {
-		if o.Options["local_ip"] == t.Options["local_ip"] || o.Options["peer_ip"] == t.Options["peer_ip"] ||
-			o.Options["local_ip"] == t.Options["peer_ip"] || o.Options["peer_ip"] == t.Options["local_ip"] {
-			return fmt.Errorf("%w: %v and %v", errLinkAddressTaken, t.Options["local_ip"], t.Options["peer_ip"])
+		for _, addr := range linkAddresses(o) {
+			taken[addrHost(addr)] = true
+		}
+	}
+	for _, addr := range mine {
+		if taken[addrHost(addr)] {
+			return fmt.Errorf("%w: %s", errLinkAddressTaken, strings.Join(mine, " and "))
 		}
 	}
 	return nil
+}
+
+func addrHost(addr string) string {
+	host, _, _ := strings.Cut(addr, "/")
+	return host
+}
+
+// linkAddresses lists what a tunnel puts on its own network interface: BackPack's direct pair and
+// Rakhsh's layer-3 pair. Other tunnels use none.
+func linkAddresses(t model.ServerTunnel) []string {
+	var out []string
+	switch {
+	case t.Engine == model.TunnelEngineBackpack && t.Mode == model.TunnelModeDirect:
+		for _, key := range []string{"local_ip", "peer_ip"} {
+			if v, _ := t.Options[key].(string); v != "" {
+				out = append(out, v)
+			}
+		}
+	case t.Engine == model.TunnelEngineRakhsh:
+		if addr, _ := t.Options["l3_addr"].(string); addr != "" {
+			out = append(out, addr)
+			if mirrored, err := rakhsh.MirrorL3Addr(addr); err == nil {
+				out = append(out, mirrored)
+			}
+		}
+	}
+	return out
 }
 
 // CreatePortal makes the listening end of a tunnel; routeInbounds are the local inbound tags that leave through it.
@@ -334,6 +378,9 @@ func (s *TunnelService) Status(id int) (tunnel.Status, error) {
 	if err != nil {
 		return tunnel.Status{}, err
 	}
+	if t.Engine == model.TunnelEngineRakhsh {
+		return s.rakhshStatus(t), nil
+	}
 	if t.Mode == model.TunnelModeDirect {
 		return s.directStatus(t), nil
 	}
@@ -350,36 +397,58 @@ func (s *TunnelService) Status(id int) (tunnel.Status, error) {
 	return tunnel.ProbeVia(addr, tunnel.DefaultProbeURL, tunnelProbeTimeout), nil
 }
 
-// applyChange lets both engines pick up a stored change; a missing BackPack engine is reported by Status.
+// applyChange lets every engine pick up a stored change; a missing engine binary is reported by Status.
 func (s *TunnelService) applyChange() {
 	s.xrayService.SetToNeedRestart()
 	if err := s.ReconcileEngines(); err != nil {
-		logger.Warning("BackPack tunnels:", err)
+		logger.Warning("tunnel engines:", err)
 	}
 }
 
-// ReconcileEngines starts and stops BackPack processes to match the stored tunnels.
+// ReconcileEngines starts and stops BackPack and Rakhsh processes to match the stored tunnels. Both are
+// reconciled even when one fails, and the first error is returned.
 func (s *TunnelService) ReconcileEngines() error {
 	tunnels, err := s.GetAll()
 	if err != nil {
 		return err
 	}
-	return tunnelEngines.Reconcile(backpack.WithManagement(tunnels))
+	tunnels = engine.WithManagement(tunnels)
+	var firstErr error
+	for _, kind := range allExternalEngines() {
+		if err := kind.supervisor().Reconcile(tunnels); err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+	return firstErr
 }
 
-// StopEngines stops every BackPack process this panel started.
-func (s *TunnelService) StopEngines() { tunnelEngines.StopAll() }
-
-func (s *TunnelService) EngineInfo() EngineInfo {
-	_, err := os.Stat(tunnelEngines.Binary)
-	return EngineInfo{Installed: err == nil, Version: backpack.InstalledVersion(tunnelEngines.Binary), Pinned: backpack.PinnedVersion}
+// StopEngines stops every engine process this panel started.
+func (s *TunnelService) StopEngines() {
+	for _, kind := range allExternalEngines() {
+		kind.supervisor().StopAll()
+	}
 }
 
-// InstallEngine downloads the pinned BackPack release through the panel's own proxy settings and starts its tunnels.
-func (s *TunnelService) InstallEngine() error {
+// EngineInfo reports on one engine; an empty id means BackPack.
+func (s *TunnelService) EngineInfo(id string) (EngineInfo, error) {
+	kind, err := externalEngineFor(id)
+	if err != nil {
+		return EngineInfo{}, err
+	}
+	binary := kind.supervisor().Binary
+	_, statErr := os.Stat(binary)
+	return EngineInfo{Engine: kind.id, Installed: statErr == nil, Version: kind.installed(binary), Pinned: kind.pinned}, nil
+}
+
+// InstallEngine downloads the pinned release of one engine through the panel's own proxy settings and starts its tunnels.
+func (s *TunnelService) InstallEngine(id string) error {
+	kind, err := externalEngineFor(id)
+	if err != nil {
+		return err
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), engineInstallTimeout)
 	defer cancel()
-	return s.updateEngineFrom(ctx, directEngineSource, backpack.PinnedVersion)
+	return s.updateEngineFrom(ctx, kind, directEngineSource, kind.pinned)
 }
 
 // directInterfaceUp is replaced by tests; the engine creates the interface once the link is established.
@@ -390,7 +459,7 @@ var directInterfaceUp = func(name string) bool {
 
 // directStatus judges a direct tunnel by its link interface, since it has no forwarded Xray traffic to probe.
 func (s *TunnelService) directStatus(t *model.ServerTunnel) tunnel.Status {
-	if !s.EngineInfo().Installed {
+	if info, _ := s.EngineInfo(model.TunnelEngineBackpack); !info.Installed {
 		return tunnel.Status{Error: backpack.ErrNotInstalled.Error()}
 	}
 	name := backpack.DirectInterface(t.Id)
@@ -405,7 +474,7 @@ func (s *TunnelService) directStatus(t *model.ServerTunnel) tunnel.Status {
 }
 
 func (s *TunnelService) backpackStatus(t *model.ServerTunnel) tunnel.Status {
-	if !s.EngineInfo().Installed {
+	if info, _ := s.EngineInfo(model.TunnelEngineBackpack); !info.Installed {
 		return tunnel.Status{Error: backpack.ErrNotInstalled.Error()}
 	}
 	snap, err := backpack.ReadSnapshot(tunnelEngines.Dir, t.Name)
@@ -418,6 +487,27 @@ func (s *TunnelService) backpackStatus(t *model.ServerTunnel) tunnel.Status {
 		if host, _, err := net.SplitHostPort(snap.Peer); err == nil {
 			status.ExitIP = host
 		}
+	}
+	return status
+}
+
+// rakhshStatus judges a Rakhsh tunnel by the lanes its process reports; the entry end shows how many are up.
+func (s *TunnelService) rakhshStatus(t *model.ServerTunnel) tunnel.Status {
+	ctx, cancel := context.WithTimeout(context.Background(), rakhshStatusTimeout)
+	defer cancel()
+	st, err := rakhsh.ReadStatus(ctx, rakhshEngines.Binary, rakhsh.ControlSocket(rakhshEngines.Dir, t.Name))
+	if err != nil {
+		return tunnel.Status{Error: err.Error()}
+	}
+	status := tunnel.Status{Connected: st.Connected, LanesUp: st.LanesUp, TargetLanes: st.TargetLanes, LossPct: st.LossPct}
+	if st.RTTMs != nil {
+		status.LatencyMs = int64(*st.RTTMs + 0.5)
+	}
+	if !st.Connected {
+		status.Error = fmt.Sprintf("no lane is up (0 of %d)", st.TargetLanes)
+	}
+	if t.Mode == model.TunnelModeDirect && t.Role == model.TunnelRolePortal {
+		status.ExitIP = t.Address
 	}
 	return status
 }

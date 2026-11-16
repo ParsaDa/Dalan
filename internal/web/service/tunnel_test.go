@@ -251,7 +251,7 @@ func TestABackpackTunnelWithoutTheEngineIsCreatedAndSaysWhatIsMissing(t *testing
 	if err != nil || status.Connected || !strings.Contains(status.Error, "not installed") {
 		t.Fatalf("Status = %+v, %v; want not connected, saying the engine is not installed", status, err)
 	}
-	if info := svc.EngineInfo(); info.Installed || info.Version != "" || info.Pinned != backpack.PinnedVersion {
+	if info, _ := svc.EngineInfo("backpack"); info.Installed || info.Version != "" || info.Pinned != backpack.PinnedVersion {
 		t.Fatalf("EngineInfo = %+v, want not installed and no installed version and the pinned one on offer", info)
 	}
 }
