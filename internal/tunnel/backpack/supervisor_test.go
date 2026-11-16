@@ -89,6 +89,25 @@ func TestReconcileRunsOneEnginePerEnabledBackpackTunnel(t *testing.T) {
 	}
 }
 
+// The panel's default engine path is relative ("bin/backpack") while the engine runs inside Dir.
+func TestReconcileStartsAnEngineGivenByARelativePath(t *testing.T) {
+	folder, err := os.MkdirTemp(".", "engine-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.RemoveAll(folder) })
+	if err := os.Rename(fakeEngine(t), filepath.Join(folder, "backpack")); err != nil {
+		t.Skipf("cannot place the stand-in engine beside the package: %v", err)
+	}
+	s := &Supervisor{Binary: filepath.Join(folder, "backpack"), Dir: t.TempDir(), RestartDelay: 50 * time.Millisecond}
+	t.Cleanup(s.StopAll)
+
+	if err := s.Reconcile([]model.ServerTunnel{bridge("de1", "tcp")}); err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+	starts(t, s, 1)
+}
+
 func TestReconcileRestartsOnlyWhenTheConfigChangedAndStopsRemovedTunnels(t *testing.T) {
 	s := newSupervisor(t)
 	if err := s.Reconcile([]model.ServerTunnel{bridge("de1", "tcp")}); err != nil {
