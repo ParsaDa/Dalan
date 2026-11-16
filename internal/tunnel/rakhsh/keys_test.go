@@ -74,3 +74,30 @@ func TestPublicKeyRejectsAMalformedSecret(t *testing.T) {
 		})
 	}
 }
+
+func TestBridgeKeyIsDerivedFromThePortalKeyAndTheTunnelSoALinkCanBeIssuedAgain(t *testing.T) {
+	portal, _, err := GenerateKeyPair()
+	if err != nil {
+		t.Fatal(err)
+	}
+	const tunnelUUID = "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
+	first, err := BridgeSecret(portal, tunnelUUID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	again, _ := BridgeSecret(portal, tunnelUUID)
+	other, _ := BridgeSecret(portal, "11111111-5c1b-4f0e-9a51-2f6d1c7b9e10")
+	decode32(t, "bridge secret", first)
+	if first != again {
+		t.Fatal("the bridge secret changed between two derivations, so a reissued link would not pair")
+	}
+	if first == other || first == portal {
+		t.Fatalf("the bridge secret must differ per tunnel and from the portal's: first=%s other=%s portal=%s", first, other, portal)
+	}
+	if _, err := PublicKey(first); err != nil {
+		t.Fatalf("the derived secret is not a usable key: %v", err)
+	}
+	if _, err := BridgeSecret("not a key", tunnelUUID); err == nil || !strings.Contains(err.Error(), "secret") {
+		t.Fatalf("a malformed portal secret gave %v, want an error about the secret", err)
+	}
+}

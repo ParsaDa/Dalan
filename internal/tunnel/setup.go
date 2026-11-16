@@ -19,6 +19,7 @@ import (
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 )
 
 const (
@@ -28,6 +29,8 @@ const (
 	setupLinkBackpack = 2
 	// Version 3 carries BackPack options and the direct mode; a panel that stops at version 2 refuses it by number.
 	setupLinkBackpackOptions = 3
+	// Version 4 describes Rakhsh tunnels and carries the exit end's secret key.
+	setupLinkRakhsh = 4
 )
 
 var errNotASetupLink = errors.New("not a Dalan tunnel link")
@@ -43,7 +46,8 @@ type PortalSpec struct {
 	Security   string
 	ServerName string
 
-	// Engine is "xray" when empty. The fields below belong to the BackPack engine.
+	// Engine is "xray" when empty. The fields below belong to the BackPack and Rakhsh engines;
+	// for Rakhsh, Transport is the carrier.
 	Engine             string
 	Transport          string
 	FallbackTransports []string
@@ -70,6 +74,10 @@ type setupPayload struct {
 	RelayPort          int            `json:"relayPort,omitempty"`
 	Mode               string         `json:"mode,omitempty"`
 	Options            map[string]any `json:"options,omitempty"`
+
+	// RakhshSecret is the exit end's secret key and RakhshPeer the entry's public key; the link is a secret.
+	RakhshSecret string `json:"rakhshSecret,omitempty"`
+	RakhshPeer   string `json:"rakhshPeer,omitempty"`
 }
 
 func validateEndpoint(name, address string, port int) error {
@@ -184,6 +192,8 @@ func NewPortal(spec PortalSpec) (model.ServerTunnel, error) {
 			return model.ServerTunnel{}, err
 		}
 		return portal, nil
+	case model.TunnelEngineRakhsh:
+		return newRakhshPortal(portal, spec)
 	default:
 		return model.ServerTunnel{}, fmt.Errorf("tunnel engine %q is not supported", spec.Engine)
 	}
@@ -207,6 +217,53 @@ func NewPortal(spec PortalSpec) (model.ServerTunnel, error) {
 	return portal, nil
 }
 
+func newRakhshPortal(portal model.ServerTunnel, spec PortalSpec) (model.ServerTunnel, error) {
+	if spec.Security == model.TunnelSecurityReality || spec.ServerName != "" {
+		return model.ServerTunnel{}, errors.New("REALITY belongs to the Xray engine; Rakhsh sets its server name with the sni option")
+	}
+	portal.Engine, portal.Security = model.TunnelEngineRakhsh, model.TunnelSecurityNone
+	portal.Transport = spec.Transport
+	portal.ForwardPorts = spec.ForwardPorts
+	portal.Options = maps.Clone(spec.Options)
+	switch spec.Mode {
+	case "", model.TunnelModeReverse:
+		portal.Mode = model.TunnelModeReverse
+	case model.TunnelModeDirect:
+		portal.Mode = model.TunnelModeDirect
+	default:
+		return model.ServerTunnel{}, fmt.Errorf("tunnel mode %q is not supported", spec.Mode)
+	}
+	relay, err := backpack.NewRelayPort()
+	if err != nil {
+		return model.ServerTunnel{}, err
+	}
+	portal.RelayPort = relay
+	secret, _, err := rakhsh.GenerateKeyPair()
+	if err != nil {
+		return model.ServerTunnel{}, err
+	}
+	bridgeSecret, err := rakhsh.BridgeSecret(secret, portal.UUID)
+	if err != nil {
+		return model.ServerTunnel{}, err
+	}
+	if portal.RakhshPeerPublic, err = rakhsh.PublicKey(bridgeSecret); err != nil {
+		return model.ServerTunnel{}, err
+	}
+	portal.RakhshSecret = secret
+	// Issuing and parsing the link renders both ends, which is the engine's own validation of the spec.
+	link, err := SetupLink(portal)
+	if err != nil {
+		return model.ServerTunnel{}, err
+	}
+	if _, err := rakhsh.RenderConfig(portal, ""); err != nil {
+		return model.ServerTunnel{}, err
+	}
+	if _, err := ParseSetupLink(link); err != nil {
+		return model.ServerTunnel{}, err
+	}
+	return portal, nil
+}
+
 // SetupLink encodes what the other server needs to dial a portal; the private key never leaves the portal.
 func SetupLink(portal model.ServerTunnel) (string, error) {
 	if portal.Role != model.TunnelRolePortal {
@@ -225,6 +282,20 @@ func SetupLink(portal model.ServerTunnel) (string, error) {
 			payload.Version = setupLinkBackpackOptions
 			payload.Mode, payload.Options = portal.Mode, portal.Options
 		}
+	}
+	if portal.Engine == model.TunnelEngineRakhsh {
+		bridgeSecret, err := rakhsh.BridgeSecret(portal.RakhshSecret, portal.UUID)
+		if err != nil {
+			return "", err
+		}
+		portalPublic, err := rakhsh.PublicKey(portal.RakhshSecret)
+		if err != nil {
+			return "", err
+		}
+		payload.Version = setupLinkRakhsh
+		payload.Transport, payload.RelayPort = portal.Transport, portal.RelayPort
+		payload.Mode, payload.Options = portal.Mode, portal.Options
+		payload.RakhshSecret, payload.RakhshPeer = bridgeSecret, portalPublic
 	}
 	raw, err := json.Marshal(payload)
 	if err != nil {
@@ -304,8 +375,34 @@ func ParseSetupLink(link string) (model.ServerTunnel, error) {
 		if _, err := backpack.RenderConfig(bridge); err != nil {
 			return model.ServerTunnel{}, err
 		}
+	case setupLinkRakhsh:
+		return parseRakhshLink(bridge, p)
 	default:
-		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands versions %d to %d", p.Version, setupLinkXray, setupLinkBackpackOptions)
+		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands versions %d to %d", p.Version, setupLinkXray, setupLinkRakhsh)
+	}
+	return bridge, nil
+}
+
+func parseRakhshLink(bridge model.ServerTunnel, p setupPayload) (model.ServerTunnel, error) {
+	if p.PublicKey != "" || p.ShortId != "" || p.ServerName != "" {
+		return model.ServerTunnel{}, errors.New("tunnel link mixes Xray fields into a Rakhsh tunnel")
+	}
+	if p.RelayPort != 0 && (p.RelayPort < backpack.RelayPortMin || p.RelayPort > backpack.RelayPortMax) {
+		return model.ServerTunnel{}, fmt.Errorf("tunnel link has a relay port outside %d-%d", backpack.RelayPortMin, backpack.RelayPortMax)
+	}
+	if p.Mode != "" && p.Mode != model.TunnelModeReverse && p.Mode != model.TunnelModeDirect {
+		return model.ServerTunnel{}, fmt.Errorf("tunnel link has the unknown mode %q", p.Mode)
+	}
+	bridge.Engine, bridge.Security = model.TunnelEngineRakhsh, model.TunnelSecurityNone
+	bridge.Transport, bridge.RelayPort = p.Transport, p.RelayPort
+	bridge.Mode, bridge.Options = model.TunnelModeReverse, p.Options
+	if p.Mode == model.TunnelModeDirect {
+		bridge.Mode = model.TunnelModeDirect
+	}
+	bridge.RakhshSecret, bridge.RakhshPeerPublic = p.RakhshSecret, p.RakhshPeer
+	// Rendering is the engine's own validation of the keys, the carrier and the options.
+	if _, err := rakhsh.RenderConfig(bridge, ""); err != nil {
+		return model.ServerTunnel{}, err
 	}
 	return bridge, nil
 }
