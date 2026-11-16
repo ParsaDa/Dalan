@@ -17,7 +17,7 @@ Why it exists: during internet shutdowns in Iran only connections opened from ou
 | **The main panel runs on the Iran server.** Servers abroad are nodes and must dial in | owner |
 | Tunnels are reverse by default (exit server dials the entry server); direct tunnels also wanted | owner |
 | Name: Dalan. Terminal command `dalan` (alias of `x-ui`) | owner |
-| Two engines from the start: Xray VLESS reverse and BackPack | owner |
+| Two engines from the start: Xray VLESS reverse and BackPack; Rakhsh as the third engine in 0.5.0, a fourth (or an own tunnel) maybe later | owner |
 | A node chosen by the operator is a backup server: encrypted data store only, no automatic takeover | owner |
 | UI redesign comes after tunnels work, and starts with a brainstorm with the owner | owner |
 | Internal names stay unchanged (Go module path, `x-ui` binary, `/etc/x-ui`, `XUI_*`, unit names) so upstream keeps merging | Claude, accepted |
@@ -29,7 +29,7 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 
 ## State of the repository
 
-`main` is at Dalan **0.4.0** (PR #13, released as `v0.4.0`); branch `feat/dalan-0.4.5` carries **0.4.5**. `v0.3.1` has working binaries but its Docker image never built (the Dockerfile compiled `main.go` alone and missed `enrol_cmd.go`); `v0.3.2` fixes that. Releases so far: `v0.1.0`, `v0.2.0`, plus the rolling `dev-latest` pre-release built on every push to `main`.
+`main` is at Dalan **0.4.5** (released as `v0.4.5`); branch `feat/dalan-0.5.0` carries **0.5.0**. `v0.3.1` has working binaries but its Docker image never built (the Dockerfile compiled `main.go` alone and missed `enrol_cmd.go`); `v0.3.2` fixes that. Releases so far: `v0.1.0`, `v0.2.0`, plus the rolling `dev-latest` pre-release built on every push to `main`.
 
 | PR | What |
 |---|---|
@@ -42,8 +42,17 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 | #7 | 0.3.0 |
 | #13 | 0.4.0: tunnels as outbounds, spare-tunnel pools, route test, engine update through a node, container front door |
 | #14 | 0.4.5: reverse/direct label, direct layer-3 tunnels, all BackPack 1.9.0 options, edit in place, live tunnel traffic |
+| next | 0.5.0: the Rakhsh engine (third engine, all its options) |
 
 Merged in PR #9 (0.3.1): reverse node enrolment and the management channel, item 1 of the list below. Design: `dalan/plans/2026-11-15-node-enrolment-design.md`. Operator guide: "Nodes that dial in" in `dalan/TUNNELS.md`.
+
+### What 0.5.0 adds (branch `feat/dalan-0.5.0`)
+
+- **Rakhsh** (`CluvexStudio/rakhsh`, AGPL Rust core, run as its own unmodified binary like BackPack). Engine id `rakhsh`; `internal/tunnel/rakhsh/` has `RenderConfig`, `Catalog`/`ValidateOptions` (options.go), `Supervisor` (a thin `engine.Supervisor`, shared with BackPack in `internal/tunnel/engine/`), `Install` (pinned `v0.1.0`, verified against the release checksums), `GenerateKeyPair`/`BridgeSecret` (X25519 keys; the bridge key is derived from the portal's and the tunnel UUID) and `ReadStatus` (`rakhsh status --socket S --json`: lanes up, loss, latency).
+- **Setup link version 4** carries `rakhshSecret`/`rakhshPeer`; the link is a secret. `ServerTunnel` gained `rakhsh_secret` and `rakhsh_peer_public` (plain string columns, added by AutoMigrate like the BackPack ones; no hand-written migration was needed).
+- **Per-engine install, update, release** in `tunnel_engine.go` (`externalEngine` table); `POST .../engine/install|update|release` and `GET .../options|engine` take `engine` (default `backpack`, so old clients keep working). `TunnelService.ReconcileEngines`/`StopEngines` run both external engines; `checkLinkAddressesFree` refuses a link address that another tunnel already listens on.
+- **Panel**: Rakhsh in the engine picker, carriers, forwards (`listen=target[/udp]`), a links field (carrier, address, per-link overrides), every catalog option filtered by role and mode, raw carriers warn and require `peer_ip`, one install/update bar per engine (`TunnelEngineBar.tsx`), lanes and loss in the status cell. `GET /panel/api/tunnels/options?engine=` serves the catalog.
+- Not done on purpose: loss-aware carrier switching (the owner wants to talk about it later), Rakhsh's router sections, a fourth engine.
 
 ### What 0.4.5 adds
 
@@ -66,10 +75,11 @@ Merged in PR #9 (0.3.1): reverse node enrolment and the management channel, item
 
 ### Where the tunnel code is
 
-- `internal/database/model/server_tunnel.go` — `ServerTunnel`, one end of a tunnel. Roles `portal` (entry, listens) and `bridge` (exit, dials). Engines `xray`, `backpack`.
+- `internal/database/model/server_tunnel.go` — `ServerTunnel`, one end of a tunnel. Roles `portal` (entry, listens) and `bridge` (exit, dials). Engines `xray`, `backpack`, `rakhsh`.
 - `internal/tunnel/setup.go` — `NewPortal`, `SetupLink`, `ParseSetupLink`. Link format `dalan://tunnel/<base64url JSON>`; version 1 = Xray, version 2 = BackPack, version 3 = BackPack with options or direct mode. The REALITY private key never enters a link.
 - `internal/tunnel/xrayreverse/apply.go` — injects enabled Xray tunnels into the *generated* Xray config (never the stored template). Portal: VLESS inbound whose client has `reverse.tag`, plus a routing rule sending the chosen inbound tags to outbound `tunnel-<name>`, plus a loopback probe inbound on `62900 + id%500`. Bridge: VLESS outbound with `reverse.tag` and a rule sending its traffic to the exit outbound.
 - `internal/tunnel/probe.go` — one GET through the probe port; reports latency, exit IP and country (Cloudflare trace).
+- `internal/tunnel/rakhsh/` — see "What 0.5.0 adds"; the engine-neutral supervisor, installer and management forward live in `internal/tunnel/engine/`.
 - `internal/tunnel/backpack/` — `RenderConfig` (TOML), `Supervisor` (one process per tunnel, restart on change or crash, config file 0600 and removed with the tunnel), `ReadSnapshot` (`<name>.metrics.json`), `Install` (pinned `v1.9.0`, verified against the release's `SHA256SUMS`), `Catalog`/`ValidateOptions` (options.go), `renderDirect` and `DirectInterface` (config.go).
 - `ServerTunnel.ManagePort` marks a management tunnel. `xrayreverse.Apply` gives the portal a loopback `dokodemo-door` inbound on that port and gives the bridge a freedom outbound whose `redirect` pins every tunnelled connection to `127.0.0.1:<ManagePort>` (the node's panel). `internal/web/service/tunnel_management.go` creates, replaces and deletes these; the ordinary tunnel routes refuse to delete or probe them.
 - `internal/tunnel/enrol/` — the enrolment link (`dalan://enrol/...`), the sealed request and reply (X25519 + HKDF + AES-GCM, key in the link) and the node's HTTP client.
@@ -91,10 +101,12 @@ Verified by automated tests that run in CI:
 - Service, controller and page behaviour; installer against a local release server (good checksum, wrong checksum, missing checksum, failed download keeps the current engine); supervisor with a stand-in engine.
 
 Verified once by hand, not in CI:
+- A real Rakhsh binary built from `CluvexStudio/rakhsh` (target/release) accepts every config the renderer writes (reverse and direct, both ends, `rakhsh check -c`) and carries a forwarded TCP port over `tcp` and `wss` between two supervised processes on loopback: `DALAN_RAKHSH_E2E_BINARY=/path/to/rakhsh go test ./internal/tunnel/rakhsh/`.
 - A real BackPack v1.8.5 binary (built from that tag with `CGO_ENABLED=0`, not repeated for v1.9.0) on both ends carries a forwarded TCP port: `DALAN_BACKPACK_E2E_BINARY=/path/to/backpack go test ./internal/tunnel/backpack/`.
 - A real install of v0.1.0 on a server by the owner: panel came up, `dalan` command works.
 
 **Not verified — waiting on the owner's tests:**
+- Everything Rakhsh on real servers: a pair across the real internet, `quic`/`kcp`/`ws` behind a CDN, any raw carrier or layer-3 device (needs root; only `tcp` and `wss` ran on loopback), a link failing over to the next carrier, the install button (whether the `v0.1.0` release assets and checksums are named the way `rakhsh.Install` expects was not checked against GitHub), editing a node-made Rakhsh tunnel, and the option catalog beyond what `rakhsh check` accepts.
 - Everything new in 0.4.5 on real servers: a direct tunnel (needs root and `/dev/net/tun`; no real v1.9.0 binary was run), reverse `ws`/`wss` behind a CDN with `edge_ip`, editing a node-made tunnel, the option catalog against the real engine (it was written from the v1.9.0 source and config reference, not from a running engine). Whether the `v1.9.0` GitHub release carries `backpack_linux_<arch>.tar.gz` and `SHA256SUMS` was not checked (the tag exists); if the install button answers 404, that is why.
 - An Xray REALITY tunnel between two real servers (owner was testing `v0.2.0`; result not reported yet).
 - Node enrolment between two real servers, and with REALITY: the automated tests run both panels on one host with tunnel security "none". `dalan enrol` through the real `x-ui.sh` (systemd, Alpine and Docker restart paths) has not been run.
@@ -120,12 +132,12 @@ Verified once by hand, not in CI:
 
 ## What is left, in order
 
-1. **Real-server tests of 0.4.0 and 0.4.5** (owner): tunnels as outbounds, pools, route test, engine update through a node, install-and-enrol, and the Docker image on Railway. Nothing here has run on real servers; the Docker image was not built in the sandbox (no daemon), CI builds it on the tag.
+1. **Real-server tests of 0.4.0, 0.4.5 and 0.5.0** (owner): tunnels as outbounds, pools, route test, engine update through a node, install-and-enrol, and the Docker image on Railway. Nothing here has run on real servers; the Docker image was not built in the sandbox (no daemon), CI builds it on the tag.
 2. **Direct tunnel gaps**: not an Xray outbound, cannot cross a CDN (UDP/raw/ICMP carriers), the `spoof` carrier and BackPack's Naive/Xray helper sections are not offered. The **backup server** (design §7.7) is cancelled for now. Pool balancer tags are not offered in the Routing page's balancer picker (they can be typed as `pool-<name>`); BackPack members of a pool report no latency and only replace a tunnel that is down.
 3. **One shared port for all management tunnels**, and Xray tunnels over transports other than REALITY/TCP.
 4. **Node tabs**: the owner's idea — each enrolled node gets a tab in the main panel that shows that node's whole management panel (the main panel already has the node's API token and a path to it through the management tunnel; needs request forwarding plus a node-scoped UI). Fits the UI redesign.
 5. **UI redesign** — only after a brainstorm with the owner; he asked to be consulted first.
-6. Later: more engines (Arange-tun, C-Tunnel for GRE, GOST), user-management ideas from PasarGuard, an optional SmartDNS module (idea from hyperdns).
+6. Later: loss-aware switching, a fourth engine or an own tunnel, more engines (Arange-tun, C-Tunnel for GRE, GOST), user-management ideas from PasarGuard, an optional SmartDNS module (idea from hyperdns).
 
 ## How to work in this repo
 
