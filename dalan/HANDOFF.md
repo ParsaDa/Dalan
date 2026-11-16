@@ -1,6 +1,6 @@
 # Dalan — handoff
 
-Written 2026-11-15 for whoever continues this work (a person or a coding agent). Read this first, then `CLAUDE.md` (upstream's rules, all still binding), `dalan/UPSTREAM.md` and `dalan/TUNNELS.md`.
+Written 2026-11-15, updated 2026-11-16 for 0.4.0, for whoever continues this work (a person or a coding agent). Read this first, then `CLAUDE.md` (upstream's rules, all still binding), `dalan/UPSTREAM.md` and `dalan/TUNNELS.md`.
 
 ## What Dalan is
 
@@ -25,7 +25,7 @@ Why it exists: during internet shutdowns in Iran only connections opened from ou
 | BackPack runs as its own unmodified binary (AGPL, trademarked name); its code is never copied | Claude |
 | PasarGuard code (Python, AGPL) and nx-panel (closed source) are not used; only ideas | Claude |
 
-Design documents live in the claude.ai Project "VPN and Networking": `design/2026-11-15-panel-design.md` and `design/2026-11-15-addendum-xray-reverse.md` (Persian). Section 7.2 of the first describes the reverse management channel that is not built yet.
+Design documents live in the claude.ai Project "VPN and Networking": `design/2026-11-15-panel-design.md` and `design/2026-11-15-addendum-xray-reverse.md` (Persian). Section 7.2 of the first describes the reverse management channel (built in 0.3.1).
 
 ## State of the repository
 
@@ -102,7 +102,7 @@ Verified once by hand, not in CI:
 - Traffic totals are shown for Xray entry tunnels only; BackPack tunnels show none in the table.
 - BackPack: forwarded-port conflicts with local inbounds are not checked; `skip_optz` is left at the engine default, so BackPack applies its own TCP tuning to the host.
 - Deleting a tunnel on one server leaves the other end in place. The same holds for an enrolled node: deleting it on the main panel leaves the bridge `node-<name>` and the main panel's API token on the node.
-- Enrolment: a node whose panel listens on one specific IP is refused (the bridge delivers to 127.0.0.1); each node takes its own tunnel port on the main panel; an https node is registered with certificate verification off, because the hop is loopback through the tunnel; a management tunnel has no status of its own in the Tunnels page (the node's status is its health); a Join that imports the data tunnel after the management tunnel has no rollback; joining a second main panel with the same data-tunnel name clashes; each enrolled node gets its own tunnel port unless it rides an existing tunnel.
+- Enrolment: a node whose panel listens on one specific IP is refused (the bridge delivers to 127.0.0.1); each node takes its own tunnel port on the main panel; an https node is registered with certificate verification off, because the hop is loopback through the tunnel; a management tunnel has no status of its own in the Tunnels page (the node's status is its health); a Join that imports the data tunnel after the management tunnel has no rollback; joining a second main panel with the same data-tunnel name clashes.
 - `docs/content/docs/en/reference/api/meta.json` lists neither `tunnels` nor `node-enrolment`, so those generated pages are not in the docs site navigation.
 - A data race inside xray-core's VLESS reverse monitor (`proxy/vless/outbound`, handler read while `New` is still writing it) makes the two-core traffic test unusable under `-race`; the file carries `//go:build !race`. Worth reporting upstream.
 - `node-e2e` in CI failed once with `bind: address already in use` in upstream's harness and passed on re-run. Treat one such failure as a flake, a second as real.
