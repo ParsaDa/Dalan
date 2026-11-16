@@ -5154,6 +5154,46 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "TunnelPool": {
+    "description": "TunnelPool is a set of entry tunnels that stand in for each other: traffic leaves through the\nactive one, and the panel moves it to a spare when that one stays worse than the spare.",
+    "properties": {
+      "active": {
+        "description": "Active is the member carrying the traffic now; empty means the first working member.",
+        "example": "de1",
+        "type": "string"
+      },
+      "id": {
+        "example": 1,
+        "type": "integer"
+      },
+      "members": {
+        "description": "Members are tunnel names in order of preference.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "name": {
+        "example": "main",
+        "type": "string"
+      },
+      "routeInbounds": {
+        "description": "RouteInbounds lists the local inbound tags whose traffic leaves through the pool.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "active",
+      "id",
+      "members",
+      "name",
+      "routeInbounds"
+    ],
+    "type": "object"
+  },
   "User": {
     "description": "User represents a user account in the 3x-ui panel.",
     "properties": {

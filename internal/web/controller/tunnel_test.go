@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -142,5 +143,49 @@ func TestAddingATunnelForAnUnknownNodeCreatesNothing(t *testing.T) {
 	var tunnels []model.ServerTunnel
 	if err := json.Unmarshal(list.Obj, &tunnels); err != nil || len(tunnels) != 0 {
 		t.Fatalf("tunnels after the refused add = %s (%v), want none", list.Obj, err)
+	}
+}
+
+func TestPoolRoutesCreateListAndDeleteAPool(t *testing.T) {
+	engine := newTunnelEngine(t)
+	for i, name := range []string{"a", "b"} {
+		added := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+			"name": name, "address": "203.0.113.10", "port": 8443 + i, "security": "none",
+		})
+		if !added.Success {
+			t.Fatalf("add %s: %s", name, added.Msg)
+		}
+	}
+
+	refused := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/pools/add", map[string]any{
+		"name": "main", "members": []string{"a"},
+	})
+	if refused.Success || !strings.Contains(refused.Msg, "at least two") {
+		t.Fatalf("a pool of one: success=%v msg=%q, want a refusal naming the minimum", refused.Success, refused.Msg)
+	}
+
+	created := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/pools/add", map[string]any{
+		"name": "main", "members": []string{"b", "a"}, "routeInbounds": []string{"in-1"},
+	})
+	if !created.Success {
+		t.Fatalf("pools/add: %s", created.Msg)
+	}
+	var made model.TunnelPool
+	if err := json.Unmarshal(created.Obj, &made); err != nil || made.Id == 0 || made.Active != "b" {
+		t.Fatalf("pools/add returned %s (%v), want the stored pool with b first", created.Obj, err)
+	}
+
+	listed := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/pools/list", nil)
+	var pools []model.TunnelPool
+	if err := json.Unmarshal(listed.Obj, &pools); err != nil || len(pools) != 1 || pools[0].Name != "main" {
+		t.Fatalf("pools/list = %s (%v), want the one pool", listed.Obj, err)
+	}
+
+	if deleted := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/pools/del/"+strconv.Itoa(made.Id), nil); !deleted.Success {
+		t.Fatalf("pools/del: %s", deleted.Msg)
+	}
+	listed = doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/pools/list", nil)
+	if strings.Contains(string(listed.Obj), "main") {
+		t.Fatalf("the pool is still listed after deleting it: %s", listed.Obj)
 	}
 }

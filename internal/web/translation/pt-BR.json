@@ -2587,7 +2587,17 @@
       "nodeEnd": "Create the other end on a node",
       "nodeEndHint": "This panel also sets up the exit end on the chosen node, so nothing needs to be copied or pasted. Deleting the tunnel removes both ends.",
       "removeHere": "Remove this end only",
-      "removeHereHint": "The node holding the other end did not answer. Remove only this end now? The node keeps its end until it is deleted there."
+      "removeHereHint": "The node holding the other end did not answer. Remove only this end now? The node keeps its end until it is deleted there.",
+      "pools": "Tunnel pools",
+      "newPool": "New pool",
+      "poolsHint": "Tunnels in a pool stand in for each other. Traffic leaves through the one in use and moves to a spare only after the spare has been clearly better several checks in a row. The balancer is also available to routing rules as pool-<name>.",
+      "poolsEmpty": "No pools yet",
+      "poolMembers": "Tunnels",
+      "poolInUse": "in use",
+      "poolDeleteConfirm": "Delete this pool? Its tunnels stay.",
+      "poolTunnels": "Tunnels",
+      "poolTunnelsHint": "Entry tunnels in order of preference; the first one carries the traffic to begin with.",
+      "poolNeedsTwo": "Pick at least two tunnels."
     },
     "enrolments": {
       "title": "Add node with a command",

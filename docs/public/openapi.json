@@ -5180,6 +5180,46 @@
         ],
         "type": "object"
       },
+      "TunnelPool": {
+        "description": "TunnelPool is a set of entry tunnels that stand in for each other: traffic leaves through the\nactive one, and the panel moves it to a spare when that one stays worse than the spare.",
+        "properties": {
+          "active": {
+            "description": "Active is the member carrying the traffic now; empty means the first working member.",
+            "example": "de1",
+            "type": "string"
+          },
+          "id": {
+            "example": 1,
+            "type": "integer"
+          },
+          "members": {
+            "description": "Members are tunnel names in order of preference.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "example": "main",
+            "type": "string"
+          },
+          "routeInbounds": {
+            "description": "RouteInbounds lists the local inbound tags whose traffic leaves through the pool.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "active",
+          "id",
+          "members",
+          "name",
+          "routeInbounds"
+        ],
+        "type": "object"
+      },
       "User": {
         "description": "User represents a user account in the 3x-ui panel.",
         "properties": {
@@ -14036,6 +14076,164 @@
         }
       }
     },
+    "/panel/api/tunnels/pools/list": {
+      "get": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "List tunnel pools. active is the member that carries the traffic now; the panel moves it to a spare after the spare has been clearly better for several checks in a row.",
+        "operationId": "get_panel_api_tunnels_pools_list",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TunnelPool"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "active": "de1",
+                      "id": 1,
+                      "members": [
+                        ""
+                      ],
+                      "name": "main",
+                      "routeInbounds": [
+                        ""
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/pools/add": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Create a pool of two or more entry tunnels, in order of preference. routeInbounds lists the local inbound tags whose traffic leaves through the pool; the balancer is also available to routing rules as pool-<name>.",
+        "operationId": "post_panel_api_tunnels_pools_add",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "name": "main",
+                "members": [
+                  "de1",
+                  "nl1"
+                ],
+                "routeInbounds": [
+                  "inbound-443"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/TunnelPool"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "active": "de1",
+                    "id": 1,
+                    "members": [
+                      ""
+                    ],
+                    "name": "main",
+                    "routeInbounds": [
+                      ""
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/pools/del/{id}": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Delete a pool. Its tunnels stay.",
+        "operationId": "post_panel_api_tunnels_pools_del_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Pool ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/tunnels/del/{id}": {
       "post": {
         "tags": [
@@ -14140,7 +14338,7 @@
         "tags": [
           "Node enrolment"
         ],
-        "summary": "Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored. Set tunnelId to an existing entry tunnel to manage the node over it instead; address, port and security are then taken from that tunnel.",
+        "summary": "Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored. Set tunnelId to an existing entry tunnel to manage the node over it instead; address, port and security are then taken from that tunnel. Set withTunnel to also create an ordinary entry tunnel named after the node on the same port, which the node imports when it joins; it cannot be combined with tunnelId.",
         "operationId": "post_panel_api_enrolments_add",
         "requestBody": {
           "required": true,

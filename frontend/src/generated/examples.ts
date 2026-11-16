@@ -1282,6 +1282,17 @@ export const EXAMPLES: Record<string, unknown> = {
     "udp_relay_mode": "",
     "zero_rtt_handshake": false
   },
+  "TunnelPool": {
+    "active": "de1",
+    "id": 1,
+    "members": [
+      ""
+    ],
+    "name": "main",
+    "routeInbounds": [
+      ""
+    ]
+  },
   "User": {
     "id": 0,
     "password": "",

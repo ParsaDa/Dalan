@@ -1167,6 +1167,14 @@ export interface TuicServerSettings {
   zero_rtt_handshake: boolean;
 }
 
+export interface TunnelPool {
+  active: string;
+  id: number;
+  members: string[];
+  name: string;
+  routeInbounds: string[];
+}
+
 export interface User {
   id: number;
   password: string;

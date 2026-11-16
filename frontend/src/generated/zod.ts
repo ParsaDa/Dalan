@@ -1244,6 +1244,15 @@ export const TuicServerSettingsSchema = z.object({
 });
 export type TuicServerSettings = z.infer<typeof TuicServerSettingsSchema>;
 
+export const TunnelPoolSchema = z.object({
+  active: z.string(),
+  id: z.number().int(),
+  members: z.array(z.string()),
+  name: z.string(),
+  routeInbounds: z.array(z.string()),
+});
+export type TunnelPool = z.infer<typeof TunnelPoolSchema>;
+
 export const UserSchema = z.object({
   id: z.number().int(),
   password: z.string(),

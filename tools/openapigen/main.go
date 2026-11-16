@@ -40,6 +40,7 @@ func run(root, outDir string) error {
 				"InboundFallback",
 				"Host",
 				"ServerTunnel",
+				"TunnelPool",
 				"NodeEnrolment",
 				"SubBalancer",
 			),

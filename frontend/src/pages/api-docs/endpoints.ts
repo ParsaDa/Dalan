@@ -2052,8 +2052,31 @@ export const sections: readonly Section[] = [
         body: '{\n  "enable": false\n}',
       },
       {
+        method: 'GET',
+        path: '/panel/api/tunnels/pools/list',
+        summary:
+          'List tunnel pools. active is the member that carries the traffic now; the panel moves it to a spare after the spare has been clearly better for several checks in a row.',
+        responseSchema: 'TunnelPool',
+        responseSchemaArray: true,
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnels/pools/add',
+        summary:
+          'Create a pool of two or more entry tunnels, in order of preference. routeInbounds lists the local inbound tags whose traffic leaves through the pool; the balancer is also available to routing rules as pool-<name>.',
+        body: '{\n  "name": "main",\n  "members": ["de1", "nl1"],\n  "routeInbounds": ["inbound-443"]\n}',
+        responseSchema: 'TunnelPool',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnels/pools/del/:id',
+        summary: 'Delete a pool. Its tunnels stay.',
+        params: [{ name: 'id', in: 'path', type: 'number', desc: 'Pool ID.' }],
+      },
+      {
         method: 'POST',
         path: '/panel/api/tunnels/del/:id',
+
         summary:
           'Delete a tunnel. When this panel made the other end on a node, that end is removed too, and the call fails if the node cannot be reached; add here=true to remove only this end. Otherwise the other server keeps its end until it is deleted there.',
         params: [
@@ -2082,7 +2105,7 @@ export const sections: readonly Section[] = [
         method: 'POST',
         path: '/panel/api/enrolments/add',
         summary:
-          'Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored. Set tunnelId to an existing entry tunnel to manage the node over it instead; address, port and security are then taken from that tunnel.',
+          'Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored. Set tunnelId to an existing entry tunnel to manage the node over it instead; address, port and security are then taken from that tunnel. Set withTunnel to also create an ordinary entry tunnel named after the node on the same port, which the node imports when it joins; it cannot be combined with tunnelId.',
         body: '{\n  "name": "de1",\n  "panelUrl": "https://panel.example.com:2053/",\n  "address": "203.0.113.10",\n  "port": 8443,\n  "security": "reality",\n  "serverName": "www.example.com",\n  "tunnelId": 0\n}',
         responseSchema: 'Invitation',
       },

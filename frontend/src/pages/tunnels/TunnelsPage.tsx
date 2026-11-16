@@ -27,6 +27,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { CopyOutlined, DeleteOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons';
 
 import { useTheme } from '@/hooks/useTheme';
+import TunnelPools from './TunnelPools';
 import { useNodesQuery } from '@/api/queries/useNodesQuery';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
 import {
@@ -407,6 +408,11 @@ export default function TunnelsPage() {
                     locale={{ emptyText: <Empty description={t('pages.tunnels.empty')} /> }}
                   />
                 </Card>
+              )}
+              {fetched && !fetchError && (
+                <div style={{ marginTop: 16 }}>
+                  <TunnelPools tunnels={tunnels} />
+                </div>
               )}
             </Spin>
           </Layout.Content>

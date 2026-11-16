@@ -315,3 +315,87 @@ func TestManagementRidingOnADisabledOrMissingTunnelAddsNothing(t *testing.T) {
 		buildWithXray(t, cfg)
 	}
 }
+
+func poolTunnel(t *testing.T, name string, port int) model.ServerTunnel {
+	t.Helper()
+	portal, err := tunnel.NewPortal(tunnel.PortalSpec{
+		Name: name, Address: "203.0.113.10", Port: port, Security: model.TunnelSecurityNone,
+	})
+	if err != nil {
+		t.Fatalf("NewPortal: %v", err)
+	}
+	return portal
+}
+
+func routingOf(t *testing.T, cfg *xray.Config) (rules, balancers []map[string]any) {
+	t.Helper()
+	var routing struct {
+		Rules     []map[string]any `json:"rules"`
+		Balancers []map[string]any `json:"balancers"`
+	}
+	if err := json.Unmarshal(cfg.RouterConfig, &routing); err != nil {
+		t.Fatalf("routing: %v", err)
+	}
+	return routing.Rules, routing.Balancers
+}
+
+func TestAPoolBecomesABalancerOnItsActiveTunnelAndRoutesItsInbounds(t *testing.T) {
+	a, b := poolTunnel(t, "a", 8443), poolTunnel(t, "b", 8444)
+	tunnels := []model.ServerTunnel{a, b}
+	pool := model.TunnelPool{
+		Name: "main", Members: []string{"a", "b"}, RouteInbounds: []string{"in-1"}, Active: "b",
+	}
+	cfg := &xray.Config{OutboundConfigs: []byte(`[{"tag":"direct","protocol":"freedom"}]`)}
+	if err := Apply(cfg, tunnels); err != nil {
+		t.Fatal(err)
+	}
+	if err := ApplyPools(cfg, tunnels, []model.TunnelPool{pool}); err != nil {
+		t.Fatalf("ApplyPools: %v", err)
+	}
+	buildWithXray(t, cfg)
+
+	rules, balancers := routingOf(t, cfg)
+	if len(balancers) != 1 || balancers[0]["tag"] != "pool-main" {
+		t.Fatalf("balancers = %v, want one named pool-main", balancers)
+	}
+	selector, _ := balancers[0]["selector"].([]any)
+	if len(selector) != 1 || selector[0] != "tunnel-b" {
+		t.Fatalf("selector = %v, want only the active tunnel-b", selector)
+	}
+	var routed bool
+	for _, r := range rules {
+		if r["balancerTag"] == "pool-main" {
+			routed = true
+		}
+	}
+	if !routed {
+		t.Fatalf("no rule sends in-1 to the pool: %v", rules)
+	}
+}
+
+func TestAPoolFallsBackToTheFirstWorkingMemberAndIgnoresTunnelsItCannotUse(t *testing.T) {
+	a, b := poolTunnel(t, "a", 8443), poolTunnel(t, "b", 8444)
+	a.Enable = false
+	tunnels := []model.ServerTunnel{a, b}
+	cfg := &xray.Config{OutboundConfigs: []byte(`[{"tag":"direct","protocol":"freedom"}]`)}
+	if err := Apply(cfg, tunnels); err != nil {
+		t.Fatal(err)
+	}
+	pool := model.TunnelPool{Name: "main", Members: []string{"a", "gone", "b"}, Active: "a", RouteInbounds: []string{"in-1"}}
+	if err := ApplyPools(cfg, tunnels, []model.TunnelPool{pool}); err != nil {
+		t.Fatalf("ApplyPools: %v", err)
+	}
+	buildWithXray(t, cfg)
+	_, balancers := routingOf(t, cfg)
+	if selector, _ := balancers[0]["selector"].([]any); len(selector) != 1 || selector[0] != "tunnel-b" {
+		t.Fatalf("selector = %v, want tunnel-b: a is disabled and gone does not exist", selector)
+	}
+
+	empty := &xray.Config{OutboundConfigs: []byte(`[{"tag":"direct","protocol":"freedom"}]`)}
+	if err := ApplyPools(empty, nil, []model.TunnelPool{pool}); err != nil {
+		t.Fatalf("ApplyPools without tunnels: %v", err)
+	}
+	if string(empty.RouterConfig) != "" {
+		t.Fatalf("a pool with no usable member changed the routing: %s", empty.RouterConfig)
+	}
+}

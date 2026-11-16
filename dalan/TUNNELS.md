@@ -112,6 +112,12 @@ What to know:
 
 In **Tunnels → New tunnel**, **Create the other end on a node** picks one of the panel's nodes. The panel stores its entry end, then asks the node (through the management channel) to store the dialling end, so nothing is copied or pasted. If the node cannot take its end, nothing is left behind. Deleting the tunnel removes both ends; when the node cannot be reached, the panel offers to remove only its own end.
 
+## Pools of spare tunnels
+
+**Tunnels → Tunnel pools → New pool** groups two or more entry tunnels (different ports, transports or even engines) that stand in for each other, in order of preference. Pick the inbounds whose traffic should leave through the pool; the panel adds a balancer `pool-<name>` that points at the tunnel in use, so the same tag can also be chosen in a routing rule.
+
+Every 15 seconds the panel measures each member (a real request through an Xray tunnel, the engine's own connected state for BackPack). Traffic moves to another member only when that member has been the better choice three checks in a row: the tunnel in use is down, or a measured tunnel is at least 50 ms and 30% faster. One bad check changes nothing. The move needs no Xray restart, and the choice is remembered across restarts. A BackPack member reports no latency, so it takes over only from a tunnel that is down. A tunnel that belongs to a pool cannot be deleted before the pool.
+
 ## Engine output
 
 Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>: ...`; when it exits, the last lines are repeated with the restart notice.
@@ -121,6 +127,5 @@ Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>
 - Traffic totals per tunnel in the panel.
 - Installing Dalan and enrolling a node in one command.
 - One shared port for the management tunnels of all nodes.
-- Spare tunnels with automatic switching.
 - Xray tunnels over transports other than REALITY on TCP.
 - Updating the BackPack engine from the panel after it is installed.

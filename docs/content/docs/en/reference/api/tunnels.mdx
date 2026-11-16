@@ -51,6 +51,20 @@ _openapi:
       title: Enable or disable a tunnel end.
       url: '#enable-or-disable-a-tunnel-end'
     - depth: 2
+      title: List tunnel pools. active is the member that carries the traffic now; the
+        panel moves it to a spare after the spare has been clearly better for
+        several checks in a row.
+      url: '#list-tunnel-pools-active-is-the-member-that-carries-the-traffic-now-the-panel-moves-it-to-a-spare-after-the-spare-has-been-clearly-better-for-several-checks-in-a-row'
+    - depth: 2
+      title: Create a pool of two or more entry tunnels, in order of preference.
+        routeInbounds lists the local inbound tags whose traffic leaves through
+        the pool; the balancer is also available to routing rules as
+        pool-<name>.
+      url: '#create-a-pool-of-two-or-more-entry-tunnels-in-order-of-preference-routeinbounds-lists-the-local-inbound-tags-whose-traffic-leaves-through-the-pool-the-balancer-is-also-available-to-routing-rules-as-pool-name'
+    - depth: 2
+      title: Delete a pool. Its tunnels stay.
+      url: '#delete-a-pool-its-tunnels-stay'
+    - depth: 2
       title: Delete a tunnel. When this panel made the other end on a node, that end
         is removed too, and the call fails if the node cannot be reached; add
         here=true to remove only this end. Otherwise the other server keeps its
@@ -93,6 +107,17 @@ _openapi:
         id: create-the-exit-end-of-a-tunnel-from-the-setup-link-of-an-entry-server-exitoutbound-is-the-local-outbound-traffic-leaves-from-empty-means-direct
       - content: Enable or disable a tunnel end.
         id: enable-or-disable-a-tunnel-end
+      - content: List tunnel pools. active is the member that carries the traffic now;
+          the panel moves it to a spare after the spare has been clearly better
+          for several checks in a row.
+        id: list-tunnel-pools-active-is-the-member-that-carries-the-traffic-now-the-panel-moves-it-to-a-spare-after-the-spare-has-been-clearly-better-for-several-checks-in-a-row
+      - content: Create a pool of two or more entry tunnels, in order of preference.
+          routeInbounds lists the local inbound tags whose traffic leaves
+          through the pool; the balancer is also available to routing rules as
+          pool-<name>.
+        id: create-a-pool-of-two-or-more-entry-tunnels-in-order-of-preference-routeinbounds-lists-the-local-inbound-tags-whose-traffic-leaves-through-the-pool-the-balancer-is-also-available-to-routing-rules-as-pool-name
+      - content: Delete a pool. Its tunnels stay.
+        id: delete-a-pool-its-tunnels-stay
       - content: Delete a tunnel. When this panel made the other end on a node, that end
           is removed too, and the call fails if the node cannot be reached; add
           here=true to remove only this end. Otherwise the other server keeps
@@ -108,7 +133,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
     </>
   );
 }

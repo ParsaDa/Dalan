@@ -56,10 +56,7 @@ func (s *TunnelService) RoutableOutbounds() ([]TunnelOutbound, error) {
 	}
 	out := make([]TunnelOutbound, 0, len(tunnels))
 	for _, t := range tunnels {
-		if !t.Enable || t.Role != model.TunnelRolePortal || t.ManagePort > 0 {
-			continue
-		}
-		if t.Engine == model.TunnelEngineBackpack && t.RelayPort == 0 {
+		if !xrayreverse.Routable(t) {
 			continue
 		}
 		out = append(out, TunnelOutbound{Tag: xrayreverse.PortalOutboundTag(t.Name), Name: t.Name, Engine: t.Engine})
@@ -206,7 +203,7 @@ func (s *TunnelService) Delete(id int) error {
 	if err != nil {
 		return err
 	}
-	if err := s.refuseWhileCarrying(t); err != nil {
+	if err := s.refuseWhileInUse(t); err != nil {
 		return err
 	}
 	if t.NodeId > 0 && t.Role == model.TunnelRolePortal {
@@ -226,8 +223,19 @@ func (s *TunnelService) DeleteHere(id int) error {
 	return s.deleteLocal(t)
 }
 
-// refuseWhileCarrying keeps a tunnel that a node's management still rides on, before any end is touched.
-func (s *TunnelService) refuseWhileCarrying(t *model.ServerTunnel) error {
+// refuseWhileInUse keeps a tunnel that a pool or a node's management still uses, before any end is touched.
+func (s *TunnelService) refuseWhileInUse(t *model.ServerTunnel) error {
+	var pools []model.TunnelPool
+	if err := database.GetDB().Find(&pools).Error; err != nil {
+		return err
+	}
+	for _, p := range pools {
+		for _, m := range p.Members {
+			if m == t.Name {
+				return fmt.Errorf("this tunnel is part of pool %s; delete the pool first", p.Name)
+			}
+		}
+	}
 	if t.ManagePort > 0 && t.Role == model.TunnelRolePortal {
 		return errManagementTunnel
 	}
@@ -242,7 +250,7 @@ func (s *TunnelService) refuseWhileCarrying(t *model.ServerTunnel) error {
 }
 
 func (s *TunnelService) deleteLocal(t *model.ServerTunnel) error {
-	if err := s.refuseWhileCarrying(t); err != nil {
+	if err := s.refuseWhileInUse(t); err != nil {
 		return err
 	}
 	if err := database.GetDB().Delete(&model.ServerTunnel{}, t.Id).Error; err != nil {

@@ -12,6 +12,7 @@ import (
 
 type TunnelController struct {
 	tunnelService service.TunnelService
+	poolService   service.TunnelPoolService
 }
 
 func NewTunnelController(g *gin.RouterGroup) *TunnelController {
@@ -25,12 +26,51 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.GET("/link/:id", a.link)
 	g.GET("/status/:id", a.status)
 	g.GET("/engine", a.engine)
+	g.GET("/pools/list", a.poolList)
 
 	g.POST("/add", a.add)
 	g.POST("/import", a.importLink)
 	g.POST("/engine/install", a.installEngine)
 	g.POST("/setEnable/:id", a.setEnable)
 	g.POST("/del/:id", a.del)
+	g.POST("/pools/add", a.poolAdd)
+	g.POST("/pools/del/:id", a.poolDel)
+}
+
+func (a *TunnelController) poolList(c *gin.Context) {
+	pools, err := a.poolService.List()
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.list"), err)
+		return
+	}
+	jsonObj(c, pools, nil)
+}
+
+func (a *TunnelController) poolAdd(c *gin.Context) {
+	var req struct {
+		Name          string   `json:"name"`
+		Members       []string `json:"members"`
+		RouteInbounds []string `json:"routeInbounds"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
+		return
+	}
+	pool, err := a.poolService.Create(req.Name, req.Members, req.RouteInbounds)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
+		return
+	}
+	jsonMsgObj(c, I18nWeb(c, "pages.tunnels.toasts.add"), pool, nil)
+}
+
+func (a *TunnelController) poolDel(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), err)
+		return
+	}
+	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), a.poolService.Delete(id))
 }
 
 func (a *TunnelController) list(c *gin.Context) {
