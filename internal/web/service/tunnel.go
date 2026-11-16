@@ -114,13 +114,18 @@ func (s *TunnelService) create(t *model.ServerTunnel) error {
 	if count > 0 {
 		return fmt.Errorf("a tunnel with the name %q already exists", t.Name)
 	}
-	if t.Role == model.TunnelRolePortal && t.ParentId == 0 {
-		if err := s.checkPortFree(t.Port); err != nil {
+	if listensOnPort(*t) {
+		if err := s.checkPortFree(t.Port, 0); err != nil {
 			return err
 		}
 	}
 	if t.RelayPort > 0 {
 		if err := s.checkRelayPortFree(t.RelayPort); err != nil {
+			return err
+		}
+	}
+	if t.Mode == model.TunnelModeDirect {
+		if err := s.checkLinkAddressesFree(t, 0); err != nil {
 			return err
 		}
 	}
@@ -131,12 +136,24 @@ func (s *TunnelService) create(t *model.ServerTunnel) error {
 	return nil
 }
 
-// A portal listens on its port, so it cannot share it with an inbound or another portal on this panel.
-func (s *TunnelService) checkPortFree(port int) error {
+// listensOnPort tells whether this end opens its port here: a reverse portal does, and so does the exit end of
+// a direct tunnel. A management rider shares its parent's port and opens none.
+func listensOnPort(t model.ServerTunnel) bool {
+	if t.Mode == model.TunnelModeDirect {
+		return t.Role == model.TunnelRoleBridge
+	}
+	return t.Role == model.TunnelRolePortal && t.ParentId == 0
+}
+
+// A listening end cannot share its port with an inbound or another listening end on this panel; except is
+// the tunnel being edited, which may keep its own port.
+func (s *TunnelService) checkPortFree(port, except int) error {
 	db := database.GetDB()
 	var count int64
 	if err := db.Model(&model.ServerTunnel{}).
-		Where("role = ? AND port = ?", model.TunnelRolePortal, port).Count(&count).Error; err != nil {
+		Where("id <> ? AND port = ? AND parent_id = 0 AND ((role = ? AND COALESCE(mode, '') <> ?) OR (role = ? AND mode = ?))",
+			except, port, model.TunnelRolePortal, model.TunnelModeDirect, model.TunnelRoleBridge, model.TunnelModeDirect).
+		Count(&count).Error; err != nil {
 		return err
 	}
 	if count == 0 {
@@ -170,6 +187,23 @@ func (s *TunnelService) checkRelayPortFree(port int) error {
 	return nil
 }
 
+var errLinkAddressTaken = errors.New("tunnel link addresses are already used by another direct tunnel")
+
+// Two direct tunnels on one server need different address pairs, or their interfaces would clash.
+func (s *TunnelService) checkLinkAddressesFree(t *model.ServerTunnel, except int) error {
+	var others []model.ServerTunnel
+	if err := database.GetDB().Where("id <> ? AND mode = ?", except, model.TunnelModeDirect).Find(&others).Error; err != nil {
+		return err
+	}
+	for _, o := range others {
+		if o.Options["local_ip"] == t.Options["local_ip"] || o.Options["peer_ip"] == t.Options["peer_ip"] ||
+			o.Options["local_ip"] == t.Options["peer_ip"] || o.Options["peer_ip"] == t.Options["local_ip"] {
+			return fmt.Errorf("%w: %v and %v", errLinkAddressTaken, t.Options["local_ip"], t.Options["peer_ip"])
+		}
+	}
+	return nil
+}
+
 // CreatePortal makes the listening end of a tunnel; routeInbounds are the local inbound tags that leave through it.
 func (s *TunnelService) CreatePortal(spec tunnel.PortalSpec, routeInbounds []string) (*model.ServerTunnel, error) {
 	for attempt := 0; ; attempt++ {
@@ -189,13 +223,21 @@ func (s *TunnelService) CreatePortal(spec tunnel.PortalSpec, routeInbounds []str
 	}
 }
 
-// Import makes the dialing end of a tunnel from the other panel's setup link.
+// Import makes the dialing end of a tunnel from the other panel's setup link. A link for a name that is
+// already a dialing end updates that end in place, which is how an edit on the entry end reaches this one.
 func (s *TunnelService) Import(link, exitOutbound string) (*model.ServerTunnel, error) {
 	bridge, err := tunnel.ParseSetupLink(link)
 	if err != nil {
 		return nil, err
 	}
 	bridge.ExitOutbound = exitOutbound
+	var existing model.ServerTunnel
+	switch err := database.GetDB().Where("name = ?", bridge.Name).First(&existing).Error; {
+	case err == nil:
+		return s.updateDialingEnd(&existing, bridge)
+	case !errors.Is(err, gorm.ErrRecordNotFound):
+		return nil, err
+	}
 	if err := s.create(&bridge); err != nil {
 		return nil, err
 	}
@@ -292,6 +334,9 @@ func (s *TunnelService) Status(id int) (tunnel.Status, error) {
 	if err != nil {
 		return tunnel.Status{}, err
 	}
+	if t.Mode == model.TunnelModeDirect {
+		return s.directStatus(t), nil
+	}
 	if t.Engine == model.TunnelEngineBackpack {
 		return s.backpackStatus(t), nil
 	}
@@ -335,6 +380,28 @@ func (s *TunnelService) InstallEngine() error {
 	ctx, cancel := context.WithTimeout(context.Background(), engineInstallTimeout)
 	defer cancel()
 	return s.updateEngineFrom(ctx, directEngineSource, backpack.PinnedVersion)
+}
+
+// directInterfaceUp is replaced by tests; the engine creates the interface once the link is established.
+var directInterfaceUp = func(name string) bool {
+	iface, err := net.InterfaceByName(name)
+	return err == nil && iface.Flags&net.FlagUp != 0
+}
+
+// directStatus judges a direct tunnel by its link interface, since it has no forwarded Xray traffic to probe.
+func (s *TunnelService) directStatus(t *model.ServerTunnel) tunnel.Status {
+	if !s.EngineInfo().Installed {
+		return tunnel.Status{Error: backpack.ErrNotInstalled.Error()}
+	}
+	name := backpack.DirectInterface(t.Id)
+	if !directInterfaceUp(name) {
+		return tunnel.Status{Error: fmt.Sprintf("the link interface %s is not up", name)}
+	}
+	status := tunnel.Status{Connected: true}
+	if t.Role == model.TunnelRolePortal {
+		status.ExitIP = t.Address
+	}
+	return status
 }
 
 func (s *TunnelService) backpackStatus(t *model.ServerTunnel) tunnel.Status {

@@ -108,6 +108,8 @@ type fakeTunnelNode struct {
 	next  int
 	fail  bool
 	calls []string
+	// links are the setup links the node was given, oldest first.
+	links []string
 }
 
 func newFakeTunnelNode(t *testing.T) (*fakeTunnelNode, *model.Node) {
@@ -137,8 +139,16 @@ func newFakeTunnelNode(t *testing.T) (*fakeTunnelNode, *model.Node) {
 				_, _ = fmt.Fprintf(w, `{"success":false,"msg":%q}`, err.Error())
 				return
 			}
-			f.next++
-			bridge.Id = f.next
+			f.links = append(f.links, body.Link)
+			for id, name := range f.ends {
+				if name == bridge.Name {
+					bridge.Id = id
+				}
+			}
+			if bridge.Id == 0 {
+				f.next++
+				bridge.Id = f.next
+			}
 			f.ends[bridge.Id] = bridge.Name
 			reply(bridge)
 		case r.Method == http.MethodPost && r.URL.Path == "/panel/api/tunnels/dial":
