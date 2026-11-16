@@ -2,6 +2,7 @@ package xrayreverse
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/xtls/xray-core/infra/conf"
@@ -428,5 +429,30 @@ func TestAnEntryTunnelSwitchesOutboundStatsOnSoItsTrafficCanBeCounted(t *testing
 	}
 	if string(untouched.Policy) != policy {
 		t.Fatalf("an exit end changed the policy: %s", untouched.Policy)
+	}
+}
+
+func TestRakhshRelayMakesAnEntryTunnelRoutable(t *testing.T) {
+	entry := model.ServerTunnel{Name: "r1", Role: model.TunnelRolePortal, Engine: model.TunnelEngineRakhsh, Enable: true}
+	if Routable(entry) {
+		t.Fatal("a Rakhsh entry tunnel with no relay port is an outbound")
+	}
+	entry.RelayPort = 63500
+	if !Routable(entry) {
+		t.Fatal("a Rakhsh entry tunnel with a relay port is not an outbound")
+	}
+}
+
+func TestRakhshRelayGetsTheSameXrayWiringAsBackpack(t *testing.T) {
+	portal := model.ServerTunnel{
+		Id: 7, Name: "r1", Role: model.TunnelRolePortal, Engine: model.TunnelEngineRakhsh, Enable: true,
+		RelayPort: 63500, UUID: "token", RouteInbounds: []string{"in-1"},
+	}
+	cfg := &xray.Config{}
+	if err := Apply(cfg, []model.ServerTunnel{portal}); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(cfg.OutboundConfigs), `"tag":"tunnel-r1"`) {
+		t.Fatalf("no outbound tunnel-r1 in %s", cfg.OutboundConfigs)
 	}
 }

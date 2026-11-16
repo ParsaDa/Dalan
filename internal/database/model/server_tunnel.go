@@ -6,6 +6,7 @@ const (
 
 	TunnelEngineXray     = "xray"
 	TunnelEngineBackpack = "backpack"
+	TunnelEngineRakhsh   = "rakhsh"
 
 	TunnelModeReverse = "reverse"
 	TunnelModeDirect  = "direct"
@@ -13,6 +14,11 @@ const (
 	TunnelSecurityNone    = "none"
 	TunnelSecurityReality = "reality"
 )
+
+// ExternalEngine reports whether an engine runs as its own process and reaches Xray through a loopback relay.
+func ExternalEngine(engine string) bool {
+	return engine == TunnelEngineBackpack || engine == TunnelEngineRakhsh
+}
 
 // ServerTunnel is one end of a tunnel between two panels. The portal listens and
 // takes user traffic; the bridge dials the portal and is where traffic leaves.
@@ -47,6 +53,10 @@ type ServerTunnel struct {
 	// Options are BackPack settings beyond the fields above, keyed as the engine spells them; each end
 	// writes the ones that apply to its role.
 	Options map[string]any `json:"options" gorm:"serializer:json;column:options"`
+
+	// RakhshSecret is this end's private key for the Rakhsh handshake; RakhshPeerPublic pins the other end's.
+	RakhshSecret     string `json:"-" gorm:"column:rakhsh_secret"`
+	RakhshPeerPublic string `json:"rakhshPeerPublic" gorm:"column:rakhsh_peer_public" example:"MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM="`
 
 	// RouteInbounds (portal) lists the local inbound tags whose traffic leaves through this tunnel.
 	RouteInbounds []string `json:"routeInbounds" gorm:"serializer:json;column:route_inbounds"`
