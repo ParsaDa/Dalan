@@ -43,6 +43,9 @@ func quoteList(items []string) string {
 
 // RenderConfig writes the BackPack configuration file for one end of a tunnel.
 func RenderConfig(t model.ServerTunnel) (string, error) {
+	if t.Mode == model.TunnelModeDirect {
+		return renderDirect(t)
+	}
 	if !knownTransport(t.Transport) {
 		return "", fmt.Errorf("tunnel %q: unknown BackPack transport %q", t.Name, t.Transport)
 	}
@@ -84,8 +87,59 @@ func RenderConfig(t model.ServerTunnel) (string, error) {
 	if len(t.FallbackTransports) > 0 {
 		fmt.Fprintf(&b, "fallback_transports = %s\n", quoteList(t.FallbackTransports))
 	}
+	if err := renderOptions(&b, modeReverse, t.Role, t.Options); err != nil {
+		return "", fmt.Errorf("tunnel %q: %w", t.Name, err)
+	}
 	return b.String(), nil
 }
+
+// renderDirect writes the layer-3 configuration: the entry end dials the exit end, which listens.
+func renderDirect(t model.ServerTunnel) (string, error) {
+	for _, key := range []string{"carrier", "local_ip", "peer_ip"} {
+		if _, ok := t.Options[key]; !ok {
+			return "", fmt.Errorf("tunnel %q: a direct tunnel needs %s", t.Name, key)
+		}
+	}
+	var b strings.Builder
+	var ports []string
+	switch t.Role {
+	case model.TunnelRolePortal:
+		for _, port := range t.ForwardPorts {
+			if !forwardPortPattern.MatchString(port) {
+				return "", fmt.Errorf("tunnel %q: forwarded port %q is not valid", t.Name, port)
+			}
+		}
+		ports = t.ForwardPorts
+		fmt.Fprintf(&b, "[l3]\nmode = \"dial\"\naddr = %s\n", strconv.Quote(net.JoinHostPort(t.Address, strconv.Itoa(t.Port))))
+	case model.TunnelRoleBridge:
+		fmt.Fprintf(&b, "[l3]\nmode = \"listen\"\naddr = %s\n", strconv.Quote(net.JoinHostPort("0.0.0.0", strconv.Itoa(t.Port))))
+	default:
+		return "", fmt.Errorf("tunnel %q: unknown role %q", t.Name, t.Role)
+	}
+	fmt.Fprintf(&b, "token = %s\niface = %s\n", strconv.Quote(t.UUID), strconv.Quote(DirectInterface(t.Id)))
+	// The addresses and the carrier come first because the engine reads them before anything else.
+	for _, key := range []string{"carrier", "local_ip", "peer_ip"} {
+		o, _ := findOption(modeDirect, key)
+		text, err := renderValue(o, t.Options[key])
+		if err != nil {
+			return "", fmt.Errorf("tunnel %q: option %q: %w", t.Name, key, err)
+		}
+		fmt.Fprintf(&b, "%s = %s\n", key, text)
+	}
+	if len(ports) > 0 {
+		fmt.Fprintf(&b, "ports = %s\n", quoteList(ports))
+		if t.AcceptUDP {
+			b.WriteString("accept_udp = true\n")
+		}
+	}
+	if err := renderOptions(&b, modeDirect, t.Role, t.Options, "carrier", "local_ip", "peer_ip"); err != nil {
+		return "", fmt.Errorf("tunnel %q: %w", t.Name, err)
+	}
+	return b.String(), nil
+}
+
+// DirectInterface names the network interface of a direct tunnel; it is kept short because Linux allows 15 characters.
+func DirectInterface(id int) string { return "dl" + strconv.Itoa(id) }
 
 // Snapshot is the part of the engine's periodic status file the panel shows.
 type Snapshot struct {
