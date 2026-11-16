@@ -9,6 +9,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
+	"math/big"
+	"net"
 	"regexp"
 	"strings"
 
@@ -23,6 +26,8 @@ const (
 	// Version 2 links describe BackPack tunnels; a panel that only knows version 1 refuses them by number.
 	setupLinkXray     = 1
 	setupLinkBackpack = 2
+	// Version 3 carries BackPack options and the direct mode; a panel that stops at version 2 refuses it by number.
+	setupLinkBackpackOptions = 3
 )
 
 var errNotASetupLink = errors.New("not a Dalan tunnel link")
@@ -44,6 +49,9 @@ type PortalSpec struct {
 	FallbackTransports []string
 	ForwardPorts       []string
 	AcceptUDP          bool
+	// Mode is "reverse" when empty. A direct tunnel needs the BackPack engine and a carrier in Options.
+	Mode    string
+	Options map[string]any
 }
 
 type setupPayload struct {
@@ -57,9 +65,11 @@ type setupPayload struct {
 	PublicKey  string `json:"publicKey,omitempty"`
 	ShortId    string `json:"shortId,omitempty"`
 
-	Transport          string   `json:"transport,omitempty"`
-	FallbackTransports []string `json:"fallbackTransports,omitempty"`
-	RelayPort          int      `json:"relayPort,omitempty"`
+	Transport          string         `json:"transport,omitempty"`
+	FallbackTransports []string       `json:"fallbackTransports,omitempty"`
+	RelayPort          int            `json:"relayPort,omitempty"`
+	Mode               string         `json:"mode,omitempty"`
+	Options            map[string]any `json:"options,omitempty"`
 }
 
 func validateEndpoint(name, address string, port int) error {
@@ -97,6 +107,35 @@ func validateBackpackTransports(transport string, fallbacks []string) error {
 	return nil
 }
 
+// addDirectAddresses gives a direct tunnel a /30 of its own in 10.10.0.0/16 unless the options already name one.
+func addDirectAddresses(options map[string]any) error {
+	if _, named := options["local_ip"]; named {
+		return nil
+	}
+	n, err := rand.Int(rand.Reader, big.NewInt(250))
+	if err != nil {
+		return err
+	}
+	third := 1 + n.Int64()
+	options["local_ip"] = fmt.Sprintf("10.10.%d.1/30", third)
+	options["peer_ip"] = fmt.Sprintf("10.10.%d.2", third)
+	return nil
+}
+
+// mirrorDirectAddresses turns the entry end's address pair into the exit end's: each takes the other's address.
+func mirrorDirectAddresses(options map[string]any) (map[string]any, error) {
+	local, _ := options["local_ip"].(string)
+	peer, _ := options["peer_ip"].(string)
+	host, prefix, hasPrefix := strings.Cut(local, "/")
+	if net.ParseIP(host) == nil || net.ParseIP(peer) == nil || !hasPrefix {
+		return nil, errors.New("tunnel link has no valid pair of tunnel addresses")
+	}
+	mirrored := maps.Clone(options)
+	mirrored["local_ip"] = peer + "/" + prefix
+	mirrored["peer_ip"] = host
+	return mirrored, nil
+}
+
 // NewPortal validates a spec and generates the secrets for the listening end of a tunnel.
 func NewPortal(spec PortalSpec) (model.ServerTunnel, error) {
 	if err := validateEndpoint(spec.Name, spec.Address, spec.Port); err != nil {
@@ -113,18 +152,33 @@ func NewPortal(spec PortalSpec) (model.ServerTunnel, error) {
 		}
 		portal.Security = spec.Security
 	case model.TunnelEngineBackpack:
-		if err := validateBackpackTransports(spec.Transport, spec.FallbackTransports); err != nil {
-			return model.ServerTunnel{}, err
-		}
 		portal.Engine = model.TunnelEngineBackpack
 		portal.Security = model.TunnelSecurityNone
-		portal.Transport, portal.FallbackTransports = spec.Transport, spec.FallbackTransports
 		portal.ForwardPorts, portal.AcceptUDP = spec.ForwardPorts, spec.AcceptUDP
-		relay, err := backpack.NewRelayPort()
-		if err != nil {
-			return model.ServerTunnel{}, err
+		portal.Mode = model.TunnelModeReverse
+		portal.Options = maps.Clone(spec.Options)
+		switch spec.Mode {
+		case "", model.TunnelModeReverse:
+			if err := validateBackpackTransports(spec.Transport, spec.FallbackTransports); err != nil {
+				return model.ServerTunnel{}, err
+			}
+			portal.Transport, portal.FallbackTransports = spec.Transport, spec.FallbackTransports
+			relay, err := backpack.NewRelayPort()
+			if err != nil {
+				return model.ServerTunnel{}, err
+			}
+			portal.RelayPort = relay
+		case model.TunnelModeDirect:
+			portal.Mode = model.TunnelModeDirect
+			if portal.Options == nil {
+				portal.Options = map[string]any{}
+			}
+			if err := addDirectAddresses(portal.Options); err != nil {
+				return model.ServerTunnel{}, err
+			}
+		default:
+			return model.ServerTunnel{}, fmt.Errorf("tunnel mode %q is not supported", spec.Mode)
 		}
-		portal.RelayPort = relay
 		// Rendering is the engine's own validation of the forwarded ports.
 		if _, err := backpack.RenderConfig(portal); err != nil {
 			return model.ServerTunnel{}, err
@@ -132,6 +186,9 @@ func NewPortal(spec PortalSpec) (model.ServerTunnel, error) {
 		return portal, nil
 	default:
 		return model.ServerTunnel{}, fmt.Errorf("tunnel engine %q is not supported", spec.Engine)
+	}
+	if len(spec.Options) > 0 || spec.Mode == model.TunnelModeDirect {
+		return model.ServerTunnel{}, errors.New("options and the direct mode belong to the BackPack engine")
 	}
 	if spec.Security == model.TunnelSecurityReality {
 		key, err := ecdh.X25519().GenerateKey(rand.Reader)
@@ -164,6 +221,10 @@ func SetupLink(portal model.ServerTunnel) (string, error) {
 		payload.Version = setupLinkBackpack
 		payload.Transport, payload.FallbackTransports = portal.Transport, portal.FallbackTransports
 		payload.RelayPort = portal.RelayPort
+		if portal.Mode == model.TunnelModeDirect || len(portal.Options) > 0 {
+			payload.Version = setupLinkBackpackOptions
+			payload.Mode, payload.Options = portal.Mode, portal.Options
+		}
 	}
 	raw, err := json.Marshal(payload)
 	if err != nil {
@@ -216,8 +277,35 @@ func ParseSetupLink(link string) (model.ServerTunnel, error) {
 			return model.ServerTunnel{}, fmt.Errorf("tunnel link has a relay port outside %d-%d", backpack.RelayPortMin, backpack.RelayPortMax)
 		}
 		bridge.RelayPort = p.RelayPort
+	case setupLinkBackpackOptions:
+		bridge.Engine = model.TunnelEngineBackpack
+		bridge.Security = model.TunnelSecurityNone
+		bridge.Mode, bridge.Options = model.TunnelModeReverse, p.Options
+		switch p.Mode {
+		case "", model.TunnelModeReverse:
+			if err := validateBackpackTransports(p.Transport, p.FallbackTransports); err != nil {
+				return model.ServerTunnel{}, err
+			}
+			bridge.Transport, bridge.FallbackTransports = p.Transport, p.FallbackTransports
+			if p.RelayPort != 0 && (p.RelayPort < backpack.RelayPortMin || p.RelayPort > backpack.RelayPortMax) {
+				return model.ServerTunnel{}, fmt.Errorf("tunnel link has a relay port outside %d-%d", backpack.RelayPortMin, backpack.RelayPortMax)
+			}
+			bridge.RelayPort = p.RelayPort
+		case model.TunnelModeDirect:
+			mirrored, err := mirrorDirectAddresses(p.Options)
+			if err != nil {
+				return model.ServerTunnel{}, err
+			}
+			bridge.Mode, bridge.Options = model.TunnelModeDirect, mirrored
+		default:
+			return model.ServerTunnel{}, fmt.Errorf("tunnel link has the unknown mode %q", p.Mode)
+		}
+		// Rendering is the engine's own validation of the options.
+		if _, err := backpack.RenderConfig(bridge); err != nil {
+			return model.ServerTunnel{}, err
+		}
 	default:
-		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands versions %d and %d", p.Version, setupLinkXray, setupLinkBackpack)
+		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands versions %d to %d", p.Version, setupLinkXray, setupLinkBackpackOptions)
 	}
 	return bridge, nil
 }
