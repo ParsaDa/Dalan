@@ -90,3 +90,19 @@ func TestDalanVersionIsSeparateFromUpstreamVersion(t *testing.T) {
 		t.Errorf("GetBaseVersion() = %q, want the upstream version %q that node protocol gates compare", got, want)
 	}
 }
+
+func TestTheFrontDoorPortComesFromItsOwnVariableNotThePanelPortOne(t *testing.T) {
+	t.Setenv("XUI_PORT", "20530")
+	t.Setenv("DALAN_FRONT_PORT", "")
+	if _, configured, _ := GetFrontDoorPort(); configured {
+		t.Fatal("XUI_PORT alone switched the front door on")
+	}
+	t.Setenv("DALAN_FRONT_PORT", "8080")
+	if port, configured, err := GetFrontDoorPort(); err != nil || !configured || port != 8080 {
+		t.Fatalf("GetFrontDoorPort = %d, %v, %v; want 8080", port, configured, err)
+	}
+	t.Setenv("DALAN_FRONT_PORT", "http")
+	if _, _, err := GetFrontDoorPort(); err == nil || !strings.Contains(err.Error(), "DALAN_FRONT_PORT") {
+		t.Fatalf("a bad value gave %v, want an error naming DALAN_FRONT_PORT", err)
+	}
+}

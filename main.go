@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	_ "embed"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -14,6 +15,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	_ "unsafe"
@@ -21,6 +23,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/config"
 	"github.com/mhsanaei/3x-ui/v3/internal/crypto/nodetoken"
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
+	"github.com/mhsanaei/3x-ui/v3/internal/frontdoor"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/sub"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnelmonitor"
@@ -139,6 +142,8 @@ func runWebServer() {
 		log.Fatalf("Error starting sub server: %v", err)
 	}
 
+	stopFrontDoor := startFrontDoor()
+
 	sigCh := make(chan os.Signal, 8)
 	// Trap shutdown signals
 	signal.Notify(sigCh, syscall.SIGHUP, syscall.SIGTERM, sys.SIGUSR1, os.Interrupt)
@@ -221,10 +226,35 @@ func runWebServer() {
 				logger.Error("Server shutdown failed:", err)
 			}
 			_ = subServer.Stop()
+			stopFrontDoor()
 			log.Println("Shutting down servers.")
 			return
 		}
 	}
+}
+
+// startFrontDoor opens the single public HTTP port when DALAN_FRONT_PORT is set (the container image
+// sets it from the platform's PORT) and returns the function that closes it again.
+func startFrontDoor() func() {
+	port, configured, err := config.GetFrontDoorPort()
+	if err != nil {
+		log.Fatalf("Error reading the front door port: %v", err)
+	}
+	if !configured {
+		return func() {}
+	}
+	var door service.FrontDoorService
+	if table := door.Table(); table.PanelPort == port {
+		log.Fatalf("The front door port %d is the panel's own port; set XUI_PORT to another one", port)
+	}
+	srv := frontdoor.Server(":"+strconv.Itoa(port), door.Table)
+	go func() {
+		logger.Info("Front door listening on port", port)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Error("Front door stopped:", err)
+		}
+	}()
+	return func() { _ = srv.Close() }
 }
 
 // resetSetting resets all panel settings to their default values.

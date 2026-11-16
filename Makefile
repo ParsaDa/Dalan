@@ -104,6 +104,7 @@ build-storybook: ## Build the static Storybook (compile-checks all stories)
 brand-check: ## Fail if an upstream release URL survives in scripts or workflows
 	bash scripts/dalan/rebrand_test.sh
 	bash scripts/dalan/check-brand.sh
+	sh deploy/test/container-prepare.sh
 
 verify: gen-check lint format-check typecheck test build build-storybook docs-openapi-check brand-check ## Full local gate (mirrors CI)
 	@echo "verify: OK"

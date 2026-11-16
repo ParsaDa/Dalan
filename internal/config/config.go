@@ -110,17 +110,27 @@ func IsSkipHSTS() bool {
 }
 
 func GetPortOverride() (port int, configured bool, err error) {
-	value, ok := os.LookupEnv("XUI_PORT")
+	return portFromEnv("XUI_PORT")
+}
+
+// GetFrontDoorPort is the one public HTTP port to put in front of the panel, the subscription
+// server and the WebSocket/XHTTP inbounds; unset means no front door.
+func GetFrontDoorPort() (port int, configured bool, err error) {
+	return portFromEnv("DALAN_FRONT_PORT")
+}
+
+func portFromEnv(name string) (port int, configured bool, err error) {
+	value, ok := os.LookupEnv(name)
 	if !ok || strings.TrimSpace(value) == "" {
 		return 0, false, nil
 	}
 
 	port, err = strconv.Atoi(strings.TrimSpace(value))
 	if err != nil {
-		return 0, true, fmt.Errorf("parse XUI_PORT: %w", err)
+		return 0, true, fmt.Errorf("parse %s: %w", name, err)
 	}
 	if port < 1 || port > 65535 {
-		return 0, true, fmt.Errorf("XUI_PORT must be between 1 and 65535")
+		return 0, true, fmt.Errorf("%s must be between 1 and 65535", name)
 	}
 
 	return port, true, nil
