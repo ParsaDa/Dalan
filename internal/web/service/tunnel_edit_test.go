@@ -232,14 +232,14 @@ func TestADirectTunnelsEntryEndReportsTheLinkInterfaceNotAConnectedPeer(t *testi
 	previous := directInterfaceUp
 	t.Cleanup(func() { directInterfaceUp = previous })
 
-	directInterfaceUp = func(name string) bool { return name == "dl"+itoa(portal.Id) }
+	directInterfaceUp = func(name string) bool { return name == "dl"+strconv.Itoa(portal.Id) }
 	status, err := svc.Status(portal.Id)
 	if err != nil || !status.Connected || status.ExitIP != "203.0.113.20" {
 		t.Fatalf("Status with the interface up = %+v, %v; want connected with the exit address", status, err)
 	}
 	directInterfaceUp = func(string) bool { return false }
 	status, err = svc.Status(portal.Id)
-	if err != nil || status.Connected || !strings.Contains(status.Error, "dl"+itoa(portal.Id)) {
+	if err != nil || status.Connected || !strings.Contains(status.Error, "dl"+strconv.Itoa(portal.Id)) {
 		t.Fatalf("Status with the interface missing = %+v, %v; want not connected, naming the interface", status, err)
 	}
 }
@@ -249,8 +249,6 @@ func directNodeSpecWithAddress() tunnel.PortalSpec {
 	spec.Address = "203.0.113.20"
 	return spec
 }
-
-func itoa(n int) string { return strconv.Itoa(n) }
 
 func TestTwoDirectTunnelsOnOneServerNeverShareAnAddressPair(t *testing.T) {
 	svc := newTunnelDB(t)
@@ -276,5 +274,27 @@ func TestTwoDirectTunnelsOnOneServerNeverShareAnAddressPair(t *testing.T) {
 	}
 	if one.Options["local_ip"] == "10.10.5.1/30" {
 		t.Fatalf("generated pair %v clashes with the first tunnel", one.Options["local_ip"])
+	}
+}
+
+func TestEditingTheExitEndOfADirectTunnelKeepsTheLinkAddressesItWasSetUpWith(t *testing.T) {
+	svc := newTunnelDB(t)
+	fakeBackpack(t)
+	portal, err := tunnel.NewPortal(directNodeSpecWithAddress())
+	if err != nil {
+		t.Fatalf("NewPortal: %v", err)
+	}
+	link, _ := tunnel.SetupLink(portal)
+	bridge, err := svc.Import(link, "")
+	if err != nil {
+		t.Fatalf("Import: %v", err)
+	}
+
+	if _, err := svc.Update(bridge.Id, TunnelEdit{Options: map[string]any{"carrier": "pck"}}); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	row := stored(t, bridge.Id)
+	if row.Options["carrier"] != "pck" || row.Options["local_ip"] != bridge.Options["local_ip"] || row.Options["peer_ip"] != bridge.Options["peer_ip"] {
+		t.Fatalf("exit end options = %v, want the new carrier and the addresses %v / %v kept", row.Options, bridge.Options["local_ip"], bridge.Options["peer_ip"])
 	}
 }

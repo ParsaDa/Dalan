@@ -42,7 +42,7 @@ func (s *TunnelService) Update(id int, edit TunnelEdit) (*model.ServerTunnel, er
 	next := *t
 	next.Options = maps.Clone(t.Options)
 	if t.Role == model.TunnelRoleBridge {
-		err = applyExitEdit(&next, edit)
+		err = applyExitEdit(t, &next, edit)
 	} else {
 		err = s.applyEntryEdit(t, &next, edit)
 	}
@@ -66,14 +66,14 @@ func (s *TunnelService) Update(id int, edit TunnelEdit) (*model.ServerTunnel, er
 	return &next, nil
 }
 
-func applyExitEdit(next *model.ServerTunnel, edit TunnelEdit) error {
+func applyExitEdit(old, next *model.ServerTunnel, edit TunnelEdit) error {
 	next.ExitOutbound = strings.TrimSpace(edit.ExitOutbound)
 	if next.Engine != model.TunnelEngineBackpack {
 		return nil
 	}
 	next.Options = maps.Clone(edit.Options)
 	if next.Mode == model.TunnelModeDirect {
-		return keepLinkAddresses(next, edit.Options)
+		return keepLinkAddresses(next, old.Options)
 	}
 	// Rendering is the engine's own validation of the options.
 	_, err := backpack.RenderConfig(*next)
