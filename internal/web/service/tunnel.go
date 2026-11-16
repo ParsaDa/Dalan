@@ -200,22 +200,52 @@ func (s *TunnelService) SetEnable(id int, enable bool) error {
 	return nil
 }
 
+// Delete removes a tunnel; when this panel made the other end on a node, that end is removed first.
 func (s *TunnelService) Delete(id int) error {
 	t, err := s.get(id)
 	if err != nil {
 		return err
 	}
+	if err := s.refuseWhileCarrying(t); err != nil {
+		return err
+	}
+	if t.NodeId > 0 && t.Role == model.TunnelRolePortal {
+		if err := s.deleteNodeEnd(t); err != nil {
+			return fmt.Errorf("%w; remove only this end if the node is gone for good", err)
+		}
+	}
+	return s.deleteLocal(t)
+}
+
+// DeleteHere removes this end only, for a tunnel whose node cannot be asked any more.
+func (s *TunnelService) DeleteHere(id int) error {
+	t, err := s.get(id)
+	if err != nil {
+		return err
+	}
+	return s.deleteLocal(t)
+}
+
+// refuseWhileCarrying keeps a tunnel that a node's management still rides on, before any end is touched.
+func (s *TunnelService) refuseWhileCarrying(t *model.ServerTunnel) error {
 	if t.ManagePort > 0 && t.Role == model.TunnelRolePortal {
 		return errManagementTunnel
 	}
 	var carried []string
-	if err := database.GetDB().Model(&model.ServerTunnel{}).Where("parent_id = ?", id).Pluck("name", &carried).Error; err != nil {
+	if err := database.GetDB().Model(&model.ServerTunnel{}).Where("parent_id = ?", t.Id).Pluck("name", &carried).Error; err != nil {
 		return err
 	}
 	if len(carried) > 0 {
 		return fmt.Errorf("this tunnel carries the management of %s; remove that node first", strings.Join(carried, ", "))
 	}
-	if err := database.GetDB().Delete(&model.ServerTunnel{}, id).Error; err != nil {
+	return nil
+}
+
+func (s *TunnelService) deleteLocal(t *model.ServerTunnel) error {
+	if err := s.refuseWhileCarrying(t); err != nil {
+		return err
+	}
+	if err := database.GetDB().Delete(&model.ServerTunnel{}, t.Id).Error; err != nil {
 		return err
 	}
 	s.applyChange()

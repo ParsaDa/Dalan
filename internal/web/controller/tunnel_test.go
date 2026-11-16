@@ -128,3 +128,19 @@ func TestTunnelRoutesCreateABackpackTunnelAndReportTheEngine(t *testing.T) {
 		t.Fatalf("engine info = %s (%v), want not installed, v1.8.5", info.Obj, err)
 	}
 }
+
+func TestAddingATunnelForAnUnknownNodeCreatesNothing(t *testing.T) {
+	engine := newTunnelEngine(t)
+
+	refused := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+		"name": "tr9", "address": "203.0.113.10", "port": 9555, "security": "none", "nodeId": 999,
+	})
+	if refused.Success || !strings.Contains(refused.Msg, "node 999") {
+		t.Fatalf("add for an unknown node: success=%v msg=%q, want a refusal naming node 999", refused.Success, refused.Msg)
+	}
+	list := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/list", nil)
+	var tunnels []model.ServerTunnel
+	if err := json.Unmarshal(list.Obj, &tunnels); err != nil || len(tunnels) != 0 {
+		t.Fatalf("tunnels after the refused add = %s (%v), want none", list.Obj, err)
+	}
+}

@@ -85,6 +85,8 @@ Both servers need Dalan.
 
    Instead of a new tunnel you can pick **Tunnel that carries it**: an existing entry tunnel. The node is then managed over that tunnel, with the same address, port and disguise and nothing new to open. On an Xray tunnel the node gets a second client on the tunnel's own port; on a BackPack tunnel (which the node must already have) the panel adds a loopback forward to the node's panel port. A tunnel that carries a node cannot be deleted until that node is removed; if it goes down, the node's management goes down with it.
 
+   **Also make a tunnel for this node's traffic** (on by default for a new tunnel) adds an ordinary entry tunnel named after the node, on the same port and with the same disguise. The node's management rides on it, so one port serves both, and the tunnel can be picked as an exit in Outbounds, Routing and the inbound form as soon as the node has joined. Deleting that tunnel removes the node's end of it too; it cannot be deleted while the node exists.
+
 2. Press **Create command** and copy the command. It is shown once, works once and expires after 30 minutes.
 3. On the node, run it:
 
@@ -106,6 +108,10 @@ What to know:
 - If the node's panel is set to listen on one specific IP, clear that setting first: the tunnel delivers to `127.0.0.1`.
 - A waiting enrolment can be cancelled in the same dialog.
 
+## Making both ends from one panel
+
+In **Tunnels → New tunnel**, **Create the other end on a node** picks one of the panel's nodes. The panel stores its entry end, then asks the node (through the management channel) to store the dialling end, so nothing is copied or pasted. If the node cannot take its end, nothing is left behind. Deleting the tunnel removes both ends; when the node cannot be reached, the panel offers to remove only its own end.
+
 ## Engine output
 
 Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>: ...`; when it exits, the last lines are repeated with the restart notice.
@@ -113,7 +119,6 @@ Everything a BackPack process prints goes to the panel log as `BackPack <tunnel>
 ## Not built yet
 
 - Traffic totals per tunnel in the panel.
-- Creating both ends of a user tunnel from one panel, and a user tunnel created automatically when a node is added.
 - Installing Dalan and enrolling a node in one command.
 - One shared port for the management tunnels of all nodes.
 - Spare tunnels with automatic switching.

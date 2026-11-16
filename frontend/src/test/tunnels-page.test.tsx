@@ -255,3 +255,51 @@ test('creates a BackPack entry tunnel without any forwarded port', async () => {
     ),
   );
 });
+
+test('makes the other end on a chosen node from the same form', async () => {
+  vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
+    if (url === '/panel/api/nodes/list')
+      return new Msg(true, '', [{ id: 9, name: 'nl1', enable: true }]);
+    if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
+    return new Msg(true, '', []);
+  });
+  openTunnels();
+  await screen.findByText('de1');
+
+  fireEvent.click(screen.getByRole('button', { name: 'New tunnel' }));
+  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'tr2' } });
+  fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
+  fireEvent.change(screen.getByLabelText('Server name (SNI)'), {
+    target: { value: 'www.example.org' },
+  });
+  fireEvent.mouseDown(await screen.findByLabelText('Create the other end on a node'));
+  fireEvent.click(await screen.findByText('nl1'));
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/add',
+      expect.objectContaining({ name: 'tr2', nodeId: 9 }),
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('offers to remove only this end when the node holding the other end cannot be reached', async () => {
+  listed = [{ ...portal, id: 5, name: 'tr5', nodeId: 9 }];
+  vi.spyOn(HttpUtil, 'post').mockImplementation(async (url) =>
+    url === '/panel/api/tunnels/del/5'
+      ? new Msg(false, 'node nl1 is unreachable', null)
+      : new Msg(true, '', {}),
+  );
+  openTunnels();
+  await screen.findByText('tr5');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Delete tr5' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Remove this end only' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith('/panel/api/tunnels/del/5?here=true'),
+  );
+});

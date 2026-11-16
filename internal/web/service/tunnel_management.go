@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
+	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
+	"github.com/mhsanaei/3x-ui/v3/internal/web/runtime"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -72,6 +75,75 @@ func (s *TunnelService) CreateManagementPortal(spec tunnel.PortalSpec) (*model.S
 	return &portal, nil
 }
 
+const nodeCallTimeout = 20 * time.Second
+
+func (s *TunnelService) remoteFor(nodeID int) (*runtime.Remote, error) {
+	node, err := (&NodeService{}).GetById(nodeID)
+	if err != nil || node == nil {
+		return nil, fmt.Errorf("node %d does not exist", nodeID)
+	}
+	if !node.Enable {
+		return nil, fmt.Errorf("node %q is disabled", node.Name)
+	}
+	mgr := runtime.GetManager()
+	if mgr == nil {
+		return nil, errors.New("runtime manager unavailable")
+	}
+	return mgr.RemoteFor(node)
+}
+
+// CreateOnNode makes both ends of a tunnel from this panel: the listening end here and the dialling end on a node.
+func (s *TunnelService) CreateOnNode(nodeID int, spec tunnel.PortalSpec, routeInbounds []string, exitOutbound string) (*model.ServerTunnel, error) {
+	remote, err := s.remoteFor(nodeID)
+	if err != nil {
+		return nil, err
+	}
+	portal, err := s.CreatePortal(spec, routeInbounds)
+	if err != nil {
+		return nil, err
+	}
+	link, err := tunnel.SetupLink(*portal)
+	if err == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), nodeCallTimeout)
+		defer cancel()
+		_, err = remote.ImportTunnel(ctx, link, exitOutbound)
+	}
+	if err == nil {
+		err = database.GetDB().Model(&model.ServerTunnel{}).Where("id = ?", portal.Id).Update("node_id", nodeID).Error
+		portal.NodeId = nodeID
+	}
+	if err != nil {
+		if delErr := s.deleteLocal(portal); delErr != nil {
+			logger.Warning("tunnels: removing the entry end of a tunnel the node did not take:", delErr)
+		}
+		return nil, fmt.Errorf("the node did not take its end of tunnel %q: %w", spec.Name, err)
+	}
+	return portal, nil
+}
+
+// deleteNodeEnd removes the dialling end a node holds for this tunnel; an end already gone is not an error.
+func (s *TunnelService) deleteNodeEnd(t *model.ServerTunnel) error {
+	if node, err := (&NodeService{}).GetById(t.NodeId); err != nil || node == nil {
+		return nil
+	}
+	remote, err := s.remoteFor(t.NodeId)
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), nodeCallTimeout)
+	defer cancel()
+	ends, err := remote.ListTunnels(ctx)
+	if err != nil {
+		return err
+	}
+	for _, end := range ends {
+		if end.Name == t.Name && end.Role == model.TunnelRoleBridge {
+			return remote.DeleteTunnel(ctx, end.Id)
+		}
+	}
+	return nil
+}
+
 // CreateManagementRider opens a node's management channel on an existing tunnel: same port and
 // identity, a client and a loopback port of its own, so no second address gets exposed.
 func (s *TunnelService) CreateManagementRider(parentId int, name string) (*model.ServerTunnel, error) {
@@ -126,6 +198,17 @@ func (s *TunnelService) ImportManagementBridge(link string, panelPort int) (*mod
 	}
 	s.applyChange()
 	return &bridge, nil
+}
+
+// DeleteNodeTunnel removes the entry tunnel made for a node's traffic; one already gone is not an error.
+func (s *TunnelService) DeleteNodeTunnel(id int) error {
+	err := database.GetDB().Where("id = ? AND manage_port = 0 AND role = ?", id, model.TunnelRolePortal).
+		Delete(&model.ServerTunnel{}).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return err
+	}
+	s.applyChange()
+	return nil
 }
 
 // DeleteManagement removes a management tunnel; a tunnel already gone is not an error.

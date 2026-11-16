@@ -14,7 +14,7 @@ import type { EnrolmentFormValues } from '@/schemas/enrolment';
 export type { Invitation, NodeEnrolment };
 
 export type EnrolmentRequest =
-  | Omit<EnrolmentFormValues, 'tunnelId'>
+  | (Omit<EnrolmentFormValues, 'tunnelId' | 'withTunnel'> & { withTunnel?: true })
   | { name: string; panelUrl: string; tunnelId: number };
 
 const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };

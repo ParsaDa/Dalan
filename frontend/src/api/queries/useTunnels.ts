@@ -28,6 +28,7 @@ export type NewPortalValues =
       security: 'reality' | 'none';
       serverName: string;
       routeInbounds: string[];
+      nodeId?: number;
     }
   | {
       name: string;
@@ -39,6 +40,7 @@ export type NewPortalValues =
       forwardPorts: string[];
       acceptUdp: boolean;
       routeInbounds: string[];
+      nodeId?: number;
     };
 
 async function fetchTunnels(): Promise<ServerTunnel[]> {
@@ -86,7 +88,8 @@ export function useTunnelMutations() {
     onSuccess: refresh,
   });
   const remove = useMutation({
-    mutationFn: (id: number) => HttpUtil.post(`/panel/api/tunnels/del/${id}`),
+    mutationFn: ({ id, here }: { id: number; here?: boolean }) =>
+      HttpUtil.post(`/panel/api/tunnels/del/${id}${here ? '?here=true' : ''}`),
     onSuccess: refresh,
   });
 

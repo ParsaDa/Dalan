@@ -18,6 +18,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/dbtest"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/crypto"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/global"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/runtime"
@@ -365,6 +366,9 @@ var remoteMethodsOutsideContract = map[string]string{
 	"ForgetPushedInbound":   "local fingerprint bookkeeping",
 	"ForgetInbound":         "local bookkeeping for an inbound the node no longer has",
 	"UpdatePanel":           "replaces the node binary; node-sync is denied it on purpose (#6201)",
+	"ListTunnels":           "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
+	"ImportTunnel":          "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
+	"DeleteTunnel":          "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
 }
 
 // A Remote method with no cell is how activeInbounds and bulkResetTraffic
@@ -381,4 +385,55 @@ func assertEveryRemoteCallCovered(t *testing.T, covered map[string]bool) {
 			t.Errorf("runtime.Remote.%s has no cell in TestMasterNodeContract", name)
 		}
 	}
+}
+
+// A node-sync token drives inbounds only; managing tunnels needs an admin or node-admin token.
+func TestMasterNodeTunnelContract(t *testing.T) {
+	portal, err := tunnel.NewPortal(tunnel.PortalSpec{
+		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+	})
+	if err != nil {
+		t.Fatalf("NewPortal: %v", err)
+	}
+	link, err := tunnel.SetupLink(portal)
+	if err != nil {
+		t.Fatalf("SetupLink: %v", err)
+	}
+	for _, scope := range []string{model.ApiScopeAdmin, model.ApiScopeNodeAdmin} {
+		t.Run(scope, func(t *testing.T) {
+			node := startContractNode(t)
+			master := node.masterWithToken(t, scope)
+			ctx := context.Background()
+
+			imported, err := master.ImportTunnel(ctx, link, "")
+			if err != nil || imported.Name != "tr1" || imported.Role != model.TunnelRoleBridge || imported.Id == 0 {
+				t.Fatalf("ImportTunnel = %+v (%v), want the bridge end stored on the node", imported, err)
+			}
+			listed, err := master.ListTunnels(ctx)
+			if err != nil || len(listed) != 1 || listed[0].Id != imported.Id {
+				t.Fatalf("ListTunnels = %+v (%v), want the imported bridge", listed, err)
+			}
+			if err := master.DeleteTunnel(ctx, imported.Id); err != nil {
+				t.Fatalf("DeleteTunnel: %v", err)
+			}
+			var left int64
+			database.GetDB().Model(&model.ServerTunnel{}).Count(&left)
+			if left != 0 {
+				t.Fatalf("node still has %d tunnel rows", left)
+			}
+			if refused := node.takeRefused(); len(refused) != 0 {
+				t.Fatalf("node refused master requests: %v", refused)
+			}
+		})
+	}
+	t.Run(model.ApiScopeNodeSync, func(t *testing.T) {
+		node := startContractNode(t)
+		master := node.masterWithToken(t, model.ApiScopeNodeSync)
+		if _, err := master.ImportTunnel(context.Background(), link, ""); err == nil {
+			t.Fatal("a node-sync token was allowed to create a tunnel on the node")
+		}
+		if _, err := master.ListTunnels(context.Background()); err == nil {
+			t.Fatal("a node-sync token was allowed to list the node's tunnels")
+		}
+	})
 }

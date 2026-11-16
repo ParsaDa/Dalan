@@ -50,6 +50,9 @@ type Spec struct {
 	// TunnelId, when set, carries the node's management on that existing entry tunnel; the address
 	// and security fields are then taken from it.
 	TunnelId int `json:"tunnelId,omitempty" example:"0"`
+	// WithTunnel also makes an ordinary entry tunnel named after the node, and the management
+	// rides on it; the node's other end of it is stored when the node joins.
+	WithTunnel bool `json:"withTunnel,omitempty" example:"true"`
 }
 
 // Invitation is a new enrolment with the link that is shown once and never stored.
@@ -89,6 +92,11 @@ func (s *Service) remove(row *model.NodeEnrolment) error {
 	if err := s.tunnels.DeleteManagement(row.TunnelId); err != nil {
 		return err
 	}
+	if row.DataTunnelId > 0 {
+		if err := s.tunnels.DeleteNodeTunnel(row.DataTunnelId); err != nil {
+			return err
+		}
+	}
 	return database.GetDB().Delete(&model.NodeEnrolment{}, row.Id).Error
 }
 
@@ -124,10 +132,16 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 	if err != nil {
 		return nil, err
 	}
-	var portal *model.ServerTunnel
-	if spec.TunnelId > 0 {
+	if spec.WithTunnel && spec.TunnelId > 0 {
+		return nil, errors.New("the node already rides on an existing tunnel; it does not need one of its own")
+	}
+	var portal, data *model.ServerTunnel
+	switch {
+	case spec.TunnelId > 0:
 		portal, err = s.tunnels.CreateManagementRider(spec.TunnelId, tunnelNamePrefix+name)
-	} else {
+	case spec.WithTunnel:
+		portal, data, err = s.createTunnelWithChannel(name, spec)
+	default:
 		portal, err = s.tunnels.CreateManagementPortal(tunnel.PortalSpec{
 			Name: tunnelNamePrefix + name, Address: spec.Address, Port: spec.Port,
 			Security: spec.Security, ServerName: spec.ServerName,
@@ -140,8 +154,11 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 		Name: name, PublicId: offer.ID, TokenHash: hashToken(offer.Token), PrivateKey: offer.PrivateKey,
 		ExpiresAt: time.Now().Add(linkLifetime).Unix(), TunnelId: portal.Id,
 	}
+	if data != nil {
+		row.DataTunnelId = data.Id
+	}
 	if err := db.Create(&row).Error; err != nil {
-		if delErr := s.tunnels.DeleteManagement(portal.Id); delErr != nil {
+		if delErr := s.remove(&row); delErr != nil {
 			logger.Warning("enrolments: removing the tunnel of a failed enrolment:", delErr)
 		}
 		return nil, err
@@ -150,6 +167,24 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 		Id: row.Id, Name: row.Name, ExpiresAt: row.ExpiresAt,
 		Link: offer.Link, Command: "dalan enrol '" + offer.Link + "'",
 	}, nil
+}
+
+// createTunnelWithChannel makes the node's ordinary entry tunnel and its management channel on the same port.
+func (s *Service) createTunnelWithChannel(name string, spec Spec) (channel, data *model.ServerTunnel, err error) {
+	data, err = s.tunnels.CreatePortal(tunnel.PortalSpec{
+		Name: name, Address: spec.Address, Port: spec.Port, Security: spec.Security, ServerName: spec.ServerName,
+	}, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	channel, err = s.tunnels.CreateManagementRider(data.Id, tunnelNamePrefix+name)
+	if err != nil {
+		if delErr := s.tunnels.DeleteNodeTunnel(data.Id); delErr != nil {
+			logger.Warning("enrolments: removing the tunnel of a failed enrolment:", delErr)
+		}
+		return nil, nil, err
+	}
+	return channel, data, nil
 }
 
 // Delete cancels a waiting enrolment and closes its tunnel; a joined node is removed from the node list instead.
@@ -252,7 +287,25 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 			logger.Warning("enrolments: applying the node's forward to its BackPack tunnel:", err)
 		}
 	}
-	return sealReply(enrol.Grant{Tunnel: setup})
+	grant := enrol.Grant{Tunnel: setup}
+	if row.DataTunnelId > 0 {
+		if grant.DataTunnel, err = s.grantDataTunnel(row.DataTunnelId, node.Id); err != nil {
+			return nil, err
+		}
+	}
+	return sealReply(grant)
+}
+
+// grantDataTunnel ties the node's traffic tunnel to the node, so deleting it reaches the node's end too.
+func (s *Service) grantDataTunnel(tunnelID, nodeID int) (string, error) {
+	var data model.ServerTunnel
+	if err := database.GetDB().First(&data, tunnelID).Error; err != nil {
+		return "", err
+	}
+	if err := database.GetDB().Model(&model.ServerTunnel{}).Where("id = ?", tunnelID).Update("node_id", nodeID).Error; err != nil {
+		return "", err
+	}
+	return tunnel.SetupLink(data)
 }
 
 func loopbackOrAny(listen string) bool {
@@ -314,6 +367,9 @@ func (s *Service) Join(ctx context.Context, rawLink string) error {
 	})
 	if err == nil && grant.Tunnel != "" {
 		_, err = s.tunnels.ImportManagementBridge(grant.Tunnel, port)
+	}
+	if err == nil && grant.DataTunnel != "" {
+		_, err = s.tunnels.Import(grant.DataTunnel, "")
 	}
 	if err != nil {
 		if delErr := tokens.Delete(token.Id); delErr != nil {

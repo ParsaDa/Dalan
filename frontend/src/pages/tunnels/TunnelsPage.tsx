@@ -27,6 +27,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { CopyOutlined, DeleteOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons';
 
 import { useTheme } from '@/hooks/useTheme';
+import { useNodesQuery } from '@/api/queries/useNodesQuery';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
 import {
   fetchSetupLink,
@@ -66,6 +67,7 @@ interface PortalFormValues {
   security: 'reality' | 'none';
   serverName?: string;
   routeInbounds?: string[];
+  nodeId?: number;
   transport: string;
   fallbackTransports?: string[];
   forwardPorts?: string[];
@@ -109,6 +111,7 @@ export default function TunnelsPage() {
   const { t } = useTranslation();
   const { isDark, isUltra, antdThemeConfig } = useTheme();
   const [messageApi, messageContextHolder] = message.useMessage();
+  const [modal, modalContextHolder] = Modal.useModal();
   useEffect(() => {
     setMessageInstance(messageApi);
   }, [messageApi]);
@@ -118,6 +121,7 @@ export default function TunnelsPage() {
     useTunnelMutations();
   const { data: engineInfo } = useTunnelEngine();
   const { data: inboundOptions = [] } = useInboundOptions();
+  const { nodes } = useNodesQuery();
 
   const [portalOpen, setPortalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
@@ -145,11 +149,32 @@ export default function TunnelsPage() {
     return false;
   };
 
+  const removeTunnel = async (row: ServerTunnel) => {
+    const msg = await remove({ id: row.id });
+    if (msg?.success || !row.nodeId) {
+      report(msg);
+      return;
+    }
+    modal.confirm({
+      title: msg?.msg || t('somethingWentWrong'),
+      content: t('pages.tunnels.removeHereHint'),
+      okText: t('pages.tunnels.removeHere'),
+      okType: 'danger',
+      cancelText: t('cancel'),
+      onOk: async () => report(await remove({ id: row.id, here: true })),
+    });
+  };
+
   const submitPortal = async () => {
     const values = await portalForm.validateFields();
     setSaving(true);
     try {
-      const common = { name: values.name, address: values.address.trim(), port: values.port };
+      const common = {
+        name: values.name,
+        address: values.address.trim(),
+        port: values.port,
+        ...(values.nodeId ? { nodeId: values.nodeId } : {}),
+      };
       const request: NewPortalValues =
         values.engine === 'backpack'
           ? {
@@ -282,10 +307,7 @@ export default function TunnelsPage() {
               onClick={() => copyLink(row.id)}
             />
           )}
-          <Popconfirm
-            title={t('pages.tunnels.deleteConfirm')}
-            onConfirm={async () => report(await remove(row.id))}
-          >
+          <Popconfirm title={t('pages.tunnels.deleteConfirm')} onConfirm={() => removeTunnel(row)}>
             <Button
               type="text"
               danger
@@ -305,6 +327,7 @@ export default function TunnelsPage() {
   return (
     <ConfigProvider theme={antdThemeConfig}>
       {messageContextHolder}
+      {modalContextHolder}
       <Layout className={pageClass}>
         <AppSidebar />
         <Layout className="content-shell">
@@ -442,6 +465,20 @@ export default function TunnelsPage() {
               ]}
             />
           </Form.Item>
+          {nodes.length > 0 && (
+            <Form.Item
+              name="nodeId"
+              label={t('pages.tunnels.nodeEnd')}
+              extra={t('pages.tunnels.nodeEndHint')}
+            >
+              <Select
+                allowClear
+                options={nodes
+                  .filter((node) => node.enable)
+                  .map((node) => ({ value: node.id, label: node.name }))}
+              />
+            </Form.Item>
+          )}
           {engine === 'backpack' ? (
             <>
               <Form.Item name="transport" label={t('pages.tunnels.transport')}>

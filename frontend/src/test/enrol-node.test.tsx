@@ -61,6 +61,7 @@ test('creates an enrolment for this panel and shows the one-time command to copy
         port: 8443,
         security: 'reality',
         serverName: 'www.example.org',
+        withTunnel: true,
       },
       { headers: { 'Content-Type': 'application/json' } },
     ),
@@ -153,6 +154,21 @@ test('carries a node on an existing tunnel without asking for an address of its 
       '/panel/api/enrolments/add',
       { name: 'tr2', panelUrl: `${window.location.origin}/`, tunnelId: 4 },
       { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('makes a tunnel for the node by default and leaves it out when unticked', async () => {
+  fireEvent.change(await openDialog(), { target: { value: 'tr1' } });
+  fireEvent.click(screen.getByLabelText('None (not encrypted)'));
+  fireEvent.click(screen.getByLabelText('Also make a tunnel for this node\u2019s traffic'));
+  fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/enrolments/add',
+      expect.not.objectContaining({ withTunnel: true }),
+      expect.anything(),
     ),
   );
 });

@@ -3866,6 +3866,11 @@ export const SCHEMAS: Record<string, unknown> = {
   "NodeEnrolment": {
     "description": "NodeEnrolment is one invitation for a node abroad to dial into this panel, and afterwards the\nrecord tying that node to its management tunnel. Its secrets are cleared once it is used.",
     "properties": {
+      "dataTunnelId": {
+        "description": "DataTunnelId is the ordinary entry tunnel made for the node's traffic; 0 when none was asked for.",
+        "example": 0,
+        "type": "integer"
+      },
       "expiresAt": {
         "example": 1700001800,
         "format": "int64",
@@ -3894,6 +3899,7 @@ export const SCHEMAS: Record<string, unknown> = {
       }
     },
     "required": [
+      "dataTunnelId",
       "expiresAt",
       "id",
       "name",
@@ -4755,6 +4761,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "de1",
         "type": "string"
       },
+      "nodeId": {
+        "description": "NodeId (portal) names the node whose panel holds the other end, set when this panel created both ends.",
+        "example": 0,
+        "type": "integer"
+      },
       "parentId": {
         "description": "ParentId (management portal) is the tunnel whose port and REALITY identity this channel shares.",
         "example": 0,
@@ -4816,6 +4827,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "id",
       "managePort",
       "name",
+      "nodeId",
       "parentId",
       "port",
       "realityPublicKey",

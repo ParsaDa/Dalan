@@ -12,6 +12,7 @@ import {
   Popconfirm,
   Radio,
   Select,
+  Switch,
   Typography,
   message,
 } from 'antd';
@@ -41,6 +42,7 @@ function defaultValues(): EnrolmentFormValues {
     security: 'reality',
     serverName: '',
     tunnelId: 0,
+    withTunnel: true,
   };
 }
 
@@ -77,6 +79,7 @@ export default function EnrolNode() {
             port: parsed.port,
             security: parsed.security,
             serverName: parsed.security === 'reality' ? parsed.serverName : '',
+            ...(parsed.withTunnel ? { withTunnel: true } : {}),
           },
     );
     if (created) setInvitation(created);
@@ -200,6 +203,14 @@ export default function EnrolNode() {
                       <Input placeholder="www.example.com" autoComplete="off" />
                     </FormField>
                   )}
+                  <FormField
+                    name="withTunnel"
+                    label={t('pages.enrolments.withTunnel')}
+                    extra={t('pages.enrolments.withTunnelHint')}
+                    valueProp="checked"
+                  >
+                    <Switch />
+                  </FormField>
                 </>
               )}
             </Form>

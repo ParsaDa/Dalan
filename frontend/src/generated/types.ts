@@ -883,6 +883,7 @@ export interface Node {
 }
 
 export interface NodeEnrolment {
+  dataTunnelId: number;
   expiresAt: number;
   id: number;
   name: string;
@@ -1081,6 +1082,7 @@ export interface ServerTunnel {
   id: number;
   managePort: number;
   name: string;
+  nodeId: number;
   parentId: number;
   port: number;
   realityPublicKey: string;

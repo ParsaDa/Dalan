@@ -12,4 +12,6 @@ type NodeEnrolment struct {
 	UsedAt     int64  `json:"usedAt" gorm:"column:used_at;default:0" example:"0"`
 	TunnelId   int    `json:"tunnelId" gorm:"column:tunnel_id" example:"3"`
 	NodeId     int    `json:"nodeId" gorm:"column:node_id;default:0" example:"0"`
+	// DataTunnelId is the ordinary entry tunnel made for the node's traffic; 0 when none was asked for.
+	DataTunnelId int `json:"dataTunnelId" gorm:"column:data_tunnel_id;default:0" example:"0"`
 }

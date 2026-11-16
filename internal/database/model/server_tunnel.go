@@ -48,6 +48,8 @@ type ServerTunnel struct {
 	ManagePort int `json:"managePort" gorm:"column:manage_port;default:0" example:"0"`
 	// ParentId (management portal) is the tunnel whose port and REALITY identity this channel shares.
 	ParentId int `json:"parentId" gorm:"column:parent_id;default:0" example:"0"`
+	// NodeId (portal) names the node whose panel holds the other end, set when this panel created both ends.
+	NodeId int `json:"nodeId" gorm:"column:node_id;default:0" example:"0"`
 	// ManageTarget is the node panel port a BackPack parent delivers its management forward to.
 	ManageTarget int `json:"-" gorm:"column:manage_target;default:0"`
 }

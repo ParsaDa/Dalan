@@ -3,6 +3,7 @@ package controller
 import (
 	"strconv"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 
@@ -69,16 +70,28 @@ func (a *TunnelController) add(c *gin.Context) {
 		FallbackTransports []string `json:"fallbackTransports"`
 		ForwardPorts       []string `json:"forwardPorts"`
 		AcceptUDP          bool     `json:"acceptUdp"`
+
+		NodeId       int    `json:"nodeId"`
+		ExitOutbound string `json:"exitOutbound"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
 		return
 	}
-	portal, err := a.tunnelService.CreatePortal(tunnel.PortalSpec{
+	spec := tunnel.PortalSpec{
 		Name: req.Name, Address: req.Address, Port: req.Port, Security: req.Security, ServerName: req.ServerName,
 		Engine: req.Engine, Transport: req.Transport, FallbackTransports: req.FallbackTransports,
 		ForwardPorts: req.ForwardPorts, AcceptUDP: req.AcceptUDP,
-	}, req.RouteInbounds)
+	}
+	var (
+		portal *model.ServerTunnel
+		err    error
+	)
+	if req.NodeId > 0 {
+		portal, err = a.tunnelService.CreateOnNode(req.NodeId, spec, req.RouteInbounds, req.ExitOutbound)
+	} else {
+		portal, err = a.tunnelService.CreatePortal(spec, req.RouteInbounds)
+	}
 	if err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
 		return
@@ -123,6 +136,10 @@ func (a *TunnelController) del(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), err)
+		return
+	}
+	if c.Query("here") == "true" {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), a.tunnelService.DeleteHere(id))
 		return
 	}
 	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), a.tunnelService.Delete(id))

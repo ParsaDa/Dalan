@@ -974,6 +974,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "xrayVersion": "25.10.31"
   },
   "NodeEnrolment": {
+    "dataTunnelId": 0,
     "expiresAt": 1700001800,
     "id": 1,
     "name": "de1",
@@ -1181,6 +1182,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "id": 1,
     "managePort": 0,
     "name": "de1",
+    "nodeId": 0,
     "parentId": 0,
     "port": 8443,
     "realityPublicKey": "",

@@ -941,6 +941,7 @@ export const NodeSchema = z.object({
 export type Node = z.infer<typeof NodeSchema>;
 
 export const NodeEnrolmentSchema = z.object({
+  dataTunnelId: z.number().int(),
   expiresAt: z.number().int(),
   id: z.number().int(),
   name: z.string(),
@@ -1149,6 +1150,7 @@ export const ServerTunnelSchema = z.object({
   id: z.number().int(),
   managePort: z.number().int(),
   name: z.string(),
+  nodeId: z.number().int(),
   parentId: z.number().int(),
   port: z.number().int(),
   realityPublicKey: z.string(),
