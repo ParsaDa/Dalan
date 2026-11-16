@@ -1,6 +1,6 @@
 # Dalan — handoff
 
-Written 2026-11-15, updated 2026-11-16 for 0.4.5, for whoever continues this work (a person or a coding agent). Read this first, then `CLAUDE.md` (upstream's rules, all still binding), `dalan/UPSTREAM.md` and `dalan/TUNNELS.md`.
+Written 2026-11-15, updated 2026-11-16 for 0.5.0, for whoever continues this work (a person or a coding agent). Read this first, then `CLAUDE.md` (upstream's rules, all still binding), `dalan/UPSTREAM.md` and `dalan/TUNNELS.md`.
 
 ## What Dalan is
 
