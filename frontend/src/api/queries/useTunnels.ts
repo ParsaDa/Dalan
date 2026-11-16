@@ -8,7 +8,9 @@ import { ServerTunnelSchema, type ServerTunnel } from '@/generated/zod';
 export type { ServerTunnel };
 
 const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
-const TUNNELS_KEY = ['tunnels'] as const;
+export const TUNNELS_KEY = ['tunnels'] as const;
+// A tunnel's entry outbound is named tunnel-<name> in the Xray config.
+const TUNNEL_OUTBOUND_PREFIX = 'tunnel-';
 // The API sends null for an empty tag list; the table and form want an array.
 const stringList = z.array(z.string()).nullish();
 const TunnelListSchema = z.array(
@@ -42,6 +44,17 @@ export type NewPortalValues =
       routeInbounds: string[];
       nodeId?: number;
     };
+
+export function withLiveTraffic(
+  tunnels: ServerTunnel[],
+  rows: { tag?: string; up?: number; down?: number }[],
+): ServerTunnel[] {
+  const byTag = new Map(rows.map((r) => [r.tag, r]));
+  return tunnels.map((t) => {
+    const row = byTag.get(TUNNEL_OUTBOUND_PREFIX + t.name);
+    return row ? { ...t, up: row.up ?? 0, down: row.down ?? 0 } : t;
+  });
+}
 
 async function fetchTunnels(): Promise<ServerTunnel[]> {
   const msg = await HttpUtil.get('/panel/api/tunnels/list', undefined, { silent: true });

@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { getSharedWebSocketClient } from '@/api/websocket';
 import { keys } from '@/api/queryKeys';
 import { isRecentLocalInvalidate } from '@/api/invalidationTracker';
+import { TUNNELS_KEY, withLiveTraffic, type ServerTunnel } from '@/api/queries/useTunnels';
 
 type Handler = (payload: unknown) => void;
 
@@ -33,6 +34,9 @@ export function useWebSocketBridge() {
     const onOutbounds: Handler = (payload) => {
       if (!Array.isArray(payload)) return;
       queryClient.setQueryData(keys.xray.outboundsTraffic(), payload);
+      queryClient.setQueryData<ServerTunnel[]>(TUNNELS_KEY, (tunnels) =>
+        tunnels ? withLiveTraffic(tunnels, payload) : tunnels,
+      );
     };
 
     const onNodes: Handler = (payload) => {
