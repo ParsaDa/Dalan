@@ -56,6 +56,18 @@ _openapi:
         several checks in a row.
       url: '#list-tunnel-pools-active-is-the-member-that-carries-the-traffic-now-the-panel-moves-it-to-a-spare-after-the-spare-has-been-clearly-better-for-several-checks-in-a-row'
     - depth: 2
+      title: Find out which TCP ports a node can reach on this server. The panel
+        listens on each port, asks the node through its management channel to
+        dial address:port, and counts a port only when the connection arrived
+        here. A port this server cannot listen on is reported with the reason.
+        At most 20 ports.
+      url: '#find-out-which-tcp-ports-a-node-can-reach-on-this-server-the-panel-listens-on-each-port-asks-the-node-through-its-management-channel-to-dial-addressport-and-counts-a-port-only-when-the-connection-arrived-here-a-port-this-server-cannot-listen-on-is-reported-with-the-reason-at-most-20-ports'
+    - depth: 2
+      title: Open a TCP connection from this server to each port of host and report
+        how it went. Used by the route test of another panel; needs an admin or
+        node-admin token.
+      url: '#open-a-tcp-connection-from-this-server-to-each-port-of-host-and-report-how-it-went-used-by-the-route-test-of-another-panel-needs-an-admin-or-node-admin-token'
+    - depth: 2
       title: Create a pool of two or more entry tunnels, in order of preference.
         routeInbounds lists the local inbound tags whose traffic leaves through
         the pool; the balancer is also available to routing rules as
@@ -111,6 +123,16 @@ _openapi:
           the panel moves it to a spare after the spare has been clearly better
           for several checks in a row.
         id: list-tunnel-pools-active-is-the-member-that-carries-the-traffic-now-the-panel-moves-it-to-a-spare-after-the-spare-has-been-clearly-better-for-several-checks-in-a-row
+      - content: Find out which TCP ports a node can reach on this server. The panel
+          listens on each port, asks the node through its management channel to
+          dial address:port, and counts a port only when the connection arrived
+          here. A port this server cannot listen on is reported with the reason.
+          At most 20 ports.
+        id: find-out-which-tcp-ports-a-node-can-reach-on-this-server-the-panel-listens-on-each-port-asks-the-node-through-its-management-channel-to-dial-addressport-and-counts-a-port-only-when-the-connection-arrived-here-a-port-this-server-cannot-listen-on-is-reported-with-the-reason-at-most-20-ports
+      - content: Open a TCP connection from this server to each port of host and report
+          how it went. Used by the route test of another panel; needs an admin
+          or node-admin token.
+        id: open-a-tcp-connection-from-this-server-to-each-port-of-host-and-report-how-it-went-used-by-the-route-test-of-another-panel-needs-an-admin-or-node-admin-token
       - content: Create a pool of two or more entry tunnels, in order of preference.
           routeInbounds lists the local inbound tags whose traffic leaves
           through the pool; the balancer is also available to routing rules as
@@ -133,7 +155,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
     </>
   );
 }

@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -369,6 +370,7 @@ var remoteMethodsOutsideContract = map[string]string{
 	"ListTunnels":           "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
 	"ImportTunnel":          "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
 	"DeleteTunnel":          "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
+	"DialPorts":             "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
 }
 
 // A Remote method with no cell is how activeInbounds and bulkResetTraffic
@@ -413,6 +415,15 @@ func TestMasterNodeTunnelContract(t *testing.T) {
 			if err != nil || len(listed) != 1 || listed[0].Id != imported.Id {
 				t.Fatalf("ListTunnels = %+v (%v), want the imported bridge", listed, err)
 			}
+			open, err := net.Listen("tcp", "127.0.0.1:0")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer open.Close()
+			dialed, err := master.DialPorts(ctx, "127.0.0.1", []int{open.Addr().(*net.TCPAddr).Port})
+			if err != nil || len(dialed) != 1 || !dialed[0].Reachable {
+				t.Fatalf("DialPorts = %+v (%v), want the open port reached from the node", dialed, err)
+			}
 			if err := master.DeleteTunnel(ctx, imported.Id); err != nil {
 				t.Fatalf("DeleteTunnel: %v", err)
 			}
@@ -434,6 +445,9 @@ func TestMasterNodeTunnelContract(t *testing.T) {
 		}
 		if _, err := master.ListTunnels(context.Background()); err == nil {
 			t.Fatal("a node-sync token was allowed to list the node's tunnels")
+		}
+		if _, err := master.DialPorts(context.Background(), "127.0.0.1", []int{8443}); err == nil {
+			t.Fatal("a node-sync token was allowed to make the node dial out")
 		}
 	})
 }

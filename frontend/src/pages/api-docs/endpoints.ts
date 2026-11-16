@@ -2061,6 +2061,24 @@ export const sections: readonly Section[] = [
       },
       {
         method: 'POST',
+        path: '/panel/api/tunnels/routetest',
+        summary:
+          'Find out which TCP ports a node can reach on this server. The panel listens on each port, asks the node through its management channel to dial address:port, and counts a port only when the connection arrived here. A port this server cannot listen on is reported with the reason. At most 20 ports.',
+        body: '{\n  "nodeId": 3,\n  "address": "203.0.113.10",\n  "ports": [443, 8443, 2053]\n}',
+        response:
+          '{\n  "success": true,\n  "obj": [\n    {\n      "port": 8443,\n      "reachable": true,\n      "latencyMs": 96,\n      "error": ""\n    }\n  ]\n}',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnels/dial',
+        summary:
+          'Open a TCP connection from this server to each port of host and report how it went. Used by the route test of another panel; needs an admin or node-admin token.',
+        body: '{\n  "host": "203.0.113.10",\n  "ports": [443, 8443]\n}',
+        response:
+          '{\n  "success": true,\n  "obj": [\n    {\n      "port": 8443,\n      "reachable": true,\n      "latencyMs": 96,\n      "error": ""\n    }\n  ]\n}',
+      },
+      {
+        method: 'POST',
         path: '/panel/api/tunnels/pools/add',
         summary:
           'Create a pool of two or more entry tunnels, in order of preference. routeInbounds lists the local inbound tags whose traffic leaves through the pool; the balancer is also available to routing rules as pool-<name>.',

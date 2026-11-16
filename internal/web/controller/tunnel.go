@@ -2,6 +2,7 @@ package controller
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
@@ -33,8 +34,48 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.POST("/engine/install", a.installEngine)
 	g.POST("/setEnable/:id", a.setEnable)
 	g.POST("/del/:id", a.del)
+	g.POST("/dial", a.dial)
+	g.POST("/routetest", a.routeTest)
 	g.POST("/pools/add", a.poolAdd)
 	g.POST("/pools/del/:id", a.poolDel)
+}
+
+const dialTimeout = 5 * time.Second
+
+// dial runs on the node during a route test: it tries each port from this server's side.
+func (a *TunnelController) dial(c *gin.Context) {
+	var req struct {
+		Host  string `json:"host"`
+		Ports []int  `json:"ports"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.routeTest"), err)
+		return
+	}
+	results, err := tunnel.DialPorts(req.Host, req.Ports, dialTimeout)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.routeTest"), err)
+		return
+	}
+	jsonObj(c, results, nil)
+}
+
+func (a *TunnelController) routeTest(c *gin.Context) {
+	var req struct {
+		NodeId  int    `json:"nodeId"`
+		Address string `json:"address"`
+		Ports   []int  `json:"ports"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.routeTest"), err)
+		return
+	}
+	results, err := a.tunnelService.RouteTest(req.NodeId, req.Address, req.Ports)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.routeTest"), err)
+		return
+	}
+	jsonObj(c, results, nil)
 }
 
 func (a *TunnelController) poolList(c *gin.Context) {

@@ -15,6 +15,8 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"strings"
+	"sync/atomic"
 )
 
 const (
@@ -219,4 +221,77 @@ func (s *TunnelService) DeleteManagement(id int) error {
 	}
 	s.applyChange()
 	return nil
+}
+
+// routeTestHitWait is how long the listeners get to report a connection after the node says it connected.
+const routeTestHitWait = 500 * time.Millisecond
+
+// RouteTest finds out which ports a node abroad can reach on this server: it listens on each port,
+// has the node dial them, and counts a port only when the connection arrived here.
+func (s *TunnelService) RouteTest(nodeID int, address string, ports []int) ([]tunnel.PortResult, error) {
+	address = strings.TrimSpace(address)
+	if address == "" {
+		return nil, errors.New("a route test needs this server's address as the node sees it")
+	}
+	if err := tunnel.ValidatePorts(ports); err != nil {
+		return nil, err
+	}
+	remote, err := s.remoteFor(nodeID)
+	if err != nil {
+		return nil, err
+	}
+	results := make([]tunnel.PortResult, len(ports))
+	hits := make(map[int]*atomic.Int32, len(ports))
+	var listening []int
+	for i, port := range ports {
+		results[i] = tunnel.PortResult{Port: port}
+		l, err := (&net.ListenConfig{}).Listen(context.Background(), "tcp", fmt.Sprintf(":%d", port))
+		if err != nil {
+			results[i].Error = "this server cannot listen on the port: " + err.Error()
+			continue
+		}
+		defer l.Close()
+		hits[port] = new(atomic.Int32)
+		listening = append(listening, port)
+		go func() {
+			for {
+				conn, err := l.Accept()
+				if err != nil {
+					return
+				}
+				hits[port].Add(1)
+				_ = conn.Close()
+			}
+		}()
+	}
+	if len(listening) == 0 {
+		return results, nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), nodeCallTimeout)
+	defer cancel()
+	dialed, err := remote.DialPorts(ctx, address, listening)
+	if err != nil {
+		return nil, err
+	}
+	byPort := map[int]tunnel.PortResult{}
+	for _, d := range dialed {
+		byPort[d.Port] = d
+	}
+	deadline := time.Now().Add(routeTestHitWait)
+	for i := range results {
+		counter, ok := hits[results[i].Port]
+		if !ok {
+			continue
+		}
+		d := byPort[results[i].Port]
+		for d.Reachable && counter.Load() == 0 && time.Now().Before(deadline) {
+			time.Sleep(10 * time.Millisecond)
+		}
+		results[i].LatencyMs, results[i].Error = d.LatencyMs, d.Error
+		results[i].Reachable = d.Reachable && counter.Load() > 0
+		if d.Reachable && !results[i].Reachable {
+			results[i].Error = "something other than this panel answered on that address and port"
+		}
+	}
+	return results, nil
 }

@@ -131,6 +131,7 @@ var nodeAdminScopeAllow = map[string]map[string]struct{}{
 	"/tunnels/list":       {http.MethodGet: {}},
 	"/tunnels/import":     {http.MethodPost: {}},
 	"/tunnels/del/:id":    {http.MethodPost: {}},
+	"/tunnels/dial":       {http.MethodPost: {}},
 }
 
 func scopeAllows(allow map[string]map[string]struct{}, path, method string) bool {

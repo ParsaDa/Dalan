@@ -14127,6 +14127,124 @@
         }
       }
     },
+    "/panel/api/tunnels/routetest": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Find out which TCP ports a node can reach on this server. The panel listens on each port, asks the node through its management channel to dial address:port, and counts a port only when the connection arrived here. A port this server cannot listen on is reported with the reason. At most 20 ports.",
+        "operationId": "post_panel_api_tunnels_routetest",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "nodeId": 3,
+                "address": "203.0.113.10",
+                "ports": [
+                  443,
+                  8443,
+                  2053
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "port": 8443,
+                      "reachable": true,
+                      "latencyMs": 96,
+                      "error": ""
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/dial": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Open a TCP connection from this server to each port of host and report how it went. Used by the route test of another panel; needs an admin or node-admin token.",
+        "operationId": "post_panel_api_tunnels_dial",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "host": "203.0.113.10",
+                "ports": [
+                  443,
+                  8443
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "port": 8443,
+                      "reachable": true,
+                      "latencyMs": 96,
+                      "error": ""
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/tunnels/pools/add": {
       "post": {
         "tags": [

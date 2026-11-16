@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
@@ -138,6 +140,18 @@ func newFakeTunnelNode(t *testing.T) (*fakeTunnelNode, *model.Node) {
 			bridge.Id = f.next
 			f.ends[bridge.Id] = bridge.Name
 			reply(bridge)
+		case r.Method == http.MethodPost && r.URL.Path == "/panel/api/tunnels/dial":
+			var body struct {
+				Host  string `json:"host"`
+				Ports []int  `json:"ports"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			results, err := tunnel.DialPorts(body.Host, body.Ports, time.Second)
+			if err != nil {
+				_, _ = fmt.Fprintf(w, `{"success":false,"msg":%q}`, err.Error())
+				return
+			}
+			reply(results)
 		case r.Method == http.MethodGet && r.URL.Path == "/panel/api/tunnels/list":
 			list := []model.ServerTunnel{}
 			for id, name := range f.ends {
@@ -248,5 +262,66 @@ func TestADeleteRefusedForCarryingANodeLeavesTheNodesEndInPlace(t *testing.T) {
 	}
 	if len(fake.ends) != 1 {
 		t.Fatalf("the refused delete removed the node's end: %d ends left, want 1", len(fake.ends))
+	}
+}
+
+func freePorts(t *testing.T, n int) []int {
+	t.Helper()
+	var ls []net.Listener
+	var ports []int
+	for range n {
+		l, err := net.Listen("tcp", ":0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		ls = append(ls, l)
+		ports = append(ports, l.Addr().(*net.TCPAddr).Port)
+	}
+	for _, l := range ls {
+		_ = l.Close()
+	}
+	return ports
+}
+
+func TestARouteTestReportsOnlyThePortsTheNodeReallyReachedHere(t *testing.T) {
+	svc := newTunnelDB(t)
+	_, node := newFakeTunnelNode(t)
+	ports := freePorts(t, 2)
+	busy, err := net.Listen("tcp", fmt.Sprintf(":%d", ports[1]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer busy.Close()
+
+	results, err := svc.RouteTest(node.Id, "127.0.0.1", ports)
+	if err != nil {
+		t.Fatalf("RouteTest: %v", err)
+	}
+	if len(results) != 2 || results[0].Port != ports[0] || results[1].Port != ports[1] {
+		t.Fatalf("results = %+v, want one per port in the order asked", results)
+	}
+	if !results[0].Reachable || results[0].Error != "" {
+		t.Fatalf("free port = %+v, want reached from the node", results[0])
+	}
+	if results[1].Reachable || !strings.Contains(results[1].Error, "listen") {
+		t.Fatalf("port taken on this server = %+v, want unreachable because this server cannot listen on it", results[1])
+	}
+
+	again, err := net.Listen("tcp", fmt.Sprintf(":%d", ports[0]))
+	if err != nil {
+		t.Fatalf("the test left its listener open: %v", err)
+	}
+	_ = again.Close()
+}
+
+func TestARouteTestWithoutAReachableNodeIsAnError(t *testing.T) {
+	svc := newTunnelDB(t)
+	fake, node := newFakeTunnelNode(t)
+	fake.fail = true
+	if _, err := svc.RouteTest(node.Id, "127.0.0.1", freePorts(t, 1)); err == nil {
+		t.Fatal("a route test through a node that does not answer reported results")
+	}
+	if _, err := svc.RouteTest(node.Id, "", freePorts(t, 1)); err == nil {
+		t.Fatal("a route test without an address was accepted")
 	}
 }

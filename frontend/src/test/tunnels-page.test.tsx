@@ -303,3 +303,40 @@ test('offers to remove only this end when the node holding the other end cannot 
     expect(HttpUtil.post).toHaveBeenCalledWith('/panel/api/tunnels/del/5?here=true'),
   );
 });
+
+test('tests which ports the chosen node can reach and fills in the one that is clicked', async () => {
+  vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
+    if (url === '/panel/api/nodes/list')
+      return new Msg(true, '', [{ id: 9, name: 'nl1', enable: true }]);
+    if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
+    return new Msg(true, '', []);
+  });
+  vi.spyOn(HttpUtil, 'post').mockImplementation(async (url) =>
+    url === '/panel/api/tunnels/routetest'
+      ? new Msg(true, '', [
+          { port: 443, reachable: false, latencyMs: 0, error: 'timeout' },
+          { port: 8443, reachable: true, latencyMs: 96, error: '' },
+        ])
+      : new Msg(true, '', {}),
+  );
+  openTunnels();
+  await screen.findByText('de1');
+
+  fireEvent.click(screen.getByRole('button', { name: 'New tunnel' }));
+  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'tr3' } });
+  fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
+  fireEvent.mouseDown(await screen.findByLabelText('Create the other end on a node'));
+  fireEvent.click(await screen.findByText('nl1'));
+  fireEvent.click(await screen.findByRole('button', { name: 'Test ports' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/routetest',
+      expect.objectContaining({ nodeId: 9, address: '198.51.100.7', ports: expect.any(Array) }),
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+  expect(await screen.findByText('443: timeout')).toBeTruthy();
+  fireEvent.click(await screen.findByRole('button', { name: '8443 · 96 ms' }));
+  expect((screen.getByLabelText('Port') as HTMLInputElement).value).toBe('8443');
+});

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
 	"strconv"
 	"strings"
@@ -187,5 +188,37 @@ func TestPoolRoutesCreateListAndDeleteAPool(t *testing.T) {
 	listed = doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/pools/list", nil)
 	if strings.Contains(string(listed.Obj), "main") {
 		t.Fatalf("the pool is still listed after deleting it: %s", listed.Obj)
+	}
+}
+
+func TestDialRouteReportsWhichPortsThisServerCanReach(t *testing.T) {
+	engine := newTunnelEngine(t)
+	open, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer open.Close()
+	port := open.Addr().(*net.TCPAddr).Port
+
+	env := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/dial", map[string]any{
+		"host": "127.0.0.1", "ports": []int{port},
+	})
+	var results []struct {
+		Port      int  `json:"port"`
+		Reachable bool `json:"reachable"`
+	}
+	if err := json.Unmarshal(env.Obj, &results); err != nil || len(results) != 1 || results[0].Port != port || !results[0].Reachable {
+		t.Fatalf("dial = %s (%v), want the open port reachable", env.Obj, err)
+	}
+
+	refused := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/dial", map[string]any{"host": "127.0.0.1", "ports": []int{}})
+	if refused.Success {
+		t.Fatal("a dial request without ports was accepted")
+	}
+	unknown := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/routetest", map[string]any{
+		"nodeId": 99, "address": "203.0.113.10", "ports": []int{8443},
+	})
+	if unknown.Success {
+		t.Fatal("a route test through a node that does not exist succeeded")
 	}
 }

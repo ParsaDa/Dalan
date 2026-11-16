@@ -27,6 +27,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { CopyOutlined, DeleteOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons';
 
 import { useTheme } from '@/hooks/useTheme';
+import PortTest from './PortTest';
 import TunnelPools from './TunnelPools';
 import { useNodesQuery } from '@/api/queries/useNodesQuery';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
@@ -131,6 +132,8 @@ export default function TunnelsPage() {
   const [importForm] = Form.useForm<{ link: string; exitOutbound?: string }>();
   const security = Form.useWatch('security', portalForm);
   const engine = Form.useWatch('engine', portalForm);
+  const chosenNode = Form.useWatch('nodeId', portalForm);
+  const chosenAddress = Form.useWatch('address', portalForm);
   const usesBackpack = tunnels.some((tunnel) => tunnel.engine === 'backpack');
 
   const inboundTagOptions = useMemo(
@@ -485,6 +488,13 @@ export default function TunnelsPage() {
               />
             </Form.Item>
           )}
+          {chosenNode ? (
+            <PortTest
+              nodeId={chosenNode}
+              address={chosenAddress ?? ''}
+              onPick={(port) => portalForm.setFieldValue('port', port)}
+            />
+          ) : null}
           {engine === 'backpack' ? (
             <>
               <Form.Item name="transport" label={t('pages.tunnels.transport')}>

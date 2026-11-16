@@ -112,6 +112,10 @@ What to know:
 
 In **Tunnels → New tunnel**, **Create the other end on a node** picks one of the panel's nodes. The panel stores its entry end, then asks the node (through the management channel) to store the dialling end, so nothing is copied or pasted. If the node cannot take its end, nothing is left behind. Deleting the tunnel removes both ends; when the node cannot be reached, the panel offers to remove only its own end.
 
+## Which port passes: Test ports
+
+In **Tunnels → New tunnel**, after choosing a node under **Create the other end on a node** and typing this server's address, **Test ports** tries 443, 8443, 2053, 2083, 2087, 2096, 8080 and 80. This server listens on each port, the node dials it from abroad, and a port counts as open only when the connection really arrived here. Click an open port to use it. A port this server already uses is reported as such. The node needs this Dalan version; the test checks TCP only, not whether a disguise survives deep inspection.
+
 ## Pools of spare tunnels
 
 **Tunnels → Tunnel pools → New pool** groups two or more entry tunnels (different ports, transports or even engines) that stand in for each other, in order of preference. Pick the inbounds whose traffic should leave through the pool; the panel adds a balancer `pool-<name>` that points at the tunnel in use, so the same tag can also be chosen in a routing rule.

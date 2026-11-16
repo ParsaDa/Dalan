@@ -2582,7 +2582,8 @@
         "del": "Delete tunnel",
         "link": "Get setup link",
         "status": "Test tunnel",
-        "installEngine": "Install the BackPack engine"
+        "installEngine": "Install the BackPack engine",
+        "routeTest": "The route test could not run"
       },
       "nodeEnd": "Create the other end on a node",
       "nodeEndHint": "This panel also sets up the exit end on the chosen node, so nothing needs to be copied or pasted. Deleting the tunnel removes both ends.",
@@ -2597,7 +2598,8 @@
       "poolDeleteConfirm": "Delete this pool? Its tunnels stay.",
       "poolTunnels": "Tunnels",
       "poolTunnelsHint": "Entry tunnels in order of preference; the first one carries the traffic to begin with.",
-      "poolNeedsTwo": "Pick at least two tunnels."
+      "poolNeedsTwo": "Pick at least two tunnels.",
+      "testPorts": "Test ports"
     },
     "enrolments": {
       "title": "Add node with a command",
