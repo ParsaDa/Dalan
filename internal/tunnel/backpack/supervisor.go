@@ -99,7 +99,12 @@ func (s *Supervisor) startLocked(name, rendered string) error {
 		return err
 	}
 	// The engine outlives any one request; it is stopped by signal, not by a context.
-	cmd := exec.CommandContext(context.Background(), s.Binary, "-c", s.configPath(name))
+	// cmd.Dir is set, so a relative engine path such as the default "bin/backpack" would be looked up inside Dir.
+	binary, err := filepath.Abs(s.Binary)
+	if err != nil {
+		return err
+	}
+	cmd := exec.CommandContext(context.Background(), binary, "-c", s.configPath(name))
 	cmd.Dir = s.Dir
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("start BackPack for tunnel %q: %w", name, err)
