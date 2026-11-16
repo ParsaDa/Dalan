@@ -868,6 +868,7 @@ export interface Node {
   parentGuid?: string;
   pinnedCertSha256: string;
   port: number;
+  publicAddress: string;
   remark: string;
   scheme: string;
   status: string;
@@ -904,6 +905,7 @@ export interface NodeMutationRequest {
   outboundTag: string;
   pinnedCertSha256: string;
   port: number;
+  publicAddress: string;
   remark: string;
   scheme: string;
   tlsVerifyMode: string;
@@ -941,6 +943,7 @@ export interface NodeView {
   parentGuid?: string;
   pinnedCertSha256: string;
   port: number;
+  publicAddress: string;
   remark: string;
   scheme: string;
   status: string;

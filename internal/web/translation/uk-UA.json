@@ -1119,6 +1119,8 @@
       "name": "Назва",
       "namePlaceholder": "напр. de-frankfurt-1",
       "addressPlaceholder": "panel.example.com або 1.2.3.4",
+      "publicAddress": "Public address",
+      "publicAddressHint": "The address clients connect to. Set it when the panel reaches this node on 127.0.0.1 through a tunnel. Leave empty to use the address above.",
       "remark": "Примітка",
       "scheme": "Схема",
       "address": "Адреса",

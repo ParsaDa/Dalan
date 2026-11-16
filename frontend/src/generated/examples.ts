@@ -958,6 +958,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "parentGuid": "",
     "pinnedCertSha256": "",
     "port": 2053,
+    "publicAddress": "203.0.113.9",
     "remark": "",
     "scheme": "https",
     "status": "online",
@@ -996,6 +997,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "outboundTag": "",
     "pinnedCertSha256": "",
     "port": 1,
+    "publicAddress": "",
     "remark": "",
     "scheme": "http",
     "tlsVerifyMode": "verify"
@@ -1034,6 +1036,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "parentGuid": "",
     "pinnedCertSha256": "",
     "port": 2053,
+    "publicAddress": "203.0.113.9",
     "remark": "Primary edge",
     "scheme": "https",
     "status": "online",

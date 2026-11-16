@@ -51,7 +51,7 @@ func redeem(t *testing.T, svc *Service, link enrol.Link, info enrol.NodeInfo) (e
 	if err != nil {
 		t.Fatalf("Seal: %v", err)
 	}
-	reply, err := svc.Redeem(body)
+	reply, err := svc.Redeem(body, "198.51.100.9")
 	if err != nil {
 		return enrol.Grant{}, err
 	}
@@ -121,6 +121,9 @@ func TestRedeemingAnEnrolmentRegistersTheNodeOnItsManagementPort(t *testing.T) {
 	if node.Address != "127.0.0.1" || node.Port != portal.ManagePort || !node.AllowPrivateAddress {
 		t.Fatalf("node dials %s:%d private=%v, want 127.0.0.1:%d with private addresses allowed",
 			node.Address, node.Port, node.AllowPrivateAddress, portal.ManagePort)
+	}
+	if node.PublicAddress != "198.51.100.9" {
+		t.Fatalf("PublicAddress = %q, want the address the node enrolled from, 198.51.100.9", node.PublicAddress)
 	}
 	if node.ApiToken != "node-token-1" || node.BasePath != "/x/" || node.Scheme != "https" || node.TlsVerifyMode != "skip" || !node.Enable {
 		t.Fatalf("node = token %q path %q scheme %q tls %q enable %v", node.ApiToken, node.BasePath, node.Scheme, node.TlsVerifyMode, node.Enable)

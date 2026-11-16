@@ -410,6 +410,11 @@ func (s *NodeService) normalize(n *model.Node) error {
 		return common.NewError(err.Error())
 	}
 	n.Address = addr
+	if n.PublicAddress = strings.TrimSpace(n.PublicAddress); n.PublicAddress != "" {
+		if n.PublicAddress, err = netsafe.NormalizeHost(n.PublicAddress); err != nil {
+			return common.NewError("public address: " + err.Error())
+		}
+	}
 	if n.Port <= 0 || n.Port > 65535 {
 		return common.NewError("node port must be 1-65535")
 	}
@@ -537,6 +542,7 @@ func (s *NodeService) Update(id int, in *model.Node) error {
 		"remark":                in.Remark,
 		"scheme":                in.Scheme,
 		"address":               in.Address,
+		"public_address":        in.PublicAddress,
 		"port":                  in.Port,
 		"base_path":             in.BasePath,
 		"api_token":             apiToken,
@@ -600,6 +606,7 @@ func (s *NodeService) UpdateFromRequest(id int, req *NodeMutationRequest) error 
 		"remark":                in.Remark,
 		"scheme":                in.Scheme,
 		"address":               in.Address,
+		"public_address":        in.PublicAddress,
 		"port":                  in.Port,
 		"base_path":             in.BasePath,
 		"api_token":             apiToken,

@@ -15,6 +15,7 @@ type NodeView struct {
 	Remark              string   `json:"remark" example:"Primary edge"`
 	Scheme              string   `json:"scheme" example:"https"`
 	Address             string   `json:"address" example:"node.example.com"`
+	PublicAddress       string   `json:"publicAddress" example:"203.0.113.9"`
 	Port                int      `json:"port" example:"2053"`
 	BasePath            string   `json:"basePath" example:"/"`
 	HasApiToken         bool     `json:"hasApiToken" example:"true"`
@@ -64,6 +65,7 @@ func toNodeView(n *model.Node) *NodeView {
 		Remark:              n.Remark,
 		Scheme:              n.Scheme,
 		Address:             n.Address,
+		PublicAddress:       n.PublicAddress,
 		Port:                n.Port,
 		BasePath:            n.BasePath,
 		HasApiToken:         n.ApiToken != "",
@@ -121,6 +123,7 @@ type NodeMutationRequest struct {
 	Remark              string   `json:"remark" form:"remark"`
 	Scheme              string   `json:"scheme" form:"scheme" validate:"omitempty,oneof=http https"`
 	Address             string   `json:"address" form:"address" validate:"required"`
+	PublicAddress       string   `json:"publicAddress" form:"publicAddress"`
 	Port                int      `json:"port" form:"port" validate:"gte=1,lte=65535"`
 	BasePath            string   `json:"basePath" form:"basePath"`
 	ApiToken            *string  `json:"apiToken,omitempty" form:"apiToken"`
@@ -171,6 +174,7 @@ func (r *NodeMutationRequest) toNode() *model.Node {
 		Remark:              r.Remark,
 		Scheme:              r.Scheme,
 		Address:             r.Address,
+		PublicAddress:       r.PublicAddress,
 		Port:                r.Port,
 		BasePath:            r.BasePath,
 		Enable:              r.Enable,

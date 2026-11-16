@@ -73,7 +73,7 @@ func (a *EnrolmentController) redeem(c *gin.Context) {
 		c.String(http.StatusRequestEntityTooLarge, "enrolment request is too large")
 		return
 	}
-	reply, err := a.enrolments.Redeem(body)
+	reply, err := a.enrolments.Redeem(body, c.ClientIP())
 	switch {
 	case errors.Is(err, enrolment.ErrGone):
 		c.String(http.StatusGone, err.Error())

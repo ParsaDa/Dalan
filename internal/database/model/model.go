@@ -838,6 +838,15 @@ type Setting struct {
 	Value string `json:"value" form:"value"`
 }
 
+// ShareAddress is the host clients are given for this node's inbounds. A node that dials in is
+// reached on loopback, which no client can use, so its public address takes over.
+func (n *Node) ShareAddress() string {
+	if n.PublicAddress != "" {
+		return n.PublicAddress
+	}
+	return n.Address
+}
+
 // Node represents a remote 3x-ui panel registered with the central panel.
 // The central panel polls each node's existing /panel/api/server/status
 // endpoint over HTTP using the per-node ApiToken to populate the runtime
@@ -848,6 +857,7 @@ type Node struct {
 	Remark              string   `json:"remark" form:"remark"`
 	Scheme              string   `json:"scheme" form:"scheme" validate:"omitempty,oneof=http https" example:"https"`
 	Address             string   `json:"address" form:"address" validate:"required" example:"node1.example.com"`
+	PublicAddress       string   `json:"publicAddress" form:"publicAddress" gorm:"column:public_address" example:"203.0.113.9"`
 	Port                int      `json:"port" form:"port" validate:"gte=1,lte=65535" example:"2053"`
 	BasePath            string   `json:"basePath" form:"basePath" example:"/"`
 	ApiToken            string   `json:"-" form:"-" gorm:"column:api_token" validate:"required_unless=TlsVerifyMode mtls" example:"abcdef0123456789"`
