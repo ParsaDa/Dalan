@@ -47,6 +47,8 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 | `frontend/src/routes/panelRoutes.tsx`, `CommandPalette.tsx` | Tunnels route and its palette keywords |
 | `frontend/src/pages/nodes/NodeList.tsx` | `<EnrolNode />` button in the toolbar |
 | `frontend/src/pages/api-docs/endpoints.ts` | Tunnels and Node enrolment sections |
+| `frontend/src/pages/xray/outbounds/` (`OutboundsTab.tsx`, `useOutboundColumns.tsx`, `OutboundCardList.tsx`, `outbounds-tab-types.ts`, `outbounds-tab-helpers.ts`) | tunnel rows in the outbounds table and cards, read-only, with a Reverse tag |
+| `frontend/src/api/websocketBridge.ts` | the `outbounds` push also refreshes the tunnels' traffic in the query cache |
 | `internal/web/translation/*.json` | `menu.tunnels`, `pages.tunnels` and `pages.enrolments` |
 
 Keep upstream's change and re-apply the Dalan line on top.
