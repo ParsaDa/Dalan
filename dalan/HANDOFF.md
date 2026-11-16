@@ -29,7 +29,7 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 
 ## State of the repository
 
-`main` is at Dalan **0.3.0**; **0.3.1** is on the branch below (tag `v0.3.1` to be created by the owner after the merge). Releases so far: `v0.1.0`, `v0.2.0`, plus the rolling `dev-latest` pre-release built on every push to `main`.
+`main` is at Dalan **0.3.2**. `v0.3.1` has working binaries but its Docker image never built (the Dockerfile compiled `main.go` alone and missed `enrol_cmd.go`); `v0.3.2` fixes that. Releases so far: `v0.1.0`, `v0.2.0`, plus the rolling `dev-latest` pre-release built on every push to `main`.
 
 | PR | What |
 |---|---|
@@ -41,7 +41,7 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 | #6 | BackPack engine: config rendering, process supervisor, verified installer, status, UI |
 | #7 | 0.3.0 |
 
-Unreleased on branch `claude/new-session-zu5aqy` (no PR opened yet): reverse node enrolment and the management channel, item 1 of the list below. Design: `dalan/plans/2026-11-15-node-enrolment-design.md`. Operator guide: "Nodes that dial in" in `dalan/TUNNELS.md`.
+Merged in PR #9 (0.3.1): reverse node enrolment and the management channel, item 1 of the list below. Design: `dalan/plans/2026-11-15-node-enrolment-design.md`. Operator guide: "Nodes that dial in" in `dalan/TUNNELS.md`.
 
 ### Where the tunnel code is
 
