@@ -499,6 +499,10 @@ func (s *XrayService) GetXrayConfig() (*xray.Config, error) {
 		logger.Warning("read tunnels for config injection failed:", err)
 	} else if err := xrayreverse.Apply(xrayConfig, tunnels); err != nil {
 		logger.Warning("tunnel injection skipped:", err)
+	} else if pools, err := (&TunnelPoolService{}).List(); err != nil {
+		logger.Warning("read tunnel pools for config injection failed:", err)
+	} else if err := xrayreverse.ApplyPools(xrayConfig, tunnels, pools); err != nil {
+		logger.Warning("tunnel pool injection skipped:", err)
 	}
 
 	xrayConfig.RouterConfig = dropRefusedScript(xrayConfig.RouterConfig, "routing", routingScriptRefused)

@@ -4,6 +4,7 @@ import { Alert, Button, Form, Input, Modal, Select, Space, Spin, Typography, mes
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 
 import { XrayConfigPayloadSchema } from '@/schemas/xray';
+import { injectedOutboundTags } from '@/lib/xray/injected-outbound-tags';
 import { isOutboundProtocol } from '@/schemas/primitives';
 import { HttpUtil } from '@/utils';
 
@@ -81,12 +82,7 @@ export default function GeodataSection({ active, onBusy, onClose }: GeodataSecti
         const tag = rec.tag;
         if (typeof tag === 'string' && tag) tags.add(tag);
       }
-      const subTags = Array.isArray(payload.subscriptionOutboundTags)
-        ? payload.subscriptionOutboundTags
-        : [];
-      for (const tag of subTags) {
-        if (typeof tag === 'string' && tag) tags.add(tag);
-      }
+      for (const tag of injectedOutboundTags(payload)) tags.add(tag);
       setOutboundTags([...tags]);
     } finally {
       setLoading(false);

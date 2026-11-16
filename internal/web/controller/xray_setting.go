@@ -30,6 +30,7 @@ type XraySettingController struct {
 	PiaService                  integration.PiaService
 	OutboundSubscriptionService service.OutboundSubscriptionService
 	GeodataService              service.GeodataService
+	TunnelService               service.TunnelService
 }
 
 // NewXraySettingController creates a new XraySettingController and initializes its routes.
@@ -128,6 +129,10 @@ func (a *XraySettingController) getXraySetting(c *gin.Context) {
 	}
 	if subTags, err := a.OutboundSubscriptionService.AllActiveOutboundTags(); err == nil && len(subTags) > 0 {
 		xrayResponse["subscriptionOutboundTags"] = subTags
+	}
+	// Tunnels are injected into the generated config at runtime, like subscription outbounds.
+	if tunnels, err := a.TunnelService.RoutableOutbounds(); err == nil && len(tunnels) > 0 {
+		xrayResponse["tunnelOutbounds"] = tunnels
 	}
 	result, err := json.Marshal(xrayResponse)
 	if err != nil {

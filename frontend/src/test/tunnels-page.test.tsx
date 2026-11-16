@@ -65,7 +65,11 @@ beforeEach(() => {
   vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
     if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
     if (url === '/panel/api/tunnels/engine')
-      return new Msg(true, '', { installed: engineInstalled, version: 'v1.8.5' });
+      return new Msg(true, '', {
+        installed: engineInstalled,
+        version: engineInstalled ? 'v1.8.5' : '',
+        pinned: 'v1.8.5',
+      });
     if (url === '/panel/api/tunnels/status/3')
       return new Msg(true, '', {
         connected: true,
@@ -196,6 +200,48 @@ test('offers to install the BackPack engine when a BackPack tunnel has none', as
   );
 });
 
+test('shows the installed BackPack engine release and updates it from this server', async () => {
+  listed = [backpackPortal];
+  openTunnels();
+  expect(await screen.findByText('BackPack engine v1.8.5')).toBeTruthy();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Update engine' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/engine/update',
+      { nodeId: 0, version: '' },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('installs the BackPack engine through a node when this server cannot reach GitHub', async () => {
+  listed = [backpackPortal];
+  engineInstalled = false;
+  vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
+    if (url === '/panel/api/nodes/list')
+      return new Msg(true, '', [{ id: 9, name: 'nl1', enable: true }]);
+    if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
+    if (url === '/panel/api/tunnels/engine')
+      return new Msg(true, '', { installed: false, version: '', pinned: 'v1.8.5' });
+    return new Msg(true, '', []);
+  });
+  openTunnels();
+
+  fireEvent.mouseDown(await screen.findByLabelText('Download through node'));
+  fireEvent.click(await screen.findByText('nl1'));
+  fireEvent.click(screen.getByRole('button', { name: 'Install BackPack' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/engine/update',
+      { nodeId: 9, version: '' },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
 test('does not mention the BackPack engine while only Xray tunnels exist', async () => {
   engineInstalled = false;
   openTunnels();
@@ -229,8 +275,121 @@ test('creates a BackPack entry tunnel with its transport and forwarded ports', a
         fallbackTransports: [],
         forwardPorts: ['443=127.0.0.1:2096'],
         acceptUdp: false,
+        routeInbounds: [],
       },
       { headers: { 'Content-Type': 'application/json' } },
     ),
   );
+});
+
+test('creates a BackPack entry tunnel without any forwarded port', async () => {
+  openTunnels();
+  await screen.findByText('de1');
+
+  fireEvent.click(screen.getByRole('button', { name: 'New tunnel' }));
+  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'bp3' } });
+  fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
+  fireEvent.click(screen.getByRole('radio', { name: 'BackPack' }));
+  await screen.findByLabelText('Forwarded ports');
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/add',
+      expect.objectContaining({ name: 'bp3', engine: 'backpack', forwardPorts: [] }),
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('makes the other end on a chosen node from the same form', async () => {
+  vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
+    if (url === '/panel/api/nodes/list')
+      return new Msg(true, '', [{ id: 9, name: 'nl1', enable: true }]);
+    if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
+    return new Msg(true, '', []);
+  });
+  openTunnels();
+  await screen.findByText('de1');
+
+  fireEvent.click(screen.getByRole('button', { name: 'New tunnel' }));
+  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'tr2' } });
+  fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
+  fireEvent.change(screen.getByLabelText('Server name (SNI)'), {
+    target: { value: 'www.example.org' },
+  });
+  fireEvent.mouseDown(await screen.findByLabelText('Create the other end on a node'));
+  fireEvent.click(await screen.findByText('nl1'));
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/add',
+      expect.objectContaining({ name: 'tr2', nodeId: 9 }),
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('offers to remove only this end when the node holding the other end cannot be reached', async () => {
+  listed = [{ ...portal, id: 5, name: 'tr5', nodeId: 9 }];
+  vi.spyOn(HttpUtil, 'post').mockImplementation(async (url) =>
+    url === '/panel/api/tunnels/del/5'
+      ? new Msg(false, 'node nl1 is unreachable', null)
+      : new Msg(true, '', {}),
+  );
+  openTunnels();
+  await screen.findByText('tr5');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Delete tr5' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Remove this end only' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith('/panel/api/tunnels/del/5?here=true'),
+  );
+});
+
+test('tests which ports the chosen node can reach and fills in the one that is clicked', async () => {
+  vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
+    if (url === '/panel/api/nodes/list')
+      return new Msg(true, '', [{ id: 9, name: 'nl1', enable: true }]);
+    if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
+    return new Msg(true, '', []);
+  });
+  vi.spyOn(HttpUtil, 'post').mockImplementation(async (url) =>
+    url === '/panel/api/tunnels/routetest'
+      ? new Msg(true, '', [
+          { port: 443, reachable: false, latencyMs: 0, error: 'timeout' },
+          { port: 8443, reachable: true, latencyMs: 96, error: '' },
+        ])
+      : new Msg(true, '', {}),
+  );
+  openTunnels();
+  await screen.findByText('de1');
+
+  fireEvent.click(screen.getByRole('button', { name: 'New tunnel' }));
+  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'tr3' } });
+  fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
+  fireEvent.mouseDown(await screen.findByLabelText('Create the other end on a node'));
+  fireEvent.click(await screen.findByText('nl1'));
+  fireEvent.click(await screen.findByRole('button', { name: 'Test ports' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/routetest',
+      expect.objectContaining({ nodeId: 9, address: '198.51.100.7', ports: expect.any(Array) }),
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+  expect(await screen.findByText('443: timeout')).toBeTruthy();
+  fireEvent.click(await screen.findByRole('button', { name: '8443 · 96 ms' }));
+  expect((screen.getByLabelText('Port') as HTMLInputElement).value).toBe('8443');
+});
+
+test('shows how much has passed through an entry tunnel', async () => {
+  listed = [{ ...portal, up: 1536, down: 5 * 1024 * 1024 }, bridge];
+  openTunnels();
+
+  expect(await screen.findByText('↑ 1.50 KB · ↓ 5.00 MB')).toBeTruthy();
 });

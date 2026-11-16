@@ -2104,6 +2104,11 @@ install_x-ui() {
     # works out of the box (no-op when XUI_ENABLE_FAIL2BAN=false). Never fatal.
     setup_fail2ban
 
+    if [[ -n "${XUI_ENROL:-}" ]]; then
+        echo -e "${green}Joining the main panel...${plain}"
+        /usr/bin/x-ui enrol "${XUI_ENROL}" || echo -e "${red}Joining failed. Run again later: x-ui enrol '<link>'${plain}"
+    fi
+
     echo -e "${green}x-ui ${tag_version}${plain} installation finished, it is running now..."
     echo -e ""
     echo -e "┌───────────────────────────────────────────────────────┐

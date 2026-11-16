@@ -95,6 +95,10 @@ func TestRedeemingAnEnrolmentRegistersTheNodeOnItsManagementPort(t *testing.T) {
 	if !strings.Contains(created.Command, created.Link) {
 		t.Fatalf("command %q does not carry the link", created.Command)
 	}
+	wantInstall := "XUI_ENROL='" + created.Link + "' bash <(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)"
+	if created.InstallCommand != wantInstall {
+		t.Fatalf("install command = %q, want %q", created.InstallCommand, wantInstall)
+	}
 
 	grant, err := redeem(t, svc, link, enrol.NodeInfo{
 		Token: link.Token, Port: 2053, BasePath: "/x/", Scheme: "https", APIToken: "node-token-1",
@@ -231,13 +235,18 @@ func TestTwoEnrolmentsGetDifferentManagementPortsAndNamesMustBeFree(t *testing.T
 // fakeMainPanel answers an enrolment the way a main panel does and records what the node told it.
 func fakeMainPanel(t *testing.T, refuse bool) (link string, told *enrol.NodeInfo) {
 	t.Helper()
-	told = &enrol.NodeInfo{}
-	var offer enrol.Offer
 	portal, err := tunnel.NewPortal(tunnel.PortalSpec{Name: "node-de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone})
 	if err != nil {
 		t.Fatal(err)
 	}
 	setup, _ := tunnel.SetupLink(portal)
+	return fakeMainPanelGranting(t, refuse, enrol.Grant{Tunnel: setup})
+}
+
+func fakeMainPanelGranting(t *testing.T, refuse bool, grant enrol.Grant) (link string, told *enrol.NodeInfo) {
+	t.Helper()
+	told = &enrol.NodeInfo{}
+	var offer enrol.Offer
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
 		info, seal, err := enrol.OpenRequest(offer.PrivateKey, body)
@@ -246,10 +255,11 @@ func fakeMainPanel(t *testing.T, refuse bool) (link string, told *enrol.NodeInfo
 			return
 		}
 		*told = info
-		reply, _ := seal(enrol.Grant{Tunnel: setup})
+		reply, _ := seal(grant)
 		_, _ = w.Write(reply)
 	}))
 	t.Cleanup(srv.Close)
+	var err error
 	offer, err = enrol.NewOffer(srv.URL + "/")
 	if err != nil {
 		t.Fatal(err)
@@ -327,5 +337,193 @@ func TestARefusedJoinKeepsTheChannelToTheCurrentMainPanel(t *testing.T) {
 	}
 	if got := tunnelByName(t, "node-de1"); got == nil {
 		t.Fatalf("a refused join removed the current management tunnel")
+	}
+}
+
+func TestAnEnrolmentOnAnExistingTunnelAddsAClientToItInsteadOfOpeningAPort(t *testing.T) {
+	newDB(t)
+	svc := &Service{}
+	parent, err := svc.tunnels.CreatePortal(tunnel.PortalSpec{
+		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+	}, nil)
+	if err != nil {
+		t.Fatalf("CreatePortal: %v", err)
+	}
+	spec := Spec{Name: "de1", PanelURL: "http://203.0.113.10:2053/", TunnelId: parent.Id}
+	created, err := svc.Create(spec)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	link, err := enrol.ParseLink(created.Link)
+	if err != nil {
+		t.Fatalf("ParseLink: %v", err)
+	}
+	rider := tunnelByName(t, "node-de1")
+	if rider == nil || rider.ParentId != parent.Id || rider.Port != 8443 || rider.ManagePort == 0 {
+		t.Fatalf("channel after Create = %+v, want one riding on tunnel %d", rider, parent.Id)
+	}
+
+	grant, err := redeem(t, svc, link, enrol.NodeInfo{
+		Token: link.Token, Port: 2053, BasePath: "/x/", Scheme: "https", APIToken: "node-token-1",
+	})
+	if err != nil {
+		t.Fatalf("Redeem: %v", err)
+	}
+	bridge, err := tunnel.ParseSetupLink(grant.Tunnel)
+	if err != nil || bridge.UUID != rider.UUID || bridge.UUID == parent.UUID || bridge.Port != 8443 {
+		t.Fatalf("granted bridge = %+v (%v), want the rider's own client on the tunnel's port", bridge, err)
+	}
+	var node model.Node
+	if err := database.GetDB().Where("name = ?", "de1").First(&node).Error; err != nil || node.Port != rider.ManagePort {
+		t.Fatalf("node = %+v (%v), want it behind the rider's management port %d", node, err, rider.ManagePort)
+	}
+
+	if err := svc.NodeDeleted(node.Id); err != nil {
+		t.Fatalf("NodeDeleted: %v", err)
+	}
+	if tunnelByName(t, "node-de1") != nil || tunnelByName(t, "tr1") == nil {
+		t.Fatal("removing the node must close its channel and keep the tunnel it rode on")
+	}
+}
+
+func TestAnEnrolmentOnABackpackTunnelForwardsToTheNodesPanelPort(t *testing.T) {
+	newDB(t)
+	svc := &Service{}
+	parent := model.ServerTunnel{
+		Name: "bp1", Role: model.TunnelRolePortal, Engine: model.TunnelEngineBackpack, Enable: true,
+		Address: "203.0.113.10", Port: 8443, UUID: "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10", Transport: "tcpmux",
+		RelayPort: 63500,
+	}
+	if err := database.GetDB().Create(&parent).Error; err != nil {
+		t.Fatalf("create parent: %v", err)
+	}
+	created, err := svc.Create(Spec{Name: "de1", PanelURL: "http://203.0.113.10:2053/", TunnelId: parent.Id})
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	link, _ := enrol.ParseLink(created.Link)
+
+	grant, err := redeem(t, svc, link, enrol.NodeInfo{
+		Token: link.Token, Port: 2053, BasePath: "/x/", Scheme: "https", APIToken: "node-token-1",
+	})
+	if err != nil {
+		t.Fatalf("Redeem: %v", err)
+	}
+	if grant.Tunnel != "" {
+		t.Fatalf("granted %q, want no tunnel to import: the node already has the BackPack tunnel", grant.Tunnel)
+	}
+	if rider := tunnelByName(t, "node-de1"); rider == nil || rider.ManageTarget != 2053 {
+		t.Fatalf("channel after Redeem = %+v, want the forward aimed at the node's panel port 2053", rider)
+	}
+}
+
+func TestANodeWithATunnelGetsAnOrdinaryTunnelThatItsManagementRidesOn(t *testing.T) {
+	newDB(t)
+	svc := &Service{}
+	spec := enrolmentSpec("de1", 8443)
+	spec.WithTunnel = true
+	created, err := svc.Create(spec)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	link, err := enrol.ParseLink(created.Link)
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, channel := tunnelByName(t, "de1"), tunnelByName(t, "node-de1")
+	if data == nil || data.ManagePort != 0 || data.ParentId != 0 || data.Port != 8443 {
+		t.Fatalf("data tunnel after Create = %+v, want an ordinary entry tunnel on 8443", data)
+	}
+	if channel == nil || channel.ParentId != data.Id || channel.ManagePort == 0 || channel.Port != 8443 {
+		t.Fatalf("management channel = %+v, want one riding on the data tunnel %d", channel, data.Id)
+	}
+
+	grant, err := redeem(t, svc, link, enrol.NodeInfo{
+		Token: link.Token, Port: 2053, BasePath: "/x/", Scheme: "https", APIToken: "node-token-1",
+	})
+	if err != nil {
+		t.Fatalf("Redeem: %v", err)
+	}
+	dataBridge, err := tunnel.ParseSetupLink(grant.DataTunnel)
+	if err != nil || dataBridge.UUID != data.UUID || dataBridge.Name != "de1" {
+		t.Fatalf("granted data bridge = %+v (%v), want the data tunnel's own client", dataBridge, err)
+	}
+	manageBridge, err := tunnel.ParseSetupLink(grant.Tunnel)
+	if err != nil || manageBridge.UUID != channel.UUID {
+		t.Fatalf("granted management bridge = %+v (%v), want the channel's client", manageBridge, err)
+	}
+	var node model.Node
+	if err := database.GetDB().Where("name = ?", "de1").First(&node).Error; err != nil {
+		t.Fatal(err)
+	}
+	if got := tunnelByName(t, "de1"); got.NodeId != node.Id {
+		t.Fatalf("data tunnel NodeId = %d, want the node %d so deleting it reaches the node's end", got.NodeId, node.Id)
+	}
+
+	if err := svc.NodeDeleted(node.Id); err != nil {
+		t.Fatalf("NodeDeleted: %v", err)
+	}
+	if tunnelByName(t, "de1") != nil || tunnelByName(t, "node-de1") != nil {
+		t.Fatal("removing the node must remove its channel and its data tunnel")
+	}
+}
+
+func TestCancellingAPendingEnrolmentWithATunnelRemovesBothTunnels(t *testing.T) {
+	newDB(t)
+	svc := &Service{}
+	spec := enrolmentSpec("de1", 8443)
+	spec.WithTunnel = true
+	created, err := svc.Create(spec)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if err := svc.Delete(created.Id); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if tunnelByName(t, "de1") != nil || tunnelByName(t, "node-de1") != nil {
+		t.Fatal("a cancelled enrolment left a tunnel behind")
+	}
+}
+
+func TestAnEnrolmentOnAnExistingTunnelNeedsNoSecondTunnel(t *testing.T) {
+	newDB(t)
+	svc := &Service{}
+	parent, err := svc.tunnels.CreatePortal(tunnel.PortalSpec{
+		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+	}, nil)
+	if err != nil {
+		t.Fatalf("CreatePortal: %v", err)
+	}
+	_, err = svc.Create(Spec{Name: "de1", PanelURL: "http://203.0.113.10:2053/", TunnelId: parent.Id, WithTunnel: true})
+	if err == nil {
+		t.Fatal("asked for a tunnel of its own on top of an existing tunnel and got no refusal")
+	}
+	if tunnelByName(t, "node-de1") != nil {
+		t.Fatal("the refused enrolment left a channel behind")
+	}
+}
+
+func TestJoiningWithADataTunnelStoresItNextToTheManagementBridge(t *testing.T) {
+	newDB(t)
+	manage, err := tunnel.NewPortal(tunnel.PortalSpec{Name: "node-de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := tunnel.NewPortal(tunnel.PortalSpec{Name: "de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone})
+	if err != nil {
+		t.Fatal(err)
+	}
+	manageLink, _ := tunnel.SetupLink(manage)
+	dataLink, _ := tunnel.SetupLink(data)
+	link, _ := fakeMainPanelGranting(t, false, enrol.Grant{Tunnel: manageLink, DataTunnel: dataLink})
+	if err := (&Service{}).Join(context.Background(), link); err != nil {
+		t.Fatalf("Join: %v", err)
+	}
+	got := tunnelByName(t, "de1")
+	if got == nil || got.Role != model.TunnelRoleBridge || got.ManagePort != 0 || got.UUID != data.UUID {
+		t.Fatalf("data bridge = %+v, want an ordinary bridge with the granted identity", got)
+	}
+	if tunnelByName(t, "node-de1") == nil {
+		t.Fatal("the management bridge is missing")
 	}
 }

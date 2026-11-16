@@ -27,6 +27,7 @@ type engine struct {
 	cmd    *exec.Cmd
 	config string
 	exited chan struct{}
+	output *outputLog
 }
 
 // Supervisor keeps one BackPack process running per enabled BackPack tunnel.
@@ -34,6 +35,8 @@ type Supervisor struct {
 	Binary       string
 	Dir          string
 	RestartDelay time.Duration
+	// LogLine receives each line an engine prints; nil sends it to the panel log.
+	LogLine func(tunnel, line string)
 
 	mu      sync.Mutex
 	engines map[string]*engine
@@ -106,10 +109,12 @@ func (s *Supervisor) startLocked(name, rendered string) error {
 	}
 	cmd := exec.CommandContext(context.Background(), binary, "-c", s.configPath(name))
 	cmd.Dir = s.Dir
+	output := s.outputFor(name)
+	cmd.Stdout, cmd.Stderr = output, output
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("start BackPack for tunnel %q: %w", name, err)
 	}
-	e := &engine{cmd: cmd, config: rendered, exited: make(chan struct{})}
+	e := &engine{cmd: cmd, config: rendered, exited: make(chan struct{}), output: output}
 	s.engines[name] = e
 	go s.watch(name, e)
 	return nil
@@ -131,7 +136,7 @@ func (s *Supervisor) watch(name string, e *engine) {
 	if s.engines[name] != e {
 		return
 	}
-	logger.Warningf("BackPack engine for tunnel %q exited (%v); starting it again", name, err)
+	logger.Warningf("BackPack engine for tunnel %q exited (%v); starting it again. Last output: %s", name, err, e.output.finish())
 	delete(s.engines, name)
 	if err := s.startLocked(name, e.config); err != nil {
 		logger.Warningf("BackPack engine for tunnel %q could not be restarted: %v", name, err)
@@ -140,6 +145,8 @@ func (s *Supervisor) watch(name string, e *engine) {
 
 func (s *Supervisor) stopLocked(name string, e *engine) {
 	delete(s.engines, name)
+	// A stopped engine's status file goes stale at once and would read as connected for up to 30 seconds.
+	defer func() { _ = os.Remove(snapshotPath(s.Dir, name)) }()
 	_ = e.cmd.Process.Signal(syscall.SIGTERM)
 	select {
 	case <-e.exited:

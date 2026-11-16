@@ -2,7 +2,9 @@ package controller
 
 import (
 	"encoding/json"
+	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -108,19 +110,116 @@ func TestTunnelRoutesCreateABackpackTunnelAndReportTheEngine(t *testing.T) {
 		t.Fatalf("stored tunnel = %+v, want the BackPack settings from the request", portal)
 	}
 
-	refused := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+	routed := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
 		"name": "bp2", "address": "203.0.113.10", "port": 9444, "engine": "backpack", "transport": "wssmux",
 	})
-	if refused.Success || !strings.Contains(refused.Msg, "forwarded port") {
-		t.Fatalf("a BackPack tunnel with no forwarded port: success=%v msg=%q", refused.Success, refused.Msg)
+	var routable model.ServerTunnel
+	if err := json.Unmarshal(routed.Obj, &routable); err != nil || !routed.Success {
+		t.Fatalf("a BackPack tunnel with no forwarded port: success=%v msg=%q (%v)", routed.Success, routed.Msg, err)
+	}
+	if routable.RelayPort < 63400 || routable.RelayPort > 64399 {
+		t.Fatalf("relay port = %d, want one in 63400-64399 so the tunnel can be routed to", routable.RelayPort)
 	}
 
 	info := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/engine", nil)
 	var got struct {
 		Installed bool   `json:"installed"`
 		Version   string `json:"version"`
+		Pinned    string `json:"pinned"`
 	}
-	if err := json.Unmarshal(info.Obj, &got); err != nil || got.Installed || got.Version != "v1.8.5" {
-		t.Fatalf("engine info = %s (%v), want not installed, v1.8.5", info.Obj, err)
+	if err := json.Unmarshal(info.Obj, &got); err != nil || got.Installed || got.Version != "" || got.Pinned != "v1.8.5" {
+		t.Fatalf("engine info = %s (%v), want not installed, offering v1.8.5", info.Obj, err)
+	}
+}
+
+func TestAddingATunnelForAnUnknownNodeCreatesNothing(t *testing.T) {
+	engine := newTunnelEngine(t)
+
+	refused := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+		"name": "tr9", "address": "203.0.113.10", "port": 9555, "security": "none", "nodeId": 999,
+	})
+	if refused.Success || !strings.Contains(refused.Msg, "node 999") {
+		t.Fatalf("add for an unknown node: success=%v msg=%q, want a refusal naming node 999", refused.Success, refused.Msg)
+	}
+	list := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/list", nil)
+	var tunnels []model.ServerTunnel
+	if err := json.Unmarshal(list.Obj, &tunnels); err != nil || len(tunnels) != 0 {
+		t.Fatalf("tunnels after the refused add = %s (%v), want none", list.Obj, err)
+	}
+}
+
+func TestPoolRoutesCreateListAndDeleteAPool(t *testing.T) {
+	engine := newTunnelEngine(t)
+	for i, name := range []string{"a", "b"} {
+		added := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+			"name": name, "address": "203.0.113.10", "port": 8443 + i, "security": "none",
+		})
+		if !added.Success {
+			t.Fatalf("add %s: %s", name, added.Msg)
+		}
+	}
+
+	refused := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/pools/add", map[string]any{
+		"name": "main", "members": []string{"a"},
+	})
+	if refused.Success || !strings.Contains(refused.Msg, "at least two") {
+		t.Fatalf("a pool of one: success=%v msg=%q, want a refusal naming the minimum", refused.Success, refused.Msg)
+	}
+
+	created := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/pools/add", map[string]any{
+		"name": "main", "members": []string{"b", "a"}, "routeInbounds": []string{"in-1"},
+	})
+	if !created.Success {
+		t.Fatalf("pools/add: %s", created.Msg)
+	}
+	var made model.TunnelPool
+	if err := json.Unmarshal(created.Obj, &made); err != nil || made.Id == 0 || made.Active != "b" {
+		t.Fatalf("pools/add returned %s (%v), want the stored pool with b first", created.Obj, err)
+	}
+
+	listed := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/pools/list", nil)
+	var pools []model.TunnelPool
+	if err := json.Unmarshal(listed.Obj, &pools); err != nil || len(pools) != 1 || pools[0].Name != "main" {
+		t.Fatalf("pools/list = %s (%v), want the one pool", listed.Obj, err)
+	}
+
+	if deleted := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/pools/del/"+strconv.Itoa(made.Id), nil); !deleted.Success {
+		t.Fatalf("pools/del: %s", deleted.Msg)
+	}
+	listed = doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/pools/list", nil)
+	if strings.Contains(string(listed.Obj), "main") {
+		t.Fatalf("the pool is still listed after deleting it: %s", listed.Obj)
+	}
+}
+
+func TestDialRouteReportsWhichPortsThisServerCanReach(t *testing.T) {
+	engine := newTunnelEngine(t)
+	open, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer open.Close()
+	port := open.Addr().(*net.TCPAddr).Port
+
+	env := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/dial", map[string]any{
+		"host": "127.0.0.1", "ports": []int{port},
+	})
+	var results []struct {
+		Port      int  `json:"port"`
+		Reachable bool `json:"reachable"`
+	}
+	if err := json.Unmarshal(env.Obj, &results); err != nil || len(results) != 1 || results[0].Port != port || !results[0].Reachable {
+		t.Fatalf("dial = %s (%v), want the open port reachable", env.Obj, err)
+	}
+
+	refused := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/dial", map[string]any{"host": "127.0.0.1", "ports": []int{}})
+	if refused.Success {
+		t.Fatal("a dial request without ports was accepted")
+	}
+	unknown := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/routetest", map[string]any{
+		"nodeId": 99, "address": "203.0.113.10", "ports": []int{8443},
+	})
+	if unknown.Success {
+		t.Fatal("a route test through a node that does not exist succeeded")
 	}
 }

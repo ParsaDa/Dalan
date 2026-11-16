@@ -3531,6 +3531,11 @@
             "example": 1,
             "type": "integer"
           },
+          "installCommand": {
+            "description": "InstallCommand installs Dalan on a fresh server and joins this panel in one go.",
+            "example": "XUI_ENROL='dalan://enrol/eyJ2IjoxfQ' bash <(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)",
+            "type": "string"
+          },
           "link": {
             "example": "dalan://enrol/eyJ2IjoxfQ",
             "type": "string"
@@ -3544,6 +3549,7 @@
           "command",
           "expiresAt",
           "id",
+          "installCommand",
           "link",
           "name"
         ],
@@ -3892,6 +3898,11 @@
       "NodeEnrolment": {
         "description": "NodeEnrolment is one invitation for a node abroad to dial into this panel, and afterwards the\nrecord tying that node to its management tunnel. Its secrets are cleared once it is used.",
         "properties": {
+          "dataTunnelId": {
+            "description": "DataTunnelId is the ordinary entry tunnel made for the node's traffic; 0 when none was asked for.",
+            "example": 0,
+            "type": "integer"
+          },
           "expiresAt": {
             "example": 1700001800,
             "format": "int64",
@@ -3920,6 +3931,7 @@
           }
         },
         "required": [
+          "dataTunnelId",
           "expiresAt",
           "id",
           "name",
@@ -4742,6 +4754,11 @@
             "example": "203.0.113.10",
             "type": "string"
           },
+          "down": {
+            "example": 5242880,
+            "format": "int64",
+            "type": "integer"
+          },
           "enable": {
             "example": true,
             "type": "boolean"
@@ -4781,12 +4798,27 @@
             "example": "de1",
             "type": "string"
           },
+          "nodeId": {
+            "description": "NodeId (portal) names the node whose panel holds the other end, set when this panel created both ends.",
+            "example": 0,
+            "type": "integer"
+          },
+          "parentId": {
+            "description": "ParentId (management portal) is the tunnel whose port and REALITY identity this channel shares.",
+            "example": 0,
+            "type": "integer"
+          },
           "port": {
             "example": 8443,
             "type": "integer"
           },
           "realityPublicKey": {
             "type": "string"
+          },
+          "relayPort": {
+            "description": "RelayPort is the loopback port both ends of a BackPack tunnel use to carry Xray traffic; zero means none.",
+            "example": 63500,
+            "type": "integer"
           },
           "role": {
             "example": "portal",
@@ -4816,6 +4848,12 @@
             "example": "wssmux",
             "type": "string"
           },
+          "up": {
+            "description": "Up and Down are bytes that left and came back through the entry outbound; read from the stats, never stored.",
+            "example": 1048576,
+            "format": "int64",
+            "type": "integer"
+          },
           "uuid": {
             "example": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10",
             "type": "string"
@@ -4824,6 +4862,7 @@
         "required": [
           "acceptUdp",
           "address",
+          "down",
           "enable",
           "engine",
           "exitOutbound",
@@ -4832,14 +4871,18 @@
           "id",
           "managePort",
           "name",
+          "nodeId",
+          "parentId",
           "port",
           "realityPublicKey",
+          "relayPort",
           "role",
           "routeInbounds",
           "security",
           "serverName",
           "shortId",
           "transport",
+          "up",
           "uuid"
         ],
         "type": "object"
@@ -5153,6 +5196,46 @@
           "private_key",
           "udp_relay_mode",
           "zero_rtt_handshake"
+        ],
+        "type": "object"
+      },
+      "TunnelPool": {
+        "description": "TunnelPool is a set of entry tunnels that stand in for each other: traffic leaves through the\nactive one, and the panel moves it to a spare when that one stays worse than the spare.",
+        "properties": {
+          "active": {
+            "description": "Active is the member carrying the traffic now; empty means the first working member.",
+            "example": "de1",
+            "type": "string"
+          },
+          "id": {
+            "example": 1,
+            "type": "integer"
+          },
+          "members": {
+            "description": "Members are tunnel names in order of preference.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "example": "main",
+            "type": "string"
+          },
+          "routeInbounds": {
+            "description": "RouteInbounds lists the local inbound tags whose traffic leaves through the pool.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "active",
+          "id",
+          "members",
+          "name",
+          "routeInbounds"
         ],
         "type": "object"
       },
@@ -13596,6 +13679,7 @@
                     {
                       "acceptUdp": false,
                       "address": "203.0.113.10",
+                      "down": 5242880,
                       "enable": true,
                       "engine": "xray",
                       "exitOutbound": "direct",
@@ -13608,8 +13692,11 @@
                       "id": 1,
                       "managePort": 0,
                       "name": "de1",
+                      "nodeId": 0,
+                      "parentId": 0,
                       "port": 8443,
                       "realityPublicKey": "",
+                      "relayPort": 63500,
                       "role": "portal",
                       "routeInbounds": [
                         ""
@@ -13618,6 +13705,7 @@
                       "serverName": "www.example.com",
                       "shortId": "a1b2c3d4",
                       "transport": "wssmux",
+                      "up": 1048576,
                       "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
                     }
                   ]
@@ -13729,7 +13817,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Whether the BackPack engine binary is on this server, and the BackPack release this Dalan version installs.",
+        "summary": "Whether the BackPack engine binary is on this server, which release is installed (empty when it was placed by hand), and the release this Dalan version installs by default.",
         "operationId": "get_panel_api_tunnels_engine",
         "responses": {
           "200": {
@@ -13751,8 +13839,9 @@
                 "example": {
                   "success": true,
                   "obj": {
-                    "installed": false,
-                    "version": "v1.8.5"
+                    "installed": true,
+                    "version": "v1.8.5",
+                    "pinned": "v1.8.5"
                   }
                 }
               }
@@ -13791,12 +13880,118 @@
         }
       }
     },
+    "/panel/api/tunnels/engine/update": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Install a BackPack release (empty version means the newest) and restart the BackPack tunnels on it. With nodeId the release is downloaded by that node and sent over the management channel, for a server that cannot reach GitHub. The release is verified against its published checksums. When tunnels that were connected do not reconnect within about 75 seconds, the earlier engine is put back and the call fails. Can take several minutes.",
+        "operationId": "post_panel_api_tunnels_engine_update",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "nodeId": 0,
+                "version": ""
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "installed": true,
+                    "version": "v1.9.0",
+                    "pinned": "v1.8.5"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/engine/release": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Node side of an engine update through a node: the first call starts downloading a BackPack release and answers pending until it is done, then each call returns the part of the archive that starts at offset (the checksums come with the first part). Needs an admin or node-admin token.",
+        "operationId": "post_panel_api_tunnels_engine_release",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "version": "",
+                "offset": 0
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "pending": false,
+                    "version": "v1.9.0",
+                    "size": 8421376,
+                    "data": "H4sIAAAA",
+                    "sums": "ZTNiMGM0NDI5OGZj"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/tunnels/add": {
       "post": {
         "tags": [
           "Tunnels"
         ],
-        "summary": "Create the entry end of a tunnel on this server. Secrets are generated by the panel. With the default engine (xray), routeInbounds lists the local inbound tags whose traffic leaves through the tunnel. With engine \"backpack\", send transport, forwardPorts (for example \"443=127.0.0.1:2096\") and optionally fallbackTransports and acceptUdp instead of security, serverName and routeInbounds.",
+        "summary": "Create the entry end of a tunnel on this server. Secrets are generated by the panel. With the default engine (xray), routeInbounds lists the local inbound tags whose traffic leaves through the tunnel. With engine \"backpack\", send transport, forwardPorts (for example \"443=127.0.0.1:2096\") and optionally fallbackTransports and acceptUdp instead of security, serverName and routeInbounds. Send nodeId to also create the dialling end on that node through its management channel; exitOutbound then names the outbound traffic leaves from there. If the node does not take its end, nothing is created.",
         "operationId": "post_panel_api_tunnels_add",
         "requestBody": {
           "required": true,
@@ -13842,6 +14037,7 @@
                   "obj": {
                     "acceptUdp": false,
                     "address": "203.0.113.10",
+                    "down": 5242880,
                     "enable": true,
                     "engine": "xray",
                     "exitOutbound": "direct",
@@ -13854,8 +14050,11 @@
                     "id": 1,
                     "managePort": 0,
                     "name": "de1",
+                    "nodeId": 0,
+                    "parentId": 0,
                     "port": 8443,
                     "realityPublicKey": "",
+                    "relayPort": 63500,
                     "role": "portal",
                     "routeInbounds": [
                       ""
@@ -13864,6 +14063,7 @@
                     "serverName": "www.example.com",
                     "shortId": "a1b2c3d4",
                     "transport": "wssmux",
+                    "up": 1048576,
                     "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
                   }
                 }
@@ -13918,6 +14118,7 @@
                   "obj": {
                     "acceptUdp": false,
                     "address": "203.0.113.10",
+                    "down": 5242880,
                     "enable": true,
                     "engine": "xray",
                     "exitOutbound": "direct",
@@ -13930,8 +14131,11 @@
                     "id": 1,
                     "managePort": 0,
                     "name": "de1",
+                    "nodeId": 0,
+                    "parentId": 0,
                     "port": 8443,
                     "realityPublicKey": "",
+                    "relayPort": 63500,
                     "role": "portal",
                     "routeInbounds": [
                       ""
@@ -13940,6 +14144,7 @@
                     "serverName": "www.example.com",
                     "shortId": "a1b2c3d4",
                     "transport": "wssmux",
+                    "up": 1048576,
                     "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
                   }
                 }
@@ -14003,12 +14208,288 @@
         }
       }
     },
+    "/panel/api/tunnels/pools/list": {
+      "get": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "List tunnel pools. active is the member that carries the traffic now; the panel moves it to a spare after the spare has been clearly better for several checks in a row.",
+        "operationId": "get_panel_api_tunnels_pools_list",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TunnelPool"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "active": "de1",
+                      "id": 1,
+                      "members": [
+                        ""
+                      ],
+                      "name": "main",
+                      "routeInbounds": [
+                        ""
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/routetest": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Find out which TCP ports a node can reach on this server. The panel listens on each port, asks the node through its management channel to dial address:port, and counts a port only when the connection arrived here. A port this server cannot listen on is reported with the reason. At most 20 ports.",
+        "operationId": "post_panel_api_tunnels_routetest",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "nodeId": 3,
+                "address": "203.0.113.10",
+                "ports": [
+                  443,
+                  8443,
+                  2053
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "port": 8443,
+                      "reachable": true,
+                      "latencyMs": 96,
+                      "error": ""
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/dial": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Open a TCP connection from this server to each port of host and report how it went. Used by the route test of another panel; needs an admin or node-admin token.",
+        "operationId": "post_panel_api_tunnels_dial",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "host": "203.0.113.10",
+                "ports": [
+                  443,
+                  8443
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "port": 8443,
+                      "reachable": true,
+                      "latencyMs": 96,
+                      "error": ""
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/pools/add": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Create a pool of two or more entry tunnels, in order of preference. routeInbounds lists the local inbound tags whose traffic leaves through the pool; the balancer is also available to routing rules as pool-<name>.",
+        "operationId": "post_panel_api_tunnels_pools_add",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "name": "main",
+                "members": [
+                  "de1",
+                  "nl1"
+                ],
+                "routeInbounds": [
+                  "inbound-443"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/TunnelPool"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "active": "de1",
+                    "id": 1,
+                    "members": [
+                      ""
+                    ],
+                    "name": "main",
+                    "routeInbounds": [
+                      ""
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/pools/del/{id}": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Delete a pool. Its tunnels stay.",
+        "operationId": "post_panel_api_tunnels_pools_del_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Pool ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/tunnels/del/{id}": {
       "post": {
         "tags": [
           "Tunnels"
         ],
-        "summary": "Delete a tunnel end from this panel. The other server keeps its end until it is deleted there.",
+        "summary": "Delete a tunnel. When this panel made the other end on a node, that end is removed too, and the call fails if the node cannot be reached; add here=true to remove only this end. Otherwise the other server keeps its end until it is deleted there.",
         "operationId": "post_panel_api_tunnels_del_id",
         "parameters": [
           {
@@ -14018,6 +14499,15 @@
             "description": "Tunnel ID.",
             "schema": {
               "type": "integer"
+            }
+          },
+          {
+            "name": "here",
+            "in": "query",
+            "required": true,
+            "description": "Remove only this end.",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -14077,6 +14567,7 @@
                   "success": true,
                   "obj": [
                     {
+                      "dataTunnelId": 0,
                       "expiresAt": 1700001800,
                       "id": 1,
                       "name": "de1",
@@ -14097,7 +14588,7 @@
         "tags": [
           "Node enrolment"
         ],
-        "summary": "Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored.",
+        "summary": "Open a management tunnel for a new node and return its one-time link, valid for 30 minutes. panelUrl is this panel as the node can reach it; address and port are where the node dials the tunnel. The link is returned only here and is never stored. Set tunnelId to an existing entry tunnel to manage the node over it instead; address, port and security are then taken from that tunnel. Set withTunnel to also create an ordinary entry tunnel named after the node on the same port, which the node imports when it joins; it cannot be combined with tunnelId.",
         "operationId": "post_panel_api_enrolments_add",
         "requestBody": {
           "required": true,
@@ -14112,7 +14603,8 @@
                 "address": "203.0.113.10",
                 "port": 8443,
                 "security": "reality",
-                "serverName": "www.example.com"
+                "serverName": "www.example.com",
+                "tunnelId": 0
               }
             }
           }
@@ -14142,6 +14634,7 @@
                     "command": "dalan enrol 'dalan://enrol/eyJ2IjoxfQ'",
                     "expiresAt": 1700001800,
                     "id": 1,
+                    "installCommand": "XUI_ENROL='dalan://enrol/eyJ2IjoxfQ' bash <(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)",
                     "link": "dalan://enrol/eyJ2IjoxfQ",
                     "name": "de1"
                   }

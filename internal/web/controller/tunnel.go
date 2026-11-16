@@ -1,8 +1,11 @@
 package controller
 
 import (
+	"context"
 	"strconv"
+	"time"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 
@@ -11,6 +14,7 @@ import (
 
 type TunnelController struct {
 	tunnelService service.TunnelService
+	poolService   service.TunnelPoolService
 }
 
 func NewTunnelController(g *gin.RouterGroup) *TunnelController {
@@ -24,16 +28,100 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.GET("/link/:id", a.link)
 	g.GET("/status/:id", a.status)
 	g.GET("/engine", a.engine)
+	g.GET("/pools/list", a.poolList)
 
 	g.POST("/add", a.add)
 	g.POST("/import", a.importLink)
 	g.POST("/engine/install", a.installEngine)
+	g.POST("/engine/update", a.updateEngine)
+	g.POST("/engine/release", a.engineRelease)
 	g.POST("/setEnable/:id", a.setEnable)
 	g.POST("/del/:id", a.del)
+	g.POST("/dial", a.dial)
+	g.POST("/routetest", a.routeTest)
+	g.POST("/pools/add", a.poolAdd)
+	g.POST("/pools/del/:id", a.poolDel)
+}
+
+const (
+	dialTimeout         = 5 * time.Second
+	engineUpdateTimeout = 8 * time.Minute
+)
+
+// dial runs on the node during a route test: it tries each port from this server's side.
+func (a *TunnelController) dial(c *gin.Context) {
+	var req struct {
+		Host  string `json:"host"`
+		Ports []int  `json:"ports"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.routeTest"), err)
+		return
+	}
+	results, err := tunnel.DialPorts(c.Request.Context(), req.Host, req.Ports, dialTimeout)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.routeTest"), err)
+		return
+	}
+	jsonObj(c, results, nil)
+}
+
+func (a *TunnelController) routeTest(c *gin.Context) {
+	var req struct {
+		NodeId  int    `json:"nodeId"`
+		Address string `json:"address"`
+		Ports   []int  `json:"ports"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.routeTest"), err)
+		return
+	}
+	results, err := a.tunnelService.RouteTest(req.NodeId, req.Address, req.Ports)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.routeTest"), err)
+		return
+	}
+	jsonObj(c, results, nil)
+}
+
+func (a *TunnelController) poolList(c *gin.Context) {
+	pools, err := a.poolService.List()
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.list"), err)
+		return
+	}
+	jsonObj(c, pools, nil)
+}
+
+func (a *TunnelController) poolAdd(c *gin.Context) {
+	var req struct {
+		Name          string   `json:"name"`
+		Members       []string `json:"members"`
+		RouteInbounds []string `json:"routeInbounds"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
+		return
+	}
+	pool, err := a.poolService.Create(req.Name, req.Members, req.RouteInbounds)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
+		return
+	}
+	jsonMsgObj(c, I18nWeb(c, "pages.tunnels.toasts.add"), pool, nil)
+}
+
+func (a *TunnelController) poolDel(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), err)
+		return
+	}
+	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), a.poolService.Delete(id))
 }
 
 func (a *TunnelController) list(c *gin.Context) {
-	tunnels, err := a.tunnelService.GetAll()
+	tunnels, err := a.tunnelService.ListWithTraffic()
 	if err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.list"), err)
 		return
@@ -69,16 +157,28 @@ func (a *TunnelController) add(c *gin.Context) {
 		FallbackTransports []string `json:"fallbackTransports"`
 		ForwardPorts       []string `json:"forwardPorts"`
 		AcceptUDP          bool     `json:"acceptUdp"`
+
+		NodeId       int    `json:"nodeId"`
+		ExitOutbound string `json:"exitOutbound"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
 		return
 	}
-	portal, err := a.tunnelService.CreatePortal(tunnel.PortalSpec{
+	spec := tunnel.PortalSpec{
 		Name: req.Name, Address: req.Address, Port: req.Port, Security: req.Security, ServerName: req.ServerName,
 		Engine: req.Engine, Transport: req.Transport, FallbackTransports: req.FallbackTransports,
 		ForwardPorts: req.ForwardPorts, AcceptUDP: req.AcceptUDP,
-	}, req.RouteInbounds)
+	}
+	var (
+		portal *model.ServerTunnel
+		err    error
+	)
+	if req.NodeId > 0 {
+		portal, err = a.tunnelService.CreateOnNode(req.NodeId, spec, req.RouteInbounds, req.ExitOutbound)
+	} else {
+		portal, err = a.tunnelService.CreatePortal(spec, req.RouteInbounds)
+	}
 	if err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
 		return
@@ -125,6 +225,10 @@ func (a *TunnelController) del(c *gin.Context) {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), err)
 		return
 	}
+	if c.Query("here") == "true" {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), a.tunnelService.DeleteHere(id))
+		return
+	}
 	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.del"), a.tunnelService.Delete(id))
 }
 
@@ -144,6 +248,42 @@ func (a *TunnelController) status(c *gin.Context) {
 
 func (a *TunnelController) engine(c *gin.Context) {
 	jsonObj(c, a.tunnelService.EngineInfo(), nil)
+}
+
+func (a *TunnelController) updateEngine(c *gin.Context) {
+	var req struct {
+		NodeId  int    `json:"nodeId"`
+		Version string `json:"version"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), engineUpdateTimeout)
+	defer cancel()
+	err := a.tunnelService.UpdateEngine(ctx, req.NodeId, req.Version)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
+		return
+	}
+	jsonObj(c, a.tunnelService.EngineInfo(), nil)
+}
+
+func (a *TunnelController) engineRelease(c *gin.Context) {
+	var req struct {
+		Version string `json:"version"`
+		Offset  int    `json:"offset"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
+		return
+	}
+	chunk, err := a.tunnelService.EngineReleaseChunk(req.Version, req.Offset)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
+		return
+	}
+	jsonObj(c, chunk, nil)
 }
 
 func (a *TunnelController) installEngine(c *gin.Context) {

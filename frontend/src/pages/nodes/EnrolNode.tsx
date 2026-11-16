@@ -11,6 +11,8 @@ import {
   Modal,
   Popconfirm,
   Radio,
+  Select,
+  Switch,
   Typography,
   message,
 } from 'antd';
@@ -22,6 +24,7 @@ import {
   useWaitingEnrolments,
   type Invitation,
 } from '@/api/queries/useEnrolments';
+import { useTunnelsQuery } from '@/api/queries/useTunnels';
 import { FormField, rhfZodValidate } from '@/components/form/rhf';
 import {
   EnrolmentFormSchema,
@@ -38,6 +41,8 @@ function defaultValues(): EnrolmentFormValues {
     port: 8443,
     security: 'reality',
     serverName: '',
+    tunnelId: 0,
+    withTunnel: true,
   };
 }
 
@@ -48,6 +53,11 @@ export default function EnrolNode() {
   const [messageApi, messageContextHolder] = message.useMessage();
   const methods = useForm<EnrolmentFormValues>({ defaultValues: defaultValues() });
   const security = useWatch({ control: methods.control, name: 'security' });
+  const tunnelId = useWatch({ control: methods.control, name: 'tunnelId' });
+  const { tunnels } = useTunnelsQuery();
+  const carriers = tunnels.filter(
+    (row) => row.role === 'portal' && !row.managePort && !row.parentId && row.enable,
+  );
   const waiting = useWaitingEnrolments(open);
   const { create, creating, cancel } = useEnrolmentMutations();
 
@@ -59,12 +69,26 @@ export default function EnrolNode() {
 
   const submit = methods.handleSubmit(async (values) => {
     const parsed = EnrolmentFormSchema.parse(values);
-    const created = await create({
-      ...parsed,
-      serverName: parsed.security === 'reality' ? parsed.serverName : '',
-    });
+    const created = await create(
+      parsed.tunnelId > 0
+        ? { name: parsed.name, panelUrl: parsed.panelUrl, tunnelId: parsed.tunnelId }
+        : {
+            name: parsed.name,
+            panelUrl: parsed.panelUrl,
+            address: parsed.address,
+            port: parsed.port,
+            security: parsed.security,
+            serverName: parsed.security === 'reality' ? parsed.serverName : '',
+            ...(parsed.withTunnel ? { withTunnel: true } : {}),
+          },
+    );
     if (created) setInvitation(created);
   });
+
+  const copyInstallCommand = async () => {
+    if (invitation && (await ClipboardManager.copyText(invitation.installCommand)))
+      messageApi.success(t('pages.enrolments.copied'));
+  };
 
   const copyCommand = async () => {
     if (invitation && (await ClipboardManager.copyText(invitation.command))) {
@@ -110,6 +134,15 @@ export default function EnrolNode() {
             <Button icon={<CopyOutlined aria-hidden />} onClick={copyCommand}>
               {t('pages.enrolments.copy')}
             </Button>
+            <Typography.Paragraph type="secondary" style={{ marginTop: 16 }}>
+              {t('pages.enrolments.installTitle')}
+            </Typography.Paragraph>
+            <Typography.Paragraph code style={{ direction: 'ltr', wordBreak: 'break-all' }}>
+              {invitation.installCommand}
+            </Typography.Paragraph>
+            <Button icon={<CopyOutlined aria-hidden />} onClick={copyInstallCommand}>
+              {t('pages.enrolments.copyInstall')}
+            </Button>
           </>
         ) : (
           <FormProvider {...methods}>
@@ -132,38 +165,67 @@ export default function EnrolNode() {
               >
                 <Input autoComplete="off" style={{ direction: 'ltr' }} />
               </FormField>
-              <FormField
-                name="address"
-                label={t('pages.tunnels.address')}
-                extra={t('pages.tunnels.addressHint')}
-                rules={{ validate: rhfZodValidate(EnrolmentFormSchema.shape.address) }}
-              >
-                <Input autoComplete="off" style={{ direction: 'ltr' }} />
-              </FormField>
-              <FormField
-                name="port"
-                label={t('pages.tunnels.port')}
-                rules={{ validate: rhfZodValidate(EnrolmentFormSchema.shape.port) }}
-              >
-                <InputNumber min={1} max={65535} style={{ width: '100%' }} />
-              </FormField>
-              <FormField name="security" label={t('pages.tunnels.security')}>
-                <Radio.Group
-                  options={[
-                    { value: 'reality', label: t('pages.tunnels.securityReality') },
-                    { value: 'none', label: t('pages.tunnels.securityNone') },
-                  ]}
-                />
-              </FormField>
-              {security === 'reality' && (
+              {carriers.length > 0 && (
                 <FormField
-                  name="serverName"
-                  label={t('pages.tunnels.serverName')}
-                  extra={t('pages.tunnels.serverNameHint')}
-                  rules={{ validate: rhfZodValidate(RealityServerNameSchema) }}
+                  name="tunnelId"
+                  label={t('pages.enrolments.tunnel')}
+                  extra={t('pages.enrolments.tunnelHint')}
                 >
-                  <Input placeholder="www.example.com" autoComplete="off" />
+                  <Select
+                    options={[
+                      { value: 0, label: t('pages.enrolments.tunnelNew') },
+                      ...carriers.map((row) => ({
+                        value: row.id,
+                        label: `${row.name} · ${row.address}:${row.port}`,
+                      })),
+                    ]}
+                  />
                 </FormField>
+              )}
+              {tunnelId === 0 && (
+                <>
+                  <FormField
+                    name="address"
+                    label={t('pages.tunnels.address')}
+                    extra={t('pages.tunnels.addressHint')}
+                    rules={{ validate: rhfZodValidate(EnrolmentFormSchema.shape.address) }}
+                  >
+                    <Input autoComplete="off" style={{ direction: 'ltr' }} />
+                  </FormField>
+                  <FormField
+                    name="port"
+                    label={t('pages.tunnels.port')}
+                    rules={{ validate: rhfZodValidate(EnrolmentFormSchema.shape.port) }}
+                  >
+                    <InputNumber min={1} max={65535} style={{ width: '100%' }} />
+                  </FormField>
+                  <FormField name="security" label={t('pages.tunnels.security')}>
+                    <Radio.Group
+                      options={[
+                        { value: 'reality', label: t('pages.tunnels.securityReality') },
+                        { value: 'none', label: t('pages.tunnels.securityNone') },
+                      ]}
+                    />
+                  </FormField>
+                  {security === 'reality' && (
+                    <FormField
+                      name="serverName"
+                      label={t('pages.tunnels.serverName')}
+                      extra={t('pages.tunnels.serverNameHint')}
+                      rules={{ validate: rhfZodValidate(RealityServerNameSchema) }}
+                    >
+                      <Input placeholder="www.example.com" autoComplete="off" />
+                    </FormField>
+                  )}
+                  <FormField
+                    name="withTunnel"
+                    label={t('pages.enrolments.withTunnel')}
+                    extra={t('pages.enrolments.withTunnelHint')}
+                    valueProp="checked"
+                  >
+                    <Switch />
+                  </FormField>
+                </>
               )}
             </Form>
             {waiting.length > 0 && (

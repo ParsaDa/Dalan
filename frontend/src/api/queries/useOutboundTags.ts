@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { keys } from '@/api/queryKeys';
 import { fetchXrayConfig } from '@/hooks/useXraySetting';
+import { injectedOutboundTags } from '@/lib/xray/injected-outbound-tags';
 import { isOutboundProtocol } from '@/schemas/primitives';
 
 // Available outbound (and balancer-eligible) tags the user can route an mtproto
@@ -22,9 +23,7 @@ export function useOutboundTags(opts?: { excludeBlackhole?: boolean }) {
         if (excludeBlackhole && isOutboundProtocol(ob, 'blackhole')) continue;
         tags.add(ob.tag);
       }
-      for (const t of data?.subscriptionOutboundTags ?? []) {
-        if (t) tags.add(t);
-      }
+      for (const t of injectedOutboundTags(data ?? {})) tags.add(t);
       // Balancers are valid routing targets too — injectMtprotoEgress emits a
       // balancerTag rule when the chosen tag names a balancer.
       const balancers = (
@@ -60,9 +59,7 @@ export function useOutboundTagGroups(opts?: { excludeBlackhole?: boolean }) {
         if (excludeBlackhole && isOutboundProtocol(ob, 'blackhole')) continue;
         outbounds.add(ob.tag);
       }
-      for (const t of data?.subscriptionOutboundTags ?? []) {
-        if (t) outbounds.add(t);
-      }
+      for (const t of injectedOutboundTags(data ?? {})) outbounds.add(t);
       const balancers: string[] = [];
       const bal = (
         data?.xraySetting?.routing as { balancers?: Array<{ tag?: string }> } | undefined

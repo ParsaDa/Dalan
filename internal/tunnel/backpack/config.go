@@ -53,15 +53,20 @@ func RenderConfig(t model.ServerTunnel) (string, error) {
 	}
 
 	var b strings.Builder
+	var ports []string
 	switch t.Role {
 	case model.TunnelRolePortal:
-		if len(t.ForwardPorts) == 0 {
-			return "", fmt.Errorf("tunnel %q: an entry tunnel needs at least one forwarded port", t.Name)
-		}
-		for _, port := range t.ForwardPorts {
+		ports = append(ports, t.ForwardPorts...)
+		for _, port := range ports {
 			if !forwardPortPattern.MatchString(port) {
 				return "", fmt.Errorf("tunnel %q: forwarded port %q is not valid", t.Name, port)
 			}
+		}
+		if t.RelayPort > 0 {
+			ports = append(ports, RelayForward(t.RelayPort))
+		}
+		if len(ports) == 0 {
+			return "", fmt.Errorf("tunnel %q: an entry tunnel needs at least one forwarded port", t.Name)
 		}
 		fmt.Fprintf(&b, "[server]\nbind_addr = %s\n", strconv.Quote(net.JoinHostPort("0.0.0.0", strconv.Itoa(t.Port))))
 	case model.TunnelRoleBridge:
@@ -71,7 +76,7 @@ func RenderConfig(t model.ServerTunnel) (string, error) {
 	}
 	fmt.Fprintf(&b, "transport = %s\ntoken = %s\n", strconv.Quote(t.Transport), strconv.Quote(t.UUID))
 	if t.Role == model.TunnelRolePortal {
-		fmt.Fprintf(&b, "ports = %s\n", quoteList(t.ForwardPorts))
+		fmt.Fprintf(&b, "ports = %s\n", quoteList(ports))
 		if t.AcceptUDP {
 			b.WriteString("accept_udp = true\n")
 		}

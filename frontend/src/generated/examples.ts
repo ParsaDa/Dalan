@@ -897,6 +897,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "command": "dalan enrol 'dalan://enrol/eyJ2IjoxfQ'",
     "expiresAt": 1700001800,
     "id": 1,
+    "installCommand": "XUI_ENROL='dalan://enrol/eyJ2IjoxfQ' bash \u003c(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)",
     "link": "dalan://enrol/eyJ2IjoxfQ",
     "name": "de1"
   },
@@ -974,6 +975,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "xrayVersion": "25.10.31"
   },
   "NodeEnrolment": {
+    "dataTunnelId": 0,
     "expiresAt": 1700001800,
     "id": 1,
     "name": "de1",
@@ -1169,6 +1171,7 @@ export const EXAMPLES: Record<string, unknown> = {
   "ServerTunnel": {
     "acceptUdp": false,
     "address": "203.0.113.10",
+    "down": 5242880,
     "enable": true,
     "engine": "xray",
     "exitOutbound": "direct",
@@ -1181,8 +1184,11 @@ export const EXAMPLES: Record<string, unknown> = {
     "id": 1,
     "managePort": 0,
     "name": "de1",
+    "nodeId": 0,
+    "parentId": 0,
     "port": 8443,
     "realityPublicKey": "",
+    "relayPort": 63500,
     "role": "portal",
     "routeInbounds": [
       ""
@@ -1191,6 +1197,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "serverName": "www.example.com",
     "shortId": "a1b2c3d4",
     "transport": "wssmux",
+    "up": 1048576,
     "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
   },
   "Setting": {
@@ -1277,6 +1284,17 @@ export const EXAMPLES: Record<string, unknown> = {
     "sni": "",
     "udp_relay_mode": "",
     "zero_rtt_handshake": false
+  },
+  "TunnelPool": {
+    "active": "de1",
+    "id": 1,
+    "members": [
+      ""
+    ],
+    "name": "main",
+    "routeInbounds": [
+      ""
+    ]
   },
   "User": {
     "id": 0,

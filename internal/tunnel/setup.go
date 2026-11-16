@@ -59,6 +59,7 @@ type setupPayload struct {
 
 	Transport          string   `json:"transport,omitempty"`
 	FallbackTransports []string `json:"fallbackTransports,omitempty"`
+	RelayPort          int      `json:"relayPort,omitempty"`
 }
 
 func validateEndpoint(name, address string, port int) error {
@@ -119,6 +120,11 @@ func NewPortal(spec PortalSpec) (model.ServerTunnel, error) {
 		portal.Security = model.TunnelSecurityNone
 		portal.Transport, portal.FallbackTransports = spec.Transport, spec.FallbackTransports
 		portal.ForwardPorts, portal.AcceptUDP = spec.ForwardPorts, spec.AcceptUDP
+		relay, err := backpack.NewRelayPort()
+		if err != nil {
+			return model.ServerTunnel{}, err
+		}
+		portal.RelayPort = relay
 		// Rendering is the engine's own validation of the forwarded ports.
 		if _, err := backpack.RenderConfig(portal); err != nil {
 			return model.ServerTunnel{}, err
@@ -157,6 +163,7 @@ func SetupLink(portal model.ServerTunnel) (string, error) {
 	if portal.Engine == model.TunnelEngineBackpack {
 		payload.Version = setupLinkBackpack
 		payload.Transport, payload.FallbackTransports = portal.Transport, portal.FallbackTransports
+		payload.RelayPort = portal.RelayPort
 	}
 	raw, err := json.Marshal(payload)
 	if err != nil {
@@ -205,6 +212,10 @@ func ParseSetupLink(link string) (model.ServerTunnel, error) {
 		bridge.Engine = model.TunnelEngineBackpack
 		bridge.Security = model.TunnelSecurityNone
 		bridge.Transport, bridge.FallbackTransports = p.Transport, p.FallbackTransports
+		if p.RelayPort != 0 && (p.RelayPort < backpack.RelayPortMin || p.RelayPort > backpack.RelayPortMax) {
+			return model.ServerTunnel{}, fmt.Errorf("tunnel link has a relay port outside %d-%d", backpack.RelayPortMin, backpack.RelayPortMax)
+		}
+		bridge.RelayPort = p.RelayPort
 	default:
 		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands versions %d and %d", p.Version, setupLinkXray, setupLinkBackpack)
 	}

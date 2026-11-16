@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# Platform environment (PORT, DALAN_*) becomes panel settings before anything starts.
+# shellcheck source=DockerPrepare.sh
+. /app/DockerPrepare.sh
+dalan_prepare
+
 # Start fail2ban with the 3x-ipl jail
 if [ "$XUI_ENABLE_FAIL2BAN" = "true" ]; then
     LOG_FOLDER="${XUI_LOG_FOLDER:-/var/log/x-ui}"

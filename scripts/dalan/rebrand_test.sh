@@ -27,6 +27,12 @@ db=/etc/x-ui/x-ui.db
 echo https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh
 TREE
 cp "${root}/a.sh" "${root}/x-ui.sh"
+cp "${root}/a.sh" "${root}/install.sh"
+cat >> "${root}/install.sh" <<'TREE'
+    setup_fail2ban
+
+    echo -e "${green}x-ui ${tag_version}${plain} installation finished, it is running now..."
+TREE
 cat >> "${root}/x-ui.sh" <<'TREE'
         "restart-xray")
             check_install 0 && restart_xray 0
@@ -66,6 +72,11 @@ has "${root}/x-ui.sh" '            check_install 0 && "${xui_folder}/x-ui" enrol
 [[ "$(grep -nF -- '"enrol")' "${root}/x-ui.sh" | cut -d: -f1)" -lt "$(grep -nF -- '"restart-xray")' "${root}/x-ui.sh" | cut -d: -f1)" ]] \
     || fail "the enrol command is not a case of its own ahead of restart-xray"
 lacks "${root}/a.sh" '"enrol")'
+has "${root}/install.sh" 'if [[ -n "${XUI_ENROL:-}" ]]; then'
+has "${root}/install.sh" '        /usr/bin/x-ui enrol "${XUI_ENROL}" ||'
+[[ "$(grep -nF -- 'XUI_ENROL:-' "${root}/install.sh" | cut -d: -f1)" -lt "$(grep -nF -- 'installation finished' "${root}/install.sh" | cut -d: -f1)" ]] \
+    || fail "the install-and-enrol step does not run before the final summary"
+lacks "${root}/a.sh" 'XUI_ENROL'
 has "${root}/a.sh" "echo https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh"
 has "${root}/.github/workflows/r.yml" "images: ghcr.io/parsada/dalan"
 has "${root}/.github/workflows/r.yml" "-X github.com/mhsanaei/3x-ui/v3/internal/config.buildCommit=abc"
@@ -77,6 +88,9 @@ has "${root}/.github/workflows/r.yml" "        uses: docker/login-action@v4"
 lacks "${root}/a.sh" "MHSanaei/3x-ui"
 
 bash "${here}/check-brand.sh" "${root}" || fail "check failed on a rebranded tree"
+
+bash "${here}/rebrand.sh" "${root}"
+[[ "$(count "${root}/install.sh" 'if [[ -n "${XUI_ENROL:-}" ]]; then')" == 1 ]] || fail "rebranding twice duplicated the install-and-enrol step"
 
 before="$(cd "${root}" && find . -type f -exec sha256sum {} + | sort)"
 bash "${here}/rebrand.sh" "${root}"

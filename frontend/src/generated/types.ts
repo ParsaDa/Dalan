@@ -5,6 +5,7 @@ export type OnlineAPISupport = number;
 export type ProcessState = string;
 export type Protocol = string;
 export type addrFamily = number;
+export type engineSource = unknown;
 export type staticEgressResolver = string;
 export type trafficLocalApplyAction = number;
 export type transportBits = number;
@@ -803,6 +804,7 @@ export interface Invitation {
   command: string;
   expiresAt: number;
   id: number;
+  installCommand: string;
   link: string;
   name: string;
 }
@@ -883,6 +885,7 @@ export interface Node {
 }
 
 export interface NodeEnrolment {
+  dataTunnelId: number;
   expiresAt: number;
   id: number;
   name: string;
@@ -1073,6 +1076,7 @@ export interface ServerSettings {
 export interface ServerTunnel {
   acceptUdp: boolean;
   address: string;
+  down: number;
   enable: boolean;
   engine: string;
   exitOutbound: string;
@@ -1081,14 +1085,18 @@ export interface ServerTunnel {
   id: number;
   managePort: number;
   name: string;
+  nodeId: number;
+  parentId: number;
   port: number;
   realityPublicKey: string;
+  relayPort: number;
   role: string;
   routeInbounds: string[];
   security: string;
   serverName: string;
   shortId: string;
   transport: string;
+  up: number;
   uuid: string;
 }
 
@@ -1161,6 +1169,14 @@ export interface TuicServerSettings {
   sni?: string;
   udp_relay_mode: string;
   zero_rtt_handshake: boolean;
+}
+
+export interface TunnelPool {
+  active: string;
+  id: number;
+  members: string[];
+  name: string;
+  routeInbounds: string[];
 }
 
 export interface User {

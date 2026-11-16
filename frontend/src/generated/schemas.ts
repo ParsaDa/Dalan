@@ -3505,6 +3505,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": 1,
         "type": "integer"
       },
+      "installCommand": {
+        "description": "InstallCommand installs Dalan on a fresh server and joins this panel in one go.",
+        "example": "XUI_ENROL='dalan://enrol/eyJ2IjoxfQ' bash \u003c(curl -Ls https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh)",
+        "type": "string"
+      },
       "link": {
         "example": "dalan://enrol/eyJ2IjoxfQ",
         "type": "string"
@@ -3518,6 +3523,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "command",
       "expiresAt",
       "id",
+      "installCommand",
       "link",
       "name"
     ],
@@ -3866,6 +3872,11 @@ export const SCHEMAS: Record<string, unknown> = {
   "NodeEnrolment": {
     "description": "NodeEnrolment is one invitation for a node abroad to dial into this panel, and afterwards the\nrecord tying that node to its management tunnel. Its secrets are cleared once it is used.",
     "properties": {
+      "dataTunnelId": {
+        "description": "DataTunnelId is the ordinary entry tunnel made for the node's traffic; 0 when none was asked for.",
+        "example": 0,
+        "type": "integer"
+      },
       "expiresAt": {
         "example": 1700001800,
         "format": "int64",
@@ -3894,6 +3905,7 @@ export const SCHEMAS: Record<string, unknown> = {
       }
     },
     "required": [
+      "dataTunnelId",
       "expiresAt",
       "id",
       "name",
@@ -4716,6 +4728,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "203.0.113.10",
         "type": "string"
       },
+      "down": {
+        "example": 5242880,
+        "format": "int64",
+        "type": "integer"
+      },
       "enable": {
         "example": true,
         "type": "boolean"
@@ -4755,12 +4772,27 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "de1",
         "type": "string"
       },
+      "nodeId": {
+        "description": "NodeId (portal) names the node whose panel holds the other end, set when this panel created both ends.",
+        "example": 0,
+        "type": "integer"
+      },
+      "parentId": {
+        "description": "ParentId (management portal) is the tunnel whose port and REALITY identity this channel shares.",
+        "example": 0,
+        "type": "integer"
+      },
       "port": {
         "example": 8443,
         "type": "integer"
       },
       "realityPublicKey": {
         "type": "string"
+      },
+      "relayPort": {
+        "description": "RelayPort is the loopback port both ends of a BackPack tunnel use to carry Xray traffic; zero means none.",
+        "example": 63500,
+        "type": "integer"
       },
       "role": {
         "example": "portal",
@@ -4790,6 +4822,12 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "wssmux",
         "type": "string"
       },
+      "up": {
+        "description": "Up and Down are bytes that left and came back through the entry outbound; read from the stats, never stored.",
+        "example": 1048576,
+        "format": "int64",
+        "type": "integer"
+      },
       "uuid": {
         "example": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10",
         "type": "string"
@@ -4798,6 +4836,7 @@ export const SCHEMAS: Record<string, unknown> = {
     "required": [
       "acceptUdp",
       "address",
+      "down",
       "enable",
       "engine",
       "exitOutbound",
@@ -4806,14 +4845,18 @@ export const SCHEMAS: Record<string, unknown> = {
       "id",
       "managePort",
       "name",
+      "nodeId",
+      "parentId",
       "port",
       "realityPublicKey",
+      "relayPort",
       "role",
       "routeInbounds",
       "security",
       "serverName",
       "shortId",
       "transport",
+      "up",
       "uuid"
     ],
     "type": "object"
@@ -5127,6 +5170,46 @@ export const SCHEMAS: Record<string, unknown> = {
       "private_key",
       "udp_relay_mode",
       "zero_rtt_handshake"
+    ],
+    "type": "object"
+  },
+  "TunnelPool": {
+    "description": "TunnelPool is a set of entry tunnels that stand in for each other: traffic leaves through the\nactive one, and the panel moves it to a spare when that one stays worse than the spare.",
+    "properties": {
+      "active": {
+        "description": "Active is the member carrying the traffic now; empty means the first working member.",
+        "example": "de1",
+        "type": "string"
+      },
+      "id": {
+        "example": 1,
+        "type": "integer"
+      },
+      "members": {
+        "description": "Members are tunnel names in order of preference.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "name": {
+        "example": "main",
+        "type": "string"
+      },
+      "routeInbounds": {
+        "description": "RouteInbounds lists the local inbound tags whose traffic leaves through the pool.",
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "active",
+      "id",
+      "members",
+      "name",
+      "routeInbounds"
     ],
     "type": "object"
   },

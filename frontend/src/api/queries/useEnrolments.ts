@@ -13,6 +13,10 @@ import type { EnrolmentFormValues } from '@/schemas/enrolment';
 
 export type { Invitation, NodeEnrolment };
 
+export type EnrolmentRequest =
+  | (Omit<EnrolmentFormValues, 'tunnelId' | 'withTunnel'> & { withTunnel?: true })
+  | { name: string; panelUrl: string; tunnelId: number };
+
 const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
 const ENROLMENTS_KEY = ['enrolments'] as const;
 
@@ -33,7 +37,7 @@ export function useEnrolmentMutations() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ENROLMENTS_KEY });
 
   const create = useMutation({
-    mutationFn: async (values: EnrolmentFormValues): Promise<Invitation | null> => {
+    mutationFn: async (values: EnrolmentRequest): Promise<Invitation | null> => {
       const msg = await HttpUtil.post('/panel/api/enrolments/add', values, JSON_HEADERS);
       if (!msg?.success) return null;
       return parseMsg(msg, InvitationSchema, 'enrolments/add').obj ?? null;

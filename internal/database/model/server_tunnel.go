@@ -35,6 +35,8 @@ type ServerTunnel struct {
 	// ForwardPorts (portal) are ports opened on this server and carried to the other end, like "443=127.0.0.1:2096".
 	ForwardPorts []string `json:"forwardPorts" gorm:"serializer:json;column:forward_ports"`
 	AcceptUDP    bool     `json:"acceptUdp" gorm:"column:accept_udp"`
+	// RelayPort is the loopback port both ends of a BackPack tunnel use to carry Xray traffic; zero means none.
+	RelayPort int `json:"relayPort" gorm:"column:relay_port;default:0" example:"63500"`
 
 	// RouteInbounds (portal) lists the local inbound tags whose traffic leaves through this tunnel.
 	RouteInbounds []string `json:"routeInbounds" gorm:"serializer:json;column:route_inbounds"`
@@ -44,4 +46,13 @@ type ServerTunnel struct {
 	// ManagePort marks a management tunnel. Portal: the loopback port opened here. Bridge: this
 	// server's panel port, the only place the tunnel's traffic may go. Zero is an ordinary tunnel.
 	ManagePort int `json:"managePort" gorm:"column:manage_port;default:0" example:"0"`
+	// ParentId (management portal) is the tunnel whose port and REALITY identity this channel shares.
+	ParentId int `json:"parentId" gorm:"column:parent_id;default:0" example:"0"`
+	// NodeId (portal) names the node whose panel holds the other end, set when this panel created both ends.
+	NodeId int `json:"nodeId" gorm:"column:node_id;default:0" example:"0"`
+	// Up and Down are bytes that left and came back through the entry outbound; read from the stats, never stored.
+	Up   int64 `json:"up" gorm:"-" example:"1048576"`
+	Down int64 `json:"down" gorm:"-" example:"5242880"`
+	// ManageTarget is the node panel port a BackPack parent delivers its management forward to.
+	ManageTarget int `json:"-" gorm:"column:manage_target;default:0"`
 }

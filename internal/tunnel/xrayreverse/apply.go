@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/json_util"
 	"github.com/mhsanaei/3x-ui/v3/internal/xray"
 )
@@ -21,6 +22,7 @@ func bridgeInboundTag(name string) string  { return "tunnel-" + name + "-exit" }
 func probeInboundTag(name string) string   { return "tunnel-" + name + "-probe" }
 func manageInboundTag(name string) string  { return "tunnel-" + name + "-manage" }
 func panelOutboundTag(name string) string  { return "tunnel-" + name + "-panel" }
+func relayInboundTag(name string) string   { return "tunnel-" + name + "-relay" }
 
 const probeBasePort = 62900
 
@@ -44,15 +46,57 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 	existing, _ := routing["rules"].([]any)
 	var rules []any
 	changed := false
+	riders := ridersByParent(tunnels)
 
 	for _, t := range tunnels {
-		if !t.Enable || (t.Engine != "" && t.Engine != model.TunnelEngineXray) {
+		if !t.Enable {
+			continue
+		}
+		if t.ParentId > 0 {
+			if t.Engine == model.TunnelEngineBackpack || !hasRider(riders, t) {
+				continue
+			}
+			changed = true
+			cfg.InboundConfigs = append(cfg.InboundConfigs, manageInbound(t))
+			rules = append(rules, map[string]any{
+				"type": "field", "inboundTag": []string{manageInboundTag(t.Name)}, "outboundTag": PortalOutboundTag(t.Name),
+			})
+			continue
+		}
+		if t.Engine == model.TunnelEngineBackpack {
+			if t.RelayPort == 0 {
+				continue
+			}
+			changed = true
+			switch t.Role {
+			case model.TunnelRolePortal:
+				outbounds = append(outbounds, relayOutbound(t))
+				if len(t.RouteInbounds) > 0 {
+					rules = append(rules, map[string]any{
+						"type": "field", "inboundTag": t.RouteInbounds, "outboundTag": PortalOutboundTag(t.Name),
+					})
+				}
+			case model.TunnelRoleBridge:
+				cfg.InboundConfigs = append(cfg.InboundConfigs, relayInbound(t))
+				exit := t.ExitOutbound
+				if exit == "" {
+					exit = defaultExitOutbound
+				}
+				rules = append(rules, map[string]any{
+					"type": "field", "inboundTag": []string{relayInboundTag(t.Name)}, "outboundTag": exit,
+				})
+			default:
+				return fmt.Errorf("tunnel %q: unknown role %q", t.Name, t.Role)
+			}
+			continue
+		}
+		if t.Engine != "" && t.Engine != model.TunnelEngineXray {
 			continue
 		}
 		changed = true
 		switch t.Role {
 		case model.TunnelRolePortal:
-			inbound, err := portalInbound(t)
+			inbound, err := portalInbound(t, riders[t.Id])
 			if err != nil {
 				return err
 			}
@@ -95,6 +139,11 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 	if !changed {
 		return nil
 	}
+	if hasEntry(tunnels) {
+		if err := enableOutboundStats(cfg); err != nil {
+			return err
+		}
+	}
 
 	// Tunnel rules go first so an operator's catch-all rule cannot swallow tunnel traffic.
 	routing["rules"] = append(rules, existing...)
@@ -111,14 +160,39 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 	return nil
 }
 
-func portalInbound(t model.ServerTunnel) (xray.InboundConfig, error) {
-	settings, err := json.Marshal(map[string]any{
-		"decryption": "none",
-		"clients": []any{map[string]any{
-			"id": t.UUID, "email": PortalOutboundTag(t.Name),
-			"reverse": map[string]any{"tag": PortalOutboundTag(t.Name)},
-		}},
-	})
+// ridersByParent groups the management channels that share an enabled Xray tunnel's port.
+func ridersByParent(tunnels []model.ServerTunnel) map[int][]model.ServerTunnel {
+	parents := map[int]bool{}
+	for _, t := range tunnels {
+		if t.Enable && t.Role == model.TunnelRolePortal && t.Engine != model.TunnelEngineBackpack &&
+			t.ParentId == 0 && t.ManagePort == 0 {
+			parents[t.Id] = true
+		}
+	}
+	riders := map[int][]model.ServerTunnel{}
+	for _, t := range tunnels {
+		if t.Enable && t.Role == model.TunnelRolePortal && t.ManagePort > 0 && parents[t.ParentId] {
+			riders[t.ParentId] = append(riders[t.ParentId], t)
+		}
+	}
+	return riders
+}
+
+func hasRider(riders map[int][]model.ServerTunnel, t model.ServerTunnel) bool {
+	for _, r := range riders[t.ParentId] {
+		if r.Id == t.Id {
+			return true
+		}
+	}
+	return false
+}
+
+func portalInbound(t model.ServerTunnel, riders []model.ServerTunnel) (xray.InboundConfig, error) {
+	clients := []any{reverseClient(t)}
+	for _, r := range riders {
+		clients = append(clients, reverseClient(r))
+	}
+	settings, err := json.Marshal(map[string]any{"decryption": "none", "clients": clients})
 	if err != nil {
 		return xray.InboundConfig{}, err
 	}
@@ -139,6 +213,13 @@ func portalInbound(t model.ServerTunnel) (xray.InboundConfig, error) {
 		Listen: json_util.RawMessage(`"0.0.0.0"`), Port: t.Port, Protocol: "vless",
 		Settings: settings, StreamSettings: streamJSON, Tag: portalInboundTag(t.Name),
 	}, nil
+}
+
+func reverseClient(t model.ServerTunnel) map[string]any {
+	return map[string]any{
+		"id": t.UUID, "email": PortalOutboundTag(t.Name),
+		"reverse": map[string]any{"tag": PortalOutboundTag(t.Name)},
+	}
 }
 
 func bridgeOutbound(t model.ServerTunnel) map[string]any {
@@ -195,4 +276,62 @@ func probeInbound(cfg *xray.Config, t model.ServerTunnel) (xray.InboundConfig, b
 		Listen: json_util.RawMessage(`"127.0.0.1"`), Port: port, Protocol: "mixed",
 		Settings: json_util.RawMessage(`{"auth":"noauth","udp":false}`), Tag: probeInboundTag(t.Name),
 	}, true
+}
+
+// The entry end reaches the exit end's relay through the engine's loopback forward, so the relay is a plain SOCKS hop.
+func relayOutbound(t model.ServerTunnel) map[string]any {
+	user, pass := backpack.RelayCredentials(t)
+	return map[string]any{
+		"tag": PortalOutboundTag(t.Name), "protocol": "socks",
+		"settings": map[string]any{"servers": []any{map[string]any{
+			"address": "127.0.0.1", "port": t.RelayPort,
+			"users": []any{map[string]any{"user": user, "pass": pass}},
+		}}},
+	}
+}
+
+func relayInbound(t model.ServerTunnel) xray.InboundConfig {
+	user, pass := backpack.RelayCredentials(t)
+	settings, _ := json.Marshal(map[string]any{
+		"auth": "password", "udp": false,
+		"accounts": []any{map[string]any{"user": user, "pass": pass}},
+	})
+	return xray.InboundConfig{
+		Listen: json_util.RawMessage(`"127.0.0.1"`), Port: t.RelayPort, Protocol: "socks",
+		Settings: settings, Tag: relayInboundTag(t.Name),
+	}
+}
+
+func hasEntry(tunnels []model.ServerTunnel) bool {
+	for _, t := range tunnels {
+		if Routable(t) {
+			return true
+		}
+	}
+	return false
+}
+
+// enableOutboundStats turns on the counters behind a tunnel's traffic totals; the stored template is untouched.
+func enableOutboundStats(cfg *xray.Config) error {
+	policy := map[string]any{}
+	if len(cfg.Policy) > 0 {
+		if err := json.Unmarshal(cfg.Policy, &policy); err != nil {
+			return fmt.Errorf("tunnels: policy section is unparsable: %w", err)
+		}
+	}
+	system, _ := policy["system"].(map[string]any)
+	if system == nil {
+		system = map[string]any{}
+	}
+	if system["statsOutboundUplink"] == true && system["statsOutboundDownlink"] == true {
+		return nil
+	}
+	system["statsOutboundUplink"], system["statsOutboundDownlink"] = true, true
+	policy["system"] = system
+	raw, err := json.Marshal(policy)
+	if err != nil {
+		return err
+	}
+	cfg.Policy = json_util.RawMessage(raw)
+	return nil
 }

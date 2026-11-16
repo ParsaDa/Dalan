@@ -106,3 +106,84 @@ func TestInstallKeepsTheCurrentEngineWhenTheDownloadFails(t *testing.T) {
 		t.Fatalf("the working engine was replaced by a failed download: %q", got)
 	}
 }
+
+func TestInstallRemembersWhichReleaseItPutInPlaceAndAFailureKeepsTheOldRecord(t *testing.T) {
+	archive := releaseArchive(t, "#!/bin/sh\necho engine\n")
+	base := releaseServer(t, archive, sumLine(archive))
+	dest := filepath.Join(t.TempDir(), "bin", "backpack")
+
+	if got := InstalledVersion(dest); got != "" {
+		t.Fatalf("InstalledVersion before any install = %q, want none", got)
+	}
+	if err := Install(context.Background(), http.DefaultClient, base, "v2.0.0", "amd64", dest); err != nil {
+		t.Fatalf("Install: %v", err)
+	}
+	if got := InstalledVersion(dest); got != "v2.0.0" {
+		t.Fatalf("InstalledVersion = %q, want v2.0.0", got)
+	}
+
+	if err := Install(context.Background(), http.DefaultClient, base, "v9.9.9", "amd64", dest); err == nil {
+		t.Fatal("installing a release the server does not have succeeded")
+	}
+	if got := InstalledVersion(dest); got != "v2.0.0" {
+		t.Fatalf("InstalledVersion after a failed update = %q, want v2.0.0 kept", got)
+	}
+}
+
+func TestAnUpdateKeepsTheEngineItReplacedAndRollbackPutsItBack(t *testing.T) {
+	old := releaseArchive(t, "old engine")
+	oldBase := releaseServer(t, old, sumLine(old))
+	dest := filepath.Join(t.TempDir(), "backpack")
+	if err := Install(context.Background(), http.DefaultClient, oldBase, "v2.0.0", "amd64", dest); err != nil {
+		t.Fatalf("first Install: %v", err)
+	}
+
+	next := releaseArchive(t, "new engine")
+	rel := Release{Archive: next, Sums: []byte(sumLine(next))}
+	if err := Place(rel, "v2.1.0", "amd64", dest); err != nil {
+		t.Fatalf("Place: %v", err)
+	}
+	if got, _ := os.ReadFile(dest); string(got) != "new engine" || InstalledVersion(dest) != "v2.1.0" {
+		t.Fatalf("after the update engine = %q version = %q", got, InstalledVersion(dest))
+	}
+
+	if err := Rollback(dest); err != nil {
+		t.Fatalf("Rollback: %v", err)
+	}
+	if got, _ := os.ReadFile(dest); string(got) != "old engine" || InstalledVersion(dest) != "v2.0.0" {
+		t.Fatalf("after the rollback engine = %q version = %q, want the old one back", got, InstalledVersion(dest))
+	}
+	if err := Rollback(dest); err == nil {
+		t.Fatal("a second Rollback succeeded with nothing left to go back to")
+	}
+}
+
+func TestPlaceRefusesAReleaseWhoseChecksumDoesNotMatch(t *testing.T) {
+	archive := releaseArchive(t, "tampered")
+	dest := filepath.Join(t.TempDir(), "backpack")
+	writeFile(t, dest, "current engine")
+
+	err := Place(Release{Archive: archive, Sums: []byte("00  backpack_linux_amd64.tar.gz\n")}, "v2.0.0", "amd64", dest)
+	if err == nil || !strings.Contains(err.Error(), "checksum mismatch") {
+		t.Fatalf("Place error = %v, want a checksum mismatch", err)
+	}
+	if got, _ := os.ReadFile(dest); string(got) != "current engine" {
+		t.Fatalf("a refused release replaced the engine: %q", got)
+	}
+}
+
+func TestLatestVersionReadsTheTagOfTheNewestRelease(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/repos/AminMGMT/BackPack/releases/latest" {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write([]byte(`{"tag_name":"v1.9.0","draft":false}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	got, err := LatestVersion(context.Background(), http.DefaultClient, srv.URL)
+	if err != nil || got != "v1.9.0" {
+		t.Fatalf("LatestVersion = %q, %v; want v1.9.0", got, err)
+	}
+}

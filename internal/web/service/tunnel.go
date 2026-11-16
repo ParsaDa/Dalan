@@ -7,7 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"runtime"
+	"strings"
 	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/config"
@@ -29,15 +29,63 @@ var tunnelEngines = &backpack.Supervisor{
 
 const engineInstallTimeout = 5 * time.Minute
 
-// EngineInfo says whether the BackPack engine is on this server and which release Dalan installs.
+// EngineInfo says whether the BackPack engine is on this server, which release is there (empty when
+// it was placed by hand) and which one Dalan installs by default.
 type EngineInfo struct {
 	Installed bool   `json:"installed" example:"true"`
 	Version   string `json:"version" example:"v1.8.5"`
+	Pinned    string `json:"pinned" example:"v1.8.5"`
 }
 
 // TunnelService stores the tunnel ends this panel owns and schedules Xray to pick up changes.
 type TunnelService struct {
 	xrayService XrayService
+}
+
+// TunnelOutbound is an entry tunnel as Xray routing sees it: an outbound that rules and balancers can target.
+type TunnelOutbound struct {
+	Tag    string `json:"tag" example:"tunnel-de1"`
+	Name   string `json:"name" example:"de1"`
+	Engine string `json:"engine" example:"xray"`
+}
+
+// RoutableOutbounds lists the enabled entry tunnels that exist as outbounds in the generated Xray config.
+func (s *TunnelService) RoutableOutbounds() ([]TunnelOutbound, error) {
+	tunnels, err := s.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]TunnelOutbound, 0, len(tunnels))
+	for _, t := range tunnels {
+		if !xrayreverse.Routable(t) {
+			continue
+		}
+		out = append(out, TunnelOutbound{Tag: xrayreverse.PortalOutboundTag(t.Name), Name: t.Name, Engine: t.Engine})
+	}
+	return out, nil
+}
+
+// ListWithTraffic returns every tunnel with the bytes its entry outbound has carried.
+func (s *TunnelService) ListWithTraffic() ([]model.ServerTunnel, error) {
+	tunnels, err := s.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	var rows []model.OutboundTraffics
+	if err := database.GetDB().Where("tag LIKE ?", xrayreverse.PortalOutboundTag("")+"%").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	byTag := make(map[string]model.OutboundTraffics, len(rows))
+	for _, r := range rows {
+		byTag[r.Tag] = r
+	}
+	for i := range tunnels {
+		if t := &tunnels[i]; xrayreverse.Routable(*t) {
+			r := byTag[xrayreverse.PortalOutboundTag(t.Name)]
+			t.Up, t.Down = r.Up, r.Down
+		}
+	}
+	return tunnels, nil
 }
 
 func (s *TunnelService) GetAll() ([]model.ServerTunnel, error) {
@@ -66,8 +114,13 @@ func (s *TunnelService) create(t *model.ServerTunnel) error {
 	if count > 0 {
 		return fmt.Errorf("a tunnel with the name %q already exists", t.Name)
 	}
-	if t.Role == model.TunnelRolePortal {
+	if t.Role == model.TunnelRolePortal && t.ParentId == 0 {
 		if err := s.checkPortFree(t.Port); err != nil {
+			return err
+		}
+	}
+	if t.RelayPort > 0 {
+		if err := s.checkRelayPortFree(t.RelayPort); err != nil {
 			return err
 		}
 	}
@@ -97,17 +150,43 @@ func (s *TunnelService) checkPortFree(port int) error {
 	return nil
 }
 
+var errRelayPortTaken = errors.New("relay port is already used on this server")
+
+// A relay port is a loopback listener on both ends, so it cannot share a port with an inbound or another relay.
+func (s *TunnelService) checkRelayPortFree(port int) error {
+	db := database.GetDB()
+	var count int64
+	if err := db.Model(&model.ServerTunnel{}).Where("relay_port = ?", port).Count(&count).Error; err != nil {
+		return err
+	}
+	if count == 0 {
+		if err := db.Model(&model.Inbound{}).Where("node_id IS NULL AND port = ?", port).Count(&count).Error; err != nil {
+			return err
+		}
+	}
+	if count > 0 {
+		return fmt.Errorf("relay port %d: %w", port, errRelayPortTaken)
+	}
+	return nil
+}
+
 // CreatePortal makes the listening end of a tunnel; routeInbounds are the local inbound tags that leave through it.
 func (s *TunnelService) CreatePortal(spec tunnel.PortalSpec, routeInbounds []string) (*model.ServerTunnel, error) {
-	portal, err := tunnel.NewPortal(spec)
-	if err != nil {
-		return nil, err
+	for attempt := 0; ; attempt++ {
+		portal, err := tunnel.NewPortal(spec)
+		if err != nil {
+			return nil, err
+		}
+		portal.RouteInbounds = routeInbounds
+		err = s.create(&portal)
+		if errors.Is(err, errRelayPortTaken) && attempt < 5 {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		return &portal, nil
 	}
-	portal.RouteInbounds = routeInbounds
-	if err := s.create(&portal); err != nil {
-		return nil, err
-	}
-	return &portal, nil
 }
 
 // Import makes the dialing end of a tunnel from the other panel's setup link.
@@ -142,15 +221,63 @@ func (s *TunnelService) SetEnable(id int, enable bool) error {
 	return nil
 }
 
+// Delete removes a tunnel; when this panel made the other end on a node, that end is removed first.
 func (s *TunnelService) Delete(id int) error {
 	t, err := s.get(id)
 	if err != nil {
 		return err
 	}
+	if err := s.refuseWhileInUse(t); err != nil {
+		return err
+	}
+	if t.NodeId > 0 && t.Role == model.TunnelRolePortal {
+		if err := s.deleteNodeEnd(t); err != nil {
+			return fmt.Errorf("%w; remove only this end if the node is gone for good", err)
+		}
+	}
+	return s.deleteLocal(t)
+}
+
+// DeleteHere removes this end only, for a tunnel whose node cannot be asked any more.
+func (s *TunnelService) DeleteHere(id int) error {
+	t, err := s.get(id)
+	if err != nil {
+		return err
+	}
+	return s.deleteLocal(t)
+}
+
+// refuseWhileInUse keeps a tunnel that a pool or a node's management still uses, before any end is touched.
+func (s *TunnelService) refuseWhileInUse(t *model.ServerTunnel) error {
+	var pools []model.TunnelPool
+	if err := database.GetDB().Find(&pools).Error; err != nil {
+		return err
+	}
+	for _, p := range pools {
+		for _, m := range p.Members {
+			if m == t.Name {
+				return fmt.Errorf("this tunnel is part of pool %s; delete the pool first", p.Name)
+			}
+		}
+	}
 	if t.ManagePort > 0 && t.Role == model.TunnelRolePortal {
 		return errManagementTunnel
 	}
-	if err := database.GetDB().Delete(&model.ServerTunnel{}, id).Error; err != nil {
+	var carried []string
+	if err := database.GetDB().Model(&model.ServerTunnel{}).Where("parent_id = ?", t.Id).Pluck("name", &carried).Error; err != nil {
+		return err
+	}
+	if len(carried) > 0 {
+		return fmt.Errorf("this tunnel carries the management of %s; remove that node first", strings.Join(carried, ", "))
+	}
+	return nil
+}
+
+func (s *TunnelService) deleteLocal(t *model.ServerTunnel) error {
+	if err := s.refuseWhileInUse(t); err != nil {
+		return err
+	}
+	if err := database.GetDB().Delete(&model.ServerTunnel{}, t.Id).Error; err != nil {
 		return err
 	}
 	s.applyChange()
@@ -192,7 +319,7 @@ func (s *TunnelService) ReconcileEngines() error {
 	if err != nil {
 		return err
 	}
-	return tunnelEngines.Reconcile(tunnels)
+	return tunnelEngines.Reconcile(backpack.WithManagement(tunnels))
 }
 
 // StopEngines stops every BackPack process this panel started.
@@ -200,24 +327,14 @@ func (s *TunnelService) StopEngines() { tunnelEngines.StopAll() }
 
 func (s *TunnelService) EngineInfo() EngineInfo {
 	_, err := os.Stat(tunnelEngines.Binary)
-	return EngineInfo{Installed: err == nil, Version: backpack.PinnedVersion}
+	return EngineInfo{Installed: err == nil, Version: backpack.InstalledVersion(tunnelEngines.Binary), Pinned: backpack.PinnedVersion}
 }
 
 // InstallEngine downloads the pinned BackPack release through the panel's own proxy settings and starts its tunnels.
 func (s *TunnelService) InstallEngine() error {
-	arch := runtime.GOARCH
-	switch arch {
-	case "amd64", "arm64", "386", "s390x":
-	default:
-		return fmt.Errorf("BackPack publishes no build for %s", arch)
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), engineInstallTimeout)
 	defer cancel()
-	client := (&SettingService{}).NewProxiedHTTPClient(engineInstallTimeout)
-	if err := backpack.Install(ctx, client, backpack.ReleaseBaseURL, backpack.PinnedVersion, arch, tunnelEngines.Binary); err != nil {
-		return err
-	}
-	return s.ReconcileEngines()
+	return s.updateEngineFrom(ctx, directEngineSource, backpack.PinnedVersion)
 }
 
 func (s *TunnelService) backpackStatus(t *model.ServerTunnel) tunnel.Status {

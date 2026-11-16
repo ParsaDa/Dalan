@@ -127,7 +127,12 @@ var nodeSyncScopeAllow = map[string]map[string]struct{}{
 }
 
 var nodeAdminScopeAllow = map[string]map[string]struct{}{
-	"/server/updatePanel": {http.MethodPost: {}},
+	"/server/updatePanel":     {http.MethodPost: {}},
+	"/tunnels/list":           {http.MethodGet: {}},
+	"/tunnels/import":         {http.MethodPost: {}},
+	"/tunnels/del/:id":        {http.MethodPost: {}},
+	"/tunnels/dial":           {http.MethodPost: {}},
+	"/tunnels/engine/release": {http.MethodPost: {}},
 }
 
 func scopeAllows(allow map[string]map[string]struct{}, path, method string) bool {

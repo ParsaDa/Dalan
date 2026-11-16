@@ -18,6 +18,9 @@ export type Protocol = z.infer<typeof ProtocolSchema>;
 export const addrFamilySchema = z.number().int();
 export type addrFamily = z.infer<typeof addrFamilySchema>;
 
+export const engineSourceSchema = z.unknown();
+export type engineSource = z.infer<typeof engineSourceSchema>;
+
 export const staticEgressResolverSchema = z.string();
 export type staticEgressResolver = z.infer<typeof staticEgressResolverSchema>;
 
@@ -854,6 +857,7 @@ export const InvitationSchema = z.object({
   command: z.string(),
   expiresAt: z.number().int(),
   id: z.number().int(),
+  installCommand: z.string(),
   link: z.string(),
   name: z.string(),
 });
@@ -941,6 +945,7 @@ export const NodeSchema = z.object({
 export type Node = z.infer<typeof NodeSchema>;
 
 export const NodeEnrolmentSchema = z.object({
+  dataTunnelId: z.number().int(),
   expiresAt: z.number().int(),
   id: z.number().int(),
   name: z.string(),
@@ -1141,6 +1146,7 @@ export type ServerSettings = z.infer<typeof ServerSettingsSchema>;
 export const ServerTunnelSchema = z.object({
   acceptUdp: z.boolean(),
   address: z.string(),
+  down: z.number().int(),
   enable: z.boolean(),
   engine: z.string(),
   exitOutbound: z.string(),
@@ -1149,14 +1155,18 @@ export const ServerTunnelSchema = z.object({
   id: z.number().int(),
   managePort: z.number().int(),
   name: z.string(),
+  nodeId: z.number().int(),
+  parentId: z.number().int(),
   port: z.number().int(),
   realityPublicKey: z.string(),
+  relayPort: z.number().int(),
   role: z.string(),
   routeInbounds: z.array(z.string()),
   security: z.string(),
   serverName: z.string(),
   shortId: z.string(),
   transport: z.string(),
+  up: z.number().int(),
   uuid: z.string(),
 });
 export type ServerTunnel = z.infer<typeof ServerTunnelSchema>;
@@ -1239,6 +1249,15 @@ export const TuicServerSettingsSchema = z.object({
   zero_rtt_handshake: z.boolean(),
 });
 export type TuicServerSettings = z.infer<typeof TuicServerSettingsSchema>;
+
+export const TunnelPoolSchema = z.object({
+  active: z.string(),
+  id: z.number().int(),
+  members: z.array(z.string()),
+  name: z.string(),
+  routeInbounds: z.array(z.string()),
+});
+export type TunnelPool = z.infer<typeof TunnelPoolSchema>;
 
 export const UserSchema = z.object({
   id: z.number().int(),

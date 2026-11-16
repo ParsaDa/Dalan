@@ -27,6 +27,9 @@ import type { ColumnsType } from 'antd/es/table';
 import { CopyOutlined, DeleteOutlined, ImportOutlined, PlusOutlined } from '@ant-design/icons';
 
 import { useTheme } from '@/hooks/useTheme';
+import PortTest from './PortTest';
+import TunnelPools from './TunnelPools';
+import { useNodesQuery } from '@/api/queries/useNodesQuery';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
 import {
   fetchSetupLink,
@@ -39,7 +42,7 @@ import {
 } from '@/api/queries/useTunnels';
 import AppSidebar from '@/layouts/AppSidebar';
 import { selectTagRender } from '@/components/form/SelectTag';
-import { ClipboardManager } from '@/utils';
+import { ClipboardManager, SizeFormatter } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,30}$/;
@@ -66,6 +69,7 @@ interface PortalFormValues {
   security: 'reality' | 'none';
   serverName?: string;
   routeInbounds?: string[];
+  nodeId?: number;
   transport: string;
   fallbackTransports?: string[];
   forwardPorts?: string[];
@@ -109,16 +113,19 @@ export default function TunnelsPage() {
   const { t } = useTranslation();
   const { isDark, isUltra, antdThemeConfig } = useTheme();
   const [messageApi, messageContextHolder] = message.useMessage();
+  const [modal, modalContextHolder] = Modal.useModal();
   useEffect(() => {
     setMessageInstance(messageApi);
   }, [messageApi]);
 
   const { tunnels, loading, fetched, fetchError, refetch } = useTunnelsQuery();
-  const { create, importLink, setEnable, remove, installEngine, installingEngine } =
+  const { create, importLink, setEnable, remove, installEngine, updateEngine, installingEngine } =
     useTunnelMutations();
   const { data: engineInfo } = useTunnelEngine();
   const { data: inboundOptions = [] } = useInboundOptions();
+  const { nodes } = useNodesQuery();
 
+  const [engineNode, setEngineNode] = useState<number>();
   const [portalOpen, setPortalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -126,6 +133,8 @@ export default function TunnelsPage() {
   const [importForm] = Form.useForm<{ link: string; exitOutbound?: string }>();
   const security = Form.useWatch('security', portalForm);
   const engine = Form.useWatch('engine', portalForm);
+  const chosenNode = Form.useWatch('nodeId', portalForm);
+  const chosenAddress = Form.useWatch('address', portalForm);
   const usesBackpack = tunnels.some((tunnel) => tunnel.engine === 'backpack');
 
   const inboundTagOptions = useMemo(
@@ -139,17 +148,54 @@ export default function TunnelsPage() {
     [inboundOptions],
   );
 
+  const engineNodePicker = (
+    <Select
+      size="small"
+      allowClear
+      aria-label={t('pages.tunnels.engineViaNode')}
+      placeholder={t('pages.tunnels.engineViaNode')}
+      style={{ minWidth: 200 }}
+      value={engineNode}
+      onChange={setEngineNode}
+      options={nodes
+        .filter((node) => node.enable)
+        .map((node) => ({ value: node.id, label: node.name }))}
+      tagRender={selectTagRender}
+    />
+  );
+
   const report = (msg: { success?: boolean; msg?: string } | null | undefined) => {
     if (msg?.success) return true;
     messageApi.error(msg?.msg || t('somethingWentWrong'));
     return false;
   };
 
+  const removeTunnel = async (row: ServerTunnel) => {
+    const msg = await remove({ id: row.id });
+    if (msg?.success || !row.nodeId) {
+      report(msg);
+      return;
+    }
+    modal.confirm({
+      title: msg?.msg || t('somethingWentWrong'),
+      content: t('pages.tunnels.removeHereHint'),
+      okText: t('pages.tunnels.removeHere'),
+      okType: 'danger',
+      cancelText: t('cancel'),
+      onOk: async () => report(await remove({ id: row.id, here: true })),
+    });
+  };
+
   const submitPortal = async () => {
     const values = await portalForm.validateFields();
     setSaving(true);
     try {
-      const common = { name: values.name, address: values.address.trim(), port: values.port };
+      const common = {
+        name: values.name,
+        address: values.address.trim(),
+        port: values.port,
+        ...(values.nodeId ? { nodeId: values.nodeId } : {}),
+      };
       const request: NewPortalValues =
         values.engine === 'backpack'
           ? {
@@ -159,6 +205,7 @@ export default function TunnelsPage() {
               fallbackTransports: values.fallbackTransports ?? [],
               forwardPorts: values.forwardPorts ?? [],
               acceptUdp: values.acceptUdp ?? false,
+              routeInbounds: values.routeInbounds ?? [],
             }
           : {
               ...common,
@@ -244,6 +291,13 @@ export default function TunnelsPage() {
       render: (_, row) => <TunnelStatusCell tunnel={row} />,
     },
     {
+      title: t('pages.tunnels.traffic'),
+      render: (_, row) =>
+        row.role === 'portal' && !row.managePort
+          ? `↑ ${SizeFormatter.sizeFormat(row.up)} · ↓ ${SizeFormatter.sizeFormat(row.down)}`
+          : '',
+    },
+    {
       title: t('pages.tunnels.address'),
       render: (_, row) => <Typography.Text code>{`${row.address}:${row.port}`}</Typography.Text>,
     },
@@ -264,9 +318,9 @@ export default function TunnelsPage() {
       render: (_, row) =>
         row.role !== 'portal'
           ? row.exitOutbound || 'direct'
-          : (row.engine === 'backpack' ? row.forwardPorts : row.routeInbounds).map((item) => (
-              <Tag key={item}>{item}</Tag>
-            )),
+          : [...(row.engine === 'backpack' ? row.forwardPorts : []), ...row.routeInbounds].map(
+              (item) => <Tag key={item}>{item}</Tag>,
+            ),
     },
     {
       width: 110,
@@ -281,10 +335,7 @@ export default function TunnelsPage() {
               onClick={() => copyLink(row.id)}
             />
           )}
-          <Popconfirm
-            title={t('pages.tunnels.deleteConfirm')}
-            onConfirm={async () => report(await remove(row.id))}
-          >
+          <Popconfirm title={t('pages.tunnels.deleteConfirm')} onConfirm={() => removeTunnel(row)}>
             <Button
               type="text"
               danger
@@ -304,6 +355,7 @@ export default function TunnelsPage() {
   return (
     <ConfigProvider theme={antdThemeConfig}>
       {messageContextHolder}
+      {modalContextHolder}
       <Layout className={pageClass}>
         <AppSidebar />
         <Layout className="content-shell">
@@ -353,16 +405,40 @@ export default function TunnelsPage() {
                       title={t('pages.tunnels.engineMissing')}
                       description={t('pages.tunnels.engineMissingHint')}
                       action={
-                        <Button
-                          size="small"
-                          loading={installingEngine}
-                          onClick={async () => report(await installEngine())}
-                        >
-                          {t('pages.tunnels.installEngine')}
-                        </Button>
+                        <Space>
+                          {engineNodePicker}
+                          <Button
+                            size="small"
+                            loading={installingEngine}
+                            onClick={async () =>
+                              report(
+                                await (engineNode ? updateEngine(engineNode) : installEngine()),
+                              )
+                            }
+                          >
+                            {t('pages.tunnels.installEngine')}
+                          </Button>
+                        </Space>
                       }
                       style={{ marginBottom: 12 }}
                     />
+                  )}
+                  {usesBackpack && engineInfo?.installed && (
+                    <Space style={{ marginBottom: 12 }} wrap>
+                      <Typography.Text type="secondary">
+                        {t('pages.tunnels.engineVersion', {
+                          version: engineInfo.version || t('pages.tunnels.engineVersionUnknown'),
+                        })}
+                      </Typography.Text>
+                      {engineNodePicker}
+                      <Button
+                        size="small"
+                        loading={installingEngine}
+                        onClick={async () => report(await updateEngine(engineNode ?? 0))}
+                      >
+                        {t('pages.tunnels.updateEngine')}
+                      </Button>
+                    </Space>
                   )}
                   {tunnels.some((tunnel) => tunnel.role === 'portal') && (
                     <Alert
@@ -383,6 +459,11 @@ export default function TunnelsPage() {
                     locale={{ emptyText: <Empty description={t('pages.tunnels.empty')} /> }}
                   />
                 </Card>
+              )}
+              {fetched && !fetchError && (
+                <div style={{ marginTop: 16 }}>
+                  <TunnelPools tunnels={tunnels} />
+                </div>
               )}
             </Spin>
           </Layout.Content>
@@ -441,6 +522,27 @@ export default function TunnelsPage() {
               ]}
             />
           </Form.Item>
+          {nodes.length > 0 && (
+            <Form.Item
+              name="nodeId"
+              label={t('pages.tunnels.nodeEnd')}
+              extra={t('pages.tunnels.nodeEndHint')}
+            >
+              <Select
+                allowClear
+                options={nodes
+                  .filter((node) => node.enable)
+                  .map((node) => ({ value: node.id, label: node.name }))}
+              />
+            </Form.Item>
+          )}
+          {chosenNode ? (
+            <PortTest
+              nodeId={chosenNode}
+              address={chosenAddress ?? ''}
+              onPick={(port) => portalForm.setFieldValue('port', port)}
+            />
+          ) : null}
           {engine === 'backpack' ? (
             <>
               <Form.Item name="transport" label={t('pages.tunnels.transport')}>
@@ -462,7 +564,6 @@ export default function TunnelsPage() {
                 name="forwardPorts"
                 label={t('pages.tunnels.forwardPorts')}
                 extra={t('pages.tunnels.forwardPortsHint')}
-                rules={[{ required: true, type: 'array', min: 1 }]}
               >
                 <Select
                   mode="tags"
@@ -499,20 +600,20 @@ export default function TunnelsPage() {
                   <Input placeholder="www.example.com" autoComplete="off" />
                 </Form.Item>
               )}
-              <Form.Item
-                name="routeInbounds"
-                label={t('pages.tunnels.routeInbounds')}
-                extra={t('pages.tunnels.routeInboundsHint')}
-              >
-                <Select
-                  mode="multiple"
-                  options={inboundTagOptions}
-                  tagRender={selectTagRender}
-                  allowClear
-                />
-              </Form.Item>
             </>
           )}
+          <Form.Item
+            name="routeInbounds"
+            label={t('pages.tunnels.routeInbounds')}
+            extra={t('pages.tunnels.routeInboundsHint')}
+          >
+            <Select
+              mode="multiple"
+              options={inboundTagOptions}
+              tagRender={selectTagRender}
+              allowClear
+            />
+          </Form.Item>
         </Form>
       </Modal>
 

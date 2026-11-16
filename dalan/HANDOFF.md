@@ -1,6 +1,6 @@
 # Dalan — handoff
 
-Written 2026-11-15 for whoever continues this work (a person or a coding agent). Read this first, then `CLAUDE.md` (upstream's rules, all still binding), `dalan/UPSTREAM.md` and `dalan/TUNNELS.md`.
+Written 2026-11-15, updated 2026-11-16 for 0.4.0, for whoever continues this work (a person or a coding agent). Read this first, then `CLAUDE.md` (upstream's rules, all still binding), `dalan/UPSTREAM.md` and `dalan/TUNNELS.md`.
 
 ## What Dalan is
 
@@ -25,11 +25,11 @@ Why it exists: during internet shutdowns in Iran only connections opened from ou
 | BackPack runs as its own unmodified binary (AGPL, trademarked name); its code is never copied | Claude |
 | PasarGuard code (Python, AGPL) and nx-panel (closed source) are not used; only ideas | Claude |
 
-Design documents live in the claude.ai Project "VPN and Networking": `design/2026-11-15-panel-design.md` and `design/2026-11-15-addendum-xray-reverse.md` (Persian). Section 7.2 of the first describes the reverse management channel that is not built yet.
+Design documents live in the claude.ai Project "VPN and Networking": `design/2026-11-15-panel-design.md` and `design/2026-11-15-addendum-xray-reverse.md` (Persian). Section 7.2 of the first describes the reverse management channel (built in 0.3.1).
 
 ## State of the repository
 
-`main` is at Dalan **0.3.2**. `v0.3.1` has working binaries but its Docker image never built (the Dockerfile compiled `main.go` alone and missed `enrol_cmd.go`); `v0.3.2` fixes that. Releases so far: `v0.1.0`, `v0.2.0`, plus the rolling `dev-latest` pre-release built on every push to `main`.
+`main` is at Dalan **0.3.2**; branch `feat/tunnel-outbounds` (PR #13) carries **0.4.0**. `v0.3.1` has working binaries but its Docker image never built (the Dockerfile compiled `main.go` alone and missed `enrol_cmd.go`); `v0.3.2` fixes that. Releases so far: `v0.1.0`, `v0.2.0`, plus the rolling `dev-latest` pre-release built on every push to `main`.
 
 | PR | What |
 |---|---|
@@ -42,6 +42,17 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 | #7 | 0.3.0 |
 
 Merged in PR #9 (0.3.1): reverse node enrolment and the management channel, item 1 of the list below. Design: `dalan/plans/2026-11-15-node-enrolment-design.md`. Operator guide: "Nodes that dial in" in `dalan/TUNNELS.md`.
+
+### What 0.4.0 adds (PR #13)
+
+- **Tunnels as Xray outbounds.** An entry tunnel is the outbound `tunnel-<name>`; an inbound or routing rule can choose it. A management tunnel (`ManagePort > 0`) is never offered. `xrayreverse.Routable` says which tunnels count.
+- **Node management over the existing tunnel**, BackPack engine log lines in the panel log, per-tunnel traffic totals (Apply switches outbound stats on for entry tunnels in the generated config).
+- **One-panel tunnel creation**: *New tunnel → Create the other end on a node*; enrolling a node can also create its data tunnel (`withTunnel`, default on); deleting removes both ends, with "remove this end only" when the node is unreachable. `refuseWhileInUse` stops deleting a tunnel a pool or a node still uses.
+- **Spare tunnels**: `internal/tunnel/pool` (pure decision: three checks in a row, at least 50 ms and 30% faster, or the tunnel in use is down), `internal/tunnel/xrayreverse/pool.go` (balancer `pool-<name>`, `ApplyPools`), `TunnelPoolService`, job `tunnel_pool_job.go` every 15 s, hot switch through `XrayService.OverrideBalancer`.
+- **Route test**: `internal/tunnel/dial.go`, `Remote.DialPorts`, `TunnelService.RouteTest` — this server listens, the node dials, a port counts only if the connection arrived here.
+- **Engine delivery and update**: `backpack.Fetch/Place/Rollback/LatestVersion`, `TunnelService.UpdateEngine` (rolls back when connected tunnels do not return within 75 s), the node serves a release in 512 KiB parts (`EngineReleaseChunk`, `Remote.FetchEngineRelease`) because every node call has a 10 s limit. A stopped engine's status file is deleted so it cannot read as connected.
+- **Install and enrol in one command**: the enrolment dialog shows `XUI_ENROL='<link>' bash <(curl … install.sh)`. The hook in `install.sh` is added by `scripts/dalan/rebrand.sh` (`add_enrol_on_install`) so upstream syncs keep it.
+- **Container**: `internal/frontdoor` (path routing from the panel's own inbounds/settings, `FlushInterval -1` for XHTTP, upgrades pass), `service.FrontDoorService`, `DockerPrepare.sh` (PORT → `DALAN_FRONT_PORT`, panel to `XUI_PORT=20530`, `DALAN_ADMIN_*`, one-time `DALAN_ENROL`). Guide: `dalan/CONTAINER.md`.
 
 ### Where the tunnel code is
 
@@ -88,23 +99,22 @@ Verified once by hand, not in CI:
 - The panel still shows the 3x-ui version number (3.11.0) as its version; Dalan's version appears only in the update dialog.
 - Xray tunnels: only REALITY over raw TCP (or no security). No WS/XHTTP/gRPC/TLS for the tunnel link yet.
 - An Xray tunnel is tested only from the entry end. The exit end shows "tested from the entry server".
-- No traffic totals per tunnel in the UI (BackPack's snapshot has them; Xray has outbound stats).
-- BackPack: no way to update an installed engine from the panel; on a server that cannot reach GitHub the binary must be copied by hand; forwarded-port conflicts with local inbounds are not checked; `skip_optz` is left at the engine default, so BackPack applies its own TCP tuning to the host.
+- Traffic totals are shown for Xray entry tunnels only; BackPack tunnels show none in the table.
+- BackPack: forwarded-port conflicts with local inbounds are not checked; `skip_optz` is left at the engine default, so BackPack applies its own TCP tuning to the host.
 - Deleting a tunnel on one server leaves the other end in place. The same holds for an enrolled node: deleting it on the main panel leaves the bridge `node-<name>` and the main panel's API token on the node.
-- Enrolment: a node whose panel listens on one specific IP is refused (the bridge delivers to 127.0.0.1); each node takes its own tunnel port on the main panel; an https node is registered with certificate verification off, because the hop is loopback through the tunnel; a management tunnel has no status of its own in the Tunnels page (the node's status is its health); Dalan must already be installed on the node.
+- Enrolment: a node whose panel listens on one specific IP is refused (the bridge delivers to 127.0.0.1); each node takes its own tunnel port on the main panel; an https node is registered with certificate verification off, because the hop is loopback through the tunnel; a management tunnel has no status of its own in the Tunnels page (the node's status is its health); a Join that imports the data tunnel after the management tunnel has no rollback; joining a second main panel with the same data-tunnel name clashes.
 - `docs/content/docs/en/reference/api/meta.json` lists neither `tunnels` nor `node-enrolment`, so those generated pages are not in the docs site navigation.
 - A data race inside xray-core's VLESS reverse monitor (`proxy/vless/outbound`, handler read while `New` is still writing it) makes the two-core traffic test unusable under `-race`; the file carries `//go:build !race`. Worth reporting upstream.
 - `node-e2e` in CI failed once with `bind: address already in use` in upstream's harness and passed on re-run. Treat one such failure as a flake, a second as real.
 
 ## What is left, in order
 
-1. **Reverse node enrolment and management channel** — built on the branch above, waiting for the owner's test on two real servers and a PR. Still open inside it: one shared port for all management tunnels, and install plus enrol in one command.
-2. **One-panel tunnel creation**: with the management channel in place, the Iran panel creates both ends itself instead of copy-pasting a link, and a tunnel is created automatically when a node is added.
-3. **Spare tunnels and automatic switching**: several tunnels per route on different transports and ports, health from the probe (Xray) and snapshot (BackPack), switch only after the alternative has been better several times in a row. For Xray, a balancer over `tunnel-<name>` outbounds is the natural mechanism. Plus a route test before creation (which transports pass between two servers), direct tunnels, and the backup server (design §7.7).
-4. **Delivering engine binaries and updates to the Iran server through the node abroad**, so nothing depends on the Iran server reaching GitHub.
-5. **Container build** for Orbit, Railway and AWS: one HTTP port in front of the panel, subscription and WS/XHTTP inbounds (the logic of the owner's `ParsaDa/flxui`), node abroad only, Xray engine as the main one because BackPack transports beyond WS/WSS need root or UDP.
-6. **UI redesign** — only after a brainstorm with the owner; he asked to be consulted first.
-7. Later: more engines (Arange-tun, C-Tunnel for GRE, GOST), user-management ideas from PasarGuard, an optional SmartDNS module (idea from hyperdns), automatic takeover by the backup server.
+1. **Real-server tests of 0.4.0** (owner): tunnels as outbounds, pools, route test, engine update through a node, install-and-enrol, and the Docker image on Railway. Nothing here has run on real servers; the Docker image was not built in the sandbox (no daemon), CI builds it on the tag.
+2. **Direct tunnels** (not reverse) and the **backup server** (design §7.7; cancelled for now). Pool balancer tags are not offered in the Routing page's balancer picker (they can be typed as `pool-<name>`); BackPack members of a pool report no latency and only replace a tunnel that is down.
+3. **One shared port for all management tunnels**, and Xray tunnels over transports other than REALITY/TCP.
+4. **Node tabs**: the owner's idea — each enrolled node gets a tab in the main panel that shows that node's whole management panel (the main panel already has the node's API token and a path to it through the management tunnel; needs request forwarding plus a node-scoped UI). Fits the UI redesign.
+5. **UI redesign** — only after a brainstorm with the owner; he asked to be consulted first.
+6. Later: more engines (Arange-tun, C-Tunnel for GRE, GOST), user-management ideas from PasarGuard, an optional SmartDNS module (idea from hyperdns).
 
 ## How to work in this repo
 

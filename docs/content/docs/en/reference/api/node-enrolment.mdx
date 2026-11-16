@@ -20,8 +20,12 @@ _openapi:
       title: Open a management tunnel for a new node and return its one-time link,
         valid for 30 minutes. panelUrl is this panel as the node can reach it;
         address and port are where the node dials the tunnel. The link is
-        returned only here and is never stored.
-      url: '#open-a-management-tunnel-for-a-new-node-and-return-its-one-time-link-valid-for-30-minutes-panelurl-is-this-panel-as-the-node-can-reach-it-address-and-port-are-where-the-node-dials-the-tunnel-the-link-is-returned-only-here-and-is-never-stored'
+        returned only here and is never stored. Set tunnelId to an existing
+        entry tunnel to manage the node over it instead; address, port and
+        security are then taken from that tunnel. Set withTunnel to also create
+        an ordinary entry tunnel named after the node on the same port, which
+        the node imports when it joins; it cannot be combined with tunnelId.
+      url: '#open-a-management-tunnel-for-a-new-node-and-return-its-one-time-link-valid-for-30-minutes-panelurl-is-this-panel-as-the-node-can-reach-it-address-and-port-are-where-the-node-dials-the-tunnel-the-link-is-returned-only-here-and-is-never-stored-set-tunnelid-to-an-existing-entry-tunnel-to-manage-the-node-over-it-instead-address-port-and-security-are-then-taken-from-that-tunnel-set-withtunnel-to-also-create-an-ordinary-entry-tunnel-named-after-the-node-on-the-same-port-which-the-node-imports-when-it-joins-it-cannot-be-combined-with-tunnelid'
     - depth: 2
       title: Cancel a waiting enrolment and close its tunnel. An enrolment that
         belongs to a joined node is removed by deleting the node.
@@ -34,8 +38,13 @@ _openapi:
       - content: Open a management tunnel for a new node and return its one-time link,
           valid for 30 minutes. panelUrl is this panel as the node can reach it;
           address and port are where the node dials the tunnel. The link is
-          returned only here and is never stored.
-        id: open-a-management-tunnel-for-a-new-node-and-return-its-one-time-link-valid-for-30-minutes-panelurl-is-this-panel-as-the-node-can-reach-it-address-and-port-are-where-the-node-dials-the-tunnel-the-link-is-returned-only-here-and-is-never-stored
+          returned only here and is never stored. Set tunnelId to an existing
+          entry tunnel to manage the node over it instead; address, port and
+          security are then taken from that tunnel. Set withTunnel to also
+          create an ordinary entry tunnel named after the node on the same port,
+          which the node imports when it joins; it cannot be combined with
+          tunnelId.
+        id: open-a-management-tunnel-for-a-new-node-and-return-its-one-time-link-valid-for-30-minutes-panelurl-is-this-panel-as-the-node-can-reach-it-address-and-port-are-where-the-node-dials-the-tunnel-the-link-is-returned-only-here-and-is-never-stored-set-tunnelid-to-an-existing-entry-tunnel-to-manage-the-node-over-it-instead-address-port-and-security-are-then-taken-from-that-tunnel-set-withtunnel-to-also-create-an-ordinary-entry-tunnel-named-after-the-node-on-the-same-port-which-the-node-imports-when-it-joins-it-cannot-be-combined-with-tunnelid
       - content: Cancel a waiting enrolment and close its tunnel. An enrolment that
           belongs to a joined node is removed by deleting the node.
         id: cancel-a-waiting-enrolment-and-close-its-tunnel-an-enrolment-that-belongs-to-a-joined-node-is-removed-by-deleting-the-node
