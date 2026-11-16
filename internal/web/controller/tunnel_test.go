@@ -223,3 +223,57 @@ func TestDialRouteReportsWhichPortsThisServerCanReach(t *testing.T) {
 		t.Fatal("a route test through a node that does not exist succeeded")
 	}
 }
+
+func TestTunnelRoutesServeTheOptionCatalogAndEditATunnelInPlace(t *testing.T) {
+	engine := newTunnelEngine(t)
+
+	catalog := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/options", nil)
+	var options []struct {
+		Key  string `json:"key"`
+		Mode string `json:"mode"`
+	}
+	if err := json.Unmarshal(catalog.Obj, &options); err != nil || !catalog.Success {
+		t.Fatalf("options = %s (%v), want the catalog", catalog.Obj, err)
+	}
+	var reverse, direct bool
+	for _, o := range options {
+		reverse = reverse || (o.Mode == "reverse" && o.Key == "edge_ip")
+		direct = direct || (o.Mode == "direct" && o.Key == "carrier")
+	}
+	if !reverse || !direct {
+		t.Fatalf("catalog lacks edge_ip for reverse tunnels or carrier for direct ones: %s", catalog.Obj)
+	}
+
+	added := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+		"name": "bp1", "address": "203.0.113.10", "port": 9443, "engine": "backpack", "transport": "wssmux",
+		"forwardPorts": []string{"443=127.0.0.1:2096"}, "options": map[string]any{"nodelay": true},
+	})
+	if !added.Success {
+		t.Fatalf("add with options failed: %s", added.Msg)
+	}
+	var portal model.ServerTunnel
+	_ = json.Unmarshal(added.Obj, &portal)
+	if portal.Mode != "reverse" || portal.Options["nodelay"] != true {
+		t.Fatalf("stored tunnel = %+v, want a reverse tunnel keeping the option sent", portal)
+	}
+
+	edited := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/update/"+strconv.Itoa(portal.Id), map[string]any{
+		"address": "203.0.113.11", "port": 9443, "transport": "ws", "forwardPorts": []string{"443=127.0.0.1:2096"},
+		"options": map[string]any{"edge_ip": "198.51.100.7"},
+	})
+	if !edited.Success {
+		t.Fatalf("update failed: %s", edited.Msg)
+	}
+	got := listTunnels(t, engine)
+	if len(got) != 1 || got[0].Transport != "ws" || got[0].Address != "203.0.113.11" || got[0].Options["edge_ip"] != "198.51.100.7" || got[0].UUID != portal.UUID {
+		t.Fatalf("list after update = %+v, want the edit applied and the token kept", got)
+	}
+
+	refused := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/update/"+strconv.Itoa(portal.Id), map[string]any{
+		"address": "203.0.113.11", "port": 9443, "transport": "ws", "forwardPorts": []string{"443=127.0.0.1:2096"},
+		"options": map[string]any{"no_such_option": 1},
+	})
+	if refused.Success || !strings.Contains(refused.Msg, "no_such_option") {
+		t.Fatalf("update with an unknown option: success=%v msg=%q, want a refusal naming it", refused.Success, refused.Msg)
+	}
+}
