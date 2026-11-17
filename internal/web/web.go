@@ -332,6 +332,9 @@ func (s *Server) startTask(restartXray bool, loc *time.Location) {
 		if err := (&service.TunnelService{}).ReconcileEngines(); err != nil {
 			logger.Warning("start BackPack tunnels failed:", err)
 		}
+		if err := (&service.TorService{}).ReconcileExits(); err != nil {
+			logger.Warning("start Tor exits failed:", err)
+		}
 	}
 	// Check whether xray is running every second
 	_, _ = s.cron.AddJob(cadenceXrayRunning, job.NewCheckXrayRunningJob())
@@ -816,6 +819,7 @@ func (s *Server) stop(stopXray bool, stopTgBot bool) error {
 	}
 	if stopXray {
 		(&service.TunnelService{}).StopEngines()
+		(&service.TorService{}).StopExits()
 		if err := s.xrayService.StopXray(); err != nil && !errors.Is(err, service.ErrXrayNotRunning) {
 			err2 = common.Combine(err2, err)
 		}
