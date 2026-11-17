@@ -9,12 +9,15 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/config"
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tor"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
 )
 
@@ -28,6 +31,22 @@ var (
 	torExits    = newTorExits(torLayout)
 
 	torReleaseBase = tor.ReleaseBaseURL
+
+	torProbe tor.Prober = tunnel.ProbeVia
+	torNow              = time.Now
+)
+
+// torProbeKeep is how long a probe result is reused, so a page polling the list does not load Tor.
+const torProbeKeep = 30 * time.Second
+
+type torProbeResult struct {
+	status tunnel.Status
+	at     time.Time
+}
+
+var (
+	torProbeMu    sync.Mutex
+	torProbeCache = map[string]torProbeResult{}
 )
 
 func newTorExits(layout tor.Layout) *engine.Supervisor {
@@ -237,6 +256,9 @@ func (s *TorService) SetBridges(text string) error {
 
 // applyChange lets Xray and the Tor processes pick up a stored change; a missing bundle is reported by Status.
 func (s *TorService) applyChange() {
+	torProbeMu.Lock()
+	clear(torProbeCache)
+	torProbeMu.Unlock()
 	s.xrayService.SetToNeedRestart()
 	if err := s.ReconcileExits(); err != nil {
 		logger.Warning("tor exits:", err)
@@ -297,4 +319,72 @@ func (s *TorService) RollbackEngine() error {
 func (s *TorService) restartExits() error {
 	torExits.StopAll()
 	return s.ReconcileExits()
+}
+
+// TorOutbound is an enabled exit as Xray routing sees it: an outbound that rules and balancers can target.
+type TorOutbound struct {
+	Tag     string `json:"tag" example:"tor-de"`
+	Country string `json:"country" example:"de"`
+	Enable  bool   `json:"enable" example:"true"`
+}
+
+// Outbounds lists the enabled exits, the only ones that exist as outbounds in the generated config.
+func (s *TorService) Outbounds() ([]TorOutbound, error) {
+	exits, err := s.List()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]TorOutbound, 0, len(exits))
+	for _, exit := range exits {
+		if exit.Enable {
+			out = append(out, TorOutbound{Tag: tor.OutboundTag(exit.Country), Country: exit.Country, Enable: true})
+		}
+	}
+	return out, nil
+}
+
+// StatusAll judges every exit by country. Probes run side by side and are reused for torProbeKeep.
+func (s *TorService) StatusAll() (map[string]tor.Status, error) {
+	exits, err := s.List()
+	if err != nil {
+		return nil, err
+	}
+	_, statErr := os.Stat(torLayout.Binary())
+	statuses := make(map[string]tor.Status, len(exits))
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	for _, exit := range exits {
+		progress, seen := torProgress.Get(exit.Country)
+		observed := tor.Observation{
+			Port: exit.Port, Installed: statErr == nil, Running: torExits.Running(tor.OutboundTag(exit.Country)),
+			Progress: progress, HasProgress: seen,
+		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			status := tor.StatusOf(observed, cachedProbe(exit.Country))
+			mu.Lock()
+			statuses[exit.Country] = status
+			mu.Unlock()
+		}()
+	}
+	wg.Wait()
+	return statuses, nil
+}
+
+// cachedProbe wraps the real prober so one country is probed at most once per torProbeKeep.
+func cachedProbe(country string) tor.Prober {
+	return func(addr, url string, timeout time.Duration) tunnel.Status {
+		torProbeMu.Lock()
+		hit, ok := torProbeCache[country]
+		torProbeMu.Unlock()
+		if ok && torNow().Sub(hit.at) < torProbeKeep {
+			return hit.status
+		}
+		result := torProbe(addr, url, timeout)
+		torProbeMu.Lock()
+		torProbeCache[country] = torProbeResult{status: result, at: torNow()}
+		torProbeMu.Unlock()
+		return result
+	}
 }

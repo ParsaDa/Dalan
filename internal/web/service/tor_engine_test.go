@@ -6,15 +6,18 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/tor"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 )
 
 // useTorLayout points the service at a temporary bundle and state folder and stops any Tor it started.
@@ -153,5 +156,108 @@ func TestReconcileWithoutTorInstalledReportsItAndDoesNotRun(t *testing.T) {
 	}
 	if err := svc.ReconcileExits(); err != tor.ErrNotInstalled {
 		t.Fatalf("ReconcileExits = %v, want ErrNotInstalled", err)
+	}
+}
+
+func TestEnabledExitsReachTheGeneratedXrayConfig(t *testing.T) {
+	svc := newTorDB(t)
+	useTorLayout(t)
+	de, err := svc.Add("de")
+	if err != nil {
+		t.Fatal(err)
+	}
+	nl, err := svc.Add("nl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.SetEnable(nl.Id, false); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := (&XrayService{}).GetXrayConfig()
+	if err != nil {
+		t.Fatalf("GetXrayConfig: %v", err)
+	}
+	outbounds := string(cfg.OutboundConfigs)
+	if !strings.Contains(outbounds, `"tor-de"`) || strings.Contains(outbounds, `"tor-nl"`) {
+		t.Fatalf("outbounds = %s, want tor-de and no tor-nl", outbounds)
+	}
+	if !strings.Contains(outbounds, fmt.Sprintf(`"port":%d`, de.Port)) {
+		t.Fatalf("outbounds = %s, want the exit's port %d", outbounds, de.Port)
+	}
+}
+
+func TestOutboundsListsOnlyEnabledExits(t *testing.T) {
+	svc := newTorDB(t)
+	useTorLayout(t)
+	if _, err := svc.Add("de"); err != nil {
+		t.Fatal(err)
+	}
+	nl, err := svc.Add("nl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.SetEnable(nl.Id, false); err != nil {
+		t.Fatal(err)
+	}
+	got, err := svc.Outbounds()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Tag != "tor-de" || got[0].Country != "de" || !got[0].Enable {
+		t.Fatalf("Outbounds = %+v, want only tor-de", got)
+	}
+}
+
+func TestStatusAllJudgesEachExitAndCachesTheProbe(t *testing.T) {
+	svc := newTorDB(t)
+	useTorLayout(t)
+	server := torBundleServer(t)
+	oldBase := torReleaseBase
+	torReleaseBase = server.URL
+	t.Cleanup(func() { torReleaseBase = oldBase })
+
+	now := time.Date(2026, 11, 17, 9, 0, 0, 0, time.UTC)
+	probes := 0
+	oldProbe, oldNow := torProbe, torNow
+	torNow = func() time.Time { return now }
+	torProbe = func(addr, url string, timeout time.Duration) tunnel.Status {
+		probes++
+		return tunnel.Status{Connected: true, LatencyMs: 900, ExitLoc: "DE"}
+	}
+	t.Cleanup(func() { torProbe, torNow = oldProbe, oldNow })
+
+	if _, err := svc.Add("de"); err != nil {
+		t.Fatal(err)
+	}
+	nl, err := svc.Add("nl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.SetEnable(nl.Id, false); err != nil {
+		t.Fatal(err)
+	}
+	before, err := svc.StatusAll()
+	if err != nil || before["de"].State != tor.StateNotInstalled {
+		t.Fatalf("before install: %+v, %v", before["de"], err)
+	}
+
+	if err := svc.InstallEngine(); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "de to bootstrap", func() bool { p, ok := torProgress.Get("de"); return ok && p == 100 })
+
+	first, err := svc.StatusAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first["de"].State != tor.StateConnected || first["de"].LatencyMs != 900 || first["nl"].State != tor.StateStopped {
+		t.Fatalf("statuses = %+v", first)
+	}
+	if _, err := svc.StatusAll(); err != nil || probes != 1 {
+		t.Fatalf("a second call inside 30 s probed again: probes = %d, err = %v", probes, err)
+	}
+	now = now.Add(31 * time.Second)
+	if _, err := svc.StatusAll(); err != nil || probes != 2 {
+		t.Fatalf("a call after 31 s did not probe again: probes = %d, err = %v", probes, err)
 	}
 }

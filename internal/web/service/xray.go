@@ -16,6 +16,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/config"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
+	"github.com/mhsanaei/3x-ui/v3/internal/tor"
 	"github.com/mhsanaei/3x-ui/v3/internal/tuic"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/json_util"
@@ -503,6 +504,12 @@ func (s *XrayService) GetXrayConfig() (*xray.Config, error) {
 		logger.Warning("read tunnel pools for config injection failed:", err)
 	} else if err := xrayreverse.ApplyPools(xrayConfig, tunnels, pools); err != nil {
 		logger.Warning("tunnel pool injection skipped:", err)
+	}
+
+	if exits, err := (&TorService{}).List(); err != nil {
+		logger.Warning("read tor exits for config injection failed:", err)
+	} else if err := tor.Apply(xrayConfig, exits); err != nil {
+		logger.Warning("tor injection skipped:", err)
 	}
 
 	xrayConfig.RouterConfig = dropRefusedScript(xrayConfig.RouterConfig, "routing", routingScriptRefused)
