@@ -49,11 +49,12 @@ process (status must come from a real request through the SOCKS port).
 ## Design
 
 **Delivery.** The Tor Expert Bundle (Tor Project; contains `tor`, `geoip`, `geoip6` and the pluggable
-transports for obfs4 and snowflake). Dalan pins a version and the SHA-256 of each architecture's archive **in
-source**, so a swapped download fails; it installs under the bin folder, keeping the previous one for rollback
-(same Place / Rollback / InstalledVersion helpers as the engines in `internal/tunnel/engine`). A hand-placed
-binary still works. An architecture the bundle does not publish gets a plain "not available for this
-processor" error.
+transports for obfs4 and snowflake). Dalan pins the release (16.0.1, tor 0.4.9.16, which the Tor Project lists
+for GNU/Linux x86_64 and aarch64) and checks the archive against the checksum file published with it before
+installing. Hashes cannot be fixed in source: the build environment cannot reach the Tor Project hosts, and a
+hash typed from memory would be worse than none. A follow-up can pin them. The install keeps the previous
+version for rollback, using the engine helpers in `internal/tunnel/engine`. A hand-placed bundle still works. An
+architecture the bundle does not publish gets a plain "not available for this processor" error.
 
 **Model.** New table `TorExit` (`id`, `country` two-letter lower-case and unique, `port`, `enable`), with the
 migration in `internal/database/db.go` and `migrationModels`. Bridge lines are one setting, `torBridges`
@@ -63,7 +64,7 @@ migration in `internal/database/db.go` and `migrationModels`. Bridge lines are o
 **Runtime.** A supervisor runs one Tor per enabled exit with its own `DataDirectory`, `SocksPort
 127.0.0.1:<port>` and `ClientOnly 1`, restarting a crashed one. Reuse `engine.Supervisor`'s start / stop /
 restart logic rather than copying it; it is keyed on a tunnel row today, so how it is generalised is the
-builder's call. Ports come from a loopback range (suggested 19050 up) and must not clash with any inbound or
+builder's call. Ports come from the loopback range 62700-62789 (below the panel-egress port 62790, clear of the tunnel probe and relay ranges) and must not clash with any inbound or
 tunnel port. After every change `xrayService.SetToNeedRestart()` as tunnels do.
 
 **Xray injection.** At config generation, enabled exits become `socks` outbounds with tag `tor-<cc>`. They are
@@ -116,7 +117,7 @@ hashes checked at pin time); exact Tor log lines used for bootstrap and failure 
   exit.
 - Injection: an enabled exit appears as a `socks` outbound `tor-<cc>` in the generated config; a disabled one does
   not.
-- Install: a wrong checksum is refused and the old binary stays.
+- Install: a wrong checksum is refused and the old bundle stays.
 - Status parsing from real Tor log lines; "connected" only after a successful request.
 - Test endpoint cleans up its process and directory on success, failure and timeout.
 - Frontend: Tor row in the Outbounds table; picker lists many countries and filters; per-row Test shows its three
