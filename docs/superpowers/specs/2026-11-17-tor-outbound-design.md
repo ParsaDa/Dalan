@@ -85,7 +85,7 @@ rollback, bridges get / set. Each new route needs its `endpoints.ts` entry, `mak
 copy and MDX, per CLAUDE.md. New structs go in openapigen's `StructAllow`.
 
 **UI.** A **Tor** button next to Warp / Nord / PIA in the Outbounds tab opens `TorModal`: a searchable list of
-countries (flag, name in the panel language, via the existing `countryFlag` / `countryName`), a Test button per
+countries (flag and English name, via the existing `countryFlag` and `countryName` helpers called with the `en` locale; Parsa wants no Persian names), a Test button per
 row with its result, an Add / Remove action, an engine card (installed version, install button) and a bridges
 box under Advanced. Outbounds-table rows for Tor show the status and link to the modal instead of an Edit
 action. Exact visual design comes from the separate design chat; this spec fixes behaviour, not looks.
