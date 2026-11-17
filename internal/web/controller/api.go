@@ -231,6 +231,7 @@ func (a *APIController) initRouter(g *gin.RouterGroup) {
 
 	// Tunnels API — reverse tunnels between this panel and other servers
 	NewTunnelController(api.Group("/tunnels"))
+	NewTorController(api.Group("/tor"))
 	NewEnrolmentController(api.Group("/enrolments"), g)
 
 	// Settings + Xray config management live under the API surface too, so the

@@ -2680,6 +2680,19 @@
       "withTunnelHint": "Makes an ordinary tunnel named after the node on the same port, so its traffic can be routed through it. The management channel rides on it, so no second address is exposed.",
       "installTitle": "On a server without Dalan, this installs it and joins this panel in one go:",
       "copyInstall": "Copy install command"
+    },
+    "tor": {
+      "toasts": {
+        "list": "Load Tor exits",
+        "add": "Add a Tor country",
+        "del": "Delete Tor exit",
+        "update": "Update Tor exit",
+        "test": "Test a Tor country",
+        "engine": "Load the Tor engine",
+        "installEngine": "Install the Tor engine",
+        "rollbackEngine": "Restore the previous Tor engine",
+        "bridges": "Tor bridges"
+      }
     }
   },
   "tgbot": {

@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -294,7 +295,7 @@ func TestTestRunsAThrowawayTorForACountryThatIsNotAdded(t *testing.T) {
 	addrs := stubTorProbe(t, tunnel.Status{Connected: true, LatencyMs: 1500, ExitIP: "203.0.113.9", ExitLoc: "FR"})
 	installedTorBundle(t, svc)
 
-	got, err := svc.Test("FR")
+	got, err := svc.Test(context.Background(), "FR")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -323,7 +324,7 @@ func TestTestOfARunningCountryAsksThatTorInsteadOfStartingASecond(t *testing.T) 
 	installedTorBundle(t, svc)
 	waitFor(t, "de to bootstrap", func() bool { p, ok := torProgress.Get("de"); return ok && p == 100 })
 
-	got, err := svc.Test("de")
+	got, err := svc.Test(context.Background(), "de")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -345,7 +346,7 @@ func TestTestOfARunningCountryReportsWhyItFails(t *testing.T) {
 	installedTorBundle(t, svc)
 	waitFor(t, "de to bootstrap", func() bool { p, ok := torProgress.Get("de"); return ok && p == 100 })
 
-	got, err := svc.Test("de")
+	got, err := svc.Test(context.Background(), "de")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -357,10 +358,10 @@ func TestTestOfARunningCountryReportsWhyItFails(t *testing.T) {
 func TestTestRefusesBeforeInstallAndForABadCountry(t *testing.T) {
 	svc := newTorDB(t)
 	useTorLayout(t)
-	if _, err := svc.Test("de"); !errors.Is(err, tor.ErrNotInstalled) {
+	if _, err := svc.Test(context.Background(), "de"); !errors.Is(err, tor.ErrNotInstalled) {
 		t.Fatalf("before install: %v, want ErrNotInstalled", err)
 	}
-	if _, err := svc.Test("d1"); !errors.Is(err, errTorCountry) {
+	if _, err := svc.Test(context.Background(), "d1"); !errors.Is(err, errTorCountry) {
 		t.Fatalf("bad country: %v, want errTorCountry", err)
 	}
 }

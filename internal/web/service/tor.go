@@ -392,9 +392,9 @@ func cachedProbe(country string) tor.Prober {
 // torTrialTimeout bounds one Test of a country that is not running.
 const torTrialTimeout = 90 * time.Second
 
-// Test answers whether Tor can leave through a country. A country that already runs is asked directly;
+// Test answers whether Tor can leave through a country; a caller that gives up frees the one trial slot. A country that already runs is asked directly;
 // any other gets a throwaway Tor that is removed afterwards.
-func (s *TorService) Test(country string) (tor.TrialResult, error) {
+func (s *TorService) Test(ctx context.Context, country string) (tor.TrialResult, error) {
 	cc, ok := tor.NormalizeCountry(country)
 	if !ok {
 		return tor.TrialResult{}, errTorCountry
@@ -413,7 +413,7 @@ func (s *TorService) Test(country string) (tor.TrialResult, error) {
 			return trialOf(status), nil
 		}
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), torTrialTimeout)
+	ctx, cancel := context.WithTimeout(ctx, torTrialTimeout)
 	defer cancel()
 	return tor.Trial(ctx, cc, storedBridgeLines(), torLayout, torProbe)
 }
@@ -427,4 +427,34 @@ func trialOf(status tor.Status) tor.TrialResult {
 	default:
 		return tor.TrialResult{Reason: "Tor is running, but a request through it failed", Error: status.Error}
 	}
+}
+
+// TorExitView is one exit as the panel lists it: its row, its Xray tag and what it is doing now.
+type TorExitView struct {
+	Id      int        `json:"id" example:"1"`
+	Country string     `json:"country" example:"de"`
+	Port    int        `json:"port" example:"62700"`
+	Enable  bool       `json:"enable" example:"true"`
+	Tag     string     `json:"tag" example:"tor-de"`
+	Live    tor.Status `json:"status"`
+}
+
+// ListWithStatus lists every exit with its live status.
+func (s *TorService) ListWithStatus() ([]TorExitView, error) {
+	exits, err := s.List()
+	if err != nil {
+		return nil, err
+	}
+	statuses, err := s.StatusAll()
+	if err != nil {
+		return nil, err
+	}
+	out := make([]TorExitView, 0, len(exits))
+	for _, exit := range exits {
+		out = append(out, TorExitView{
+			Id: exit.Id, Country: exit.Country, Port: exit.Port, Enable: exit.Enable,
+			Tag: tor.OutboundTag(exit.Country), Live: statuses[exit.Country],
+		})
+	}
+	return out, nil
 }

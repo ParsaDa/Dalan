@@ -43,6 +43,7 @@ func run(root, outDir string) error {
 				"TunnelPool",
 				"NodeEnrolment",
 				"SubBalancer",
+				"TorExit",
 			),
 			AliasAllow: setOf("Protocol"),
 			Overrides: map[string][]walkOverride{
@@ -121,6 +122,7 @@ func run(root, outDir string) error {
 				"AmneziaWGLogs",
 				"PeerActivity",
 				"HwidSlotStatus",
+				"TorExitView",
 			),
 		},
 		{
@@ -143,6 +145,11 @@ func run(root, outDir string) error {
 		{
 			Path:        resolveRel(root, "internal/tunnel/backpack"),
 			StructAllow: setOf("Option"),
+			AliasAllow:  setOf(),
+		},
+		{
+			Path:        resolveRel(root, "internal/tor"),
+			StructAllow: setOf("Status", "TrialResult"),
 			AliasAllow:  setOf(),
 		},
 		{
