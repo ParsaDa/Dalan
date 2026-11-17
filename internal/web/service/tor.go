@@ -388,3 +388,43 @@ func cachedProbe(country string) tor.Prober {
 		return result
 	}
 }
+
+// torTrialTimeout bounds one Test of a country that is not running.
+const torTrialTimeout = 90 * time.Second
+
+// Test answers whether Tor can leave through a country. A country that already runs is asked directly;
+// any other gets a throwaway Tor that is removed afterwards.
+func (s *TorService) Test(country string) (tor.TrialResult, error) {
+	cc, ok := tor.NormalizeCountry(country)
+	if !ok {
+		return tor.TrialResult{}, errTorCountry
+	}
+	if _, err := os.Stat(torLayout.Binary()); err != nil {
+		return tor.TrialResult{}, tor.ErrNotInstalled
+	}
+	exits, err := s.List()
+	if err != nil {
+		return tor.TrialResult{}, err
+	}
+	for _, exit := range exits {
+		if exit.Country == cc && torExits.Running(tor.OutboundTag(cc)) {
+			progress, seen := torProgress.Get(cc)
+			status := tor.StatusOf(tor.Observation{Port: exit.Port, Installed: true, Running: true, Progress: progress, HasProgress: seen}, torProbe)
+			return trialOf(status), nil
+		}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), torTrialTimeout)
+	defer cancel()
+	return tor.Trial(ctx, cc, storedBridgeLines(), torLayout, torProbe)
+}
+
+func trialOf(status tor.Status) tor.TrialResult {
+	switch status.State {
+	case tor.StateConnected:
+		return tor.TrialResult{OK: true, LatencyMs: status.LatencyMs, ExitIP: status.ExitIP, ExitLoc: status.ExitLoc}
+	case tor.StateStarting:
+		return tor.TrialResult{Reason: fmt.Sprintf("Tor is still connecting (%d%%)", status.Progress)}
+	default:
+		return tor.TrialResult{Reason: "Tor is running, but a request through it failed", Error: status.Error}
+	}
+}

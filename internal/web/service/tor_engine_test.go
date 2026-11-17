@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -259,5 +260,107 @@ func TestStatusAllJudgesEachExitAndCachesTheProbe(t *testing.T) {
 	now = now.Add(31 * time.Second)
 	if _, err := svc.StatusAll(); err != nil || probes != 2 {
 		t.Fatalf("a call after 31 s did not probe again: probes = %d, err = %v", probes, err)
+	}
+}
+
+func stubTorProbe(t *testing.T, result tunnel.Status) *[]string {
+	t.Helper()
+	var addrs []string
+	old := torProbe
+	torProbe = func(addr, url string, timeout time.Duration) tunnel.Status {
+		addrs = append(addrs, addr)
+		return result
+	}
+	t.Cleanup(func() { torProbe = old })
+	return &addrs
+}
+
+func installedTorBundle(t *testing.T, svc *TorService) {
+	t.Helper()
+	server := torBundleServer(t)
+	oldBase := torReleaseBase
+	torReleaseBase = server.URL
+	t.Cleanup(func() { torReleaseBase = oldBase })
+	if err := svc.InstallEngine(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestTestRunsAThrowawayTorForACountryThatIsNotAdded(t *testing.T) {
+	svc := newTorDB(t)
+	useTorLayout(t)
+	tmp := t.TempDir()
+	t.Setenv("TMPDIR", tmp)
+	addrs := stubTorProbe(t, tunnel.Status{Connected: true, LatencyMs: 1500, ExitIP: "203.0.113.9", ExitLoc: "FR"})
+	installedTorBundle(t, svc)
+
+	got, err := svc.Test("FR")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.OK || got.LatencyMs != 1500 || got.ExitLoc != "FR" {
+		t.Fatalf("result = %+v", got)
+	}
+	if exits, _ := svc.List(); len(exits) != 0 || torExits.Running("tor-fr") {
+		t.Fatalf("testing a country added or started it: %v", exits)
+	}
+	if len(*addrs) != 1 {
+		t.Fatalf("probed %v, want one request", *addrs)
+	}
+	if entries, _ := os.ReadDir(tmp); len(entries) != 0 {
+		t.Fatalf("the test left %d entries in the temporary folder", len(entries))
+	}
+}
+
+func TestTestOfARunningCountryAsksThatTorInsteadOfStartingASecond(t *testing.T) {
+	svc := newTorDB(t)
+	useTorLayout(t)
+	addrs := stubTorProbe(t, tunnel.Status{Connected: true, LatencyMs: 800, ExitLoc: "DE"})
+	exit, err := svc.Add("de")
+	if err != nil {
+		t.Fatal(err)
+	}
+	installedTorBundle(t, svc)
+	waitFor(t, "de to bootstrap", func() bool { p, ok := torProgress.Get("de"); return ok && p == 100 })
+
+	got, err := svc.Test("de")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !got.OK || got.LatencyMs != 800 {
+		t.Fatalf("result = %+v", got)
+	}
+	if want := fmt.Sprintf("127.0.0.1:%d", exit.Port); len(*addrs) != 1 || (*addrs)[0] != want {
+		t.Fatalf("probed %v, want the running exit at %s", *addrs, want)
+	}
+}
+
+func TestTestOfARunningCountryReportsWhyItFails(t *testing.T) {
+	svc := newTorDB(t)
+	useTorLayout(t)
+	stubTorProbe(t, tunnel.Status{Error: "socks connect: general failure"})
+	if _, err := svc.Add("de"); err != nil {
+		t.Fatal(err)
+	}
+	installedTorBundle(t, svc)
+	waitFor(t, "de to bootstrap", func() bool { p, ok := torProgress.Get("de"); return ok && p == 100 })
+
+	got, err := svc.Test("de")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.OK || got.Error != "socks connect: general failure" || got.Reason == "" {
+		t.Fatalf("result = %+v, want a failure that carries the error and a reason", got)
+	}
+}
+
+func TestTestRefusesBeforeInstallAndForABadCountry(t *testing.T) {
+	svc := newTorDB(t)
+	useTorLayout(t)
+	if _, err := svc.Test("de"); !errors.Is(err, tor.ErrNotInstalled) {
+		t.Fatalf("before install: %v, want ErrNotInstalled", err)
+	}
+	if _, err := svc.Test("d1"); !errors.Is(err, errTorCountry) {
+		t.Fatalf("bad country: %v, want errTorCountry", err)
 	}
 }
