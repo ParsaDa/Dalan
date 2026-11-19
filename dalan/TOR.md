@@ -13,7 +13,7 @@ The outbound appears in **Xray → Outbounds** with a status chip: **Connected**
 A fresh install already tries to put Tor, BackPack and Rakhsh in place (`x-ui install-engines`); step 2 below is only needed when that could not download them.
 
 1. Open **Xray → Outbounds → Tor exits by country**.
-2. If the notice says Tor is not installed, press **Install Tor 16.0.1**. Dalan downloads the official Tor Expert Bundle from `dist.torproject.org`, checks it against the checksums published beside it and puts it in the panel's `bin/tor-bundle` folder.
+2. If the notice says Tor is not installed, press **Install Tor 16.0.1** (the **Download route** menu beside it chooses how the bundle is fetched: as the panel is set, direct, through an outbound or tunnel, or through a proxy address or share link; see "Download route" in `dalan/TUNNELS.md`). Dalan downloads the official Tor Expert Bundle from `dist.torproject.org`, checks it against the checksums published beside it and puts it in the panel's `bin/tor-bundle` folder.
 3. Search a country (flag and English name) and press **Test**. Dalan starts a throwaway Tor for that country and reports "Works" with the latency and exit location, or the reason it failed. One test runs at a time and takes up to 90 seconds.
 4. Press **Add**. Dalan starts a Tor for the country; it shows in Outbounds within a minute or so, once Tor has built its circuits.
 5. Use `tor-<cc>` in **Routing** like any outbound.
