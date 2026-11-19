@@ -58,7 +58,7 @@ func Trial(ctx context.Context, country string, bridges []string, layout Layout,
 		return TrialResult{}, err
 	}
 	defer os.RemoveAll(dir)
-	port, err := freeLoopbackPort()
+	port, err := freeLoopbackPort(ctx)
 	if err != nil {
 		return TrialResult{}, err
 	}
@@ -117,8 +117,8 @@ func Trial(ctx context.Context, country string, bridges []string, layout Layout,
 	return result, nil
 }
 
-func freeLoopbackPort() (int, error) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
+func freeLoopbackPort(ctx context.Context) (int, error) {
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
 	if err != nil {
 		return 0, err
 	}

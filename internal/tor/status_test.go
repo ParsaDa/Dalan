@@ -26,10 +26,8 @@ func TestStatusOf(t *testing.T) {
 		{"not running", Observation{Port: 62700, Installed: true, Running: false}, Status{State: StateStopped}, false},
 		{"no log line yet", Observation{Port: 62700, Installed: true, Running: true}, Status{State: StateStarting}, false},
 		{"bootstrapping", Observation{Port: 62700, Installed: true, Running: true, Progress: 40, HasProgress: true}, Status{State: StateStarting, Progress: 40}, false},
-		{"bootstrapped and reachable", Observation{Port: 62700, Installed: true, Running: true, Progress: 100, HasProgress: true},
-			Status{State: StateConnected, Progress: 100, LatencyMs: 1400, ExitIP: "203.0.113.9", ExitLoc: "DE"}, true},
-		{"bootstrapped but the request fails", Observation{Port: 62701, Installed: true, Running: true, Progress: 100, HasProgress: true},
-			Status{State: StateFailed, Progress: 100, Error: "socks connect: general failure"}, true},
+		{"bootstrapped and reachable", Observation{Port: 62700, Installed: true, Running: true, Progress: 100, HasProgress: true}, Status{State: StateConnected, Progress: 100, LatencyMs: 1400, ExitIP: "203.0.113.9", ExitLoc: "DE"}, true},
+		{"bootstrapped but the request fails", Observation{Port: 62701, Installed: true, Running: true, Progress: 100, HasProgress: true}, Status{State: StateFailed, Progress: 100, Error: "socks connect: general failure"}, true},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

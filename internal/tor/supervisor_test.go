@@ -1,6 +1,7 @@
 package tor
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,7 +78,7 @@ func TestSupervisorReportsTorMissing(t *testing.T) {
 	layout := Layout{Root: t.TempDir(), BundleDir: t.TempDir()}
 	s := NewSupervisor(layout, func() []string { return nil }, &Progress{})
 	err := s.Reconcile(ExitRows([]model.TorExit{{Country: "de", Port: 62700, Enable: true}}))
-	if err != ErrNotInstalled {
+	if !errors.Is(err, ErrNotInstalled) {
 		t.Fatalf("Reconcile = %v, want ErrNotInstalled", err)
 	}
 }

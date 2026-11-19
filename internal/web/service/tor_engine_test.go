@@ -162,7 +162,7 @@ func TestReconcileWithoutTorInstalledReportsItAndDoesNotRun(t *testing.T) {
 	if _, err := svc.Add("de"); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.ReconcileExits(); err != tor.ErrNotInstalled {
+	if err := svc.ReconcileExits(); !errors.Is(err, tor.ErrNotInstalled) {
 		t.Fatalf("ReconcileExits = %v, want ErrNotInstalled", err)
 	}
 }
