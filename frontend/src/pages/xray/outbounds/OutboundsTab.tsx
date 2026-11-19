@@ -22,6 +22,7 @@ import {
   PlusOutlined,
   CloudOutlined,
   ApiOutlined,
+  SafetyCertificateOutlined,
   MoreOutlined,
   RetweetOutlined,
   PlayCircleOutlined,
@@ -613,6 +614,12 @@ export default function OutboundsTab({
                       icon: <ApiOutlined aria-hidden />,
                       label: t('pages.xray.pia.menu'),
                       onClick: onShowPia,
+                    },
+                    {
+                      key: 'tor',
+                      icon: <SafetyCertificateOutlined aria-hidden />,
+                      label: t('pages.tor.menu'),
+                      onClick: onShowTor,
                     },
                     { type: 'divider' },
                     {

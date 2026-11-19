@@ -38,7 +38,7 @@ import {
   detectBalancerCycles,
 } from './balancers/balancer-loopback';
 import { DnsTab } from './dns';
-import { WarpModal, NordModal, PiaModal } from './overrides';
+import { WarpModal, NordModal, PiaModal, TorModal } from './overrides';
 import './XrayPage.css';
 
 const SECTION_SLUGS = ['basic', 'routing', 'outbound', 'balancer', 'dns', 'advanced'];
@@ -96,7 +96,7 @@ export default function XrayPage() {
   const [warpOpen, setWarpOpen] = useState(false);
   const [nordOpen, setNordOpen] = useState(false);
   const [piaOpen, setPiaOpen] = useState(false);
-  const [, setTorOpen] = useState(false);
+  const [torOpen, setTorOpen] = useState(false);
   const [advSettings, setAdvSettings] = useState<AdvKey>('xraySetting');
   const location = useLocation();
   const navigate = useNavigate();
@@ -400,6 +400,7 @@ export default function XrayPage() {
           onAddOutbound={onAddOutbound}
           onResetOutbound={onResetOutbound}
         />
+        <TorModal open={torOpen} onClose={() => setTorOpen(false)} onChanged={fetchAll} />
         <PiaModal
           open={piaOpen}
           templateSettings={templateSettings}

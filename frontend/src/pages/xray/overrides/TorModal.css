@@ -1,0 +1,91 @@
+.tor-notices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tor-engine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+}
+
+.tor-engine-hint {
+  color: var(--ant-color-text-secondary);
+  font-size: 12px;
+}
+
+.tor-country-list {
+  max-height: 360px;
+  margin-top: 8px;
+  overflow-y: auto;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+}
+
+.tor-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+}
+
+.tor-row + .tor-row {
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.tor-row-name {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tor-row-flag {
+  font-size: 18px;
+}
+
+.tor-row-code {
+  color: var(--ant-color-text-secondary);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.tor-row-info {
+  flex: 0 1 220px;
+  min-width: 0;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.tor-row-ok {
+  color: var(--ant-color-success);
+}
+
+.tor-row-bad {
+  color: var(--ant-color-error);
+}
+
+.tor-row-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+@media (max-width: 576px) {
+  .tor-row {
+    flex-wrap: wrap;
+  }
+
+  .tor-row-info {
+    flex: 1 1 100%;
+    order: 3;
+  }
+}

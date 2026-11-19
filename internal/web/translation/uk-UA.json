@@ -2703,6 +2703,37 @@
         "notInstalled": "Tor is not installed on this server",
         "stopped": "Tor is not running",
         "failed": "Tor is running, but a request through it failed"
+      },
+      "title": "Tor exits",
+      "menu": "Tor exits by country",
+      "failed": "The request failed",
+      "notice": {
+        "tcp": "Tor carries TCP traffic only. UDP traffic, such as some games and calls, does not go through it.",
+        "exit": "The last Tor relay, the exit, can read traffic that is not encrypted. Use Tor only for what you accept that for."
+      },
+      "engine": {
+        "installed": "Installed",
+        "notInstalled": "Not installed",
+        "version": "Version {version}",
+        "install": "Install Tor {version}",
+        "update": "Update to {version}",
+        "installHint": "Downloads the official Tor bundle to this server."
+      },
+      "search": "Search country",
+      "empty": "No country matches",
+      "test": "Test",
+      "add": "Add",
+      "remove": "Remove",
+      "result": {
+        "works": "Works · {ms} ms",
+        "exit": "exit {loc}"
+      },
+      "advanced": "Advanced",
+      "bridges": {
+        "title": "Bridges",
+        "help": "One bridge per line (obfs4, snowflake, webtunnel or meek_lite). Use them when this server cannot reach Tor directly.",
+        "save": "Save bridges",
+        "saved": "Bridges saved"
       }
     }
   },
