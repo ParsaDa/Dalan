@@ -378,7 +378,7 @@ test('offers to install the Rakhsh engine, not BackPack, when only Rakhsh tunnel
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
       '/panel/api/tunnels/engine/install',
-      { engine: 'rakhsh' },
+      { engine: 'rakhsh', route: { via: 'panel', value: '' } },
       JSON_HEADERS,
     ),
   );
@@ -395,7 +395,7 @@ test('updates the installed Rakhsh engine and says which release it is', async (
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
       '/panel/api/tunnels/engine/update',
-      { nodeId: 0, engine: 'rakhsh', version: '' },
+      { nodeId: 0, engine: 'rakhsh', version: '', route: { via: 'panel', value: '' } },
       JSON_HEADERS,
     ),
   );

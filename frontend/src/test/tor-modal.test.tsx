@@ -283,8 +283,30 @@ describe('TorModal', () => {
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: /Install Tor 16\.0\.1/ }));
     });
-    expect(server.posts.some((p) => p.url === '/panel/api/tor/engine/install')).toBe(true);
+    expect(server.posts.find((p) => p.url === '/panel/api/tor/engine/install')?.body).toEqual({
+      route: { via: 'panel', value: '' },
+    });
     await waitFor(() => expect(screen.getByText('Installed')).toBeTruthy());
+  });
+
+  it('installs through a proxy address typed into the download route', async () => {
+    const server = fakeServer({ installed: false });
+    await openModal();
+
+    await waitFor(() => expect(screen.getByText('Not installed')).toBeTruthy());
+    fireEvent.mouseDown(screen.getByLabelText('Download route'));
+    fireEvent.click(await screen.findByText('A proxy address or share link'));
+    const install = screen.getByRole('button', { name: /Install Tor 16\.0\.1/ });
+    expect(install.hasAttribute('disabled')).toBe(true);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Proxy address or share link' }), {
+      target: { value: 'socks5://127.0.0.1:1080' },
+    });
+    await act(async () => {
+      fireEvent.click(install);
+    });
+    expect(server.posts.find((p) => p.url === '/panel/api/tor/engine/install')?.body).toEqual({
+      route: { via: 'link', value: 'socks5://127.0.0.1:1080' },
+    });
   });
 
   it('keeps bridges under Advanced, saves them and shows the server refusal', async () => {

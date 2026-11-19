@@ -2735,6 +2735,17 @@
         "save": "Save bridges",
         "saved": "Bridges saved"
       }
+    },
+    "engineRoute": {
+      "label": "مسار التنزيل",
+      "panel": "حسب إعداد اللوحة",
+      "direct": "مباشرة من هذا الخادم",
+      "link": "عنوان بروكسي أو رابط مشاركة",
+      "linkLabel": "عنوان بروكسي أو رابط مشاركة",
+      "linkPlaceholder": "socks5://127.0.0.1:1080 أو vless://…",
+      "groupTunnel": "الأنفاق",
+      "groupTor": "مخارج Tor",
+      "groupOutbound": "مخارج أخرى"
     }
   },
   "tgbot": {

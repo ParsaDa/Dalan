@@ -222,7 +222,66 @@ test('offers to install the BackPack engine when a BackPack tunnel has none', as
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
       '/panel/api/tunnels/engine/install',
-      { engine: 'backpack' },
+      { engine: 'backpack', route: { via: 'panel', value: '' } },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('installs the BackPack engine through the outbound chosen as the download route', async () => {
+  listed = [backpackPortal];
+  engineInstalled = false;
+  const base = vi.mocked(HttpUtil.get).getMockImplementation();
+  vi.spyOn(HttpUtil, 'get').mockImplementation(async (url, ...rest) =>
+    url === '/panel/api/tunnels/engine/routes'
+      ? new Msg(true, '', [
+          { via: 'panel', value: '', kind: 'panel' },
+          { via: 'direct', value: '', kind: 'direct' },
+          { via: 'outbound', value: 'tunnel-de1', kind: 'tunnel' },
+        ])
+      : base!(url, ...rest),
+  );
+  openTunnels();
+
+  const picker = await screen.findByLabelText('Download route');
+  await waitFor(() =>
+    expect(HttpUtil.get).toHaveBeenCalledWith('/panel/api/tunnels/engine/routes', undefined, {
+      silent: true,
+    }),
+  );
+  fireEvent.mouseDown(picker);
+  fireEvent.click(await screen.findByText('tunnel-de1'));
+  fireEvent.click(screen.getByRole('button', { name: 'Install BackPack' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/engine/install',
+      { engine: 'backpack', route: { via: 'outbound', value: 'tunnel-de1' } },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('will not install through a link until an address is typed', async () => {
+  listed = [backpackPortal];
+  engineInstalled = false;
+  openTunnels();
+
+  fireEvent.mouseDown(await screen.findByLabelText('Download route'));
+  fireEvent.click(await screen.findByText('A proxy address or share link'));
+  const install = screen.getByRole('button', { name: 'Install BackPack' });
+  expect(install.hasAttribute('disabled')).toBe(true);
+
+  fireEvent.change(screen.getByRole('textbox', { name: 'Proxy address or share link' }), {
+    target: { value: 'socks5://127.0.0.1:1080' },
+  });
+  expect(install.hasAttribute('disabled')).toBe(false);
+  fireEvent.click(install);
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/engine/install',
+      { engine: 'backpack', route: { via: 'link', value: 'socks5://127.0.0.1:1080' } },
       { headers: { 'Content-Type': 'application/json' } },
     ),
   );
@@ -238,7 +297,7 @@ test('shows the installed BackPack engine release and updates it from this serve
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
       '/panel/api/tunnels/engine/update',
-      { nodeId: 0, engine: 'backpack', version: '' },
+      { nodeId: 0, engine: 'backpack', version: '', route: { via: 'panel', value: '' } },
       { headers: { 'Content-Type': 'application/json' } },
     ),
   );
@@ -259,12 +318,13 @@ test('installs the BackPack engine through a node when this server cannot reach 
 
   fireEvent.mouseDown(await screen.findByLabelText('Download through node'));
   fireEvent.click(await screen.findByText('nl1'));
+  expect(screen.queryByLabelText('Download route')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Install BackPack' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
       '/panel/api/tunnels/engine/update',
-      { nodeId: 9, engine: 'backpack', version: '' },
+      { nodeId: 9, engine: 'backpack', version: '', route: { via: 'panel', value: '' } },
       { headers: { 'Content-Type': 'application/json' } },
     ),
   );

@@ -2735,6 +2735,17 @@
         "save": "Save bridges",
         "saved": "Bridges saved"
       }
+    },
+    "engineRoute": {
+      "label": "Ruta de descarga",
+      "panel": "Según el ajuste del panel",
+      "direct": "Directo desde este servidor",
+      "link": "Una dirección de proxy o un enlace",
+      "linkLabel": "Dirección de proxy o enlace",
+      "linkPlaceholder": "socks5://127.0.0.1:1080 o vless://…",
+      "groupTunnel": "Túneles",
+      "groupTor": "Salidas de Tor",
+      "groupOutbound": "Otras salidas"
     }
   },
   "tgbot": {
