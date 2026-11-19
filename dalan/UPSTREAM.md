@@ -48,8 +48,12 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 | `frontend/src/pages/nodes/NodeList.tsx` | `<EnrolNode />` button in the toolbar |
 | `frontend/src/pages/api-docs/endpoints.ts` | Tunnels and Node enrolment sections |
 | `frontend/src/pages/xray/outbounds/` (`OutboundsTab.tsx`, `useOutboundColumns.tsx`, `OutboundCardList.tsx`, `outbounds-tab-types.ts`, `outbounds-tab-helpers.ts`) | tunnel rows in the outbounds table and cards, read-only, with a Reverse tag |
+| `internal/web/service/setting.go`, `xray_setting.go` | the `torBridges` setting and the Tor exits payload of the Xray settings |
+| `internal/web/service/xray.go` | a second block injects the Tor exit outbounds (`tor.Apply`) |
+| `internal/web/web.go`, `controller/api.go`, `database/db.go`, `migrate_data.go` | start and stop Tor exits with the panel, mount `/tor`, register `TorExit` |
+| `frontend/src/pages/xray/XrayPage.tsx`, `hooks/useXraySetting.ts`, `lib/xray/injected-outbound-tags.ts` | Tor window state, Tor status data, `tor-` tags counted as injected outbounds |
 | `frontend/src/api/websocketBridge.ts` | the `outbounds` push also refreshes the tunnels' traffic in the query cache |
-| `internal/web/translation/*.json` | `menu.tunnels`, `pages.tunnels` and `pages.enrolments` |
+| `internal/web/translation/*.json` | `menu.tunnels`, `pages.tunnels`, `pages.enrolments` and `pages.tor` |
 
 Keep upstream's change and re-apply the Dalan line on top.
 

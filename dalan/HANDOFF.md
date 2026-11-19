@@ -1,6 +1,6 @@
 # Dalan — handoff
 
-Written 2026-11-15, updated 2026-11-16 for 0.5.0, for whoever continues this work (a person or a coding agent). Read this first, then `CLAUDE.md` (upstream's rules, all still binding), `dalan/UPSTREAM.md` and `dalan/TUNNELS.md`.
+Written 2026-11-15, updated 2026-11-19 for 0.5.1, for whoever continues this work (a person or a coding agent). Read this first, then `CLAUDE.md` (upstream's rules, all still binding), `dalan/UPSTREAM.md`, `dalan/TUNNELS.md` and `dalan/TOR.md`.
 
 ## What Dalan is
 
@@ -29,7 +29,7 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 
 ## State of the repository
 
-`main` is at Dalan **0.4.5** (released as `v0.4.5`); branch `feat/dalan-0.5.0` carries **0.5.0**. `v0.3.1` has working binaries but its Docker image never built (the Dockerfile compiled `main.go` alone and missed `enrol_cmd.go`); `v0.3.2` fixes that. Releases so far: `v0.1.0`, `v0.2.0`, plus the rolling `dev-latest` pre-release built on every push to `main`.
+`main` is at Dalan **0.5.0** (released as `v0.5.0`); branch `feat/dalan-0.5.1` carries **0.5.1**. `v0.3.1` has working binaries but its Docker image never built (the Dockerfile compiled `main.go` alone and missed `enrol_cmd.go`); `v0.3.2` fixes that. Releases so far: `v0.1.0`, `v0.2.0`, plus the rolling `dev-latest` pre-release built on every push to `main`.
 
 | PR | What |
 |---|---|
@@ -43,10 +43,17 @@ Design documents live in the claude.ai Project "VPN and Networking": `design/202
 | #13 | 0.4.0: tunnels as outbounds, spare-tunnel pools, route test, engine update through a node, container front door |
 | #14 | 0.4.5: reverse/direct label, direct layer-3 tunnels, all BackPack 1.9.0 options, edit in place, live tunnel traffic |
 | #15 | 0.5.0: the Rakhsh engine (third engine, all its options) |
+| #16 | 0.5.1: Tor exits by country |
 
 Merged in PR #9 (0.3.1): reverse node enrolment and the management channel, item 1 of the list below. Design: `dalan/plans/2026-11-15-node-enrolment-design.md`. Operator guide: "Nodes that dial in" in `dalan/TUNNELS.md`.
 
-### What 0.5.0 adds (branch `feat/dalan-0.5.0`)
+### What 0.5.1 adds (branch `feat/dalan-0.5.1`)
+
+- **Tor exits by country**, run on the panel server itself (`internal/tor/`, `internal/web/service/tor.go`, `internal/web/controller/tor.go`, model `TorExit`). One managed Tor per enabled country (`ExitNodes {cc}`, `StrictNodes 1`, loopback SOCKS5 on 62700-62789, at most 10 enabled), injected into the Xray config as outbound `tor-<cc>` and shown in Outbounds with a status chip (connected only after a real request through it). Install = Tor Expert Bundle 16.0.1, checksummed; global `torBridges` setting (obfs4, snowflake, webtunnel, meek_lite). A throwaway Tor tests a country (`Trial`, one at a time, 90 s). Operator guide: `dalan/TOR.md`.
+- **Panel**: the Tor window (`pages/xray/overrides/TorModal.tsx`, opened from the Outbounds menu): every assigned ISO country with flag and English name only, Test/Add/Remove, engine install card, bridges under Advanced. `GET/POST /panel/api/tor/*`.
+- Not done on purpose: a rollback button (the API exists), UDP (Tor is TCP only), packet-loss switching, a fourth engine.
+
+### What 0.5.0 adds
 
 - **Rakhsh** (`CluvexStudio/rakhsh`, AGPL Rust core, run as its own unmodified binary like BackPack). Engine id `rakhsh`; `internal/tunnel/rakhsh/` has `RenderConfig`, `Catalog`/`ValidateOptions` (options.go), `Supervisor` (a thin `engine.Supervisor`, shared with BackPack in `internal/tunnel/engine/`), `Install` (pinned `v0.1.0`, verified against the release checksums), `GenerateKeyPair`/`BridgeSecret` (X25519 keys; the bridge key is derived from the portal's and the tunnel UUID) and `ReadStatus` (`rakhsh status --socket S --json`: lanes up, loss, latency).
 - **Setup link version 4** carries `rakhshSecret`/`rakhshPeer`; the link is a secret. `ServerTunnel` gained `rakhsh_secret` and `rakhsh_peer_public` (plain string columns, added by AutoMigrate like the BackPack ones; no hand-written migration was needed).
@@ -106,6 +113,7 @@ Verified once by hand, not in CI:
 - A real install of v0.1.0 on a server by the owner: panel came up, `dalan` command works.
 
 **Not verified — waiting on the owner's tests:**
+- Everything Tor on real servers: the install button (the bundle URL `dist.torproject.org/torbrowser/16.0.1/`, archive layout, checksum file and aarch64 availability were not reachable from the sandbox), a country test, adding an exit and routing through it, bridges. A fake `tor` shell script drives the supervisor, trial and progress tests; a real Tor run is gated behind `internal/tor/e2e_test.go`.
 - Everything Rakhsh on real servers: a pair across the real internet, `quic`/`kcp`/`ws` behind a CDN, any raw carrier or layer-3 device (needs root; only `tcp` and `wss` ran on loopback), a link failing over to the next carrier, the install button (whether the `v0.1.0` release assets and checksums are named the way `rakhsh.Install` expects was not checked against GitHub), editing a node-made Rakhsh tunnel, and the option catalog beyond what `rakhsh check` accepts.
 - Everything new in 0.4.5 on real servers: a direct tunnel (needs root and `/dev/net/tun`; no real v1.9.0 binary was run), reverse `ws`/`wss` behind a CDN with `edge_ip`, editing a node-made tunnel, the option catalog against the real engine (it was written from the v1.9.0 source and config reference, not from a running engine). Whether the `v1.9.0` GitHub release carries `backpack_linux_<arch>.tar.gz` and `SHA256SUMS` was not checked (the tag exists); if the install button answers 404, that is why.
 - An Xray REALITY tunnel between two real servers (owner was testing `v0.2.0`; result not reported yet).
@@ -132,11 +140,11 @@ Verified once by hand, not in CI:
 
 ## What is left, in order
 
-1. **Real-server tests of 0.4.0, 0.4.5 and 0.5.0** (owner): tunnels as outbounds, pools, route test, engine update through a node, install-and-enrol, and the Docker image on Railway. Nothing here has run on real servers; the Docker image was not built in the sandbox (no daemon), CI builds it on the tag.
+1. **Real-server tests of 0.4.0, 0.4.5, 0.5.0 and 0.5.1** (owner): tunnels as outbounds, pools, route test, engine update through a node, install-and-enrol, and the Docker image on Railway. Nothing here has run on real servers; the Docker image was not built in the sandbox (no daemon), CI builds it on the tag.
 2. **Direct tunnel gaps**: not an Xray outbound, cannot cross a CDN (UDP/raw/ICMP carriers), the `spoof` carrier and BackPack's Naive/Xray helper sections are not offered. The **backup server** (design §7.7) is cancelled for now. Pool balancer tags are not offered in the Routing page's balancer picker (they can be typed as `pool-<name>`); BackPack members of a pool report no latency and only replace a tunnel that is down.
 3. **One shared port for all management tunnels**, and Xray tunnels over transports other than REALITY/TCP.
 4. **Node tabs**: the owner's idea — each enrolled node gets a tab in the main panel that shows that node's whole management panel (the main panel already has the node's API token and a path to it through the management tunnel; needs request forwarding plus a node-scoped UI). Fits the UI redesign.
-5. **UI redesign** — only after a brainstorm with the owner; he asked to be consulted first.
+5. **UI redesign** — the owner wants a detailed design discussion after 0.5.1, then a brief for a separate design chat.
 6. Later: loss-aware switching, a fourth engine or an own tunnel, more engines (Arange-tun, C-Tunnel for GRE, GOST), user-management ideas from PasarGuard, an optional SmartDNS module (idea from hyperdns).
 
 ## How to work in this repo
