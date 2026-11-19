@@ -31,6 +31,7 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.GET("/link/:id", a.link)
 	g.GET("/status/:id", a.status)
 	g.GET("/engine", a.engine)
+	g.GET("/engine/routes", a.engineRoutes)
 	g.GET("/options", a.options)
 	g.GET("/pools/list", a.poolList)
 
@@ -294,6 +295,11 @@ func (a *TunnelController) engine(c *gin.Context) {
 		return
 	}
 	jsonObj(c, info, nil)
+}
+
+func (a *TunnelController) engineRoutes(c *gin.Context) {
+	routes, err := (&service.EngineRouteService{}).Choices()
+	jsonObj(c, routes, err)
 }
 
 func (a *TunnelController) updateEngine(c *gin.Context) {

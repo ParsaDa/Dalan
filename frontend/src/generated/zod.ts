@@ -619,6 +619,13 @@ export const ClientsSummarySchema = z.object({
 });
 export type ClientsSummary = z.infer<typeof ClientsSummarySchema>;
 
+export const EngineRouteChoiceSchema = z.object({
+  kind: z.string(),
+  value: z.string(),
+  via: z.string(),
+});
+export type EngineRouteChoice = z.infer<typeof EngineRouteChoiceSchema>;
+
 export const FallbackParentInfoSchema = z.object({
   masterId: z.number().int(),
   path: z.string().optional(),

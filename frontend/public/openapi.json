@@ -2528,6 +2528,30 @@
         ],
         "type": "object"
       },
+      "EngineRouteChoice": {
+        "description": "EngineRouteChoice is one entry the install dialogs offer.",
+        "properties": {
+          "kind": {
+            "description": "Kind groups the entry: panel, direct, tunnel, tor or outbound.",
+            "example": "tor",
+            "type": "string"
+          },
+          "value": {
+            "example": "tor-de",
+            "type": "string"
+          },
+          "via": {
+            "example": "outbound",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "value",
+          "via"
+        ],
+        "type": "object"
+      },
       "FallbackParentInfo": {
         "description": "FallbackParentInfo carries everything the frontend needs to rewrite a\nchild inbound's client link: where to connect (the master's address\nand port) and which path matched on the master's fallbacks array.\nThe frontend already has the master inbound in its dbInbounds list,\nso we only ship identifiers + the match path here.",
         "properties": {
@@ -14093,6 +14117,51 @@
         }
       }
     },
+    "/panel/api/tunnels/engine/routes": {
+      "get": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "The ways an engine download (BackPack, Rakhsh or Tor) can travel, for the install dialogs: the panel proxy setting, direct from this server, and every outbound of the running core, tunnels and Tor exits included. A proxy address or share link is typed by the user and is not listed. Send a chosen entry as route to the install and update calls.",
+        "operationId": "get_panel_api_tunnels_engine_routes",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/EngineRouteChoice"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "kind": "tor",
+                      "value": "tor-de",
+                      "via": "outbound"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/tunnels/options": {
       "get": {
         "tags": [
@@ -14165,7 +14234,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Download the pinned release of an engine (BackPack by default, or Rakhsh with engine \"rakhsh\") for this CPU, verify it against the checksums published with it, put it in the panel bin folder and start that engine's tunnels. Uses the panel proxy settings. Can take a few minutes.",
+        "summary": "Download the pinned release of an engine (BackPack by default, or Rakhsh with engine \"rakhsh\") for this CPU, verify it against the checksums published with it, put it in the panel bin folder and start that engine's tunnels. Can take a few minutes. route says how the download travels: via is panel (as the panel proxy is set, the default), direct (straight from this server), outbound (value is the tag of one of the outbounds of the panel, a tunnel or a Tor exit included) or link (value is a socks5:// or http:// proxy address, or a vless/vmess/trojan/ss share link). See GET /panel/api/tunnels/engine/routes.",
         "operationId": "post_panel_api_tunnels_engine_install",
         "requestBody": {
           "required": true,
@@ -14175,7 +14244,11 @@
                 "type": "object"
               },
               "example": {
-                "engine": "backpack"
+                "engine": "backpack",
+                "route": {
+                  "via": "outbound",
+                  "value": "tunnel-de1"
+                }
               }
             }
           }
@@ -14208,7 +14281,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Install a release of an engine (engine is backpack or rakhsh; empty version means the newest) and restart that engine's tunnels on it. With nodeId the release is downloaded by that node and sent over the management channel, for a server that cannot reach GitHub. The release is verified against its published checksums. When tunnels that were connected do not reconnect within about 75 seconds, the earlier engine is put back and the call fails. Can take several minutes.",
+        "summary": "Install a release of an engine (engine is backpack or rakhsh; empty version means the newest) and restart that engine's tunnels on it. With nodeId the release is downloaded by that node and sent over the management channel, for a server that cannot reach GitHub. The release is verified against its published checksums. When tunnels that were connected do not reconnect within about 75 seconds, the earlier engine is put back and the call fails. Can take several minutes. route says how the download travels: via is panel (as the panel proxy is set, the default), direct (straight from this server), outbound (value is the tag of one of the outbounds of the panel, a tunnel or a Tor exit included) or link (value is a socks5:// or http:// proxy address, or a vless/vmess/trojan/ss share link). See GET /panel/api/tunnels/engine/routes. The route is used when nodeId is 0; a node downloads as its own panel is set.",
         "operationId": "post_panel_api_tunnels_engine_update",
         "requestBody": {
           "required": true,
@@ -14220,7 +14293,10 @@
               "example": {
                 "nodeId": 0,
                 "engine": "backpack",
-                "version": ""
+                "version": "",
+                "route": {
+                  "via": "panel"
+                }
               }
             }
           }
@@ -15271,8 +15347,24 @@
         "tags": [
           "Tor"
         ],
-        "summary": "Download the pinned Tor bundle for this CPU, check it against the checksums published with it, put it in the panel bin folder and start the enabled exits. The bundle it replaces is kept for a rollback. Uses the panel proxy settings. Can take a few minutes.",
+        "summary": "Download the pinned Tor bundle for this CPU, check it against the checksums published with it, put it in the panel bin folder and start the enabled exits. The bundle it replaces is kept for a rollback. Can take a few minutes. route says how the download travels: via is panel (as the panel proxy is set, the default), direct (straight from this server), outbound (value is the tag of one of the outbounds of the panel, a tunnel or a Tor exit included) or link (value is a socks5:// or http:// proxy address, or a vless/vmess/trojan/ss share link). See GET /panel/api/tunnels/engine/routes.",
         "operationId": "post_panel_api_tor_engine_install",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "route": {
+                  "via": "link",
+                  "value": "socks5://127.0.0.1:1080"
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful response",

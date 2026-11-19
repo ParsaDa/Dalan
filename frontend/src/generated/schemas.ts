@@ -2502,6 +2502,30 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "EngineRouteChoice": {
+    "description": "EngineRouteChoice is one entry the install dialogs offer.",
+    "properties": {
+      "kind": {
+        "description": "Kind groups the entry: panel, direct, tunnel, tor or outbound.",
+        "example": "tor",
+        "type": "string"
+      },
+      "value": {
+        "example": "tor-de",
+        "type": "string"
+      },
+      "via": {
+        "example": "outbound",
+        "type": "string"
+      }
+    },
+    "required": [
+      "kind",
+      "value",
+      "via"
+    ],
+    "type": "object"
+  },
   "FallbackParentInfo": {
     "description": "FallbackParentInfo carries everything the frontend needs to rewrite a\nchild inbound's client link: where to connect (the master's address\nand port) and which path matched on the master's fallbacks array.\nThe frontend already has the master inbound in its dbInbounds list,\nso we only ship identifiers + the match path here.",
     "properties": {

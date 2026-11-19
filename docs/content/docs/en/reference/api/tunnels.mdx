@@ -32,26 +32,45 @@ _openapi:
         this Dalan version installs by default.
       url: '#whether-an-engine-binary-backpack-or-rakhsh-is-on-this-server-which-release-is-installed-empty-when-it-was-placed-by-hand-and-the-release-this-dalan-version-installs-by-default'
     - depth: 2
+      title: 'The ways an engine download (BackPack, Rakhsh or Tor) can travel, for
+        the install dialogs: the panel proxy setting, direct from this server,
+        and every outbound of the running core, tunnels and Tor exits included.
+        A proxy address or share link is typed by the user and is not listed.
+        Send a chosen entry as route to the install and update calls.'
+      url: '#the-ways-an-engine-download-backpack-rakhsh-or-tor-can-travel-for-the-install-dialogs-the-panel-proxy-setting-direct-from-this-server-and-every-outbound-of-the-running-core-tunnels-and-tor-exits-included-a-proxy-address-or-share-link-is-typed-by-the-user-and-is-not-listed-send-a-chosen-entry-as-route-to-the-install-and-update-calls'
+    - depth: 2
       title: 'Every setting of one engine (BackPack or Rakhsh) the panel can write,
         for reverse and direct tunnels: key, kind, which end reads it, group,
         allowed values and a hint in English (hintEn) and Persian (hintFa). Send
         values under options of add or update, keyed as listed here.'
       url: '#every-setting-of-one-engine-backpack-or-rakhsh-the-panel-can-write-for-reverse-and-direct-tunnels-key-kind-which-end-reads-it-group-allowed-values-and-a-hint-in-english-hinten-and-persian-hintfa-send-values-under-options-of-add-or-update-keyed-as-listed-here'
     - depth: 2
-      title: Download the pinned release of an engine (BackPack by default, or Rakhsh
+      title: 'Download the pinned release of an engine (BackPack by default, or Rakhsh
         with engine "rakhsh") for this CPU, verify it against the checksums
         published with it, put it in the panel bin folder and start that
-        engine's tunnels. Uses the panel proxy settings. Can take a few minutes.
-      url: '#download-the-pinned-release-of-an-engine-backpack-by-default-or-rakhsh-with-engine-rakhsh-for-this-cpu-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-uses-the-panel-proxy-settings-can-take-a-few-minutes'
+        engine''s tunnels. Can take a few minutes. route says how the download
+        travels: via is panel (as the panel proxy is set, the default), direct
+        (straight from this server), outbound (value is the tag of one of the
+        outbounds of the panel, a tunnel or a Tor exit included) or link (value
+        is a socks5:// or http:// proxy address, or a vless/vmess/trojan/ss
+        share link). See GET /panel/api/tunnels/engine/routes.'
+      url: '#download-the-pinned-release-of-an-engine-backpack-by-default-or-rakhsh-with-engine-rakhsh-for-this-cpu-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes'
     - depth: 2
-      title: Install a release of an engine (engine is backpack or rakhsh; empty
+      title: "Install a release of an engine (engine is backpack or rakhsh; empty
         version means the newest) and restart that engine's tunnels on it. With
         nodeId the release is downloaded by that node and sent over the
         management channel, for a server that cannot reach GitHub. The release
         is verified against its published checksums. When tunnels that were
         connected do not reconnect within about 75 seconds, the earlier engine
-        is put back and the call fails. Can take several minutes.
-      url: '#install-a-release-of-an-engine-engine-is-backpack-or-rakhsh-empty-version-means-the-newest-and-restart-that-engines-tunnels-on-it-with-nodeid-the-release-is-downloaded-by-that-node-and-sent-over-the-management-channel-for-a-server-that-cannot-reach-github-the-release-is-verified-against-its-published-checksums-when-tunnels-that-were-connected-do-not-reconnect-within-about-75-seconds-the-earlier-engine-is-put-back-and-the-call-fails-can-take-several-minutes'
+        is put back and the call fails. Can take several minutes. route says how
+        the download travels: via is panel (as the panel proxy is set, the
+        default), direct (straight from this server), outbound (value is the tag
+        of one of the outbounds of the panel, a tunnel or a Tor exit included)
+        or link (value is a socks5:// or http:// proxy address, or a
+        vless/vmess/trojan/ss share link). See GET
+        /panel/api/tunnels/engine/routes. The route is used when nodeId is 0; a
+        node downloads as its own panel is set."
+      url: '#install-a-release-of-an-engine-engine-is-backpack-or-rakhsh-empty-version-means-the-newest-and-restart-that-engines-tunnels-on-it-with-nodeid-the-release-is-downloaded-by-that-node-and-sent-over-the-management-channel-for-a-server-that-cannot-reach-github-the-release-is-verified-against-its-published-checksums-when-tunnels-that-were-connected-do-not-reconnect-within-about-75-seconds-the-earlier-engine-is-put-back-and-the-call-fails-can-take-several-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes-the-route-is-used-when-nodeid-is-0-a-node-downloads-as-its-own-panel-is-set'
     - depth: 2
       title: 'Node side of an engine update through a node: the first call starts
         downloading a release of the engine named in engine (BackPack or Rakhsh)
@@ -152,25 +171,44 @@ _openapi:
           release is installed (empty when it was placed by hand), and the
           release this Dalan version installs by default.
         id: whether-an-engine-binary-backpack-or-rakhsh-is-on-this-server-which-release-is-installed-empty-when-it-was-placed-by-hand-and-the-release-this-dalan-version-installs-by-default
+      - content: 'The ways an engine download (BackPack, Rakhsh or Tor) can travel, for
+          the install dialogs: the panel proxy setting, direct from this server,
+          and every outbound of the running core, tunnels and Tor exits
+          included. A proxy address or share link is typed by the user and is
+          not listed. Send a chosen entry as route to the install and update
+          calls.'
+        id: the-ways-an-engine-download-backpack-rakhsh-or-tor-can-travel-for-the-install-dialogs-the-panel-proxy-setting-direct-from-this-server-and-every-outbound-of-the-running-core-tunnels-and-tor-exits-included-a-proxy-address-or-share-link-is-typed-by-the-user-and-is-not-listed-send-a-chosen-entry-as-route-to-the-install-and-update-calls
       - content: 'Every setting of one engine (BackPack or Rakhsh) the panel can write,
           for reverse and direct tunnels: key, kind, which end reads it, group,
           allowed values and a hint in English (hintEn) and Persian (hintFa).
           Send values under options of add or update, keyed as listed here.'
         id: every-setting-of-one-engine-backpack-or-rakhsh-the-panel-can-write-for-reverse-and-direct-tunnels-key-kind-which-end-reads-it-group-allowed-values-and-a-hint-in-english-hinten-and-persian-hintfa-send-values-under-options-of-add-or-update-keyed-as-listed-here
-      - content: Download the pinned release of an engine (BackPack by default, or
+      - content: 'Download the pinned release of an engine (BackPack by default, or
           Rakhsh with engine "rakhsh") for this CPU, verify it against the
           checksums published with it, put it in the panel bin folder and start
-          that engine's tunnels. Uses the panel proxy settings. Can take a few
-          minutes.
-        id: download-the-pinned-release-of-an-engine-backpack-by-default-or-rakhsh-with-engine-rakhsh-for-this-cpu-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-uses-the-panel-proxy-settings-can-take-a-few-minutes
-      - content: Install a release of an engine (engine is backpack or rakhsh; empty
+          that engine''s tunnels. Can take a few minutes. route says how the
+          download travels: via is panel (as the panel proxy is set, the
+          default), direct (straight from this server), outbound (value is the
+          tag of one of the outbounds of the panel, a tunnel or a Tor exit
+          included) or link (value is a socks5:// or http:// proxy address, or a
+          vless/vmess/trojan/ss share link). See GET
+          /panel/api/tunnels/engine/routes.'
+        id: download-the-pinned-release-of-an-engine-backpack-by-default-or-rakhsh-with-engine-rakhsh-for-this-cpu-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes
+      - content: "Install a release of an engine (engine is backpack or rakhsh; empty
           version means the newest) and restart that engine's tunnels on it.
           With nodeId the release is downloaded by that node and sent over the
           management channel, for a server that cannot reach GitHub. The release
           is verified against its published checksums. When tunnels that were
           connected do not reconnect within about 75 seconds, the earlier engine
-          is put back and the call fails. Can take several minutes.
-        id: install-a-release-of-an-engine-engine-is-backpack-or-rakhsh-empty-version-means-the-newest-and-restart-that-engines-tunnels-on-it-with-nodeid-the-release-is-downloaded-by-that-node-and-sent-over-the-management-channel-for-a-server-that-cannot-reach-github-the-release-is-verified-against-its-published-checksums-when-tunnels-that-were-connected-do-not-reconnect-within-about-75-seconds-the-earlier-engine-is-put-back-and-the-call-fails-can-take-several-minutes
+          is put back and the call fails. Can take several minutes. route says
+          how the download travels: via is panel (as the panel proxy is set, the
+          default), direct (straight from this server), outbound (value is the
+          tag of one of the outbounds of the panel, a tunnel or a Tor exit
+          included) or link (value is a socks5:// or http:// proxy address, or a
+          vless/vmess/trojan/ss share link). See GET
+          /panel/api/tunnels/engine/routes. The route is used when nodeId is 0;
+          a node downloads as its own panel is set."
+        id: install-a-release-of-an-engine-engine-is-backpack-or-rakhsh-empty-version-means-the-newest-and-restart-that-engines-tunnels-on-it-with-nodeid-the-release-is-downloaded-by-that-node-and-sent-over-the-management-channel-for-a-server-that-cannot-reach-github-the-release-is-verified-against-its-published-checksums-when-tunnels-that-were-connected-do-not-reconnect-within-about-75-seconds-the-earlier-engine-is-put-back-and-the-call-fails-can-take-several-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes-the-route-is-used-when-nodeid-is-0-a-node-downloads-as-its-own-panel-is-set
       - content: 'Node side of an engine update through a node: the first call starts
           downloading a release of the engine named in engine (BackPack or
           Rakhsh) and answers pending until it is done, then each call returns
@@ -251,7 +289,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/options","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/engine/update","method":"post"},{"path":"/panel/api/tunnels/engine/release","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/update/{id}","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/routes","method":"get"},{"path":"/panel/api/tunnels/options","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/engine/update","method":"post"},{"path":"/panel/api/tunnels/engine/release","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/update/{id}","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
     </>
   );
 }
