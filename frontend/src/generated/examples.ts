@@ -628,6 +628,11 @@ export const EXAMPLES: Record<string, unknown> = {
     "onlineCount": 1,
     "total": 2000
   },
+  "EngineRouteChoice": {
+    "kind": "tor",
+    "value": "tor-de",
+    "via": "outbound"
+  },
   "FallbackParentInfo": {
     "masterId": 0,
     "path": ""

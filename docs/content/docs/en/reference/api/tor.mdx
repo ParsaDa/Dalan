@@ -44,11 +44,16 @@ _openapi:
         installs.
       url: '#whether-the-tor-bundle-is-on-this-server-which-release-is-installed-empty-when-it-was-placed-by-hand-and-the-release-this-dalan-version-installs'
     - depth: 2
-      title: Download the pinned Tor bundle for this CPU, check it against the
+      title: 'Download the pinned Tor bundle for this CPU, check it against the
         checksums published with it, put it in the panel bin folder and start
-        the enabled exits. The bundle it replaces is kept for a rollback. Uses
-        the panel proxy settings. Can take a few minutes.
-      url: '#download-the-pinned-tor-bundle-for-this-cpu-check-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-the-enabled-exits-the-bundle-it-replaces-is-kept-for-a-rollback-uses-the-panel-proxy-settings-can-take-a-few-minutes'
+        the enabled exits. The bundle it replaces is kept for a rollback. Can
+        take a few minutes. route says how the download travels: via is panel
+        (as the panel proxy is set, the default), direct (straight from this
+        server), outbound (value is the tag of one of the outbounds of the
+        panel, a tunnel or a Tor exit included) or link (value is a socks5:// or
+        http:// proxy address, or a vless/vmess/trojan/ss share link). See GET
+        /panel/api/tunnels/engine/routes.'
+      url: '#download-the-pinned-tor-bundle-for-this-cpu-check-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-the-enabled-exits-the-bundle-it-replaces-is-kept-for-a-rollback-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes'
     - depth: 2
       title: Put back the bundle the last install replaced and restart the enabled
         exits on it.
@@ -92,11 +97,16 @@ _openapi:
           (empty when it was placed by hand), and the release this Dalan version
           installs.
         id: whether-the-tor-bundle-is-on-this-server-which-release-is-installed-empty-when-it-was-placed-by-hand-and-the-release-this-dalan-version-installs
-      - content: Download the pinned Tor bundle for this CPU, check it against the
+      - content: 'Download the pinned Tor bundle for this CPU, check it against the
           checksums published with it, put it in the panel bin folder and start
-          the enabled exits. The bundle it replaces is kept for a rollback. Uses
-          the panel proxy settings. Can take a few minutes.
-        id: download-the-pinned-tor-bundle-for-this-cpu-check-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-the-enabled-exits-the-bundle-it-replaces-is-kept-for-a-rollback-uses-the-panel-proxy-settings-can-take-a-few-minutes
+          the enabled exits. The bundle it replaces is kept for a rollback. Can
+          take a few minutes. route says how the download travels: via is panel
+          (as the panel proxy is set, the default), direct (straight from this
+          server), outbound (value is the tag of one of the outbounds of the
+          panel, a tunnel or a Tor exit included) or link (value is a socks5://
+          or http:// proxy address, or a vless/vmess/trojan/ss share link). See
+          GET /panel/api/tunnels/engine/routes.'
+        id: download-the-pinned-tor-bundle-for-this-cpu-check-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-the-enabled-exits-the-bundle-it-replaces-is-kept-for-a-rollback-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes
       - content: Put back the bundle the last install replaced and restart the enabled
           exits on it.
         id: put-back-the-bundle-the-last-install-replaced-and-restart-the-enabled-exits-on-it

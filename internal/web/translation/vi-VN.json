@@ -2735,6 +2735,17 @@
         "save": "Save bridges",
         "saved": "Bridges saved"
       }
+    },
+    "engineRoute": {
+      "label": "Đường tải xuống",
+      "panel": "Theo cài đặt của bảng điều khiển",
+      "direct": "Trực tiếp từ máy chủ này",
+      "link": "Địa chỉ proxy hoặc liên kết chia sẻ",
+      "linkLabel": "Địa chỉ proxy hoặc liên kết chia sẻ",
+      "linkPlaceholder": "socks5://127.0.0.1:1080 hoặc vless://…",
+      "groupTunnel": "Đường hầm",
+      "groupTor": "Lối ra Tor",
+      "groupOutbound": "Outbound khác"
     }
   },
   "tgbot": {

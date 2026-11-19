@@ -292,11 +292,15 @@ func (s *TorService) EngineInfo() (EngineInfo, error) {
 	}, nil
 }
 
-// InstallEngine downloads the pinned bundle through the panel's proxy settings and starts the enabled exits.
-func (s *TorService) InstallEngine() error {
+// InstallEngine downloads the pinned bundle through route and starts the enabled exits.
+func (s *TorService) InstallEngine(route EngineRoute) error {
+	client, release, err := (&EngineRouteService{}).Client(route, engineInstallTimeout)
+	if err != nil {
+		return err
+	}
+	defer release()
 	ctx, cancel := context.WithTimeout(context.Background(), engineInstallTimeout)
 	defer cancel()
-	client := (&SettingService{}).NewProxiedHTTPClient(engineInstallTimeout)
 	rel, err := tor.Fetch(ctx, client, torReleaseBase, tor.PinnedVersion, runtime.GOARCH)
 	if err != nil {
 		return err

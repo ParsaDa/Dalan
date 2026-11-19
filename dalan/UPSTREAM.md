@@ -36,9 +36,9 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 | `internal/web/service/xray.go` | one block before the final `dropRefusedScript` calls in `GetXrayConfig` injects tunnels |
 | `internal/web/controller/api.go` | registers `/tunnels` and `/enrolments` (the latter also adds the public `dalan/enrol` route) |
 | `internal/web/controller/node.go` | `del` closes the management tunnel of a deleted node |
-| `main.go` | `enrol` command (its code is in `enrol_cmd.go`) and its help line |
+| `main.go` | `enrol` and `install-engines` commands (their code is in `enrol_cmd.go` and `engines_cmd.go`) and their help lines |
 | `x-ui.sh` | `enrol` case, added by `scripts/dalan/rebrand.sh` |
-| `install.sh` | `XUI_ENROL` step before the final summary, added by `scripts/dalan/rebrand.sh` |
+| `install.sh` | `install-engines` step and the `XUI_ENROL` step before the final summary, added by `scripts/dalan/rebrand.sh` |
 | `Dockerfile`, `DockerEntrypoint.sh` | copy and source `DockerPrepare.sh` (platform `PORT`, `DALAN_*` variables); `main.go` also starts the front door (`internal/frontdoor`) |
 | `.github/workflows/ci.yml` | shellcheck list includes `DockerPrepare.sh` and `deploy/test/container-prepare.sh` |
 | `internal/web/web.go` | starts BackPack and Rakhsh tunnels after Xray in `startTask`, stops them before Xray in the stop path |

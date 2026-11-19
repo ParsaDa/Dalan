@@ -333,3 +333,33 @@ func TestTunnelRoutesCreateARakhshTunnelWithoutEverListingItsSecret(t *testing.T
 		t.Fatalf("the list carries the portal's secret key: %s", raw.Obj)
 	}
 }
+
+func TestEngineRoutesListWhatAnInstallCanTravelThrough(t *testing.T) {
+	engine := newTunnelEngine(t)
+	doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
+		"name": "ir1", "address": "203.0.113.10", "port": 8443,
+		"security": "reality", "serverName": "www.example.com", "routeInbounds": []string{"inbound-443"},
+	})
+	env := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/engine/routes", nil)
+	var routes []struct{ Via, Value, Kind string }
+	if err := json.Unmarshal(env.Obj, &routes); err != nil {
+		t.Fatalf("decode routes: %v (%s)", err, env.Obj)
+	}
+	if len(routes) < 3 || routes[0].Via != "panel" || routes[1].Via != "direct" {
+		t.Fatalf("routes = %+v, want the panel setting and direct first", routes)
+	}
+	last := routes[len(routes)-1]
+	if last.Via != "outbound" || last.Value != "tunnel-ir1" || last.Kind != "tunnel" {
+		t.Fatalf("last route = %+v, want the ir1 tunnel", last)
+	}
+}
+
+func TestInstallEngineRefusesALinkItCannotUse(t *testing.T) {
+	engine := newTunnelEngine(t)
+	env := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/engine/install", map[string]any{
+		"engine": "rakhsh", "route": map[string]any{"via": "link", "value": "not a link"},
+	})
+	if env.Success || !strings.Contains(env.Msg, "link") {
+		t.Fatalf("success=%v msg=%q, want a refusal that talks about the link", env.Success, env.Msg)
+	}
+}

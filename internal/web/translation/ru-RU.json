@@ -2735,6 +2735,17 @@
         "save": "Save bridges",
         "saved": "Bridges saved"
       }
+    },
+    "engineRoute": {
+      "label": "Путь загрузки",
+      "panel": "Как задано в панели",
+      "direct": "Напрямую с этого сервера",
+      "link": "Адрес прокси или ссылка",
+      "linkLabel": "Адрес прокси или ссылка",
+      "linkPlaceholder": "socks5://127.0.0.1:1080 или vless://…",
+      "groupTunnel": "Туннели",
+      "groupTor": "Выходы Tor",
+      "groupOutbound": "Другие исходящие"
     }
   },
   "tgbot": {

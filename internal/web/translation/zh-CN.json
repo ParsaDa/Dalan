@@ -2735,6 +2735,17 @@
         "save": "Save bridges",
         "saved": "Bridges saved"
       }
+    },
+    "engineRoute": {
+      "label": "下载途径",
+      "panel": "按面板设置",
+      "direct": "从本服务器直连",
+      "link": "代理地址或分享链接",
+      "linkLabel": "代理地址或分享链接",
+      "linkPlaceholder": "socks5://127.0.0.1:1080 或 vless://…",
+      "groupTunnel": "隧道",
+      "groupTor": "Tor 出口",
+      "groupOutbound": "其他出站"
     }
   },
   "tgbot": {

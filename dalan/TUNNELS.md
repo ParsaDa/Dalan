@@ -166,7 +166,22 @@ The **Traffic** column of an entry tunnel shows what has passed through it, up a
 
 On the Tunnels page, **Install BackPack**, **Install Rakhsh** and each engine's **Update engine** fetch the newest release of that engine (**Install** the one this Dalan version pins: BackPack 1.9.0, Rakhsh 0.1.0). The page shows one bar per engine that a tunnel on it uses. The release is checked against the checksums published with it before it replaces the engine, and the engine it replaces is kept. After an update, tunnels that were connected must reconnect within about 75 seconds; if they do not, the earlier engine is put back and the update fails with that reason.
 
-A server in Iran usually cannot reach GitHub. Pick **Download through node** first: the node abroad downloads the release and sends it to this panel through the management tunnel in 512 KiB parts, so nothing depends on GitHub being reachable from here. The node needs this Dalan version. The checksums come from the same node, so this protects against a damaged download, not against a node that is itself compromised.
+## Download route
+
+Every install and update button on this server (Tunnels, and the Tor window) has a **Download route** menu beside it. It decides how the release travels from the release server to this panel:
+
+- **As the panel is set** (default): through the panel's own outbound setting, direct when none is set.
+- **Direct from this server**: no proxy, whatever the panel setting says.
+- **An outbound of the panel**: any outbound of the running Xray, listed by its tag. Tunnels (`tunnel-<name>`) and Tor exits (`tor-<cc>`) are in the list, so a server in Iran can download through a tunnel to a server abroad. The panel starts a short-lived copy of that outbound for the download and stops it afterwards.
+- **A proxy address or share link**: type `socks5://host:port` or `http://host:port`, or paste a `vless://`, `vmess://`, `trojan://` or `ss://` link. A share link runs in a short-lived core for the download only; it is not saved anywhere.
+
+The install button waits until a link is typed. **Download through node** (Tunnels only) is a separate way and hides the menu, because the node downloads as its own panel is set.
+
+The fresh-install step `x-ui install-engines` reads the environment variable `XUI_ENGINE_PROXY` (a proxy address or share link) for a server that cannot reach GitHub: `XUI_ENGINE_PROXY=socks5://127.0.0.1:1080 x-ui install-engines`.
+
+A temporary core needs Xray to be installed on the panel server; an outbound that is only in the saved template is used when Xray is not running.
+
+A server in Iran usually cannot reach GitHub. Pick **Download through node** (or a route above) first: the node abroad downloads the release and sends it to this panel through the management tunnel in 512 KiB parts, so nothing depends on GitHub being reachable from here. The node needs this Dalan version. The checksums come from the same node, so this protects against a damaged download, not against a node that is itself compromised.
 
 ## Engine output
 

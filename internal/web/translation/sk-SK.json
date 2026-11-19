@@ -2735,6 +2735,17 @@
         "save": "Save bridges",
         "saved": "Bridges saved"
       }
+    },
+    "engineRoute": {
+      "label": "Trasa sťahovania",
+      "panel": "Podľa nastavenia panela",
+      "direct": "Priamo z tohto servera",
+      "link": "Adresa proxy alebo zdieľaný odkaz",
+      "linkLabel": "Adresa proxy alebo zdieľaný odkaz",
+      "linkPlaceholder": "socks5://127.0.0.1:1080 alebo vless://…",
+      "groupTunnel": "Tunely",
+      "groupTor": "Výstupy Tor",
+      "groupOutbound": "Ďalšie odchádzajúce"
     }
   },
   "tgbot": {

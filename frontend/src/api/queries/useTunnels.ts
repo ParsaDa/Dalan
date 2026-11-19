@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { HttpUtil } from '@/utils';
 import { parseMsg } from '@/utils/zodValidate';
 import { OptionSchema, ServerTunnelSchema, type ServerTunnel } from '@/generated/zod';
+import type { EngineRoute } from '@/schemas/engineRoute';
 
 export type { ServerTunnel };
 export type TunnelMode = 'reverse' | 'direct';
@@ -147,18 +148,26 @@ export function useTunnelMutations() {
   });
 
   const installEngine = useMutation({
-    mutationFn: (engine: TunnelEngine) =>
-      HttpUtil.post('/panel/api/tunnels/engine/install', { engine }, JSON_HEADERS),
+    mutationFn: ({ engine, route }: { engine: TunnelEngine; route: EngineRoute }) =>
+      HttpUtil.post('/panel/api/tunnels/engine/install', { engine, route }, JSON_HEADERS),
     onSuccess: (msg) => {
       if (msg?.success) queryClient.invalidateQueries({ queryKey: TUNNELS_KEY });
     },
   });
 
   const updateEngine = useMutation({
-    mutationFn: ({ nodeId, engine }: { nodeId: number; engine: TunnelEngine }) =>
+    mutationFn: ({
+      nodeId,
+      engine,
+      route,
+    }: {
+      nodeId: number;
+      engine: TunnelEngine;
+      route: EngineRoute;
+    }) =>
       HttpUtil.post(
         '/panel/api/tunnels/engine/update',
-        { nodeId, engine, version: '' },
+        { nodeId, engine, version: '', route },
         JSON_HEADERS,
       ),
     onSuccess: (msg) => {

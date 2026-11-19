@@ -583,6 +583,12 @@ export interface ClientsSummary {
   total: number;
 }
 
+export interface EngineRouteChoice {
+  kind: string;
+  value: string;
+  via: string;
+}
+
 export interface FallbackParentInfo {
   masterId: number;
   path?: string;

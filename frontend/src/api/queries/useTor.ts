@@ -9,6 +9,7 @@ import {
   type TorExitView,
   type TrialResult,
 } from '@/generated/zod';
+import type { EngineRoute } from '@/schemas/engineRoute';
 
 export type { TorExitView, TrialResult };
 
@@ -100,11 +101,12 @@ export function useTorMutations() {
     },
   });
   const installEngine = useMutation({
-    mutationFn: () =>
-      HttpUtil.post('/panel/api/tor/engine/install', undefined, {
-        ...quiet,
-        timeout: INSTALL_TIMEOUT_MS,
-      }),
+    mutationFn: (route: EngineRoute) =>
+      HttpUtil.post(
+        '/panel/api/tor/engine/install',
+        { route },
+        { ...quiet, timeout: INSTALL_TIMEOUT_MS },
+      ),
     onSuccess: refresh,
   });
   const saveBridges = useMutation({

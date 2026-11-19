@@ -95,7 +95,7 @@ func TestEngineInfoBeforeAndAfterInstall(t *testing.T) {
 	if err != nil || info.Installed || info.Pinned != tor.PinnedVersion || info.Engine != "tor" {
 		t.Fatalf("before install: %+v, %v", info, err)
 	}
-	if err := svc.InstallEngine(); err != nil {
+	if err := svc.InstallEngine(EngineRoute{}); err != nil {
 		t.Fatalf("InstallEngine: %v", err)
 	}
 	info, err = svc.EngineInfo()
@@ -123,7 +123,7 @@ func TestInstallStartsTheEnabledExitsAndDisableAndDeleteStopThem(t *testing.T) {
 	if torExits.Running("tor-de") {
 		t.Fatal("a Tor ran before the bundle was installed")
 	}
-	if err := svc.InstallEngine(); err != nil {
+	if err := svc.InstallEngine(EngineRoute{}); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "both exits to run", func() bool { return torExits.Running("tor-de") && torExits.Running("tor-nl") })
@@ -249,7 +249,7 @@ func TestStatusAllJudgesEachExitAndCachesTheProbe(t *testing.T) {
 		t.Fatalf("before install: %+v, %v", before["de"], err)
 	}
 
-	if err := svc.InstallEngine(); err != nil {
+	if err := svc.InstallEngine(EngineRoute{}); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "de to bootstrap", func() bool { p, ok := torProgress.Get("de"); return ok && p == 100 })
@@ -288,7 +288,7 @@ func installedTorBundle(t *testing.T, svc *TorService) {
 	oldBase := torReleaseBase
 	torReleaseBase = server.URL
 	t.Cleanup(func() { torReleaseBase = oldBase })
-	if err := svc.InstallEngine(); err != nil {
+	if err := svc.InstallEngine(EngineRoute{}); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -387,7 +387,7 @@ func TestDisablingAnExitForgetsProgressEvenWhenTorPrintsOnItsWayOut(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.InstallEngine(); err != nil {
+	if err := svc.InstallEngine(EngineRoute{}); err != nil {
 		t.Fatal(err)
 	}
 	waitFor(t, "de to bootstrap", func() bool { p, ok := torProgress.Get("de"); return ok && p == 100 })

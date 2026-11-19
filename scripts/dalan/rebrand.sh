@@ -53,6 +53,13 @@ add_enrol_on_install() {
     perl -0pi -e 's#^([ \t]*)(echo -e "\$\{green\}x-ui \$\{tag_version\}\$\{plain\} installation finished)#$1if [[ -n "\${XUI_ENROL:-}" ]]; then\n$1    echo -e "\${green}Joining the main panel...\${plain}"\n$1    /usr/bin/x-ui enrol "\${XUI_ENROL}" || echo -e "\${red}Joining failed. Run again later: x-ui enrol '"'"'<link>'"'"'\${plain}"\n$1fi\n\n$1$2#m' "$1"
 }
 
+add_engines_on_install() {
+    # A fresh install puts every tunnel engine in place before a node joins; one that cannot be fetched never fails the install.
+    [[ "$(basename "$1")" == "install.sh" ]] || return 0
+    grep -qF -- 'install-engines' "$1" && return 0
+    perl -0pi -e 's#^([ \t]*)(if \[\[ -n "\$\{XUI_ENROL:-\}" \]\]; then)#$1echo -e "\$\{green\}Installing tunnel engines...\$\{plain\}"\n$1"\$\{xui_folder\}/x-ui" install-engines || true\n\n$1$2#m' "$1"
+}
+
 drop_upstream_docker_hub() {
     # Upstream also publishes to its author's Docker Hub account; Dalan images go to GHCR only.
     perl -0pi -e 's/^[ \t]*hsanaeii\/3x-ui[ \t]*\n//mg; s/^([ \t]*)- name: Login to Docker Hub\n(?:\1[ \t]+.*\n)*\n?//mg' "$1"
@@ -65,6 +72,7 @@ while IFS= read -r file; do
             add_command_alias "${file}"
             add_enrol_command "${file}"
             add_enrol_on_install "${file}"
+            add_engines_on_install "${file}"
             ;;
         *.yml) drop_upstream_docker_hub "${file}" ;;
     esac

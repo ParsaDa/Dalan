@@ -2735,6 +2735,17 @@
         "save": "Save bridges",
         "saved": "Bridges saved"
       }
+    },
+    "engineRoute": {
+      "label": "ダウンロード経路",
+      "panel": "パネルの設定に従う",
+      "direct": "このサーバーから直接",
+      "link": "プロキシアドレスまたは共有リンク",
+      "linkLabel": "プロキシアドレスまたは共有リンク",
+      "linkPlaceholder": "socks5://127.0.0.1:1080 または vless://…",
+      "groupTunnel": "トンネル",
+      "groupTor": "Tor 出口",
+      "groupOutbound": "その他のアウトバウンド"
     }
   },
   "tgbot": {

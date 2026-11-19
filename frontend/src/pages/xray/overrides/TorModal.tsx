@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Button, Collapse, Input, Modal, Tag } from 'antd';
 import { ExperimentOutlined } from '@ant-design/icons';
 
+import EngineRoutePicker from '@/components/engine/EngineRoutePicker';
+import { engineRouteReady, PANEL_ROUTE, type EngineRoute } from '@/schemas/engineRoute';
 import { useTorBridges, useTorEngine, useTorExits, useTorMutations } from '@/api/queries/useTor';
 import { countryFlag, countryName } from '../outbounds/outbounds-tab-helpers';
 import TorStatusChip from '../outbounds/TorStatusChip';
@@ -34,6 +36,7 @@ export default function TorModal({ open, onClose, onChanged }: TorModalProps) {
   const [bridgesDraft, setBridgesDraft] = useState<string | null>(null);
   const [bridgesError, setBridgesError] = useState('');
   const [bridgesSaved, setBridgesSaved] = useState(false);
+  const [route, setRoute] = useState<EngineRoute>(PANEL_ROUTE);
 
   const added = useMemo(() => new Map(exits.map((e) => [e.country, e])), [exits]);
   const countries = useMemo(() => {
@@ -112,15 +115,19 @@ export default function TorModal({ open, onClose, onChanged }: TorModalProps) {
             )}
           </div>
           {(!engine.installed || needsUpdate) && (
-            <Button
-              type="primary"
-              loading={installing}
-              onClick={() => change(() => installEngine())}
-            >
-              {engine.installed
-                ? t('pages.tor.engine.update', { version: pinned })
-                : t('pages.tor.engine.install', { version: pinned })}
-            </Button>
+            <div className="tor-engine-actions">
+              <EngineRoutePicker id="tor-engine-route" value={route} onChange={setRoute} />
+              <Button
+                type="primary"
+                loading={installing}
+                disabled={!engineRouteReady(route)}
+                onClick={() => change(() => installEngine(route))}
+              >
+                {engine.installed
+                  ? t('pages.tor.engine.update', { version: pinned })
+                  : t('pages.tor.engine.install', { version: pinned })}
+              </Button>
+            </div>
           )}
         </div>
       )}

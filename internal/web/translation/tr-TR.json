@@ -2735,6 +2735,17 @@
         "save": "Save bridges",
         "saved": "Bridges saved"
       }
+    },
+    "engineRoute": {
+      "label": "İndirme yolu",
+      "panel": "Panel ayarına göre",
+      "direct": "Doğrudan bu sunucudan",
+      "link": "Bir proxy adresi veya paylaşım bağlantısı",
+      "linkLabel": "Proxy adresi veya paylaşım bağlantısı",
+      "linkPlaceholder": "socks5://127.0.0.1:1080 veya vless://…",
+      "groupTunnel": "Tüneller",
+      "groupTor": "Tor çıkışları",
+      "groupOutbound": "Diğer çıkışlar"
     }
   },
   "tgbot": {
