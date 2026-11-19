@@ -15,6 +15,7 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
   NodeIndexOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -30,6 +31,7 @@ import type {
 import type { OutboundRow } from './outbounds-tab-types';
 import CountryPill from './CountryPill';
 import TestResultPopover from './TestResultPopover';
+import TorStatusChip, { type TorStatusInfo } from './TorStatusChip';
 import {
   effectiveTestMode,
   countryFlag,
@@ -55,6 +57,8 @@ interface OutboundColumnsParams {
   confirmDelete: (idx: number) => void;
   onResetTraffic: (tag: string) => void;
   onTest: (index: number, mode: string) => void;
+  torStatus?: Record<string, TorStatusInfo>;
+  onShowTor: () => void;
 }
 
 export function useOutboundColumns({
@@ -69,6 +73,8 @@ export function useOutboundColumns({
   confirmDelete,
   onResetTraffic,
   onTest,
+  torStatus,
+  onShowTor,
 }: OutboundColumnsParams): ColumnsType<OutboundRow> {
   const { t, i18n } = useTranslation();
   const [showEgressIp, setShowEgressIp] = useState(false);
@@ -82,7 +88,19 @@ export function useOutboundColumns({
         render: (_v, record, index) => (
           <div className="action-cell">
             <span className="row-index">{index + 1}</span>
-            {record.tunnelEngine ? (
+            {record.torCountry ? (
+              <div className="action-buttons">
+                <Tooltip title={t('pages.tor.manage')}>
+                  <Button
+                    shape="circle"
+                    size="small"
+                    icon={<SafetyCertificateOutlined aria-hidden />}
+                    aria-label={t('pages.tor.manage')}
+                    onClick={onShowTor}
+                  />
+                </Tooltip>
+              </div>
+            ) : record.tunnelEngine ? (
               <div className="action-buttons">
                 <Tooltip title={t('pages.xray.outbound.manageTunnel')}>
                   <Link to="/tunnels" aria-label={t('pages.xray.outbound.manageTunnel')}>
@@ -293,6 +311,14 @@ export function useOutboundColumns({
         align: 'left',
         width: 160,
         render: (_v, record) => {
+          if (record.torCountry) {
+            return (
+              <CountryPill
+                flag={countryFlag(record.torCountry)}
+                name={countryName(record.torCountry, 'en') || record.torCountry}
+              />
+            );
+          }
           const egress = testResult(outboundTestStates, record.key)?.egress;
           if (!egress?.country) {
             return (
@@ -334,6 +360,7 @@ export function useOutboundColumns({
         align: 'left',
         width: 140,
         render: (_v, record) => {
+          if (record.torCountry) return <TorStatusChip status={torStatus?.[record.tag || '']} />;
           const r = testResult(outboundTestStates, record.key);
           if (!r)
             return isTesting(outboundTestStates, record.key) ? (
@@ -367,6 +394,15 @@ export function useOutboundColumns({
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [t, i18n.language, testMode, rows, outboundTestStates, outboundsTraffic, showEgressIp],
+    [
+      t,
+      i18n.language,
+      testMode,
+      rows,
+      outboundTestStates,
+      outboundsTraffic,
+      showEgressIp,
+      torStatus,
+    ],
   );
 }

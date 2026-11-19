@@ -205,6 +205,7 @@ var defaultValueMap = map[string]string{
 	"restartXrayOnClientDisable":  "true",
 	"xrayOutboundTestUrl":         "https://www.google.com/generate_204",
 	"panelOutbound":               "",
+	"torBridges":                  "",
 	"devChannelEnable":            "false",
 
 	// LDAP defaults
@@ -510,6 +511,14 @@ func (s *SettingService) SetWarpUpdateInterval(val int) error {
 
 func (s *SettingService) GetXrayConfigTemplate() (string, error) {
 	return s.getString("xrayTemplateConfig")
+}
+
+func (s *SettingService) GetTorBridges() (string, error) {
+	return s.getString("torBridges")
+}
+
+func (s *SettingService) SetTorBridges(text string) error {
+	return s.setString("torBridges", text)
 }
 
 func (s *SettingService) GetXrayOutboundTestUrl() (string, error) {

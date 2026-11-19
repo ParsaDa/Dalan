@@ -1256,6 +1256,14 @@ export const EXAMPLES: Record<string, unknown> = {
       }
     ]
   },
+  "Status": {
+    "error": "",
+    "exitIp": "203.0.113.9",
+    "exitLoc": "DE",
+    "latencyMs": 1400,
+    "progress": 100,
+    "state": "connected"
+  },
   "SubBalancer": {
     "createdAt": 1710000000000,
     "enabled": true,
@@ -1276,12 +1284,41 @@ export const EXAMPLES: Record<string, unknown> = {
     "running": true,
     "username": "xui_bot"
   },
+  "TorExit": {
+    "country": "de",
+    "enable": true,
+    "id": 1,
+    "port": 62700
+  },
+  "TorExitView": {
+    "country": "de",
+    "enable": true,
+    "id": 1,
+    "port": 62700,
+    "status": {
+      "error": "",
+      "exitIp": "203.0.113.9",
+      "exitLoc": "DE",
+      "latencyMs": 1400,
+      "progress": 100,
+      "state": "connected"
+    },
+    "tag": "tor-de"
+  },
   "Traffic": {
     "Down": 2097152,
     "IsInbound": true,
     "IsOutbound": false,
     "Tag": "inbound-443",
     "Up": 1048576
+  },
+  "TrialResult": {
+    "error": "",
+    "exitIp": "203.0.113.9",
+    "exitLoc": "DE",
+    "latencyMs": 1400,
+    "ok": true,
+    "reason": ""
   },
   "TuicClientSettings": {
     "email": "",

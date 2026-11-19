@@ -14,6 +14,7 @@ import {
   NodeIndexOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons';
 
 import { SizeFormatter } from '@/utils';
@@ -28,6 +29,7 @@ import type {
 import type { OutboundRow } from './outbounds-tab-types';
 import CountryPill from './CountryPill';
 import TestResultPopover from './TestResultPopover';
+import TorStatusChip, { type TorStatusInfo } from './TorStatusChip';
 import {
   countryFlag,
   countryName,
@@ -49,6 +51,8 @@ interface OutboundCardListProps {
   onResetTraffic: (tag: string) => void;
   confirmDelete: (idx: number) => void;
   onTest: (index: number, mode: string) => void;
+  torStatus?: Record<string, TorStatusInfo>;
+  onShowTor: () => void;
 }
 
 export default function OutboundCardList({
@@ -61,6 +65,8 @@ export default function OutboundCardList({
   onResetTraffic,
   confirmDelete,
   onTest,
+  torStatus,
+  onShowTor,
 }: OutboundCardListProps) {
   const { t, i18n } = useTranslation();
   const [showEgressIp, setShowEgressIp] = useState<Record<string, boolean>>({});
@@ -152,6 +158,12 @@ export default function OutboundCardList({
               <Tag color="green">{record.protocol}</Tag>
               {record.tunnelEngine && <Tag>{record.tunnelEngine}</Tag>}
               {record.tunnelEngine && <Tag color="cyan">{t('pages.tunnels.modeReverse')}</Tag>}
+              {record.torCountry && (
+                <CountryPill
+                  flag={countryFlag(record.torCountry)}
+                  name={countryName(record.torCountry, 'en') || record.torCountry}
+                />
+              )}
               {[Protocols.VMess, Protocols.VLESS, Protocols.Trojan, Protocols.Shadowsocks].includes(
                 record.protocol as never,
               ) && (
@@ -163,7 +175,15 @@ export default function OutboundCardList({
                 </>
               )}
             </div>
-            {record.tunnelEngine ? (
+            {record.torCountry ? (
+              <Button
+                shape="circle"
+                size="small"
+                icon={<SafetyCertificateOutlined aria-hidden />}
+                aria-label={t('pages.tor.manage')}
+                onClick={onShowTor}
+              />
+            ) : record.tunnelEngine ? (
               <Link to="/tunnels" aria-label={t('pages.xray.outbound.manageTunnel')}>
                 <NodeIndexOutlined aria-hidden />
               </Link>
@@ -245,7 +265,9 @@ export default function OutboundCardList({
               ↓ {SizeFormatter.sizeFormat(trafficFor(outboundsTraffic, record).down)}
             </span>
             <span className="card-test">
-              {testResult(outboundTestStates, record.key) ? (
+              {record.torCountry ? (
+                <TorStatusChip status={torStatus?.[record.tag || '']} />
+              ) : testResult(outboundTestStates, record.key) ? (
                 <TestResultPopover result={testResult(outboundTestStates, record.key)!} />
               ) : isTesting(outboundTestStates, record.key) ? (
                 <LoadingOutlined aria-hidden />

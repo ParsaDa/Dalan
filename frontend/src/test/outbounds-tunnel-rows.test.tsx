@@ -31,6 +31,7 @@ function renderTab(isMobile: boolean) {
           onShowWarp={vi.fn()}
           onShowNord={vi.fn()}
           onShowPia={vi.fn()}
+          onShowTor={vi.fn()}
         />
       </MemoryRouter>
     </QueryClientProvider>,

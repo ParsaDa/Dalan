@@ -5074,6 +5074,44 @@
         ],
         "type": "object"
       },
+      "Status": {
+        "description": "Status is what the panel knows about one exit. Connected means a real request went through it.",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "exitIp": {
+            "example": "203.0.113.9",
+            "type": "string"
+          },
+          "exitLoc": {
+            "example": "DE",
+            "type": "string"
+          },
+          "latencyMs": {
+            "example": 1400,
+            "format": "int64",
+            "type": "integer"
+          },
+          "progress": {
+            "example": 100,
+            "type": "integer"
+          },
+          "state": {
+            "example": "connected",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "exitIp",
+          "exitLoc",
+          "latencyMs",
+          "progress",
+          "state"
+        ],
+        "type": "object"
+      },
       "SubBalancer": {
         "description": "SubBalancer is one extra JSON-subscription config document whose members are\nthe selected inbounds' proxy outbounds. SortOrder shares SubSortIndex semantics.",
         "properties": {
@@ -5175,6 +5213,71 @@
         ],
         "type": "object"
       },
+      "TorExit": {
+        "description": "TorExit is one country Tor leaves through: Dalan runs a Tor for it on a loopback SOCKS port that Xray\nreaches as the outbound \"tor-<country>\".",
+        "properties": {
+          "country": {
+            "example": "de",
+            "type": "string"
+          },
+          "enable": {
+            "example": true,
+            "type": "boolean"
+          },
+          "id": {
+            "example": 1,
+            "type": "integer"
+          },
+          "port": {
+            "example": 62700,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "country",
+          "enable",
+          "id",
+          "port"
+        ],
+        "type": "object"
+      },
+      "TorExitView": {
+        "description": "TorExitView is one exit as the panel lists it: its row, its Xray tag and what it is doing now.",
+        "properties": {
+          "country": {
+            "example": "de",
+            "type": "string"
+          },
+          "enable": {
+            "example": true,
+            "type": "boolean"
+          },
+          "id": {
+            "example": 1,
+            "type": "integer"
+          },
+          "port": {
+            "example": 62700,
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "tag": {
+            "example": "tor-de",
+            "type": "string"
+          }
+        },
+        "required": [
+          "country",
+          "enable",
+          "id",
+          "port",
+          "status",
+          "tag"
+        ],
+        "type": "object"
+      },
       "Traffic": {
         "description": "Traffic represents network traffic statistics for Xray connections.\nIt tracks upload and download bytes for inbound or outbound traffic.",
         "properties": {
@@ -5207,6 +5310,43 @@
           "IsOutbound",
           "Tag",
           "Up"
+        ],
+        "type": "object"
+      },
+      "TrialResult": {
+        "description": "TrialResult is what a throwaway Tor learned about one country.",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "exitIp": {
+            "example": "203.0.113.9",
+            "type": "string"
+          },
+          "exitLoc": {
+            "example": "DE",
+            "type": "string"
+          },
+          "latencyMs": {
+            "example": 1400,
+            "format": "int64",
+            "type": "integer"
+          },
+          "ok": {
+            "example": true,
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "exitIp",
+          "exitLoc",
+          "latencyMs",
+          "ok",
+          "reason"
         ],
         "type": "object"
       },
@@ -5412,6 +5552,10 @@
     {
       "name": "Tunnels",
       "description": "Tunnels between this panel and other servers. A reverse tunnel (the default): the entry end (portal) listens and the exit end (bridge) dials it, so the connection is always opened from the exit server. A direct tunnel (BackPack layer 3, mode \"direct\"): the entry end dials the exit end, for games and other low-latency traffic. All endpoints under /panel/api/tunnels."
+    },
+    {
+      "name": "Tor",
+      "description": "Tor exits by country, run on this panel server. Each added country gets its own Tor on a loopback SOCKS port and becomes the Xray outbound \"tor-<country>\", which routing rules and balancers can name like a tunnel. Tor carries TCP only, and the exit relay can read unencrypted traffic. All endpoints under /panel/api/tor."
     },
     {
       "name": "Node enrolment",
@@ -14800,6 +14944,442 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tor/list": {
+      "get": {
+        "tags": [
+          "Tor"
+        ],
+        "summary": "Every Tor exit with its Xray tag and what it is doing now. Status.state is not_installed, stopped, starting (with Tor's bootstrap progress), connected (a real request went through it, with the round-trip time and the exit address and country) or failed (with the reason in error). A connected result is reused for 30 seconds.",
+        "operationId": "get_panel_api_tor_list",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TorExitView"
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "country": "de",
+                      "enable": true,
+                      "id": 1,
+                      "port": 62700,
+                      "status": {
+                        "error": "",
+                        "exitIp": "203.0.113.9",
+                        "exitLoc": "DE",
+                        "latencyMs": 1400,
+                        "progress": 100,
+                        "state": "connected"
+                      },
+                      "tag": "tor-de"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tor/add": {
+      "post": {
+        "tags": [
+          "Tor"
+        ],
+        "summary": "Add a country (two letters, such as de). Dalan picks its loopback port from 62700 to 62789 and starts its Tor. At most 10 exits can be enabled at once; a country can be added only once.",
+        "operationId": "post_panel_api_tor_add",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "country": "de"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/TorExit"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "country": "de",
+                    "enable": true,
+                    "id": 1,
+                    "port": 62700
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tor/del/{id}": {
+      "post": {
+        "tags": [
+          "Tor"
+        ],
+        "summary": "Delete an exit and its Tor data. Refused while a routing rule, a balancer or the panel egress still names its tag, so a rule is never left pointing at nothing.",
+        "operationId": "post_panel_api_tor_del_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Exit ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tor/setEnable/{id}": {
+      "post": {
+        "tags": [
+          "Tor"
+        ],
+        "summary": "Turn an exit on or off. A disabled exit stops its Tor and leaves the generated Xray config. At most 10 exits can be enabled at once.",
+        "operationId": "post_panel_api_tor_setEnable_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Exit ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "enable": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tor/test": {
+      "post": {
+        "tags": [
+          "Tor"
+        ],
+        "summary": "Find out whether Tor can leave through a country before adding it. A country that already runs is asked directly; any other gets a throwaway Tor that is removed afterwards, and only one such test runs at a time. A country with no usable exit is a normal answer with ok=false and the reason in reason. Can take up to 90 seconds.",
+        "operationId": "post_panel_api_tor_test",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "country": "de"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/TrialResult"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "error": "",
+                    "exitIp": "203.0.113.9",
+                    "exitLoc": "DE",
+                    "latencyMs": 1400,
+                    "ok": true,
+                    "reason": ""
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tor/engine": {
+      "get": {
+        "tags": [
+          "Tor"
+        ],
+        "summary": "Whether the Tor bundle is on this server, which release is installed (empty when it was placed by hand), and the release this Dalan version installs.",
+        "operationId": "get_panel_api_tor_engine",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "engine": "tor",
+                    "installed": true,
+                    "version": "16.0.1",
+                    "pinned": "16.0.1"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tor/engine/install": {
+      "post": {
+        "tags": [
+          "Tor"
+        ],
+        "summary": "Download the pinned Tor bundle for this CPU, check it against the checksums published with it, put it in the panel bin folder and start the enabled exits. The bundle it replaces is kept for a rollback. Uses the panel proxy settings. Can take a few minutes.",
+        "operationId": "post_panel_api_tor_engine_install",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tor/engine/rollback": {
+      "post": {
+        "tags": [
+          "Tor"
+        ],
+        "summary": "Put back the bundle the last install replaced and restart the enabled exits on it.",
+        "operationId": "post_panel_api_tor_engine_rollback",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tor/bridges": {
+      "get": {
+        "tags": [
+          "Tor"
+        ],
+        "summary": "The bridge lines every Tor on this panel uses to start, one per line. Empty means Tor connects directly.",
+        "operationId": "get_panel_api_tor_bridges",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "bridges": "obfs4 192.0.2.4:443 0123456789ABCDEF0123456789ABCDEF01234567 cert=abc iat-mode=0"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Tor"
+        ],
+        "summary": "Replace the bridge lines (obfs4, snowflake, webtunnel or meek_lite, one per line) and restart the enabled exits on them. Every line is checked first and a refusal names the line, so a line can never add a Tor setting of its own. Send an empty value to connect directly.",
+        "operationId": "post_panel_api_tor_bridges",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "bridges": "obfs4 192.0.2.4:443 0123456789ABCDEF0123456789ABCDEF01234567 cert=abc iat-mode=0"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful response",

@@ -1215,6 +1215,16 @@ export const SponsorListSchema = z.object({
 });
 export type SponsorList = z.infer<typeof SponsorListSchema>;
 
+export const StatusSchema = z.object({
+  error: z.string(),
+  exitIp: z.string(),
+  exitLoc: z.string(),
+  latencyMs: z.number().int(),
+  progress: z.number().int(),
+  state: z.string(),
+});
+export type Status = z.infer<typeof StatusSchema>;
+
 export const SubBalancerSchema = z.object({
   createdAt: z.number().int(),
   enabled: z.boolean(),
@@ -1236,6 +1246,24 @@ export const TgBotCapabilitiesSchema = z.object({
 });
 export type TgBotCapabilities = z.infer<typeof TgBotCapabilitiesSchema>;
 
+export const TorExitSchema = z.object({
+  country: z.string(),
+  enable: z.boolean(),
+  id: z.number().int(),
+  port: z.number().int(),
+});
+export type TorExit = z.infer<typeof TorExitSchema>;
+
+export const TorExitViewSchema = z.object({
+  country: z.string(),
+  enable: z.boolean(),
+  id: z.number().int(),
+  port: z.number().int(),
+  status: z.lazy(() => StatusSchema),
+  tag: z.string(),
+});
+export type TorExitView = z.infer<typeof TorExitViewSchema>;
+
 export const TrafficSchema = z.object({
   Down: z.number().int(),
   IsInbound: z.boolean(),
@@ -1244,6 +1272,16 @@ export const TrafficSchema = z.object({
   Up: z.number().int(),
 });
 export type Traffic = z.infer<typeof TrafficSchema>;
+
+export const TrialResultSchema = z.object({
+  error: z.string(),
+  exitIp: z.string(),
+  exitLoc: z.string(),
+  latencyMs: z.number().int(),
+  ok: z.boolean(),
+  reason: z.string(),
+});
+export type TrialResult = z.infer<typeof TrialResultSchema>;
 
 export const TuicClientSettingsSchema = z.object({
   email: z.string(),

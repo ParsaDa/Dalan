@@ -5048,6 +5048,44 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "Status": {
+    "description": "Status is what the panel knows about one exit. Connected means a real request went through it.",
+    "properties": {
+      "error": {
+        "type": "string"
+      },
+      "exitIp": {
+        "example": "203.0.113.9",
+        "type": "string"
+      },
+      "exitLoc": {
+        "example": "DE",
+        "type": "string"
+      },
+      "latencyMs": {
+        "example": 1400,
+        "format": "int64",
+        "type": "integer"
+      },
+      "progress": {
+        "example": 100,
+        "type": "integer"
+      },
+      "state": {
+        "example": "connected",
+        "type": "string"
+      }
+    },
+    "required": [
+      "error",
+      "exitIp",
+      "exitLoc",
+      "latencyMs",
+      "progress",
+      "state"
+    ],
+    "type": "object"
+  },
   "SubBalancer": {
     "description": "SubBalancer is one extra JSON-subscription config document whose members are\nthe selected inbounds' proxy outbounds. SortOrder shares SubSortIndex semantics.",
     "properties": {
@@ -5149,6 +5187,71 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "TorExit": {
+    "description": "TorExit is one country Tor leaves through: Dalan runs a Tor for it on a loopback SOCKS port that Xray\nreaches as the outbound \"tor-\u003ccountry\u003e\".",
+    "properties": {
+      "country": {
+        "example": "de",
+        "type": "string"
+      },
+      "enable": {
+        "example": true,
+        "type": "boolean"
+      },
+      "id": {
+        "example": 1,
+        "type": "integer"
+      },
+      "port": {
+        "example": 62700,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "country",
+      "enable",
+      "id",
+      "port"
+    ],
+    "type": "object"
+  },
+  "TorExitView": {
+    "description": "TorExitView is one exit as the panel lists it: its row, its Xray tag and what it is doing now.",
+    "properties": {
+      "country": {
+        "example": "de",
+        "type": "string"
+      },
+      "enable": {
+        "example": true,
+        "type": "boolean"
+      },
+      "id": {
+        "example": 1,
+        "type": "integer"
+      },
+      "port": {
+        "example": 62700,
+        "type": "integer"
+      },
+      "status": {
+        "$ref": "#/components/schemas/Status"
+      },
+      "tag": {
+        "example": "tor-de",
+        "type": "string"
+      }
+    },
+    "required": [
+      "country",
+      "enable",
+      "id",
+      "port",
+      "status",
+      "tag"
+    ],
+    "type": "object"
+  },
   "Traffic": {
     "description": "Traffic represents network traffic statistics for Xray connections.\nIt tracks upload and download bytes for inbound or outbound traffic.",
     "properties": {
@@ -5181,6 +5284,43 @@ export const SCHEMAS: Record<string, unknown> = {
       "IsOutbound",
       "Tag",
       "Up"
+    ],
+    "type": "object"
+  },
+  "TrialResult": {
+    "description": "TrialResult is what a throwaway Tor learned about one country.",
+    "properties": {
+      "error": {
+        "type": "string"
+      },
+      "exitIp": {
+        "example": "203.0.113.9",
+        "type": "string"
+      },
+      "exitLoc": {
+        "example": "DE",
+        "type": "string"
+      },
+      "latencyMs": {
+        "example": 1400,
+        "format": "int64",
+        "type": "integer"
+      },
+      "ok": {
+        "example": true,
+        "type": "boolean"
+      },
+      "reason": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "error",
+      "exitIp",
+      "exitLoc",
+      "latencyMs",
+      "ok",
+      "reason"
     ],
     "type": "object"
   },

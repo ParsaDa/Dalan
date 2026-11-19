@@ -1,0 +1,124 @@
+---
+title: Tor
+description: Tor exits by country, run on this panel server. Each added country
+  gets its own Tor on a loopback SOCKS port and becomes the Xray outbound
+  "tor-<country>", which routing rules and balancers can name like a tunnel. Tor
+  carries TCP only, and the exit relay can read unencrypted traffic. All
+  endpoints under /panel/api/tor.
+full: true
+_openapi:
+  preload:
+    - ./public/openapi.json
+  toc:
+    - depth: 2
+      title: Every Tor exit with its Xray tag and what it is doing now. Status.state
+        is not_installed, stopped, starting (with Tor's bootstrap progress),
+        connected (a real request went through it, with the round-trip time and
+        the exit address and country) or failed (with the reason in error). A
+        connected result is reused for 30 seconds.
+      url: '#every-tor-exit-with-its-xray-tag-and-what-it-is-doing-now-statusstate-is-not_installed-stopped-starting-with-tors-bootstrap-progress-connected-a-real-request-went-through-it-with-the-round-trip-time-and-the-exit-address-and-country-or-failed-with-the-reason-in-error-a-connected-result-is-reused-for-30-seconds'
+    - depth: 2
+      title: Add a country (two letters, such as de). Dalan picks its loopback port
+        from 62700 to 62789 and starts its Tor. At most 10 exits can be enabled
+        at once; a country can be added only once.
+      url: '#add-a-country-two-letters-such-as-de-dalan-picks-its-loopback-port-from-62700-to-62789-and-starts-its-tor-at-most-10-exits-can-be-enabled-at-once-a-country-can-be-added-only-once'
+    - depth: 2
+      title: Delete an exit and its Tor data. Refused while a routing rule, a balancer
+        or the panel egress still names its tag, so a rule is never left
+        pointing at nothing.
+      url: '#delete-an-exit-and-its-tor-data-refused-while-a-routing-rule-a-balancer-or-the-panel-egress-still-names-its-tag-so-a-rule-is-never-left-pointing-at-nothing'
+    - depth: 2
+      title: Turn an exit on or off. A disabled exit stops its Tor and leaves the
+        generated Xray config. At most 10 exits can be enabled at once.
+      url: '#turn-an-exit-on-or-off-a-disabled-exit-stops-its-tor-and-leaves-the-generated-xray-config-at-most-10-exits-can-be-enabled-at-once'
+    - depth: 2
+      title: Find out whether Tor can leave through a country before adding it. A
+        country that already runs is asked directly; any other gets a throwaway
+        Tor that is removed afterwards, and only one such test runs at a time. A
+        country with no usable exit is a normal answer with ok=false and the
+        reason in reason. Can take up to 90 seconds.
+      url: '#find-out-whether-tor-can-leave-through-a-country-before-adding-it-a-country-that-already-runs-is-asked-directly-any-other-gets-a-throwaway-tor-that-is-removed-afterwards-and-only-one-such-test-runs-at-a-time-a-country-with-no-usable-exit-is-a-normal-answer-with-okfalse-and-the-reason-in-reason-can-take-up-to-90-seconds'
+    - depth: 2
+      title: Whether the Tor bundle is on this server, which release is installed
+        (empty when it was placed by hand), and the release this Dalan version
+        installs.
+      url: '#whether-the-tor-bundle-is-on-this-server-which-release-is-installed-empty-when-it-was-placed-by-hand-and-the-release-this-dalan-version-installs'
+    - depth: 2
+      title: Download the pinned Tor bundle for this CPU, check it against the
+        checksums published with it, put it in the panel bin folder and start
+        the enabled exits. The bundle it replaces is kept for a rollback. Uses
+        the panel proxy settings. Can take a few minutes.
+      url: '#download-the-pinned-tor-bundle-for-this-cpu-check-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-the-enabled-exits-the-bundle-it-replaces-is-kept-for-a-rollback-uses-the-panel-proxy-settings-can-take-a-few-minutes'
+    - depth: 2
+      title: Put back the bundle the last install replaced and restart the enabled
+        exits on it.
+      url: '#put-back-the-bundle-the-last-install-replaced-and-restart-the-enabled-exits-on-it'
+    - depth: 2
+      title: The bridge lines every Tor on this panel uses to start, one per line.
+        Empty means Tor connects directly.
+      url: '#the-bridge-lines-every-tor-on-this-panel-uses-to-start-one-per-line-empty-means-tor-connects-directly'
+    - depth: 2
+      title: Replace the bridge lines (obfs4, snowflake, webtunnel or meek_lite, one
+        per line) and restart the enabled exits on them. Every line is checked
+        first and a refusal names the line, so a line can never add a Tor
+        setting of its own. Send an empty value to connect directly.
+      url: '#replace-the-bridge-lines-obfs4-snowflake-webtunnel-or-meek_lite-one-per-line-and-restart-the-enabled-exits-on-them-every-line-is-checked-first-and-a-refusal-names-the-line-so-a-line-can-never-add-a-tor-setting-of-its-own-send-an-empty-value-to-connect-directly'
+  structuredData:
+    headings:
+      - content: Every Tor exit with its Xray tag and what it is doing now. Status.state
+          is not_installed, stopped, starting (with Tor's bootstrap progress),
+          connected (a real request went through it, with the round-trip time
+          and the exit address and country) or failed (with the reason in
+          error). A connected result is reused for 30 seconds.
+        id: every-tor-exit-with-its-xray-tag-and-what-it-is-doing-now-statusstate-is-not_installed-stopped-starting-with-tors-bootstrap-progress-connected-a-real-request-went-through-it-with-the-round-trip-time-and-the-exit-address-and-country-or-failed-with-the-reason-in-error-a-connected-result-is-reused-for-30-seconds
+      - content: Add a country (two letters, such as de). Dalan picks its loopback port
+          from 62700 to 62789 and starts its Tor. At most 10 exits can be
+          enabled at once; a country can be added only once.
+        id: add-a-country-two-letters-such-as-de-dalan-picks-its-loopback-port-from-62700-to-62789-and-starts-its-tor-at-most-10-exits-can-be-enabled-at-once-a-country-can-be-added-only-once
+      - content: Delete an exit and its Tor data. Refused while a routing rule, a
+          balancer or the panel egress still names its tag, so a rule is never
+          left pointing at nothing.
+        id: delete-an-exit-and-its-tor-data-refused-while-a-routing-rule-a-balancer-or-the-panel-egress-still-names-its-tag-so-a-rule-is-never-left-pointing-at-nothing
+      - content: Turn an exit on or off. A disabled exit stops its Tor and leaves the
+          generated Xray config. At most 10 exits can be enabled at once.
+        id: turn-an-exit-on-or-off-a-disabled-exit-stops-its-tor-and-leaves-the-generated-xray-config-at-most-10-exits-can-be-enabled-at-once
+      - content: Find out whether Tor can leave through a country before adding it. A
+          country that already runs is asked directly; any other gets a
+          throwaway Tor that is removed afterwards, and only one such test runs
+          at a time. A country with no usable exit is a normal answer with
+          ok=false and the reason in reason. Can take up to 90 seconds.
+        id: find-out-whether-tor-can-leave-through-a-country-before-adding-it-a-country-that-already-runs-is-asked-directly-any-other-gets-a-throwaway-tor-that-is-removed-afterwards-and-only-one-such-test-runs-at-a-time-a-country-with-no-usable-exit-is-a-normal-answer-with-okfalse-and-the-reason-in-reason-can-take-up-to-90-seconds
+      - content: Whether the Tor bundle is on this server, which release is installed
+          (empty when it was placed by hand), and the release this Dalan version
+          installs.
+        id: whether-the-tor-bundle-is-on-this-server-which-release-is-installed-empty-when-it-was-placed-by-hand-and-the-release-this-dalan-version-installs
+      - content: Download the pinned Tor bundle for this CPU, check it against the
+          checksums published with it, put it in the panel bin folder and start
+          the enabled exits. The bundle it replaces is kept for a rollback. Uses
+          the panel proxy settings. Can take a few minutes.
+        id: download-the-pinned-tor-bundle-for-this-cpu-check-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-the-enabled-exits-the-bundle-it-replaces-is-kept-for-a-rollback-uses-the-panel-proxy-settings-can-take-a-few-minutes
+      - content: Put back the bundle the last install replaced and restart the enabled
+          exits on it.
+        id: put-back-the-bundle-the-last-install-replaced-and-restart-the-enabled-exits-on-it
+      - content: The bridge lines every Tor on this panel uses to start, one per line.
+          Empty means Tor connects directly.
+        id: the-bridge-lines-every-tor-on-this-panel-uses-to-start-one-per-line-empty-means-tor-connects-directly
+      - content: Replace the bridge lines (obfs4, snowflake, webtunnel or meek_lite, one
+          per line) and restart the enabled exits on them. Every line is checked
+          first and a refusal names the line, so a line can never add a Tor
+          setting of its own. Send an empty value to connect directly.
+        id: replace-the-bridge-lines-obfs4-snowflake-webtunnel-or-meek_lite-one-per-line-and-restart-the-enabled-exits-on-them-every-line-is-checked-first-and-a-refusal-names-the-line-so-a-line-can-never-add-a-tor-setting-of-its-own-send-an-empty-value-to-connect-directly
+    contents: []
+---
+
+{/* This file was generated by Fumadocs. Do not edit this file directly. Any changes should be made by running the generation command again. */}
+
+export default function Layout(props) {
+  const { OpenAPIPage } = props.components ?? {};
+  return (
+    <>
+      {props.children}
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tor/list","method":"get"},{"path":"/panel/api/tor/add","method":"post"},{"path":"/panel/api/tor/del/{id}","method":"post"},{"path":"/panel/api/tor/setEnable/{id}","method":"post"},{"path":"/panel/api/tor/test","method":"post"},{"path":"/panel/api/tor/engine","method":"get"},{"path":"/panel/api/tor/engine/install","method":"post"},{"path":"/panel/api/tor/engine/rollback","method":"post"},{"path":"/panel/api/tor/bridges","method":"get"},{"path":"/panel/api/tor/bridges","method":"post"}]} showTitle />
+    </>
+  );
+}

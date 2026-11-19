@@ -44,12 +44,29 @@ type Supervisor struct {
 	NotInstalled error
 	// Leftovers lists the files an engine writes for a tunnel besides its configuration; they go when it stops.
 	Leftovers func(dir, name string) []string
+	// Ext is the suffix of the configuration file, ".toml" when empty. Env is extra environment for the process.
+	Ext string
+	Env []string
 
 	mu        sync.Mutex
 	processes map[string]*process
 }
 
-func (s *Supervisor) configPath(name string) string { return filepath.Join(s.Dir, name+".toml") }
+func (s *Supervisor) configPath(name string) string {
+	ext := s.Ext
+	if ext == "" {
+		ext = ".toml"
+	}
+	return filepath.Join(s.Dir, name+ext)
+}
+
+// Running reports whether the engine process for a tunnel is up right now.
+func (s *Supervisor) Running(name string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	_, ok := s.processes[name]
+	return ok
+}
 
 func (s *Supervisor) removeLeftovers(name string) {
 	if s.Leftovers == nil {
@@ -124,6 +141,9 @@ func (s *Supervisor) startLocked(name, rendered string) error {
 	}
 	cmd := exec.CommandContext(context.Background(), binary, s.Args(s.configPath(name))...)
 	cmd.Dir = s.Dir
+	if len(s.Env) > 0 {
+		cmd.Env = append(os.Environ(), s.Env...)
+	}
 	output := s.outputFor(name)
 	cmd.Stdout, cmd.Stderr = output, output
 	if err := cmd.Start(); err != nil {

@@ -31,6 +31,7 @@ type XraySettingController struct {
 	OutboundSubscriptionService service.OutboundSubscriptionService
 	GeodataService              service.GeodataService
 	TunnelService               service.TunnelService
+	TorService                  service.TorService
 }
 
 // NewXraySettingController creates a new XraySettingController and initializes its routes.
@@ -133,6 +134,10 @@ func (a *XraySettingController) getXraySetting(c *gin.Context) {
 	// Tunnels are injected into the generated config at runtime, like subscription outbounds.
 	if tunnels, err := a.TunnelService.RoutableOutbounds(); err == nil && len(tunnels) > 0 {
 		xrayResponse["tunnelOutbounds"] = tunnels
+	}
+	// Tor exits are injected like tunnels, so rules and balancers may name them.
+	if exits, err := a.TorService.Outbounds(); err == nil && len(exits) > 0 {
+		xrayResponse["torOutbounds"] = exits
 	}
 	result, err := json.Marshal(xrayResponse)
 	if err != nil {

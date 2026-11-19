@@ -140,7 +140,7 @@ func Apply(cfg *xray.Config, tunnels []model.ServerTunnel) error {
 		return nil
 	}
 	if hasEntry(tunnels) {
-		if err := enableOutboundStats(cfg); err != nil {
+		if err := EnableOutboundStats(cfg); err != nil {
 			return err
 		}
 	}
@@ -311,8 +311,8 @@ func hasEntry(tunnels []model.ServerTunnel) bool {
 	return false
 }
 
-// enableOutboundStats turns on the counters behind a tunnel's traffic totals; the stored template is untouched.
-func enableOutboundStats(cfg *xray.Config) error {
+// EnableOutboundStats turns on the counters behind a tunnel's traffic totals; the stored template is untouched.
+func EnableOutboundStats(cfg *xray.Config) error {
 	policy := map[string]any{}
 	if len(cfg.Policy) > 0 {
 		if err := json.Unmarshal(cfg.Policy, &policy); err != nil {

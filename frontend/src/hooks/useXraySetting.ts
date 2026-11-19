@@ -13,6 +13,7 @@ import {
   XraySettingsValueSchema,
   type OutboundTestResult,
   type OutboundTrafficRow,
+  type TorOutbound,
   type TunnelOutbound,
 } from '@/schemas/xray';
 
@@ -80,6 +81,7 @@ export interface UseXraySettingResult {
   subscriptionOutbounds: unknown[];
   subscriptionOutboundTags: string[];
   tunnelOutbounds: TunnelOutbound[];
+  torOutbounds: TorOutbound[];
   outboundsTraffic: OutboundTrafficRow[];
   outboundTestStates: Record<number, OutboundTestState>;
   subscriptionTestStates: Record<string, OutboundTestState>;
@@ -162,6 +164,7 @@ export function useXraySetting(): UseXraySettingResult {
   );
   const subscriptionOutboundTags = useMemo(() => config?.subscriptionOutboundTags || [], [config]);
   const tunnelOutbounds = useMemo(() => config?.tunnelOutbounds || [], [config]);
+  const torOutbounds = useMemo(() => config?.torOutbounds || [], [config]);
   const [outboundTestStates, setOutboundTestStates] = useState<Record<number, OutboundTestState>>(
     {},
   );
@@ -518,6 +521,7 @@ export function useXraySetting(): UseXraySettingResult {
       subscriptionOutbounds,
       subscriptionOutboundTags,
       tunnelOutbounds,
+      torOutbounds,
       outboundsTraffic,
       outboundTestStates,
       subscriptionTestStates,
@@ -547,6 +551,7 @@ export function useXraySetting(): UseXraySettingResult {
       subscriptionOutbounds,
       subscriptionOutboundTags,
       tunnelOutbounds,
+      torOutbounds,
       outboundsTraffic,
       outboundTestStates,
       subscriptionTestStates,

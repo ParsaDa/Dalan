@@ -80,4 +80,20 @@ describe('outbound tag pickers', () => {
     expect(flat.result.current.data).toEqual(['direct', 'tunnel-de1']);
     expect(grouped.result.current.data?.outbounds).toEqual(['direct', 'tunnel-de1']);
   });
+
+  it('offers a Tor exit as an exit next to the panel outbounds', async () => {
+    const payload = {
+      xraySetting: { outbounds: [{ tag: 'direct', protocol: 'freedom' }] },
+      torOutbounds: [{ tag: 'tor-de', country: 'de', enable: true }],
+    };
+    vi.spyOn(HttpUtil, 'post').mockResolvedValue(new Msg(true, '', JSON.stringify(payload)));
+
+    const flat = renderHook(() => useOutboundTags(), { wrapper: wrapperFor() });
+    const grouped = renderHook(() => useOutboundTagGroups(), { wrapper: wrapperFor() });
+
+    await waitFor(() => expect(flat.result.current.data).toBeDefined());
+    await waitFor(() => expect(grouped.result.current.data).toBeDefined());
+    expect(flat.result.current.data).toEqual(['direct', 'tor-de']);
+    expect(grouped.result.current.data?.outbounds).toEqual(['direct', 'tor-de']);
+  });
 });

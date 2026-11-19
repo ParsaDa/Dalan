@@ -54,6 +54,14 @@ export const TunnelOutboundSchema = z.object({
 
 export type TunnelOutbound = z.infer<typeof TunnelOutboundSchema>;
 
+export const TorOutboundSchema = z.object({
+  tag: z.string(),
+  country: z.string(),
+  enable: z.boolean(),
+});
+
+export type TorOutbound = z.infer<typeof TorOutboundSchema>;
+
 export const XrayConfigPayloadSchema = z
   .object({
     xraySetting: XraySettingsValueSchema,
@@ -66,6 +74,7 @@ export const XrayConfigPayloadSchema = z
     subscriptionOutbounds: z.array(z.unknown()).optional(),
     subscriptionOutboundTags: z.array(z.string()).optional(),
     tunnelOutbounds: z.array(TunnelOutboundSchema).optional(),
+    torOutbounds: z.array(TorOutboundSchema).optional(),
     geodataSources: z.array(z.object({ url: z.string(), file: z.string() })).optional(),
   })
   .loose();

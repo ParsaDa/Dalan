@@ -2162,6 +2162,89 @@ export const sections: readonly Section[] = [
   },
 
   {
+    id: 'tor',
+    title: 'Tor',
+    description:
+      'Tor exits by country, run on this panel server. Each added country gets its own Tor on a loopback SOCKS port and becomes the Xray outbound "tor-<country>", which routing rules and balancers can name like a tunnel. Tor carries TCP only, and the exit relay can read unencrypted traffic. All endpoints under /panel/api/tor.',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/panel/api/tor/list',
+        summary:
+          "Every Tor exit with its Xray tag and what it is doing now. Status.state is not_installed, stopped, starting (with Tor's bootstrap progress), connected (a real request went through it, with the round-trip time and the exit address and country) or failed (with the reason in error). A connected result is reused for 30 seconds.",
+        responseSchema: 'TorExitView',
+        responseSchemaArray: true,
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tor/add',
+        summary:
+          'Add a country (two letters, such as de). Dalan picks its loopback port from 62700 to 62789 and starts its Tor. At most 10 exits can be enabled at once; a country can be added only once.',
+        body: '{\n  "country": "de"\n}',
+        responseSchema: 'TorExit',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tor/del/:id',
+        summary:
+          'Delete an exit and its Tor data. Refused while a routing rule, a balancer or the panel egress still names its tag, so a rule is never left pointing at nothing.',
+        params: [{ name: 'id', in: 'path', type: 'number', desc: 'Exit ID.' }],
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tor/setEnable/:id',
+        summary:
+          'Turn an exit on or off. A disabled exit stops its Tor and leaves the generated Xray config. At most 10 exits can be enabled at once.',
+        params: [{ name: 'id', in: 'path', type: 'number', desc: 'Exit ID.' }],
+        body: '{\n  "enable": false\n}',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tor/test',
+        summary:
+          'Find out whether Tor can leave through a country before adding it. A country that already runs is asked directly; any other gets a throwaway Tor that is removed afterwards, and only one such test runs at a time. A country with no usable exit is a normal answer with ok=false and the reason in reason. Can take up to 90 seconds.',
+        body: '{\n  "country": "de"\n}',
+        responseSchema: 'TrialResult',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/tor/engine',
+        summary:
+          'Whether the Tor bundle is on this server, which release is installed (empty when it was placed by hand), and the release this Dalan version installs.',
+        response:
+          '{\n  "success": true,\n  "obj": {\n    "engine": "tor",\n    "installed": true,\n    "version": "16.0.1",\n    "pinned": "16.0.1"\n  }\n}',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tor/engine/install',
+        summary:
+          'Download the pinned Tor bundle for this CPU, check it against the checksums published with it, put it in the panel bin folder and start the enabled exits. The bundle it replaces is kept for a rollback. Uses the panel proxy settings. Can take a few minutes.',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tor/engine/rollback',
+        summary:
+          'Put back the bundle the last install replaced and restart the enabled exits on it.',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/tor/bridges',
+        summary:
+          'The bridge lines every Tor on this panel uses to start, one per line. Empty means Tor connects directly.',
+        response:
+          '{\n  "success": true,\n  "obj": {\n    "bridges": "obfs4 192.0.2.4:443 0123456789ABCDEF0123456789ABCDEF01234567 cert=abc iat-mode=0"\n  }\n}',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tor/bridges',
+        summary:
+          'Replace the bridge lines (obfs4, snowflake, webtunnel or meek_lite, one per line) and restart the enabled exits on them. Every line is checked first and a refusal names the line, so a line can never add a Tor setting of its own. Send an empty value to connect directly.',
+        body: '{\n  "bridges": "obfs4 192.0.2.4:443 0123456789ABCDEF0123456789ABCDEF01234567 cert=abc iat-mode=0"\n}',
+      },
+    ],
+  },
+
+  {
     id: 'enrolments',
     title: 'Node enrolment',
     description:

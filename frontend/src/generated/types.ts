@@ -1140,6 +1140,15 @@ export interface SponsorList {
   sponsors: Sponsor[];
 }
 
+export interface Status {
+  error: string;
+  exitIp: string;
+  exitLoc: string;
+  latencyMs: number;
+  progress: number;
+  state: string;
+}
+
 export interface SubBalancer {
   createdAt: number;
   enabled: boolean;
@@ -1159,12 +1168,37 @@ export interface TgBotCapabilities {
   username: string;
 }
 
+export interface TorExit {
+  country: string;
+  enable: boolean;
+  id: number;
+  port: number;
+}
+
+export interface TorExitView {
+  country: string;
+  enable: boolean;
+  id: number;
+  port: number;
+  status: Status;
+  tag: string;
+}
+
 export interface Traffic {
   Down: number;
   IsInbound: boolean;
   IsOutbound: boolean;
   Tag: string;
   Up: number;
+}
+
+export interface TrialResult {
+  error: string;
+  exitIp: string;
+  exitLoc: string;
+  latencyMs: number;
+  ok: boolean;
+  reason: string;
 }
 
 export interface TuicClientSettings {
