@@ -705,6 +705,8 @@ func main() {
 		encryptNodeTokens()
 	case "enrol":
 		joinMainPanel(os.Args[2:])
+	case "install-engines":
+		installEngines()
 	case "migrate-db":
 		if err := migrateDbCmd.Parse(os.Args[2:]); err != nil {
 			fmt.Println(err)
@@ -809,6 +811,7 @@ Commands:
     encrypt-tokens encrypt node bearer tokens with the configured active key
     setting        set settings
     enrol          join a main panel with the link it issued (dalan enrol <link>)
+    install-engines put the BackPack, Rakhsh and Tor engines in place
     install-awg-kernel
                    build and install the AmneziaWG kernel module (required for
                    an AmneziaWG inbound's kernel mode)

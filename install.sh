@@ -2104,6 +2104,9 @@ install_x-ui() {
     # works out of the box (no-op when XUI_ENABLE_FAIL2BAN=false). Never fatal.
     setup_fail2ban
 
+    echo -e "${green}Installing tunnel engines...${plain}"
+    "${xui_folder}/x-ui" install-engines || true
+
     if [[ -n "${XUI_ENROL:-}" ]]; then
         echo -e "${green}Joining the main panel...${plain}"
         /usr/bin/x-ui enrol "${XUI_ENROL}" || echo -e "${red}Joining failed. Run again later: x-ui enrol '<link>'${plain}"

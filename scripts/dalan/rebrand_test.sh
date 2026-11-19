@@ -77,6 +77,10 @@ has "${root}/install.sh" '        /usr/bin/x-ui enrol "${XUI_ENROL}" ||'
 [[ "$(grep -nF -- 'XUI_ENROL:-' "${root}/install.sh" | cut -d: -f1)" -lt "$(grep -nF -- 'installation finished' "${root}/install.sh" | cut -d: -f1)" ]] \
     || fail "the install-and-enrol step does not run before the final summary"
 lacks "${root}/a.sh" 'XUI_ENROL'
+has "${root}/install.sh" '"${xui_folder}/x-ui" install-engines || true'
+[[ "$(grep -nF -- 'install-engines' "${root}/install.sh" | cut -d: -f1)" -lt "$(grep -nF -- 'XUI_ENROL:-' "${root}/install.sh" | cut -d: -f1)" ]] \
+    || fail "the engines are not installed before the node joins its main panel"
+lacks "${root}/a.sh" 'install-engines'
 has "${root}/a.sh" "echo https://raw.githubusercontent.com/ParsaDa/dalan/main/install.sh"
 has "${root}/.github/workflows/r.yml" "images: ghcr.io/parsada/dalan"
 has "${root}/.github/workflows/r.yml" "-X github.com/mhsanaei/3x-ui/v3/internal/config.buildCommit=abc"
@@ -91,6 +95,7 @@ bash "${here}/check-brand.sh" "${root}" || fail "check failed on a rebranded tre
 
 bash "${here}/rebrand.sh" "${root}"
 [[ "$(count "${root}/install.sh" 'if [[ -n "${XUI_ENROL:-}" ]]; then')" == 1 ]] || fail "rebranding twice duplicated the install-and-enrol step"
+[[ "$(count "${root}/install.sh" 'install-engines')" == 1 ]] || fail "rebranding twice duplicated the engine install step"
 
 before="$(cd "${root}" && find . -type f -exec sha256sum {} + | sort)"
 bash "${here}/rebrand.sh" "${root}"
