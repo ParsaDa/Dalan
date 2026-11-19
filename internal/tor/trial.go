@@ -86,7 +86,10 @@ func Trial(ctx context.Context, country string, bridges []string, layout Layout,
 		return TrialResult{}, fmt.Errorf("start Tor: %w", err)
 	}
 	seen := newTrialLog()
-	go seen.scan(reader)
+	go func() {
+		seen.scan(reader)
+		close(seen.scanned)
+	}()
 	exited := make(chan struct{})
 	go func() {
 		_ = cmd.Wait()
@@ -104,6 +107,7 @@ func Trial(ctx context.Context, country string, bridges []string, layout Layout,
 			result = TrialResult{Error: status.Error, Reason: seen.probeFailureReason()}
 		}
 	case <-exited:
+		<-seen.scanned
 		result = TrialResult{Reason: seen.stoppedReason()}
 	case <-ctx.Done():
 		result = TrialResult{Reason: seen.timeoutReason()}
@@ -125,14 +129,18 @@ func freeLoopbackPort() (int, error) {
 // trialLog keeps what a throwaway Tor printed: how far it got and its last few lines.
 type trialLog struct {
 	booted chan struct{}
-	once   sync.Once
+	// scanned closes once every line Tor printed has been read.
+	scanned chan struct{}
+	once    sync.Once
 
 	mu       sync.Mutex
 	progress int
 	tail     []string
 }
 
-func newTrialLog() *trialLog { return &trialLog{booted: make(chan struct{})} }
+func newTrialLog() *trialLog {
+	return &trialLog{booted: make(chan struct{}), scanned: make(chan struct{})}
+}
 
 func (l *trialLog) scan(r io.Reader) {
 	scanner := bufio.NewScanner(r)

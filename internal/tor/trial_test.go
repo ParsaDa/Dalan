@@ -151,6 +151,19 @@ func TestTrialReportsTorStoppingByItself(t *testing.T) {
 	assertGone(t, tmp)
 }
 
+func TestTrialReasonAlwaysCarriesTheLastWordsOfATorThatStopsAtOnce(t *testing.T) {
+	layout := fakeTor(t, "echo '[err] Reading config failed--see warnings above.'\nexit 1")
+	for i := 0; i < 300; i++ {
+		got, err := Trial(context.Background(), "de", nil, layout, connected)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(got.Reason, "Reading config failed") {
+			t.Fatalf("run %d: reason %q lost what Tor said", i, got.Reason)
+		}
+	}
+}
+
 func TestSecondTrialIsBusyAndLeavesNoStrayProcess(t *testing.T) {
 	tmp := t.TempDir()
 	t.Setenv("TMPDIR", tmp)
