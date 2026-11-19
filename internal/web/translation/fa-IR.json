@@ -2692,6 +2692,17 @@
         "installEngine": "نصب موتور Tor",
         "rollbackEngine": "بازگرداندن نسخه‌ی قبلی Tor",
         "bridges": "بریج‌های Tor"
+      },
+      "manage": "مدیریت Tor",
+      "status": {
+        "connected": "متصل",
+        "starting": "در حال راه‌اندازی",
+        "notConnected": "متصل نیست"
+      },
+      "reason": {
+        "notInstalled": "Tor روی این سرور نصب نیست",
+        "stopped": "Tor در حال اجرا نیست",
+        "failed": "Tor اجراست، اما درخواست از طریق آن شکست خورد"
       }
     }
   },

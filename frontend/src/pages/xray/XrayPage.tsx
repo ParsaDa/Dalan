@@ -25,6 +25,7 @@ import AppSidebar from '@/layouts/AppSidebar';
 import { JsonEditor } from '@/components/form';
 import { setMessageInstance } from '@/utils/messageBus';
 import { injectedOutboundTags } from '@/lib/xray/injected-outbound-tags';
+import { useTorExits } from '@/api/queries/useTor';
 
 import { BasicsTab } from './basics';
 import { propagateOutboundTagRename } from './basics/helpers';
@@ -69,6 +70,7 @@ export default function XrayPage() {
     subscriptionOutbounds,
     subscriptionOutboundTags,
     tunnelOutbounds,
+    torOutbounds,
     outboundsTraffic,
     outboundTestStates,
     subscriptionTestStates,
@@ -83,12 +85,18 @@ export default function XrayPage() {
   } = xs;
 
   const injectedTags = useMemo(
-    () => injectedOutboundTags({ subscriptionOutboundTags, tunnelOutbounds }),
-    [subscriptionOutboundTags, tunnelOutbounds],
+    () => injectedOutboundTags({ subscriptionOutboundTags, tunnelOutbounds, torOutbounds }),
+    [subscriptionOutboundTags, tunnelOutbounds, torOutbounds],
+  );
+  const { exits: torExits } = useTorExits();
+  const torStatus = useMemo(
+    () => Object.fromEntries(torExits.map((e) => [e.tag, e.status])),
+    [torExits],
   );
   const [warpOpen, setWarpOpen] = useState(false);
   const [nordOpen, setNordOpen] = useState(false);
   const [piaOpen, setPiaOpen] = useState(false);
+  const [, setTorOpen] = useState(false);
   const [advSettings, setAdvSettings] = useState<AdvKey>('xraySetting');
   const location = useLocation();
   const navigate = useNavigate();
@@ -251,6 +259,8 @@ export default function XrayPage() {
             inboundTags={inboundTags}
             subscriptionOutbounds={subscriptionOutbounds}
             tunnelOutbounds={tunnelOutbounds}
+            torOutbounds={torOutbounds}
+            torStatus={torStatus}
             subscriptionOutboundTags={injectedTags}
             isMobile={isMobile}
             onResetTraffic={resetOutboundsTraffic}
@@ -260,6 +270,7 @@ export default function XrayPage() {
             onShowWarp={() => setWarpOpen(true)}
             onShowNord={() => setNordOpen(true)}
             onShowPia={() => setPiaOpen(true)}
+            onShowTor={() => setTorOpen(true)}
             onRefreshXrayData={fetchAll}
           />
         );

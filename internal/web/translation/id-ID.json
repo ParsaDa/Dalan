@@ -2692,6 +2692,17 @@
         "installEngine": "Install the Tor engine",
         "rollbackEngine": "Restore the previous Tor engine",
         "bridges": "Tor bridges"
+      },
+      "manage": "Manage Tor",
+      "status": {
+        "connected": "Connected",
+        "starting": "Starting",
+        "notConnected": "Not connected"
+      },
+      "reason": {
+        "notInstalled": "Tor is not installed on this server",
+        "stopped": "Tor is not running",
+        "failed": "Tor is running, but a request through it failed"
       }
     }
   },

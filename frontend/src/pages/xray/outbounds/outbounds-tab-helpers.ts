@@ -63,7 +63,7 @@ export function outboundAddresses(o: OutboundRow): string[] {
 }
 
 export function isUntestable(o: OutboundRow): boolean {
-  if (!o || o.tunnelEngine) return true;
+  if (!o || o.tunnelEngine || o.torCountry) return true;
   if (
     isOutboundProtocol(o, Protocols.Blackhole) ||
     isOutboundProtocol(o, Protocols.Loopback) ||

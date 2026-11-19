@@ -41,6 +41,7 @@ function renderTab(settings: XraySettingsValue) {
         onShowWarp={vi.fn()}
         onShowNord={vi.fn()}
         onShowPia={vi.fn()}
+        onShowTor={vi.fn()}
       />
     </QueryClientProvider>,
   );

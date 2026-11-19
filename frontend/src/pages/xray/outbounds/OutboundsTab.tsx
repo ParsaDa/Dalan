@@ -62,7 +62,8 @@ import { originalOutboundIndex } from './outbounds-tab-helpers';
 import { useOutboundColumns } from './useOutboundColumns';
 import OutboundCardList from './OutboundCardList';
 import SubscriptionOutbounds from './SubscriptionOutbounds';
-import type { TunnelOutbound } from '@/schemas/xray';
+import type { TorOutbound, TunnelOutbound } from '@/schemas/xray';
+import type { TorStatusInfo } from './TorStatusChip';
 
 const defaultOutboundSubscriptionUserAgent = '3x-ui-outbound-sub/1.0';
 
@@ -94,6 +95,8 @@ interface OutboundsTabProps {
   subscriptionOutbounds?: unknown[];
   subscriptionOutboundTags?: string[];
   tunnelOutbounds?: TunnelOutbound[];
+  torOutbounds?: TorOutbound[];
+  torStatus?: Record<string, TorStatusInfo>;
   isMobile: boolean;
   onResetTraffic: (tag: string) => void;
   onTest: (index: number, mode: string) => void;
@@ -102,6 +105,7 @@ interface OutboundsTabProps {
   onShowWarp: () => void;
   onShowNord: () => void;
   onShowPia: () => void;
+  onShowTor: () => void;
   onRefreshXrayData?: () => void;
 }
 
@@ -116,6 +120,8 @@ export default function OutboundsTab({
   subscriptionOutbounds,
   subscriptionOutboundTags,
   tunnelOutbounds,
+  torOutbounds,
+  torStatus,
   isMobile,
   onResetTraffic,
   onTest,
@@ -124,6 +130,7 @@ export default function OutboundsTab({
   onShowWarp,
   onShowNord,
   onShowPia,
+  onShowTor,
   onRefreshXrayData,
 }: OutboundsTabProps) {
   const { t } = useTranslation();
@@ -181,7 +188,7 @@ export default function OutboundsTab({
         .filter((o) => !isBalancerLoopbackTag(o.tag || '')),
     [outbounds],
   );
-  // Tunnel rows follow the stored outbounds, so a stored outbound's row index is still its array index.
+  // Tunnel and Tor rows follow the stored outbounds, so a stored outbound's row index is still its array index.
   const displayRows = useMemo<OutboundRow[]>(
     () => [
       ...rows,
@@ -191,8 +198,14 @@ export default function OutboundsTab({
         protocol: 'tunnel',
         tunnelEngine: o.engine,
       })),
+      ...(torOutbounds || []).map((o, i) => ({
+        key: -((tunnelOutbounds?.length ?? 0) + i + 1),
+        tag: o.tag,
+        protocol: 'tor',
+        torCountry: o.country,
+      })),
     ],
-    [rows, tunnelOutbounds],
+    [rows, tunnelOutbounds, torOutbounds],
   );
   const rowsRef = useRef<OutboundRow[]>([]);
   rowsRef.current = rows;
@@ -561,6 +574,8 @@ export default function OutboundsTab({
     confirmDelete,
     onResetTraffic,
     onTest,
+    torStatus,
+    onShowTor,
   });
 
   return (
@@ -669,6 +684,8 @@ export default function OutboundsTab({
             onResetTraffic={onResetTraffic}
             confirmDelete={confirmDelete}
             onTest={onTest}
+            torStatus={torStatus}
+            onShowTor={onShowTor}
           />
         ) : (
           <Table
