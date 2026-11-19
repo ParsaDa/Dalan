@@ -27,7 +27,7 @@ var (
 		Root:      filepath.Join(config.GetDBFolderPath(), "tor"),
 		BundleDir: filepath.Join(config.GetBinFolderPath(), "tor-bundle"),
 	}
-	torProgress tor.Progress
+	torProgress = &tor.Progress{}
 	torExits    = newTorExits(torLayout)
 
 	torReleaseBase = tor.ReleaseBaseURL
@@ -50,7 +50,7 @@ var (
 )
 
 func newTorExits(layout tor.Layout) *engine.Supervisor {
-	return tor.NewSupervisor(layout, storedBridgeLines, &torProgress)
+	return tor.NewSupervisor(layout, storedBridgeLines, torProgress)
 }
 
 func storedBridgeLines() []string {
@@ -271,12 +271,13 @@ func (s *TorService) ReconcileExits() error {
 	if err != nil {
 		return err
 	}
+	err = torExits.Reconcile(tor.ExitRows(exits))
 	for _, exit := range exits {
 		if !exit.Enable {
 			torProgress.Reset(exit.Country)
 		}
 	}
-	return torExits.Reconcile(tor.ExitRows(exits))
+	return err
 }
 
 // StopExits stops every Tor process this panel started.

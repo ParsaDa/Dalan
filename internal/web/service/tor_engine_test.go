@@ -26,21 +26,27 @@ import (
 func useTorLayout(t *testing.T) tor.Layout {
 	t.Helper()
 	layout := tor.Layout{Root: filepath.Join(t.TempDir(), "state"), BundleDir: filepath.Join(t.TempDir(), "bundle")}
-	oldLayout, oldExits := torLayout, torExits
-	torLayout, torExits = layout, newTorExits(layout)
+	oldLayout, oldExits, oldProgress := torLayout, torExits, torProgress
+	torLayout, torProgress = layout, &tor.Progress{}
+	torExits = newTorExits(layout)
 	t.Cleanup(func() {
 		torExits.StopAll()
-		torLayout, torExits = oldLayout, oldExits
+		torLayout, torExits, torProgress = oldLayout, oldExits, oldProgress
 	})
 	return layout
 }
 
 func torBundleServer(t *testing.T) *httptest.Server {
 	t.Helper()
+	return torBundleServerRunning(t, "#!/bin/sh\necho 'Bootstrapped 100% (done): Done'\nexec sleep 600\n")
+}
+
+// torBundleServerRunning serves a bundle whose tor executable is the given script.
+func torBundleServerRunning(t *testing.T, body string) *httptest.Server {
+	t.Helper()
 	var raw bytes.Buffer
 	gz := gzip.NewWriter(&raw)
 	tw := tar.NewWriter(gz)
-	body := "#!/bin/sh\necho 'Bootstrapped 100% (done): Done'\nexec sleep 600\n"
 	if err := tw.WriteHeader(&tar.Header{Name: "tor/tor", Mode: 0o755, Size: int64(len(body)), Typeflag: tar.TypeReg}); err != nil {
 		t.Fatal(err)
 	}
@@ -363,5 +369,33 @@ func TestTestRefusesBeforeInstallAndForABadCountry(t *testing.T) {
 	}
 	if _, err := svc.Test(context.Background(), "d1"); !errors.Is(err, errTorCountry) {
 		t.Fatalf("bad country: %v, want errTorCountry", err)
+	}
+}
+
+func TestDisablingAnExitForgetsProgressEvenWhenTorPrintsOnItsWayOut(t *testing.T) {
+	svc := newTorDB(t)
+	useTorLayout(t)
+	server := torBundleServerRunning(t, "#!/bin/sh\n"+
+		"sleep 600 & child=$!\n"+
+		"trap 'echo \"Bootstrapped 50% (loading): leaving\"; kill $child; exit 0' TERM\n"+
+		"echo 'Bootstrapped 100% (done): Done'\nwait $child\n")
+	oldBase := torReleaseBase
+	torReleaseBase = server.URL
+	t.Cleanup(func() { torReleaseBase = oldBase })
+
+	de, err := svc.Add("de")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.InstallEngine(); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "de to bootstrap", func() bool { p, ok := torProgress.Get("de"); return ok && p == 100 })
+
+	if err := svc.SetEnable(de.Id, false); err != nil {
+		t.Fatal(err)
+	}
+	if p, ok := torProgress.Get("de"); ok {
+		t.Fatalf("a stopped exit still reports %d%% progress", p)
 	}
 }
