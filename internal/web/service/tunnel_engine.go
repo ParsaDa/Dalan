@@ -103,19 +103,25 @@ func allExternalEngines() []externalEngine { return []externalEngine{backpackEng
 type engineSource func(ctx context.Context, id, version, arch string) (engine.Release, error)
 
 func directEngineSource(ctx context.Context, id, version, arch string) (engine.Release, error) {
-	kind, err := externalEngineFor(id)
-	if err != nil {
-		return engine.Release{}, err
-	}
-	client := (&SettingService{}).NewProxiedHTTPClient(engineInstallTimeout)
-	if version == "" {
-		latest, err := kind.latest(ctx, client)
+	return engineSourceWith((&SettingService{}).NewProxiedHTTPClient(engineInstallTimeout))(ctx, id, version, arch)
+}
+
+// engineSourceWith downloads releases through client.
+func engineSourceWith(client *http.Client) engineSource {
+	return func(ctx context.Context, id, version, arch string) (engine.Release, error) {
+		kind, err := externalEngineFor(id)
 		if err != nil {
 			return engine.Release{}, err
 		}
-		version = latest
+		if version == "" {
+			latest, err := kind.latest(ctx, client)
+			if err != nil {
+				return engine.Release{}, err
+			}
+			version = latest
+		}
+		return kind.fetch(ctx, client, version, arch)
 	}
-	return kind.fetch(ctx, client, version, arch)
 }
 
 // nodeEngineSource is where this server gets a release it passes on to a main panel; tests replace it.
@@ -194,9 +200,9 @@ func checkEngineVersion(kind externalEngine, version string) error {
 	return nil
 }
 
-// UpdateEngine installs a release of one engine (empty version means the newest). With a node it is downloaded
-// there and sent over the management channel, for a server that cannot reach GitHub.
-func (s *TunnelService) UpdateEngine(ctx context.Context, nodeID int, id, version string) error {
+// UpdateEngine installs a release of one engine (empty version means the newest), downloaded through route. With a
+// node it is downloaded there and sent over the management channel, for a server that cannot reach GitHub.
+func (s *TunnelService) UpdateEngine(ctx context.Context, nodeID int, id, version string, route EngineRoute) error {
 	kind, err := externalEngineFor(id)
 	if err != nil {
 		return err
@@ -205,7 +211,12 @@ func (s *TunnelService) UpdateEngine(ctx context.Context, nodeID int, id, versio
 		return err
 	}
 	if nodeID == 0 {
-		return s.updateEngineFrom(ctx, kind, directEngineSource, version)
+		src, release, err := (&EngineRouteService{}).Source(route)
+		if err != nil {
+			return err
+		}
+		defer release()
+		return s.updateEngineFrom(ctx, kind, src, version)
 	}
 	remote, err := s.remoteFor(nodeID)
 	if err != nil {

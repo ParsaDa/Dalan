@@ -100,6 +100,15 @@ func (s *EngineRouteService) Client(route EngineRoute, timeout time.Duration) (*
 	return nil, nil, fmt.Errorf("%w: %q", errUnknownRoute, route.Via)
 }
 
+// Source is an engineSource that downloads through route; call release when the install is over.
+func (s *EngineRouteService) Source(route EngineRoute) (src engineSource, release func(), err error) {
+	client, release, err := s.Client(route, engineInstallTimeout)
+	if err != nil {
+		return nil, nil, err
+	}
+	return engineSourceWith(client), release, nil
+}
+
 // resolve gives the proxy URL for a link or outbound route; closeRoute stops any temporary core it started.
 func (s *EngineRouteService) resolve(route EngineRoute) (proxyURL string, closeRoute func(), err error) {
 	if route.Via == RouteLink {

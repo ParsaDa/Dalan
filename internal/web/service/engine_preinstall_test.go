@@ -102,3 +102,17 @@ func TestAnEngineThatHangsOnTheNetworkDoesNotHoldUpTheOthers(t *testing.T) {
 		}
 	}
 }
+
+func TestAnUnusableRouteLeavesEveryEngineNotInstalledWithTheReason(t *testing.T) {
+	emptyEngineSlots(t)
+	useTorLayout(t)
+	got := InstallMissingEngines(context.Background(), EngineRoute{Via: "carrier-pigeon"})
+	if len(got) != 3 {
+		t.Fatalf("got %d results, want one for BackPack, Rakhsh and Tor", len(got))
+	}
+	for _, r := range got {
+		if r.Installed || !errors.Is(r.Err, errUnknownRoute) {
+			t.Errorf("%s = %+v, want not installed because of the route", r.Label, r)
+		}
+	}
+}

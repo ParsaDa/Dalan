@@ -35,3 +35,14 @@ func TestEngineReportSaysNothingIsMissingWhenEverythingIsInstalled(t *testing.T)
 		t.Fatalf("report = %q, want the ready engines and no missing notice", got)
 	}
 }
+
+func TestTheInstallScriptCanSendEngineDownloadsThroughAProxyOrLink(t *testing.T) {
+	t.Setenv("XUI_ENGINE_PROXY", "  socks5://127.0.0.1:1080 ")
+	if got := engineRouteFromEnv(); got.Via != service.RouteLink || got.Value != "socks5://127.0.0.1:1080" {
+		t.Fatalf("route = %+v, want the proxy as a link route", got)
+	}
+	t.Setenv("XUI_ENGINE_PROXY", "")
+	if got := engineRouteFromEnv(); got.Via != service.RoutePanel {
+		t.Fatalf("route = %+v, want the panel's own setting when the variable is empty", got)
+	}
+}

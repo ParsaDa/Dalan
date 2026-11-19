@@ -18,8 +18,16 @@ func installEngines() {
 		fmt.Println("Tunnel engines were not installed. Install them later from the panel.")
 		return
 	}
-	fmt.Print(engineReport(service.InstallMissingEngines(context.Background())))
+	fmt.Print(engineReport(service.InstallMissingEngines(context.Background(), engineRouteFromEnv())))
 	_ = os.Stdout.Sync()
+}
+
+// engineRouteFromEnv lets a server that cannot reach GitHub give a proxy address or share link as XUI_ENGINE_PROXY.
+func engineRouteFromEnv() service.EngineRoute {
+	if value := strings.TrimSpace(os.Getenv("XUI_ENGINE_PROXY")); value != "" {
+		return service.EngineRoute{Via: service.RouteLink, Value: value}
+	}
+	return service.EngineRoute{Via: service.RoutePanel}
 }
 
 // engineReport words the outcome for the install script; an engine that could not be fetched is not shown as an error.

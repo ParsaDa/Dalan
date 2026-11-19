@@ -108,7 +108,17 @@ func (a *TorController) engine(c *gin.Context) {
 }
 
 func (a *TorController) installEngine(c *gin.Context) {
-	jsonMsg(c, I18nWeb(c, "pages.tor.toasts.installEngine"), a.torService.InstallEngine())
+	var req struct {
+		Route service.EngineRoute `json:"route"`
+	}
+	// The body is optional: an empty one installs as the panel is set.
+	if c.Request.ContentLength != 0 {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			jsonMsg(c, I18nWeb(c, "pages.tor.toasts.installEngine"), err)
+			return
+		}
+	}
+	jsonMsg(c, I18nWeb(c, "pages.tor.toasts.installEngine"), a.torService.InstallEngine(req.Route))
 }
 
 func (a *TorController) rollbackEngine(c *gin.Context) {

@@ -3,7 +3,12 @@ package service
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"net/http/httputil"
+	"net/url"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
@@ -141,5 +146,68 @@ func TestChoicesListDirectTheOutboundsAndTheXrayTunnelsButNotInternalOnes(t *tes
 	want := "panel::panel,direct::direct,outbound:tunnel-bp1:tunnel,outbound:tor-de:tor,outbound:warp:outbound,outbound:tunnel-de1:tunnel"
 	if strings.Join(flat, ",") != want {
 		t.Fatalf("choices = %v\nwant     %s", flat, want)
+	}
+}
+
+// recordingProxy is an HTTP proxy that notes where it was asked to go and then refuses.
+func recordingProxy(t *testing.T) (*httptest.Server, func() []string) {
+	t.Helper()
+	var mu sync.Mutex
+	var hosts []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		hosts = append(hosts, r.Host)
+		mu.Unlock()
+		http.Error(w, "refused by the test proxy", http.StatusBadGateway)
+	}))
+	t.Cleanup(server.Close)
+	return server, func() []string { mu.Lock(); defer mu.Unlock(); return append([]string(nil), hosts...) }
+}
+
+func TestATunnelEngineIsDownloadedThroughTheRouteTheUserChose(t *testing.T) {
+	svc := newTunnelDB(t)
+	proxy, seen := recordingProxy(t)
+	err := svc.InstallEngine("rakhsh", EngineRoute{Via: RouteLink, Value: proxy.URL})
+	if err == nil {
+		t.Fatal("the proxy refused every request, yet the install succeeded")
+	}
+	if hosts := seen(); len(hosts) == 0 || !strings.Contains(hosts[0], "github.com") {
+		t.Fatalf("the proxy saw %v, want the GitHub release server", hosts)
+	}
+}
+
+func TestTheTorBundleIsDownloadedThroughTheRouteTheUserChose(t *testing.T) {
+	svc := newTorDB(t)
+	useTorLayout(t)
+	origin := torBundleServer(t)
+	var mu sync.Mutex
+	var viaProxy []string
+	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		viaProxy = append(viaProxy, r.Host)
+		mu.Unlock()
+		target, _ := url.Parse(origin.URL)
+		httputil.NewSingleHostReverseProxy(target).ServeHTTP(w, r)
+	}))
+	t.Cleanup(proxy.Close)
+	oldBase := torReleaseBase
+	torReleaseBase = "http://tor-release.invalid"
+	t.Cleanup(func() { torReleaseBase = oldBase })
+
+	if err := svc.InstallEngine(EngineRoute{Via: RouteLink, Value: proxy.URL}); err != nil {
+		t.Fatalf("InstallEngine through the proxy: %v", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(viaProxy) == 0 || viaProxy[0] != "tor-release.invalid" {
+		t.Fatalf("the proxy saw %v, want the Tor release host", viaProxy)
+	}
+}
+
+func TestAnUnusableRouteStopsTheInstallBeforeAnythingIsDownloaded(t *testing.T) {
+	svc := newTunnelDB(t)
+	err := svc.InstallEngine("rakhsh", EngineRoute{Via: RouteLink, Value: "not a link"})
+	if err == nil || !strings.Contains(err.Error(), "link") {
+		t.Fatalf("err = %v, want a refusal that talks about the link", err)
 	}
 }

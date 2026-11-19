@@ -298,9 +298,10 @@ func (a *TunnelController) engine(c *gin.Context) {
 
 func (a *TunnelController) updateEngine(c *gin.Context) {
 	var req struct {
-		NodeId  int    `json:"nodeId"`
-		Engine  string `json:"engine"`
-		Version string `json:"version"`
+		NodeId  int                 `json:"nodeId"`
+		Engine  string              `json:"engine"`
+		Version string              `json:"version"`
+		Route   service.EngineRoute `json:"route"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
@@ -308,7 +309,7 @@ func (a *TunnelController) updateEngine(c *gin.Context) {
 	}
 	ctx, cancel := context.WithTimeout(c.Request.Context(), engineUpdateTimeout)
 	defer cancel()
-	if err := a.tunnelService.UpdateEngine(ctx, req.NodeId, req.Engine, req.Version); err != nil {
+	if err := a.tunnelService.UpdateEngine(ctx, req.NodeId, req.Engine, req.Version, req.Route); err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.updateEngine"), err)
 		return
 	}
@@ -340,7 +341,8 @@ func (a *TunnelController) engineRelease(c *gin.Context) {
 
 func (a *TunnelController) installEngine(c *gin.Context) {
 	var req struct {
-		Engine string `json:"engine"`
+		Engine string              `json:"engine"`
+		Route  service.EngineRoute `json:"route"`
 	}
 	// The body is optional: an empty one installs BackPack, as before there was a second engine.
 	if c.Request.ContentLength != 0 {
@@ -349,5 +351,5 @@ func (a *TunnelController) installEngine(c *gin.Context) {
 			return
 		}
 	}
-	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.installEngine"), a.tunnelService.InstallEngine(req.Engine))
+	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.installEngine"), a.tunnelService.InstallEngine(req.Engine, req.Route))
 }

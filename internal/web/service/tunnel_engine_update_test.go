@@ -120,7 +120,7 @@ func TestAnEngineCanBeInstalledThroughANodeInPartsWhenThisServerCannotReachGitHu
 	}
 	serveReleaseFromNode(t, rel)
 
-	if err := svc.UpdateEngine(context.Background(), node.Id, "backpack", ""); err != nil {
+	if err := svc.UpdateEngine(context.Background(), node.Id, "backpack", "", EngineRoute{}); err != nil {
 		t.Fatalf("UpdateEngine through the node: %v", err)
 	}
 	if got := backpack.InstalledVersion(sup.Binary); got != "v2.0.0" {
@@ -141,7 +141,7 @@ func TestANodeThatCannotDownloadTheEngineSaysWhy(t *testing.T) {
 	engineDownloadsMu.Unlock()
 	t.Cleanup(func() { nodeEngineSource = previous })
 
-	if err := svc.UpdateEngine(context.Background(), node.Id, "backpack", "v3.0.0"); err == nil || !strings.Contains(err.Error(), "GitHub") {
+	if err := svc.UpdateEngine(context.Background(), node.Id, "backpack", "v3.0.0", EngineRoute{}); err == nil || !strings.Contains(err.Error(), "GitHub") {
 		t.Fatalf("UpdateEngine when the node cannot download = %v, want the node's reason", err)
 	}
 }
@@ -152,7 +152,7 @@ func TestOnlyAPlainBackpackVersionIsAsked(t *testing.T) {
 		if _, err := svc.EngineReleaseChunk("backpack", version, 0); err == nil || !strings.Contains(err.Error(), "version") {
 			t.Errorf("EngineReleaseChunk(%q) error = %v, want a refusal of the version", version, err)
 		}
-		if err := svc.UpdateEngine(context.Background(), 0, "backpack", version); err == nil || !strings.Contains(err.Error(), "version") {
+		if err := svc.UpdateEngine(context.Background(), 0, "backpack", version, EngineRoute{}); err == nil || !strings.Contains(err.Error(), "version") {
 			t.Errorf("UpdateEngine(%q) error = %v, want a refusal of the version", version, err)
 		}
 	}

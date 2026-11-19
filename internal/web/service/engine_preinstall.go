@@ -23,10 +23,15 @@ type EngineInstall struct {
 }
 
 // InstallMissingEngines puts every engine that is not on this server yet in place at its pinned version.
-// It never starts an engine and never fails as a whole: each engine reports its own outcome.
-func InstallMissingEngines(ctx context.Context) []EngineInstall {
-	return installMissingEngines(ctx, directEngineSource, func(ctx context.Context) (engine.Release, error) {
-		client := (&SettingService{}).NewProxiedHTTPClient(engineInstallTimeout)
+// It never starts an engine and never fails as a whole: each engine reports its own outcome. route is how the downloads travel.
+func InstallMissingEngines(ctx context.Context, route EngineRoute) []EngineInstall {
+	client, release, err := (&EngineRouteService{}).Client(route, engineInstallTimeout)
+	if err != nil {
+		unreachable := func(context.Context) (engine.Release, error) { return engine.Release{}, err }
+		return installMissingEngines(ctx, func(ctx context.Context, _, _, _ string) (engine.Release, error) { return unreachable(ctx) }, unreachable)
+	}
+	defer release()
+	return installMissingEngines(ctx, engineSourceWith(client), func(ctx context.Context) (engine.Release, error) {
 		return tor.Fetch(ctx, client, torReleaseBase, tor.PinnedVersion, runtime.GOARCH)
 	})
 }
