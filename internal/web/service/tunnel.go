@@ -370,8 +370,6 @@ func (s *TunnelService) deleteLocal(t *model.ServerTunnel) error {
 	return nil
 }
 
-const tunnelProbeTimeout = 8 * time.Second
-
 // Status sends one request through an entry tunnel and reports whether it came back, how fast and from where.
 func (s *TunnelService) Status(id int) (tunnel.Status, error) {
 	t, err := s.get(id)

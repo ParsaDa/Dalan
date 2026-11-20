@@ -108,7 +108,8 @@ func (s *TunnelService) applyEntryEdit(old, next *model.ServerTunnel, edit Tunne
 		return fmt.Errorf("tunnel port %d is out of range", next.Port)
 	}
 	next.RouteInbounds = edit.RouteInbounds
-	if next.Engine == model.TunnelEngineRakhsh {
+	switch next.Engine {
+	case model.TunnelEngineRakhsh:
 		next.ForwardPorts, next.Options = edit.ForwardPorts, maps.Clone(edit.Options)
 		next.Transport = edit.Transport
 		if _, err := rakhsh.RenderConfig(*next, ""); err != nil {
@@ -117,7 +118,7 @@ func (s *TunnelService) applyEntryEdit(old, next *model.ServerTunnel, edit Tunne
 		if err := s.checkLinkAddressesFree(next, old.Id); err != nil {
 			return err
 		}
-	} else if next.Engine == model.TunnelEngineBackpack {
+	case model.TunnelEngineBackpack:
 		next.ForwardPorts, next.AcceptUDP = edit.ForwardPorts, edit.AcceptUDP
 		next.Options = maps.Clone(edit.Options)
 		if next.Mode != model.TunnelModeDirect {
