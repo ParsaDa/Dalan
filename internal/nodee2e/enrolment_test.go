@@ -106,34 +106,31 @@ func (p *panel) node(name string) (nodeRow, bool) {
 	return nodeRow{}, false
 }
 
-// installBackpack gives a panel the BackPack engine: the binary named by XUI_NODE_E2E_BACKPACK, or else the
-// pinned release that "x-ui install-engines" downloads. The test skips when neither is possible.
-func (p *panel) installBackpack() {
+// installBackpack puts the BackPack binary named by XUI_NODE_E2E_BACKPACK into the panel's bin folder.
+func (p *panel) installBackpack(src string) {
 	p.t.Helper()
-	if src := os.Getenv("XUI_NODE_E2E_BACKPACK"); src != "" {
-		data, err := os.ReadFile(src)
-		if err != nil {
-			p.t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(p.dir, "bin", "backpack"), data, 0o755); err != nil {
-			p.t.Fatal(err)
-		}
-		return
+	data, err := os.ReadFile(src)
+	if err != nil {
+		p.t.Fatal(err)
 	}
-	if out := p.cli("install-engines"); !strings.Contains(out, "BackPack") || strings.Contains(out, "were not installed (BackPack") {
-		p.t.Skipf("%s: BackPack could not be installed (%s); set XUI_NODE_E2E_BACKPACK to a binary", p.name, strings.TrimSpace(out))
+	if err := os.WriteFile(filepath.Join(p.dir, "bin", "backpack"), data, 0o755); err != nil {
+		p.t.Fatal(err)
 	}
 }
 
 // The master never dials the node: the only address it holds for it is its own loopback.
 func TestANodeEnrolsByDiallingInAndIsManagedThroughItsTunnel(t *testing.T) {
+	backpackBinary := os.Getenv("XUI_NODE_E2E_BACKPACK")
+	if backpackBinary == "" {
+		t.Skip("XUI_NODE_E2E_BACKPACK is not set; a node enrols over a BackPack tunnel")
+	}
 	bin := panelBinary(t)
 	master := newPanel(t, bin, "enrol-master")
 	node := newPanel(t, bin, "enrol-node")
 	master.installXray()
 	node.installXray()
-	master.installBackpack()
-	node.installBackpack()
+	master.installBackpack(backpackBinary)
+	node.installBackpack(backpackBinary)
 	master.start()
 	node.start()
 
