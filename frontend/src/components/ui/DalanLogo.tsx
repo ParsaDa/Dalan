@@ -1,3 +1,5 @@
+import './DalanLogo.css';
+
 interface DalanLogoProps {
   size?: number;
 }

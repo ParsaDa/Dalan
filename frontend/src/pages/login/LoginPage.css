@@ -428,6 +428,9 @@ body .login-app.is-ultra {
 
 body .login-app::before,
 body .login-app::after,
+body .login-content::before,
+body .login-content::after,
+body .login-wrapper::before,
 body .login-wrapper::after,
 body .login-card::before,
 body .login-app .brand-accent {
@@ -444,7 +447,8 @@ body[data-effects='off'] .login-card {
   backdrop-filter: none;
 }
 
-body .login-app .brand-name {
+body .login-app .brand-name,
+body .login-app.is-dark .brand-name {
   background: linear-gradient(135deg, var(--dl-text), var(--dl-acc-text));
   -webkit-background-clip: text;
   background-clip: text;

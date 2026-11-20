@@ -294,11 +294,11 @@ body .ant-tag {
 }
 
 .dl-route {
-  animation: dl-route-in var(--dl-d-slow) var(--dl-e-out) both;
+  animation: dl-route-in var(--dl-d-slow) var(--dl-e-out) backwards;
 }
 
 .dl-stagger > * {
-  animation: dl-rise var(--dl-d-slow) var(--dl-e-out) both;
+  animation: dl-rise var(--dl-d-slow) var(--dl-e-out) backwards;
 }
 
 .dl-stagger > :nth-child(1) {
