@@ -28,6 +28,9 @@ import (
 const (
 	linkLifetime     = 30 * time.Minute
 	tunnelNamePrefix = "node-"
+	// The defaults ride as ordinary TLS web traffic, the most likely carrier to survive a filter.
+	defaultWebsocketCarrier = "wssmux"
+	defaultRakhshCarrier    = "wss"
 	// mainPanelTokenPrefix names the API token a node issues to its main panel; a random suffix follows.
 	mainPanelTokenPrefix = "dalan-main-panel-"
 	joinTimeout          = 30 * time.Second
@@ -41,18 +44,17 @@ var namePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,25}$`)
 
 // Spec is what an operator chooses when inviting a node.
 type Spec struct {
-	Name       string `json:"name" example:"de1"`
-	PanelURL   string `json:"panelUrl" example:"https://panel.example.com:2053/"`
-	Address    string `json:"address" example:"203.0.113.10"`
-	Port       int    `json:"port" example:"8443"`
-	Security   string `json:"security" example:"reality"`
-	ServerName string `json:"serverName" example:"www.example.com"`
-	// TunnelId, when set, carries the node's management on that existing entry tunnel; the address
-	// and security fields are then taken from it.
+	Name     string `json:"name" example:"de1"`
+	PanelURL string `json:"panelUrl" example:"https://panel.example.com:2053/"`
+	Address  string `json:"address" example:"203.0.113.10"`
+	Port     int    `json:"port" example:"8443"`
+	// Engine is "backpack" (the default when empty) or "rakhsh"; Transport and Options are passed to the tunnel.
+	Engine    string         `json:"engine,omitempty" example:"backpack"`
+	Transport string         `json:"transport,omitempty" example:"wssmux"`
+	Options   map[string]any `json:"options,omitempty"`
+	// TunnelId, when set, carries the node's management on that existing entry tunnel the node already dials;
+	// without it the node gets a tunnel of its own, named after it.
 	TunnelId int `json:"tunnelId,omitempty" example:"0"`
-	// WithTunnel also makes an ordinary entry tunnel named after the node, and the management
-	// rides on it; the node's other end of it is stored when the node joins.
-	WithTunnel bool `json:"withTunnel,omitempty" example:"true"`
 }
 
 // Invitation is a new enrolment with the link that is shown once and never stored.
@@ -136,20 +138,11 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 	if err != nil {
 		return nil, err
 	}
-	if spec.WithTunnel && spec.TunnelId > 0 {
-		return nil, errors.New("the node already rides on an existing tunnel; it does not need one of its own")
-	}
 	var portal, data *model.ServerTunnel
-	switch {
-	case spec.TunnelId > 0:
+	if spec.TunnelId > 0 {
 		portal, err = s.tunnels.CreateManagementRider(spec.TunnelId, tunnelNamePrefix+name)
-	case spec.WithTunnel:
-		portal, data, err = s.createTunnelWithChannel(name, spec)
-	default:
-		portal, err = s.tunnels.CreateManagementPortal(tunnel.PortalSpec{
-			Name: tunnelNamePrefix + name, Address: spec.Address, Port: spec.Port,
-			Security: spec.Security, ServerName: spec.ServerName,
-		})
+	} else {
+		portal, data, err = s.createNodeTunnel(name, spec)
 	}
 	if err != nil {
 		return nil, err
@@ -174,12 +167,26 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 	}, nil
 }
 
-// createTunnelWithChannel makes the node's ordinary entry tunnel and its management channel on the same port.
-func (s *Service) createTunnelWithChannel(name string, spec Spec) (channel, data *model.ServerTunnel, err error) {
-	data, err = s.tunnels.CreatePortal(tunnel.PortalSpec{
-		Name: name, Address: spec.Address, Port: spec.Port, Security: spec.Security, ServerName: spec.ServerName,
-	}, nil)
-	if err != nil {
+// createNodeTunnel makes the node's entry tunnel and its management channel on the same port.
+func (s *Service) createNodeTunnel(name string, spec Spec) (channel, data *model.ServerTunnel, err error) {
+	portalSpec := tunnel.PortalSpec{
+		Name: name, Address: spec.Address, Port: spec.Port,
+		Engine: spec.Engine, Transport: spec.Transport, Options: spec.Options,
+	}
+	switch portalSpec.Engine {
+	case "", model.TunnelEngineBackpack:
+		portalSpec.Engine = model.TunnelEngineBackpack
+		if portalSpec.Transport == "" {
+			portalSpec.Transport = defaultWebsocketCarrier
+		}
+	case model.TunnelEngineRakhsh:
+		if portalSpec.Transport == "" {
+			portalSpec.Transport = defaultRakhshCarrier
+		}
+	default:
+		return nil, nil, fmt.Errorf("tunnel engine %q is not supported", spec.Engine)
+	}
+	if data, err = s.tunnels.CreatePortal(portalSpec, nil); err != nil {
 		return nil, nil, err
 	}
 	channel, err = s.tunnels.CreateManagementRider(data.Id, tunnelNamePrefix+name)

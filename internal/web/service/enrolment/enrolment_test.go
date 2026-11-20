@@ -28,7 +28,6 @@ func newDB(t *testing.T) {
 func enrolmentSpec(name string, port int) Spec {
 	return Spec{
 		Name: name, PanelURL: "http://203.0.113.10:2053/", Address: "203.0.113.10", Port: port,
-		Security: model.TunnelSecurityNone,
 	}
 }
 
@@ -92,6 +91,7 @@ func TestRedeemingAnEnrolmentRegistersTheNodeOnItsManagementPort(t *testing.T) {
 	if portal == nil || portal.Role != model.TunnelRolePortal || portal.ManagePort == 0 || portal.Port != 8443 {
 		t.Fatalf("management tunnel after Create = %+v, want a portal on 8443 with a management port", portal)
 	}
+	data := tunnelByName(t, "de1")
 	if !strings.Contains(created.Command, created.Link) {
 		t.Fatalf("command %q does not carry the link", created.Command)
 	}
@@ -106,12 +106,15 @@ func TestRedeemingAnEnrolmentRegistersTheNodeOnItsManagementPort(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Redeem: %v", err)
 	}
-	bridge, err := tunnel.ParseSetupLink(grant.Tunnel)
+	if grant.Tunnel != "" {
+		t.Fatalf("granted management tunnel %q, want none: the channel is a forward on the node's own tunnel", grant.Tunnel)
+	}
+	bridge, err := tunnel.ParseSetupLink(grant.DataTunnel)
 	if err != nil {
 		t.Fatalf("granted tunnel link: %v", err)
 	}
-	if bridge.UUID != portal.UUID || bridge.Port != 8443 || bridge.Address != "203.0.113.10" {
-		t.Fatalf("granted bridge %+v does not dial the portal %+v", bridge, portal)
+	if bridge.UUID != data.UUID || bridge.Port != 8443 || bridge.Address != "203.0.113.10" {
+		t.Fatalf("granted bridge %+v does not dial the node's tunnel %+v", bridge, data)
 	}
 
 	var row model.Node
@@ -173,8 +176,8 @@ func TestAnExpiredEnrolmentIsRefusedAndItsTunnelRemoved(t *testing.T) {
 	if n := nodeCount(t); n != 0 {
 		t.Fatalf("an expired link registered %d node(s)", n)
 	}
-	if got := tunnelByName(t, "node-de1"); got != nil {
-		t.Fatalf("the expired enrolment's tunnel still listens: %+v", got)
+	if tunnelByName(t, "node-de1") != nil || tunnelByName(t, "de1") != nil {
+		t.Fatal("the expired enrolment's tunnel still listens")
 	}
 }
 
@@ -420,9 +423,7 @@ func TestAnEnrolmentOnABackpackTunnelForwardsToTheNodesPanelPort(t *testing.T) {
 func TestANodeWithATunnelGetsAnOrdinaryTunnelThatItsManagementRidesOn(t *testing.T) {
 	newDB(t)
 	svc := &Service{}
-	spec := enrolmentSpec("de1", 8443)
-	spec.WithTunnel = true
-	created, err := svc.Create(spec)
+	created, err := svc.Create(enrolmentSpec("de1", 8443))
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -448,9 +449,8 @@ func TestANodeWithATunnelGetsAnOrdinaryTunnelThatItsManagementRidesOn(t *testing
 	if err != nil || dataBridge.UUID != data.UUID || dataBridge.Name != "de1" {
 		t.Fatalf("granted data bridge = %+v (%v), want the data tunnel's own client", dataBridge, err)
 	}
-	manageBridge, err := tunnel.ParseSetupLink(grant.Tunnel)
-	if err != nil || manageBridge.UUID != channel.UUID {
-		t.Fatalf("granted management bridge = %+v (%v), want the channel's client", manageBridge, err)
+	if grant.Tunnel != "" {
+		t.Fatalf("granted management tunnel %q, want none: the channel rides on the data tunnel", grant.Tunnel)
 	}
 	var node model.Node
 	if err := database.GetDB().Where("name = ?", "de1").First(&node).Error; err != nil {
@@ -471,9 +471,7 @@ func TestANodeWithATunnelGetsAnOrdinaryTunnelThatItsManagementRidesOn(t *testing
 func TestCancellingAPendingEnrolmentWithATunnelRemovesBothTunnels(t *testing.T) {
 	newDB(t)
 	svc := &Service{}
-	spec := enrolmentSpec("de1", 8443)
-	spec.WithTunnel = true
-	created, err := svc.Create(spec)
+	created, err := svc.Create(enrolmentSpec("de1", 8443))
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -482,24 +480,6 @@ func TestCancellingAPendingEnrolmentWithATunnelRemovesBothTunnels(t *testing.T) 
 	}
 	if tunnelByName(t, "de1") != nil || tunnelByName(t, "node-de1") != nil {
 		t.Fatal("a cancelled enrolment left a tunnel behind")
-	}
-}
-
-func TestAnEnrolmentOnAnExistingTunnelNeedsNoSecondTunnel(t *testing.T) {
-	newDB(t)
-	svc := &Service{}
-	parent, err := svc.tunnels.CreatePortal(tunnel.PortalSpec{
-		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
-	}, nil)
-	if err != nil {
-		t.Fatalf("CreatePortal: %v", err)
-	}
-	_, err = svc.Create(Spec{Name: "de1", PanelURL: "http://203.0.113.10:2053/", TunnelId: parent.Id, WithTunnel: true})
-	if err == nil {
-		t.Fatal("asked for a tunnel of its own on top of an existing tunnel and got no refusal")
-	}
-	if tunnelByName(t, "node-de1") != nil {
-		t.Fatal("the refused enrolment left a channel behind")
 	}
 }
 
@@ -525,5 +505,48 @@ func TestJoiningWithADataTunnelStoresItNextToTheManagementBridge(t *testing.T) {
 	}
 	if tunnelByName(t, "node-de1") == nil {
 		t.Fatal("the management bridge is missing")
+	}
+}
+
+func TestAnEnrolmentWithoutAnEngineMakesABackpackTunnelOnWssmux(t *testing.T) {
+	newDB(t)
+	if _, err := (&Service{}).Create(enrolmentSpec("de1", 8443)); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	data, rider := tunnelByName(t, "de1"), tunnelByName(t, "node-de1")
+	if data == nil || data.Engine != model.TunnelEngineBackpack || data.Transport != "wssmux" || data.RelayPort == 0 {
+		t.Fatalf("node tunnel = %+v, want BackPack on wssmux with a relay port", data)
+	}
+	if rider == nil || rider.ParentId != data.Id || rider.ManagePort == 0 || rider.Engine != model.TunnelEngineBackpack {
+		t.Fatalf("channel = %+v, want a BackPack rider on tunnel %d with a management port", rider, data.Id)
+	}
+}
+
+func TestAnEnrolmentOnRakhshMakesARakhshTunnel(t *testing.T) {
+	newDB(t)
+	spec := enrolmentSpec("de1", 8443)
+	spec.Engine = model.TunnelEngineRakhsh
+	if _, err := (&Service{}).Create(spec); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	data := tunnelByName(t, "de1")
+	if data == nil || data.Engine != model.TunnelEngineRakhsh || data.RakhshSecret == "" {
+		t.Fatalf("node tunnel = %+v, want a Rakhsh tunnel with its own key", data)
+	}
+	if rider := tunnelByName(t, "node-de1"); rider == nil || rider.ParentId != data.Id {
+		t.Fatalf("channel = %+v, want a rider on the Rakhsh tunnel", rider)
+	}
+}
+
+func TestAnEnrolmentRefusesAnUnknownEngineAndLeavesNothingBehind(t *testing.T) {
+	newDB(t)
+	spec := enrolmentSpec("de1", 8443)
+	spec.Engine = "xray"
+	_, err := (&Service{}).Create(spec)
+	if err == nil || !strings.Contains(err.Error(), `tunnel engine "xray" is not supported`) {
+		t.Fatalf("Create with the xray engine: err = %v, want the engine refused", err)
+	}
+	if tunnelByName(t, "de1") != nil || tunnelByName(t, "node-de1") != nil {
+		t.Fatal("the refused enrolment left a tunnel behind")
 	}
 }
