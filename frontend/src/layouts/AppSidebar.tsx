@@ -34,6 +34,7 @@ import { formatPanelVersion } from '@/lib/panel-version';
 import { pauseAnimationsUntilLeave, useTheme } from '@/hooks/useTheme';
 import { useAllSettings } from '@/api/queries/useAllSettings';
 import { useCommandPalette } from '@/components/command-palette/useCommandPalette';
+import DalanLogo from '@/components/ui/DalanLogo';
 import { PANEL_ROUTES } from '@/routes/panelRoutes';
 import './AppSidebar.css';
 
@@ -47,6 +48,7 @@ const LOGOUT_KEY = '__logout__';
 const RAIL_WIDTH = 72;
 const SIDER_WIDTH = 220;
 const SIDEBAR_PINNED_KEY = 'sidebar-pinned';
+const PHONE_TAB_PATHS = ['/', '/clients', '/inbounds', '/nodes'];
 
 let hoveredAcrossRemounts = false;
 
@@ -367,7 +369,8 @@ export default function AppSidebar() {
       >
         <div className="sider-brand">
           <div className="brand-block">
-            <span className="brand-text">{railCollapsed ? 'DL' : 'Dalan'}</span>
+            <DalanLogo />
+            {!railCollapsed && <span className="brand-text">Dalan</span>}
           </div>
           {!railCollapsed && (
             <div className="brand-actions">
@@ -455,6 +458,7 @@ export default function AppSidebar() {
       >
         <div className="drawer-header">
           <div className="brand-block">
+            <DalanLogo />
             <span className="drawer-brand">Dalan</span>
           </div>
           <div className="drawer-header-actions">
@@ -525,16 +529,29 @@ export default function AppSidebar() {
         </div>
       </Drawer>
 
-      {!drawerOpen && (
-        <button
-          className="drawer-handle"
-          type="button"
-          aria-label={t('menu.openMenu')}
-          onClick={() => setDrawerOpen(true)}
-        >
+      <nav className="phone-tabs" aria-label={t('menu.openMenu')}>
+        {PHONE_TAB_PATHS.map((path) => {
+          const tab = navItems.find((item) => item.key === path);
+          if (!tab) return null;
+          const Icon = tab.icon;
+          return (
+            <button
+              key={path}
+              type="button"
+              className={`phone-tab${selectedKey === path ? ' active' : ''}`}
+              aria-current={selectedKey === path ? 'page' : undefined}
+              onClick={() => navigate(path)}
+            >
+              <Icon aria-hidden />
+              <span>{tab.title}</span>
+            </button>
+          );
+        })}
+        <button type="button" className="phone-tab" onClick={() => setDrawerOpen(true)}>
           <MenuOutlined aria-hidden />
+          <span>{t('menu.openMenu')}</span>
         </button>
-      )}
+      </nav>
     </div>
   );
 }
