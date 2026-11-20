@@ -1,0 +1,247 @@
+/* Dalan design system — generated from tokens.json */
+:root, [data-theme="dark"] {
+  --bg: #111114; /* Page background under the moving glow. Ink in dark, paper cream in light. */
+  --surface: #1b1b20; /* Solid cards when Effects is Off; modal body base. */
+  --surface-hi: rgba(255,255,255,0.10); /* Selected segment in a segmented control; hovered tab. */
+  --text: #f4efe6; /* Body and headings on bg, surface and every glass. */
+  --text-muted: #afaaa0; /* Secondary text, labels, captions. Dark value lifted from #A8A399 so it passes 4.5:1 over the brightest glow. */
+  --glass: rgba(255,255,255,0.07); /* Tile fill. Always with backdrop blur (blur-full or blur-light). */
+  --glass-border: rgba(255,255,255,0.13); /* Hairline around glass tiles, inputs at rest, table header rule. */
+  --glass-dense: rgba(27,27,32,0.88); /* Tables, logs, config editor, modals: long text stays readable. */
+  --track: rgba(255,255,255,0.09); /* Bar and ring tracks, skeleton base, neutral badges. */
+  --control-border: #8c877d; /* Borders of inputs, off toggles, checkboxes, dashed add buttons. 3:1 against glass. */
+  --brand: #ffb020; /* Saffron fill: primary buttons, active tab, logo doorway on This server and login. Text on it is ink. */
+  --brand-line: #ffb020; /* Saffron for bars, sparklines, card edges, focus ring. 3:1 on cream and white. */
+  --brand-text: #ffb020; /* Saffron used as text or icon on a plain ground. 4.5:1. */
+  --on-brand: #111114; /* Text and icons on any accent fill (computed: ink on all twelve accents). */
+  --mint: #34d399; /* Secondary accent fill (third glow, highlights). Never for status text in light. */
+  --mint-text: #34d399; /* Mint as text. */
+  --success: #34d399; /* Status: online, up, active. Always with an icon and a word. */
+  --success-text: #34d399; /* Success word on glass. */
+  --warning: #ff7a45; /* Status: high load, expiring, slow. Orange-red so it never reads as saffron. */
+  --warning-text: #fe8759; /* Warning word on glass. Dark value lifted so it passes over a bright glow. Do not lighten the light value. */
+  --danger: #f87171; /* Status: offline, down, expired, destructive. */
+  --danger-text: #ff8482; /* Danger word on glass. */
+  --accent-saffron: #ffb020; /* Saffron node accent, fill. Brand. This server, logo, login. Text on it: ink. */
+  --accent-saffron-line: #ffb020; /* Saffron for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-saffron-text: #ffb020; /* Saffron as text (4.5:1 on the real background, glass and glow included). */
+  --accent-rose: #ff3d6e; /* Rose node accent, fill. Turkey and other red flags. Text on it: ink. */
+  --accent-rose-line: #ff3d6e; /* Rose for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-rose-text: #fe6380; /* Rose as text (4.5:1 on the real background, glass and glow included). */
+  --accent-sun: #ffc83d; /* Sun node accent, fill. Germany, gold-led flags. Text on it: ink. */
+  --accent-sun-line: #ffc83d; /* Sun for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-sun-text: #ffc83d; /* Sun as text (4.5:1 on the real background, glass and glow included). */
+  --accent-tulip: #f062c8; /* Tulip node accent, fill. Netherlands (replaces orange #FF8A3D, too close to warning). Text on it: ink. */
+  --accent-tulip-line: #f062c8; /* Tulip for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-tulip-text: #f466cc; /* Tulip as text (4.5:1 on the real background, glass and glow included). */
+  --accent-cobalt: #4c8dff; /* Cobalt node accent, fill. France, blue-led flags. Text on it: ink. */
+  --accent-cobalt-line: #4c8dff; /* Cobalt for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-cobalt-text: #619aff; /* Cobalt as text (4.5:1 on the real background, glass and glow included). */
+  --accent-iris: #9b8cff; /* Iris node accent, fill. UK. Text on it: ink. */
+  --accent-iris-line: #9b8cff; /* Iris for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-iris-text: #9d90fe; /* Iris as text (4.5:1 on the real background, glass and glow included). */
+  --accent-lime: #b6f23c; /* Lime node accent, fill. Free pick; yellow-green, not success mint. Text on it: ink. */
+  --accent-lime-line: #b6f23c; /* Lime for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-lime-text: #b6f23c; /* Lime as text (4.5:1 on the real background, glass and glow included). */
+  --accent-cyan: #2ccce4; /* Cyan node accent, fill. Finland, Argentina, sky-blue flags. Text on it: ink. */
+  --accent-cyan-line: #2ccce4; /* Cyan for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-cyan-text: #2ccce4; /* Cyan as text (4.5:1 on the real background, glass and glow included). */
+  --accent-amethyst: #c27cf5; /* Amethyst node accent, fill. Free pick. Text on it: ink. */
+  --accent-amethyst-line: #c27cf5; /* Amethyst for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-amethyst-text: #c680f9; /* Amethyst as text (4.5:1 on the real background, glass and glow included). */
+  --accent-ice: #8ec2ff; /* Ice node accent, fill. Light-blue flags (Greece, Israel-free palette, Uruguay). Text on it: ink. */
+  --accent-ice-line: #8ec2ff; /* Ice for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-ice-text: #8ec2ff; /* Ice as text (4.5:1 on the real background, glass and glow included). */
+  --accent-sand: #e2be8a; /* Sand node accent, fill. Neutral warm, for nodes with no clear flag colour. Text on it: ink. */
+  --accent-sand-line: #e2be8a; /* Sand for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-sand-text: #e2be8a; /* Sand as text (4.5:1 on the real background, glass and glow included). */
+  --accent-steel: #9aa8bc; /* Steel node accent, fill. Neutral cool; also the custom-colour fallback. Text on it: ink. */
+  --accent-steel-line: #9aa8bc; /* Steel for bars, edges, sparklines (3:1 on the real light background). */
+  --accent-steel-text: #9aa8bc; /* Steel as text (4.5:1 on the real background, glass and glow included). */
+  --shadow-tile: inset 0 1px 0 rgba(255,255,255,0.06), 0 24px 48px -28px rgba(0,0,0,0.7); /* Every glass tile. */
+  --shadow-modal: 0 40px 80px -30px rgba(0,0,0,0.6); /* Modals and sheets. */
+}
+[data-theme="light"] {
+  --bg: #f4efe6;
+  --surface: #ffffff;
+  --surface-hi: #ffffff;
+  --text: #111114;
+  --text-muted: #6b665c;
+  --glass: rgba(255,255,255,0.60);
+  --glass-border: rgba(17,17,20,0.11);
+  --glass-dense: rgba(255,255,255,0.88);
+  --track: rgba(17,17,20,0.08);
+  --control-border: #857f75;
+  --brand: #ffb020;
+  --brand-line: #b57a04;
+  --brand-text: #906102;
+  --on-brand: #111114;
+  --mint: #34d399;
+  --mint-text: #047a55;
+  --success: #047857;
+  --success-text: #047857;
+  --warning: #c2410c;
+  --warning-text: #c2410c;
+  --danger: #b91c1c;
+  --danger-text: #b91c1c;
+  --accent-saffron: #ffb020;
+  --accent-saffron-line: #b57a04;
+  --accent-saffron-text: #906102;
+  --accent-rose: #ff3d6e;
+  --accent-rose-line: #f93669;
+  --accent-rose-text: #d3034f;
+  --accent-sun: #ffc83d;
+  --accent-sun-line: #a98006;
+  --accent-sun-text: #866505;
+  --accent-tulip: #f062c8;
+  --accent-tulip-line: #db4eb5;
+  --accent-tulip-text: #bb2d98;
+  --accent-cobalt: #4c8dff;
+  --accent-cobalt-line: #4283f4;
+  --accent-cobalt-text: #2766d4;
+  --accent-iris: #9b8cff;
+  --accent-iris-line: #8675e6;
+  --accent-iris-text: #6c59c7;
+  --accent-lime: #b6f23c;
+  --accent-lime-line: #6a9206;
+  --accent-lime-text: #547500;
+  --accent-cyan: #2ccce4;
+  --accent-cyan-line: #0494a6;
+  --accent-cyan-text: #037685;
+  --accent-amethyst: #c27cf5;
+  --accent-amethyst-line: #ac67de;
+  --accent-amethyst-text: #904abf;
+  --accent-ice: #8ec2ff;
+  --accent-ice-line: #5889c3;
+  --accent-ice-text: #3c6da4;
+  --accent-sand: #e2be8a;
+  --accent-sand-line: #a3814f;
+  --accent-sand-text: #856533;
+  --accent-steel: #9aa8bc;
+  --accent-steel-line: #7a879a;
+  --accent-steel-text: #5f6c7e;
+  --shadow-tile: inset 0 1px 0 rgba(255,255,255,0.7), 0 24px 48px -30px rgba(70,52,20,0.35);
+}
+:root {
+  --space-1: 4px; /* Icon to text inside pills and badges. */
+  --space-2: 8px; /* Between chips, tabs, small buttons. */
+  --space-3: 12px; /* Inside rows; row gap in lists. */
+  --space-4: 16px; /* Phone tile padding; grid gap on phones. */
+  --space-5: 18px; /* Grid gap on laptop. */
+  --space-6: 20px; /* Tile padding on laptop. */
+  --space-7: 24px; /* Modal padding. */
+  --space-8: 28px; /* Main area top padding. */
+  --space-9: 36px; /* Main area side padding on laptop. */
+  --radius-xs: 8px; /* Skeleton blocks, badges. */
+  --radius-sm: 12px; /* Buttons, inputs, nav items. */
+  --radius-md: 14px; /* Icon buttons, search, segmented controls. */
+  --radius-lg: 18px; /* Glass tiles. Phone tiles 20px. */
+  --radius-xl: 24px; /* Modals, login card, sheets (26px top). */
+  --radius-pill: 999px; /* Node tabs, chips, pills, toggles, bars. */
+  --blur-full: 24px; /* Effects: Full. */
+  --blur-light: 8px; /* Effects: Light. */
+  --blur-off: 0px; /* Effects: Off. Glass becomes surface. */
+  --d-fast: 140ms; /* Press, hover, chip select. */
+  --d-base: 240ms; /* Toggle, tab fill, fade. */
+  --d-slow: 420ms; /* Entrance, route change, modal, sheet, bar fill. */
+  --d-sweep: 640ms; /* Node switch accent sweep and colour tween. */
+  --d-count: 700ms; /* Number count-up. */
+  --stagger: 40ms; /* Between tiles, at most 12 steps. */
+  --e-out: cubic-bezier(0.22, 1, 0.36, 1); /* Things arriving. */
+  --e-io: cubic-bezier(0.65, 0, 0.35, 1); /* Things moving across: sweep, glow drift. */
+  --e-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* Small tactile pops: toggle knob, copy, QR. */
+  --e-in: cubic-bezier(0.55, 0, 1, 0.45); /* Things leaving. Short. */
+  --glow-dark: 0.14; /* Max accent strength at the glow hot spot, dark. Higher fails text contrast. */
+  --glow-light: 0.16; /* Max accent strength at the glow hot spot, light. */
+  --font-sans: Manrope, Vazirmatn, system-ui, sans-serif;
+  --font-fa: Vazirmatn, Manrope, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --text-display: 750 34px/38px var(--font-sans); /* Header greeting. Phone: 28px. */
+  --text-kpi: 750 40px/40px var(--font-sans); /* Big live numbers. Always tabular figures. */
+  --text-kpi-sm: 750 28px/30px var(--font-sans); /* Second number in a tile. */
+  --text-h2: 700 22px/26px var(--font-sans); /* Section and page titles (page title 28px). */
+  --text-h3: 700 16px/21px var(--font-sans); /* Card titles, row names. */
+  --text-body: 500 14px/21px var(--font-sans); /* Default text. */
+  --text-small: 600 12.5px/18px var(--font-sans); /* Secondary lines under a title, in text-muted. */
+  --text-label: 700 12px/16px var(--font-sans); /* Tile titles, field labels, table headers. */
+  --text-fa-display: 750 34px/44px var(--font-fa); /* Same sizes as Latin, line height about 15% taller, no letter spacing. */
+  --text-fa-body: 500 14px/24px var(--font-fa); /* Persian body. */
+  --text-code: 400 12.5px/22px var(--font-mono); /* Xray editor and logs only. Loads with those pages. */
+}
+.display {
+  font-family: var(--font-sans);
+  font-size: 34px;
+  line-height: 38px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+.kpi {
+  font-family: var(--font-sans);
+  font-size: 40px;
+  line-height: 40px;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+.kpi-sm {
+  font-family: var(--font-sans);
+  font-size: 28px;
+  line-height: 30px;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+.h2 {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  line-height: 26px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.h3 {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 21px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 21px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.small {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 18px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.label {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+.fa-display {
+  font-family: var(--font-fa);
+  font-size: 34px;
+  line-height: 44px;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+.fa-body {
+  font-family: var(--font-fa);
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 22px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
