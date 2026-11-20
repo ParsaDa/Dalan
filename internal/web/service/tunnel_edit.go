@@ -20,7 +20,6 @@ import (
 type TunnelEdit struct {
 	Address            string         `json:"address" example:"203.0.113.10"`
 	Port               int            `json:"port" example:"8443"`
-	ServerName         string         `json:"serverName" example:"www.example.com"`
 	Transport          string         `json:"transport" example:"wssmux"`
 	FallbackTransports []string       `json:"fallbackTransports"`
 	ForwardPorts       []string       `json:"forwardPorts"`
@@ -126,11 +125,6 @@ func (s *TunnelService) applyEntryEdit(old, next *model.ServerTunnel, edit Tunne
 		} else if err := keepLinkAddresses(next, old.Options); err != nil {
 			return err
 		}
-	} else if next.Security == model.TunnelSecurityReality {
-		if strings.TrimSpace(edit.ServerName) == "" {
-			return errors.New("a REALITY tunnel needs a server name")
-		}
-		next.ServerName = strings.TrimSpace(edit.ServerName)
 	}
 	if next.Engine == model.TunnelEngineBackpack {
 		if _, err := backpack.RenderConfig(*next); err != nil {
@@ -148,8 +142,7 @@ func (s *TunnelService) applyEntryEdit(old, next *model.ServerTunnel, edit Tunne
 
 // A node's management rides on the tunnel's address, port and identity, so those stay while it does.
 func (s *TunnelService) refuseChangeWhileCarrying(old, next *model.ServerTunnel) error {
-	if old.Address == next.Address && old.Port == next.Port && old.Transport == next.Transport &&
-		old.ServerName == next.ServerName {
+	if old.Address == next.Address && old.Port == next.Port && old.Transport == next.Transport {
 		return nil
 	}
 	var carried []string

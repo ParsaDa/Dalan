@@ -37,7 +37,7 @@ func TestTunnelRoutesCreateLinkImportToggleAndDelete(t *testing.T) {
 
 	added := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
 		"name": "ir1", "address": "203.0.113.10", "port": 8443,
-		"security": "reality", "serverName": "www.example.com", "routeInbounds": []string{"inbound-443"},
+		"transport": "tcpmux", "routeInbounds": []string{"inbound-443"},
 	})
 	if !added.Success {
 		t.Fatalf("add failed: %s", added.Msg)
@@ -45,9 +45,6 @@ func TestTunnelRoutesCreateLinkImportToggleAndDelete(t *testing.T) {
 	var portal model.ServerTunnel
 	if err := json.Unmarshal(added.Obj, &portal); err != nil || portal.Id == 0 {
 		t.Fatalf("add returned %s (%v), want the stored portal", added.Obj, err)
-	}
-	if strings.Contains(string(added.Obj), "rivateKey") {
-		t.Fatalf("the API exposed the REALITY private key: %s", added.Obj)
 	}
 
 	linkEnv := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/link/1", nil)
@@ -152,7 +149,7 @@ func TestPoolRoutesCreateListAndDeleteAPool(t *testing.T) {
 	engine := newTunnelEngine(t)
 	for i, name := range []string{"a", "b"} {
 		added := doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
-			"name": name, "address": "203.0.113.10", "port": 8443 + i, "security": "none",
+			"name": name, "address": "203.0.113.10", "port": 8443 + i, "transport": "tcpmux",
 		})
 		if !added.Success {
 			t.Fatalf("add %s: %s", name, added.Msg)
@@ -334,23 +331,15 @@ func TestTunnelRoutesCreateARakhshTunnelWithoutEverListingItsSecret(t *testing.T
 	}
 }
 
-func TestEngineRoutesListWhatAnInstallCanTravelThrough(t *testing.T) {
+func TestEngineRoutesStartWithThePanelSettingAndDirect(t *testing.T) {
 	engine := newTunnelEngine(t)
-	doHostReq(t, engine, http.MethodPost, "/panel/api/tunnels/add", map[string]any{
-		"name": "ir1", "address": "203.0.113.10", "port": 8443,
-		"security": "reality", "serverName": "www.example.com", "routeInbounds": []string{"inbound-443"},
-	})
 	env := doHostReq(t, engine, http.MethodGet, "/panel/api/tunnels/engine/routes", nil)
 	var routes []struct{ Via, Value, Kind string }
 	if err := json.Unmarshal(env.Obj, &routes); err != nil {
 		t.Fatalf("decode routes: %v (%s)", err, env.Obj)
 	}
-	if len(routes) < 3 || routes[0].Via != "panel" || routes[1].Via != "direct" {
-		t.Fatalf("routes = %+v, want the panel setting and direct first", routes)
-	}
-	last := routes[len(routes)-1]
-	if last.Via != "outbound" || last.Value != "tunnel-ir1" || last.Kind != "tunnel" {
-		t.Fatalf("last route = %+v, want the ir1 tunnel", last)
+	if len(routes) != 2 || routes[0].Via != "panel" || routes[1].Via != "direct" {
+		t.Fatalf("routes = %+v, want exactly the panel setting and direct while no core runs", routes)
 	}
 }
 

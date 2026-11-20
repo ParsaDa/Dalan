@@ -64,12 +64,12 @@ func bridge(name, transport string) model.ServerTunnel {
 
 func TestReconcileRunsOneEnginePerEnabledBackpackTunnel(t *testing.T) {
 	s := newSupervisor(t)
-	xrayTunnel := bridge("x1", "tcp")
-	xrayTunnel.Engine = model.TunnelEngineXray
+	otherEngine := bridge("x1", "tcp")
+	otherEngine.Engine = model.TunnelEngineRakhsh
 	disabled := bridge("off", "tcp")
 	disabled.Enable = false
 
-	if err := s.Reconcile([]model.ServerTunnel{bridge("de1", "tcp"), xrayTunnel, disabled}); err != nil {
+	if err := s.Reconcile([]model.ServerTunnel{bridge("de1", "tcp"), otherEngine, disabled}); err != nil {
 		t.Fatalf("Reconcile: %v", err)
 	}
 	log := starts(t, s, 1)

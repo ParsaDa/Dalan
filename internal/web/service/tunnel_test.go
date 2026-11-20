@@ -45,41 +45,10 @@ func hasTag(tags []string, want string) bool {
 	return false
 }
 
-func TestAPortalTunnelReachesTheGeneratedXrayConfigUntilDisabledOrDeleted(t *testing.T) {
-	svc := newTunnelDB(t)
-	portal, err := svc.CreatePortal(tunnel.PortalSpec{
-		Name: "de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
-	}, nil)
-	if err != nil {
-		t.Fatalf("CreatePortal: %v", err)
-	}
-	if tags := inboundTags(t); !hasTag(tags, "tunnel-de1-link") {
-		t.Fatalf("inbound tags = %v, want tunnel-de1-link among them", tags)
-	}
-
-	if err := svc.SetEnable(portal.Id, false); err != nil {
-		t.Fatalf("SetEnable: %v", err)
-	}
-	if tags := inboundTags(t); hasTag(tags, "tunnel-de1-link") {
-		t.Fatalf("a disabled tunnel is still in the config: %v", tags)
-	}
-
-	if err := svc.SetEnable(portal.Id, true); err != nil {
-		t.Fatalf("SetEnable: %v", err)
-	}
-	if err := svc.Delete(portal.Id); err != nil {
-		t.Fatalf("Delete: %v", err)
-	}
-	if tags := inboundTags(t); hasTag(tags, "tunnel-de1-link") {
-		t.Fatalf("a deleted tunnel is still in the config: %v", tags)
-	}
-}
-
 func TestImportingAPortalsLinkCreatesTheBridgeEnd(t *testing.T) {
 	svc := newTunnelDB(t)
 	portal, err := tunnel.NewPortal(tunnel.PortalSpec{
-		Name: "ir1", Address: "203.0.113.10", Port: 8443,
-		Security: model.TunnelSecurityReality, ServerName: "www.example.com",
+		Name: "ir1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux",
 	})
 	if err != nil {
 		t.Fatalf("NewPortal: %v", err)
@@ -93,21 +62,15 @@ func TestImportingAPortalsLinkCreatesTheBridgeEnd(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Import: %v", err)
 	}
-	if bridge.Id == 0 || bridge.Role != model.TunnelRoleBridge || bridge.UUID != portal.UUID {
-		t.Fatalf("bridge = %+v, want a stored bridge with the portal's uuid", bridge)
-	}
-	cfg, err := (&XrayService{}).GetXrayConfig()
-	if err != nil {
-		t.Fatalf("GetXrayConfig: %v", err)
-	}
-	if !strings.Contains(string(cfg.OutboundConfigs), `"tag":"tunnel-ir1-dial"`) {
-		t.Fatalf("outbounds lack the bridge dial outbound: %s", cfg.OutboundConfigs)
+	if bridge.Id == 0 || bridge.Role != model.TunnelRoleBridge || bridge.UUID != portal.UUID ||
+		bridge.Engine != model.TunnelEngineBackpack || bridge.RelayPort != portal.RelayPort {
+		t.Fatalf("bridge = %+v, want a stored BackPack bridge with the portal's uuid and relay port", bridge)
 	}
 }
 
 func TestTunnelsRefuseNamesAndPortsAlreadyTaken(t *testing.T) {
 	svc := newTunnelDB(t)
-	spec := tunnel.PortalSpec{Name: "de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone}
+	spec := tunnel.PortalSpec{Name: "de1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux"}
 	if _, err := svc.CreatePortal(spec, nil); err != nil {
 		t.Fatalf("CreatePortal: %v", err)
 	}
@@ -124,7 +87,7 @@ func TestTunnelsRefuseNamesAndPortsAlreadyTaken(t *testing.T) {
 func TestSetupLinkIsServedForPortalsOnly(t *testing.T) {
 	svc := newTunnelDB(t)
 	portal, err := svc.CreatePortal(tunnel.PortalSpec{
-		Name: "de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+		Name: "de1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux",
 	}, nil)
 	if err != nil {
 		t.Fatalf("CreatePortal: %v", err)
@@ -135,36 +98,6 @@ func TestSetupLinkIsServedForPortalsOnly(t *testing.T) {
 	}
 	if _, err := svc.SetupLink(portal.Id + 100); err == nil {
 		t.Fatal("SetupLink for a missing tunnel returned no error")
-	}
-}
-
-func TestStatusProbesAnEntryTunnelAndRefusesAnExitTunnel(t *testing.T) {
-	svc := newTunnelDB(t)
-	portal, err := svc.CreatePortal(tunnel.PortalSpec{
-		Name: "de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
-	}, nil)
-	if err != nil {
-		t.Fatalf("CreatePortal: %v", err)
-	}
-	// No Xray runs in this test, so the probe port is closed: that is a status, not a failure.
-	status, err := svc.Status(portal.Id)
-	if err != nil || status.Connected || status.Error == "" {
-		t.Fatalf("Status(portal) = %+v, %v; want a not-connected status carrying the reason", status, err)
-	}
-
-	entry, err := tunnel.NewPortal(tunnel.PortalSpec{
-		Name: "ir1", Address: "203.0.113.20", Port: 9443, Security: model.TunnelSecurityNone,
-	})
-	if err != nil {
-		t.Fatalf("NewPortal: %v", err)
-	}
-	link, _ := tunnel.SetupLink(entry)
-	bridge, err := svc.Import(link, "")
-	if err != nil {
-		t.Fatalf("Import: %v", err)
-	}
-	if _, err := svc.Status(bridge.Id); err == nil || !strings.Contains(err.Error(), "entry") {
-		t.Fatalf("Status(bridge) error = %v, want one saying only the entry end can be tested", err)
 	}
 }
 
@@ -258,30 +191,33 @@ func TestABackpackTunnelWithoutTheEngineIsCreatedAndSaysWhatIsMissing(t *testing
 
 func TestAManagementTunnelIsNotProbedAndCannotBeDeletedFromTheTunnelList(t *testing.T) {
 	svc := newTunnelDB(t)
-	portal, err := svc.CreateManagementPortal(tunnel.PortalSpec{
-		Name: "node-de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
-	})
+	parent, err := svc.CreatePortal(tunnel.PortalSpec{
+		Name: "tr1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux",
+	}, nil)
 	if err != nil {
-		t.Fatalf("CreateManagementPortal: %v", err)
+		t.Fatalf("CreatePortal: %v", err)
 	}
-	if portal.ManagePort < managePortFirst || portal.ManagePort > managePortLast {
-		t.Fatalf("management port %d is outside %d-%d", portal.ManagePort, managePortFirst, managePortLast)
+	rider, err := svc.CreateManagementRider(parent.Id, "node-de1")
+	if err != nil {
+		t.Fatalf("CreateManagementRider: %v", err)
+	}
+	if rider.ManagePort < managePortFirst || rider.ManagePort > managePortLast {
+		t.Fatalf("management port %d is outside %d-%d", rider.ManagePort, managePortFirst, managePortLast)
 	}
 	// A probe would be answered by the node's panel and read as a broken tunnel.
-	if _, err := svc.Status(portal.Id); err == nil || !strings.Contains(err.Error(), "node's status") {
+	if _, err := svc.Status(rider.Id); err == nil || !strings.Contains(err.Error(), "node's status") {
 		t.Fatalf("Status(management tunnel) error = %v, want a pointer to the node's status", err)
 	}
-	if err := svc.Delete(portal.Id); !errors.Is(err, errManagementTunnel) {
+	if err := svc.Delete(rider.Id); !errors.Is(err, errManagementTunnel) {
 		t.Fatalf("Delete(management tunnel) = %v, want errManagementTunnel", err)
 	}
-	if !hasTag(inboundTags(t), "tunnel-node-de1-manage") {
-		t.Fatalf("the management inbound is missing from the generated Xray config: %v", inboundTags(t))
-	}
-	if err := svc.DeleteManagement(portal.Id); err != nil {
+	if err := svc.DeleteManagement(rider.Id); err != nil {
 		t.Fatalf("DeleteManagement: %v", err)
 	}
-	if hasTag(inboundTags(t), "tunnel-node-de1-manage") {
-		t.Fatalf("the management inbound survived DeleteManagement")
+	var left int64
+	database.GetDB().Model(&model.ServerTunnel{}).Where("id = ?", rider.Id).Count(&left)
+	if left != 0 {
+		t.Fatal("the management tunnel survived DeleteManagement")
 	}
 }
 
@@ -354,24 +290,22 @@ func TestARelayPortAlreadyUsedByATunnelOrAnInboundIsRefused(t *testing.T) {
 func TestRoutableOutboundsListOnlyEnabledEntryTunnelsRoutingCanUse(t *testing.T) {
 	svc := newTunnelDB(t)
 	fakeBackpack(t)
-	xrayPortal, err := svc.CreatePortal(tunnel.PortalSpec{
-		Name: "x1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+	first, err := svc.CreatePortal(tunnel.PortalSpec{
+		Name: "a1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux",
 	}, nil)
 	if err != nil {
-		t.Fatalf("CreatePortal xray: %v", err)
+		t.Fatalf("CreatePortal: %v", err)
 	}
 	bpSpec := backpackPortalSpec()
 	bpSpec.Port = 8444
 	if _, err := svc.CreatePortal(bpSpec, nil); err != nil {
 		t.Fatalf("CreatePortal backpack: %v", err)
 	}
-	if _, err := svc.CreateManagementPortal(tunnel.PortalSpec{
-		Name: "node-de1", Address: "203.0.113.10", Port: 8445, Security: model.TunnelSecurityNone,
-	}); err != nil {
-		t.Fatalf("CreateManagementPortal: %v", err)
+	if _, err := svc.CreateManagementRider(first.Id, "node-de1"); err != nil {
+		t.Fatalf("CreateManagementRider: %v", err)
 	}
 	off, err := svc.CreatePortal(tunnel.PortalSpec{
-		Name: "off1", Address: "203.0.113.10", Port: 8446, Security: model.TunnelSecurityNone,
+		Name: "off1", Address: "203.0.113.10", Port: 8446, Transport: "tcpmux",
 	}, nil)
 	if err != nil {
 		t.Fatalf("CreatePortal off: %v", err)
@@ -380,8 +314,8 @@ func TestRoutableOutboundsListOnlyEnabledEntryTunnelsRoutingCanUse(t *testing.T)
 		t.Fatalf("SetEnable: %v", err)
 	}
 	bridge := model.ServerTunnel{
-		Name: "exit1", Role: model.TunnelRoleBridge, Engine: model.TunnelEngineXray, Enable: true,
-		Address: "203.0.113.10", Port: 8447, UUID: xrayPortal.UUID, Security: model.TunnelSecurityNone,
+		Name: "exit1", Role: model.TunnelRoleBridge, Engine: model.TunnelEngineBackpack, Enable: true,
+		Address: "203.0.113.10", Port: 8447, UUID: first.UUID, Transport: "tcpmux",
 	}
 	if err := svc.create(&bridge); err != nil {
 		t.Fatalf("create bridge: %v", err)
@@ -395,7 +329,7 @@ func TestRoutableOutboundsListOnlyEnabledEntryTunnelsRoutingCanUse(t *testing.T)
 	for _, o := range got {
 		tags = append(tags, o.Tag+"/"+o.Engine)
 	}
-	if want := "tunnel-x1/xray,tunnel-bp1/backpack"; strings.Join(tags, ",") != want {
+	if want := "tunnel-a1/backpack,tunnel-bp1/backpack"; strings.Join(tags, ",") != want {
 		t.Fatalf("routable outbounds = %v, want %s", tags, want)
 	}
 }

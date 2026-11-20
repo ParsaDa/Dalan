@@ -20,11 +20,10 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/web/runtime"
 )
 
-func TestARiderSharesItsTunnelsPortAndIdentityWithItsOwnClient(t *testing.T) {
+func TestARiderSharesItsTunnelsAddressAndPortAndGetsALoopbackPortOfItsOwn(t *testing.T) {
 	svc := newTunnelDB(t)
 	parent, err := svc.CreatePortal(tunnel.PortalSpec{
-		Name: "tr1", Address: "203.0.113.10", Port: 8443,
-		Security: model.TunnelSecurityReality, ServerName: "www.example.com",
+		Name: "tr1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux",
 	}, nil)
 	if err != nil {
 		t.Fatalf("CreatePortal: %v", err)
@@ -34,42 +33,21 @@ func TestARiderSharesItsTunnelsPortAndIdentityWithItsOwnClient(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateManagementRider: %v", err)
 	}
-	if rider.ParentId != parent.Id || rider.Port != parent.Port || rider.Address != parent.Address ||
-		rider.ShortId != parent.ShortId || rider.RealityPublicKey != parent.RealityPublicKey ||
-		rider.ServerName != parent.ServerName {
-		t.Fatalf("rider = %+v, want the port and REALITY identity of %+v", rider, parent)
+	if rider.ParentId != parent.Id || rider.Port != parent.Port || rider.Address != parent.Address || rider.Engine != parent.Engine {
+		t.Fatalf("rider = %+v, want the address, port and engine of %+v", rider, parent)
 	}
 	if rider.UUID == "" || rider.UUID == parent.UUID || rider.ManagePort == 0 {
-		t.Fatalf("rider uuid %q / manage port %d: want its own client and a loopback port", rider.UUID, rider.ManagePort)
+		t.Fatalf("rider uuid %q / manage port %d: want its own identity and a loopback port", rider.UUID, rider.ManagePort)
 	}
-	if rider.RealityPrivateKey != "" {
-		t.Fatal("the rider holds a copy of the tunnel's REALITY private key")
-	}
-	link, err := tunnel.SetupLink(*rider)
-	if err != nil {
-		t.Fatalf("SetupLink: %v", err)
-	}
-	bridge, err := tunnel.ParseSetupLink(link)
-	if err != nil || bridge.UUID != rider.UUID || bridge.Port != parent.Port || bridge.Name != "node-de1" {
-		t.Fatalf("the node's end = %+v (%v), want the rider's client on the tunnel's port", bridge, err)
-	}
-
-	tags := inboundTags(t)
-	var links int
-	for _, tag := range tags {
-		if strings.HasSuffix(tag, "-link") {
-			links++
-		}
-	}
-	if links != 1 {
-		t.Fatalf("inbounds %v: want one tunnel listener shared by both clients", tags)
+	if rider.RelayPort != 0 {
+		t.Fatalf("rider relay port = %d, want none: the engine process belongs to the tunnel it rides", rider.RelayPort)
 	}
 }
 
 func TestATunnelCarryingANodeCannotBeDeletedAndAnotherPortalCannotCarryOne(t *testing.T) {
 	svc := newTunnelDB(t)
 	parent, err := svc.CreatePortal(tunnel.PortalSpec{
-		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+		Name: "tr1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux",
 	}, nil)
 	if err != nil {
 		t.Fatalf("CreatePortal: %v", err)
@@ -210,7 +188,7 @@ func TestATunnelMadeForANodeIsStoredOnBothEndsAndDeletedFromBoth(t *testing.T) {
 	fake, node := newFakeTunnelNode(t)
 
 	portal, err := svc.CreateOnNode(node.Id, tunnel.PortalSpec{
-		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+		Name: "tr1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux",
 	}, []string{"in-1"}, "")
 	if err != nil {
 		t.Fatalf("CreateOnNode: %v", err)
@@ -237,7 +215,7 @@ func TestANodeThatCannotTakeItsEndLeavesNoHalfTunnelAndKeepsTheOneItHasUntilForc
 	fake, node := newFakeTunnelNode(t)
 	fake.fail = true
 	if _, err := svc.CreateOnNode(node.Id, tunnel.PortalSpec{
-		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+		Name: "tr1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux",
 	}, nil, ""); err == nil {
 		t.Fatal("CreateOnNode succeeded although the node refused its end")
 	}
@@ -249,7 +227,7 @@ func TestANodeThatCannotTakeItsEndLeavesNoHalfTunnelAndKeepsTheOneItHasUntilForc
 
 	fake.fail = false
 	portal, err := svc.CreateOnNode(node.Id, tunnel.PortalSpec{
-		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+		Name: "tr1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux",
 	}, nil, "")
 	if err != nil {
 		t.Fatalf("CreateOnNode: %v", err)
@@ -271,7 +249,7 @@ func TestADeleteRefusedForCarryingANodeLeavesTheNodesEndInPlace(t *testing.T) {
 	svc := newTunnelDB(t)
 	fake, node := newFakeTunnelNode(t)
 	portal, err := svc.CreateOnNode(node.Id, tunnel.PortalSpec{
-		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+		Name: "tr1", Address: "203.0.113.10", Port: 8443, Transport: "tcpmux",
 	}, nil, "")
 	if err != nil {
 		t.Fatalf("CreateOnNode: %v", err)

@@ -14,7 +14,7 @@ func twoEntryTunnels(t *testing.T, svc *TunnelService) {
 	t.Helper()
 	for i, name := range []string{"a", "b"} {
 		if _, err := svc.CreatePortal(tunnel.PortalSpec{
-			Name: name, Address: "203.0.113.10", Port: 8443 + i, Security: model.TunnelSecurityNone,
+			Name: name, Address: "203.0.113.10", Port: 8443 + i, Transport: "tcpmux",
 		}, nil); err != nil {
 			t.Fatalf("CreatePortal(%s): %v", name, err)
 		}
@@ -52,9 +52,11 @@ func TestAPoolNeedsTwoOrdinaryEntryTunnelsAndAFreeName(t *testing.T) {
 	if _, err := pools.Create("main", []string{"a", "b"}, nil); err == nil {
 		t.Fatal("a second pool with the same name was accepted")
 	}
-	if _, err := svc.CreateManagementPortal(tunnel.PortalSpec{
-		Name: "node-x", Address: "203.0.113.10", Port: 9443, Security: model.TunnelSecurityNone,
-	}); err != nil {
+	var a model.ServerTunnel
+	if err := database.GetDB().Where("name = ?", "a").First(&a).Error; err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.CreateManagementRider(a.Id, "node-x"); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := pools.Create("other", []string{"a", "node-x"}, nil); err == nil || !strings.Contains(err.Error(), "management") {

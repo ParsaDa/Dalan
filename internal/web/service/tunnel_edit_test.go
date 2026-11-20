@@ -182,11 +182,11 @@ func TestImportingAnExistingTunnelsLinkUpdatesItInPlaceAndRefusesAnotherKind(t *
 		t.Fatalf("tunnel after the second link = %+v, want the same row with the new transport and options and the old exit outbound", row)
 	}
 
-	own, err := svc.CreatePortal(tunnel.PortalSpec{Name: "own", Address: "203.0.113.10", Port: 8500, Security: model.TunnelSecurityNone}, nil)
+	own, err := svc.CreatePortal(tunnel.PortalSpec{Name: "own", Address: "203.0.113.10", Port: 8500, Transport: "tcpmux"}, nil)
 	if err != nil {
 		t.Fatalf("CreatePortal: %v", err)
 	}
-	clash := tunnel.PortalSpec{Name: own.Name, Address: "203.0.113.10", Port: 8501, Security: model.TunnelSecurityNone}
+	clash := tunnel.PortalSpec{Name: own.Name, Address: "203.0.113.10", Port: 8501, Transport: "tcpmux"}
 	clashPortal, _ := tunnel.NewPortal(clash)
 	clashLink, _ := tunnel.SetupLink(clashPortal)
 	if _, err := svc.Import(clashLink, ""); err == nil {
