@@ -72,6 +72,7 @@ export function useTorBridges(enabled: boolean) {
 // A test can run for 90 seconds and an install for minutes, so neither uses the default timeout.
 const TEST_TIMEOUT_MS = 120_000;
 const INSTALL_TIMEOUT_MS = 600_000;
+const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
 
 export function useTorMutations() {
   const queryClient = useQueryClient();
@@ -105,7 +106,7 @@ export function useTorMutations() {
       HttpUtil.post(
         '/panel/api/tor/engine/install',
         { route },
-        { ...quiet, timeout: INSTALL_TIMEOUT_MS },
+        { ...quiet, ...JSON_HEADERS, timeout: INSTALL_TIMEOUT_MS },
       ),
     onSuccess: refresh,
   });
