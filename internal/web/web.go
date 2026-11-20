@@ -872,6 +872,11 @@ func (s *Server) RestartXray() error {
 	return s.xrayService.RestartXray(true)
 }
 
+// ReconcileEngines starts and stops the BackPack and Rakhsh processes to match the stored tunnels.
+func (s *Server) ReconcileEngines() error {
+	return (&service.TunnelService{}).ReconcileEngines()
+}
+
 // scheduleSettingJob schedules j on an admin-typed spec, running it on fallback
 // when the spec is empty or a legacy value that no longer parses.
 func scheduleSettingJob(c *cron.Cron, name, spec, fallback string, j cron.Job) cron.EntryID {
