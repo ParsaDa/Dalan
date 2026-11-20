@@ -3662,6 +3662,10 @@ export const SCHEMAS: Record<string, unknown> = {
   "Node": {
     "description": "Node represents a remote 3x-ui panel registered with the central panel.\nThe central panel polls each node's existing /panel/api/server/status\nendpoint over HTTP using the per-node ApiToken to populate the runtime\nstatus fields below.",
     "properties": {
+      "accent": {
+        "example": "tulip",
+        "type": "string"
+      },
       "activeCount": {
         "example": 23,
         "type": "integer"
@@ -3687,6 +3691,10 @@ export const SCHEMAS: Record<string, unknown> = {
       "configDirtyAt": {
         "format": "int64",
         "type": "integer"
+      },
+      "country": {
+        "example": "NL",
+        "type": "string"
       },
       "cpuPct": {
         "example": 23.5,
@@ -3851,6 +3859,7 @@ export const SCHEMAS: Record<string, unknown> = {
       }
     },
     "required": [
+      "accent",
       "activeCount",
       "address",
       "allowPrivateAddress",
@@ -3858,6 +3867,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "clientCount",
       "configDirty",
       "configDirtyAt",
+      "country",
       "cpuPct",
       "createdAt",
       "depletedCount",
@@ -3948,6 +3958,9 @@ export const SCHEMAS: Record<string, unknown> = {
   "NodeMutationRequest": {
     "description": "NodeMutationRequest is the node write/probe contract. ApiToken is accepted\nonly as input. On update, nil means keep the stored token; replacement and\nclearing are explicit and mutually exclusive.",
     "properties": {
+      "accent": {
+        "type": "string"
+      },
       "address": {
         "type": "string"
       },
@@ -3963,6 +3976,9 @@ export const SCHEMAS: Record<string, unknown> = {
       },
       "clearApiToken": {
         "type": "boolean"
+      },
+      "country": {
+        "type": "string"
       },
       "enable": {
         "type": "boolean"
@@ -4021,9 +4037,11 @@ export const SCHEMAS: Record<string, unknown> = {
       }
     },
     "required": [
+      "accent",
       "address",
       "allowPrivateAddress",
       "basePath",
+      "country",
       "enable",
       "id",
       "inboundSyncMode",
@@ -4042,6 +4060,10 @@ export const SCHEMAS: Record<string, unknown> = {
   "NodeView": {
     "description": "NodeView is the browser/API read contract for nodes. Credentials are\nwrite-only: responses expose only whether a node has a token configured.",
     "properties": {
+      "accent": {
+        "example": "tulip",
+        "type": "string"
+      },
       "activeCount": {
         "example": 20,
         "type": "integer"
@@ -4070,6 +4092,10 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": 0,
         "format": "int64",
         "type": "integer"
+      },
+      "country": {
+        "example": "NL",
+        "type": "string"
       },
       "cpuPct": {
         "example": 12.5,
@@ -4226,6 +4252,7 @@ export const SCHEMAS: Record<string, unknown> = {
       }
     },
     "required": [
+      "accent",
       "activeCount",
       "address",
       "allowPrivateAddress",
@@ -4233,6 +4260,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "clientCount",
       "configDirty",
       "configDirtyAt",
+      "country",
       "cpuPct",
       "createdAt",
       "depletedCount",

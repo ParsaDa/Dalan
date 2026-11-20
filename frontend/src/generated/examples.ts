@@ -932,6 +932,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "uuid": "550e8400-e29b-41d4-a716-446655440000"
   },
   "Node": {
+    "accent": "tulip",
     "activeCount": 23,
     "address": "node1.example.com",
     "allowPrivateAddress": false,
@@ -939,6 +940,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "clientCount": 27,
     "configDirty": false,
     "configDirtyAt": 0,
+    "country": "NL",
     "cpuPct": 23.5,
     "createdAt": 1700000000,
     "depletedCount": 1,
@@ -990,11 +992,13 @@ export const EXAMPLES: Record<string, unknown> = {
     "usedAt": 0
   },
   "NodeMutationRequest": {
+    "accent": "",
     "address": "",
     "allowPrivateAddress": false,
     "apiToken": null,
     "basePath": "",
     "clearApiToken": false,
+    "country": "",
     "enable": false,
     "id": 0,
     "inboundSyncMode": "all",
@@ -1011,6 +1015,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "tlsVerifyMode": "verify"
   },
   "NodeView": {
+    "accent": "tulip",
     "activeCount": 20,
     "address": "node.example.com",
     "allowPrivateAddress": false,
@@ -1018,6 +1023,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "clientCount": 25,
     "configDirty": false,
     "configDirtyAt": 0,
+    "country": "NL",
     "cpuPct": 12.5,
     "createdAt": 1700000000,
     "depletedCount": 1,

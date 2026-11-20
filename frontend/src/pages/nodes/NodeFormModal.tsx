@@ -21,6 +21,7 @@ import type { Msg } from '@/utils';
 import { NodeFormSchema, type NodeFormValues, type ProbeResult } from '@/schemas/node';
 import { FormField, rhfZodValidate } from '@/components/form/rhf';
 import { useOutboundTagGroups } from '@/api/queries/useOutboundTags';
+import { AccentPicker, CountrySelect } from './NodeIdentityFields';
 import './NodeFormModal.css';
 
 type Mode = 'add' | 'edit';
@@ -55,6 +56,8 @@ function defaultValues(): NodeFormValues {
     inboundSyncMode: 'all',
     inboundTags: [],
     outboundTag: '',
+    country: '',
+    accent: '',
   };
 }
 
@@ -156,6 +159,8 @@ export default function NodeFormModal({
       inboundSyncMode: values.inboundSyncMode,
       inboundTags: values.inboundSyncMode === 'selected' ? values.inboundTags : [],
       outboundTag: values.outboundTag || '',
+      country: values.country,
+      accent: values.accent,
     };
     if (token) payload.apiToken = token;
     return payload;
@@ -405,6 +410,14 @@ export default function NodeFormModal({
                     : t('pages.nodes.apiTokenPlaceholder')
                 }
               />
+            </FormField>
+
+            <FormField label={t('pages.nodes.country')} name="country">
+              <CountrySelect />
+            </FormField>
+
+            <FormField label={t('pages.nodes.accent')} name="accent">
+              <AccentPicker />
             </FormField>
 
             <FormField

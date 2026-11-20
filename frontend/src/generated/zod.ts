@@ -906,6 +906,7 @@ export const NewUUIDResponseSchema = z.object({
 export type NewUUIDResponse = z.infer<typeof NewUUIDResponseSchema>;
 
 export const NodeSchema = z.object({
+  accent: z.string(),
   activeCount: z.number().int(),
   address: z.string(),
   allowPrivateAddress: z.boolean(),
@@ -913,6 +914,7 @@ export const NodeSchema = z.object({
   clientCount: z.number().int(),
   configDirty: z.boolean(),
   configDirtyAt: z.number().int(),
+  country: z.string(),
   cpuPct: z.number(),
   createdAt: z.number().int(),
   depletedCount: z.number().int(),
@@ -964,11 +966,13 @@ export const NodeEnrolmentSchema = z.object({
 export type NodeEnrolment = z.infer<typeof NodeEnrolmentSchema>;
 
 export const NodeMutationRequestSchema = z.object({
+  accent: z.string(),
   address: z.string(),
   allowPrivateAddress: z.boolean(),
   apiToken: z.string().nullable().optional(),
   basePath: z.string(),
   clearApiToken: z.boolean().optional(),
+  country: z.string(),
   enable: z.boolean(),
   id: z.number().int(),
   inboundSyncMode: z.enum(['all', 'selected']),
@@ -985,6 +989,7 @@ export const NodeMutationRequestSchema = z.object({
 export type NodeMutationRequest = z.infer<typeof NodeMutationRequestSchema>;
 
 export const NodeViewSchema = z.object({
+  accent: z.string(),
   activeCount: z.number().int(),
   address: z.string(),
   allowPrivateAddress: z.boolean(),
@@ -992,6 +997,7 @@ export const NodeViewSchema = z.object({
   clientCount: z.number().int(),
   configDirty: z.boolean(),
   configDirtyAt: z.number().int(),
+  country: z.string(),
   cpuPct: z.number(),
   createdAt: z.number().int(),
   depletedCount: z.number().int(),

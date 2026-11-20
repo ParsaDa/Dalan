@@ -846,6 +846,7 @@ export interface NewUUIDResponse {
 }
 
 export interface Node {
+  accent: string;
   activeCount: number;
   address: string;
   allowPrivateAddress: boolean;
@@ -853,6 +854,7 @@ export interface Node {
   clientCount: number;
   configDirty: boolean;
   configDirtyAt: number;
+  country: string;
   cpuPct: number;
   createdAt: number;
   depletedCount: number;
@@ -902,11 +904,13 @@ export interface NodeEnrolment {
 }
 
 export interface NodeMutationRequest {
+  accent: string;
   address: string;
   allowPrivateAddress: boolean;
   apiToken?: string | null;
   basePath: string;
   clearApiToken?: boolean;
+  country: string;
   enable: boolean;
   id: number;
   inboundSyncMode: string;
@@ -922,6 +926,7 @@ export interface NodeMutationRequest {
 }
 
 export interface NodeView {
+  accent: string;
   activeCount: number;
   address: string;
   allowPrivateAddress: boolean;
@@ -929,6 +934,7 @@ export interface NodeView {
   clientCount: number;
   configDirty: boolean;
   configDirtyAt: number;
+  country: string;
   cpuPct: number;
   createdAt: number;
   depletedCount: number;

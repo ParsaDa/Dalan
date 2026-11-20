@@ -1,0 +1,61 @@
+.node-country-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-accent-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-accent-swatch {
+  width: 26px;
+  height: 26px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    transform var(--dl-d-fast) var(--dl-e-out),
+    box-shadow var(--dl-d-base);
+}
+
+.node-accent-swatch:hover {
+  transform: scale(1.12);
+}
+
+.node-accent-swatch.on {
+  box-shadow:
+    0 0 0 2px var(--dl-surface),
+    0 0 0 4px var(--dl-text);
+}
+
+.node-accent-auto {
+  height: 26px;
+  padding: 0 12px;
+  border: 1px solid var(--dl-ctl-border);
+  border-radius: 99px;
+  background: transparent;
+  color: var(--dl-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.node-accent-auto.on {
+  border-color: var(--dl-acc-line);
+  color: var(--dl-text);
+}
+
+.node-accent-hex {
+  width: 150px;
+}
+
+.node-accent-refused {
+  flex-basis: 100%;
+  color: var(--dl-bad-text);
+  font-size: 12px;
+}

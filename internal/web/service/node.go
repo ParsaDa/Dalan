@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -453,6 +454,26 @@ func (s *NodeService) normalize(n *model.Node) error {
 		}
 	}
 	n.BasePath = normalizeBasePath(n.BasePath)
+	return normalizeNodeIdentity(n)
+}
+
+// nodeAccentPresets mirrors the accent ids in frontend/src/lib/theme/accents.ts.
+var nodeAccentPresets = []string{
+	"saffron", "rose", "sun", "tulip", "cobalt", "iris",
+	"lime", "cyan", "amethyst", "ice", "sand", "steel",
+}
+
+var nodeAccentHex = regexp.MustCompile(`^#[0-9a-f]{6}$`)
+
+func normalizeNodeIdentity(n *model.Node) error {
+	n.Country = strings.ToUpper(strings.TrimSpace(n.Country))
+	if n.Country != "" && (len(n.Country) != 2 || n.Country[0] < 'A' || n.Country[0] > 'Z' || n.Country[1] < 'A' || n.Country[1] > 'Z') {
+		return common.NewError("country must be a two-letter ISO code")
+	}
+	n.Accent = strings.ToLower(strings.TrimSpace(n.Accent))
+	if n.Accent != "" && !slices.Contains(nodeAccentPresets, n.Accent) && !nodeAccentHex.MatchString(n.Accent) {
+		return common.NewError("accent must be a preset name or a #rrggbb colour")
+	}
 	return nil
 }
 
@@ -553,6 +574,8 @@ func (s *NodeService) Update(id int, in *model.Node) error {
 		"inbound_sync_mode":     in.InboundSyncMode,
 		"inbound_tags":          string(inboundTagsJSON),
 		"outbound_tag":          in.OutboundTag,
+		"country":               in.Country,
+		"accent":                in.Accent,
 	}
 	if nodeSelectionGrew(existing, in) {
 		updates["inbounds_adopted_at"] = 0
@@ -617,6 +640,8 @@ func (s *NodeService) UpdateFromRequest(id int, req *NodeMutationRequest) error 
 		"inbound_sync_mode":     in.InboundSyncMode,
 		"inbound_tags":          string(inboundTagsJSON),
 		"outbound_tag":          in.OutboundTag,
+		"country":               in.Country,
+		"accent":                in.Accent,
 	}
 	if nodeSelectionGrew(existing, in) {
 		updates["inbounds_adopted_at"] = 0
