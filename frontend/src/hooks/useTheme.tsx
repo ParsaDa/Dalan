@@ -134,6 +134,12 @@ const LIGHT_TOKENS = {
 };
 // Text on an accent fill is ink in both themes, whatever the accent.
 const PRIMARY_BUTTON_TOKENS = { primaryColor: '#111114', fontWeight: 700 };
+// The light colorPrimary is a dark amber for text; ink on it fails 4.5:1, so buttons fill with saffron.
+const LIGHT_PRIMARY_BUTTON_TOKENS = {
+  ...PRIMARY_BUTTON_TOKENS,
+  colorPrimary: '#ffb020',
+  algorithm: true,
+};
 
 // hashed:false drops the `:where(.css-<hash>)` wrapper antd puts around every
 // rule. It costs nothing in specificity — `:where()` contributes zero, so the
@@ -158,7 +164,7 @@ export function buildAntdThemeConfig(isDark: boolean, isUltra: boolean): ThemeCo
       components: {
         Layout: TRANSPARENT_LAYOUT_TOKENS,
         Statistic: STATISTIC_TOKENS,
-        Button: PRIMARY_BUTTON_TOKENS,
+        Button: LIGHT_PRIMARY_BUTTON_TOKENS,
       },
     };
   }
