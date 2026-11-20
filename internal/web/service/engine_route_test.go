@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
@@ -10,10 +9,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-
-	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
-	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
-	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
 )
 
 type openedProxy struct {
@@ -99,23 +94,6 @@ func TestAnOutboundOfThePanelIsReachedThroughATemporaryCoreThatKnowsTheOthersToo
 	}
 }
 
-func TestAnXrayTunnelIsReachedThroughItsProbePort(t *testing.T) {
-	svc := newTunnelDB(t)
-	stubEngineRouting(t, nil)
-	portal, err := svc.CreatePortal(tunnel.PortalSpec{Name: "de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	got, closeRoute, err := (&EngineRouteService{}).resolve(EngineRoute{Via: RouteOutbound, Value: "tunnel-de1"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	closeRoute()
-	if want := fmt.Sprintf("socks5://127.0.0.1:%d", xrayreverse.ProbePort(*portal)); got != want {
-		t.Fatalf("proxy = %q, want %q", got, want)
-	}
-}
-
 func TestAnUnknownWayOfDownloadingIsRefused(t *testing.T) {
 	_, _, err := (&EngineRouteService{}).Client(EngineRoute{Via: "carrier-pigeon"}, 0)
 	if err == nil || !errors.Is(err, errUnknownRoute) {
@@ -123,11 +101,8 @@ func TestAnUnknownWayOfDownloadingIsRefused(t *testing.T) {
 	}
 }
 
-func TestChoicesListDirectTheOutboundsAndTheXrayTunnelsButNotInternalOnes(t *testing.T) {
-	svc := newTunnelDB(t)
-	if _, err := svc.CreatePortal(tunnel.PortalSpec{Name: "de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone}, nil); err != nil {
-		t.Fatal(err)
-	}
+func TestChoicesListDirectAndTheOutboundsButNotInternalOnes(t *testing.T) {
+	newTunnelDB(t)
 	stubEngineRouting(t, []any{
 		map[string]any{"tag": "direct", "protocol": "freedom"},
 		map[string]any{"tag": "blocked", "protocol": "blackhole"},
@@ -143,7 +118,7 @@ func TestChoicesListDirectTheOutboundsAndTheXrayTunnelsButNotInternalOnes(t *tes
 	for _, c := range got {
 		flat = append(flat, c.Via+":"+c.Value+":"+c.Kind)
 	}
-	want := "panel::panel,direct::direct,outbound:tunnel-bp1:tunnel,outbound:tor-de:tor,outbound:warp:outbound,outbound:tunnel-de1:tunnel"
+	want := "panel::panel,direct::direct,outbound:tunnel-bp1:tunnel,outbound:tor-de:tor,outbound:warp:outbound"
 	if strings.Join(flat, ",") != want {
 		t.Fatalf("choices = %v\nwant     %s", flat, want)
 	}

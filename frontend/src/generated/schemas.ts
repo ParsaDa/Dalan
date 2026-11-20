@@ -3914,6 +3914,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "de1",
         "type": "string"
       },
+      "needsReenrol": {
+        "description": "NeedsReenrol marks a node enrolled through the removed Xray tunnel: it has to be enrolled again.",
+        "example": false,
+        "type": "boolean"
+      },
       "nodeId": {
         "example": 0,
         "type": "integer"
@@ -3933,6 +3938,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "expiresAt",
       "id",
       "name",
+      "needsReenrol",
       "nodeId",
       "tunnelId",
       "usedAt"
@@ -4828,7 +4834,7 @@ export const SCHEMAS: Record<string, unknown> = {
         "type": "boolean"
       },
       "engine": {
-        "example": "xray",
+        "example": "backpack",
         "type": "string"
       },
       "exitOutbound": {
@@ -4890,9 +4896,6 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
         "type": "string"
       },
-      "realityPublicKey": {
-        "type": "string"
-      },
       "relayPort": {
         "description": "RelayPort is the loopback port both ends of a BackPack tunnel use to carry Xray traffic; zero means none.",
         "example": 63500,
@@ -4908,18 +4911,6 @@ export const SCHEMAS: Record<string, unknown> = {
           "type": "string"
         },
         "type": "array"
-      },
-      "security": {
-        "example": "reality",
-        "type": "string"
-      },
-      "serverName": {
-        "example": "www.example.com",
-        "type": "string"
-      },
-      "shortId": {
-        "example": "a1b2c3d4",
-        "type": "string"
       },
       "transport": {
         "description": "Transport, FallbackTransports, ForwardPorts and AcceptUDP belong to the BackPack engine.",
@@ -4955,13 +4946,9 @@ export const SCHEMAS: Record<string, unknown> = {
       "parentId",
       "port",
       "rakhshPeerPublic",
-      "realityPublicKey",
       "relayPort",
       "role",
       "routeInbounds",
-      "security",
-      "serverName",
-      "shortId",
       "transport",
       "up",
       "uuid"

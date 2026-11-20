@@ -154,8 +154,6 @@ func (a *TunnelController) add(c *gin.Context) {
 		Name          string   `json:"name"`
 		Address       string   `json:"address"`
 		Port          int      `json:"port"`
-		Security      string   `json:"security"`
-		ServerName    string   `json:"serverName"`
 		RouteInbounds []string `json:"routeInbounds"`
 
 		Engine             string         `json:"engine"`
@@ -174,7 +172,7 @@ func (a *TunnelController) add(c *gin.Context) {
 		return
 	}
 	spec := tunnel.PortalSpec{
-		Name: req.Name, Address: req.Address, Port: req.Port, Security: req.Security, ServerName: req.ServerName,
+		Name: req.Name, Address: req.Address, Port: req.Port,
 		Engine: req.Engine, Transport: req.Transport, FallbackTransports: req.FallbackTransports,
 		ForwardPorts: req.ForwardPorts, AcceptUDP: req.AcceptUDP, Mode: req.Mode, Options: req.Options,
 	}

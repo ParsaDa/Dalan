@@ -11,52 +11,9 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 )
 
-func realityPortal(t *testing.T) model.ServerTunnel {
-	t.Helper()
-	portal, err := NewPortal(PortalSpec{
-		Name: "tr1", Address: "203.0.113.10", Port: 8443,
-		Security: model.TunnelSecurityReality, ServerName: "www.example.com",
-	})
-	if err != nil {
-		t.Fatalf("NewPortal: %v", err)
-	}
-	return portal
-}
-
-func TestSetupLinkCarriesWhatTheBridgeNeedsAndNotThePrivateKey(t *testing.T) {
-	portal := realityPortal(t)
-	link, err := SetupLink(portal)
-	if err != nil {
-		t.Fatalf("SetupLink: %v", err)
-	}
-	payload, err := base64.RawURLEncoding.DecodeString(strings.TrimPrefix(link, "dalan://tunnel/"))
-	if err != nil {
-		t.Fatalf("link %q is not dalan://tunnel/<base64url>: %v", link, err)
-	}
-	if portal.RealityPrivateKey == "" || strings.Contains(string(payload), portal.RealityPrivateKey) {
-		t.Fatalf("private key must exist on the portal and stay out of the link; payload: %s", payload)
-	}
-
-	bridge, err := ParseSetupLink(link)
-	if err != nil {
-		t.Fatalf("ParseSetupLink: %v", err)
-	}
-	want := model.ServerTunnel{
-		Name: "tr1", Role: model.TunnelRoleBridge, Engine: model.TunnelEngineXray, Enable: true,
-		Address: "203.0.113.10", Port: 8443, UUID: portal.UUID, Security: model.TunnelSecurityReality,
-		ServerName: "www.example.com", RealityPublicKey: portal.RealityPublicKey, ShortId: portal.ShortId,
-	}
-	if bridge.Name != want.Name || bridge.Role != want.Role || bridge.Engine != want.Engine ||
-		bridge.Enable != want.Enable || bridge.Address != want.Address || bridge.Port != want.Port ||
-		bridge.UUID != want.UUID || bridge.Security != want.Security || bridge.ServerName != want.ServerName ||
-		bridge.RealityPublicKey != want.RealityPublicKey || bridge.ShortId != want.ShortId ||
-		bridge.RealityPrivateKey != "" {
-		t.Fatalf("bridge = %+v, want %+v", bridge, want)
-	}
-}
-
 func TestNewPortalRejectsSpecsThatCannotWork(t *testing.T) {
-	base := PortalSpec{Name: "de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone}
+	base := backpackSpec()
+	base.Name = "de1"
 	cases := []struct {
 		name    string
 		mutate  func(*PortalSpec)
@@ -67,8 +24,6 @@ func TestNewPortalRejectsSpecsThatCannotWork(t *testing.T) {
 		{"empty address", func(s *PortalSpec) { s.Address = "" }, "address"},
 		{"port zero", func(s *PortalSpec) { s.Port = 0 }, "port"},
 		{"port too large", func(s *PortalSpec) { s.Port = 70000 }, "port"},
-		{"unknown security", func(s *PortalSpec) { s.Security = "tls13" }, "security"},
-		{"reality without server name", func(s *PortalSpec) { s.Security = model.TunnelSecurityReality }, "server name"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -90,8 +45,8 @@ func TestParseSetupLinkRejectsLinksItCannotUse(t *testing.T) {
 		{"not base64", "dalan://tunnel/%%%", "not a Dalan tunnel link"},
 		{"not JSON", encode("hello"), "not a Dalan tunnel link"},
 		{"newer format", encode(`{"v":9,"name":"a","address":"203.0.113.10","port":8443,"uuid":"8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10","security":"none"}`), "version 9"},
-		{"missing uuid", encode(`{"v":1,"name":"a","address":"203.0.113.10","port":8443,"security":"none"}`), "uuid"},
-		{"bad name", encode(`{"v":1,"name":"A B","address":"203.0.113.10","port":8443,"uuid":"8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10","security":"none"}`), "name"},
+		{"missing uuid", encode(`{"v":2,"name":"a","address":"203.0.113.10","port":8443,"security":"none"}`), "uuid"},
+		{"bad name", encode(`{"v":2,"name":"A B","address":"203.0.113.10","port":8443,"uuid":"8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10","security":"none"}`), "name"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -123,8 +78,8 @@ func TestABackpackPortalAndItsLinkCarryTheEngineSettings(t *testing.T) {
 		t.Fatalf("NewPortal: %v", err)
 	}
 	if portal.Engine != model.TunnelEngineBackpack || portal.Transport != "wssmux" || !portal.AcceptUDP ||
-		len(portal.ForwardPorts) != 1 || portal.UUID == "" || portal.RealityPrivateKey != "" {
-		t.Fatalf("portal = %+v, want a BackPack portal with a token and no REALITY keys", portal)
+		len(portal.ForwardPorts) != 1 || portal.UUID == "" {
+		t.Fatalf("portal = %+v, want a BackPack portal with a token", portal)
 	}
 
 	link, err := SetupLink(portal)
@@ -163,29 +118,7 @@ func TestBackpackPortalsNeedAKnownTransportAndEngine(t *testing.T) {
 	}
 }
 
-// A panel that predates BackPack must refuse its links by version, not misread them as Xray tunnels.
-func TestBackpackLinksUseANewerLinkVersionThanXrayLinks(t *testing.T) {
-	version := func(link string) string {
-		raw, err := base64.RawURLEncoding.DecodeString(strings.TrimPrefix(link, "dalan://tunnel/"))
-		if err != nil {
-			t.Fatalf("decode link: %v", err)
-		}
-		_, rest, _ := strings.Cut(string(raw), `"v":`)
-		v, _, _ := strings.Cut(rest, ",")
-		return v
-	}
-	backpackPortal, err := NewPortal(backpackSpec())
-	if err != nil {
-		t.Fatalf("NewPortal: %v", err)
-	}
-	backpackLink, _ := SetupLink(backpackPortal)
-	xrayLink, _ := SetupLink(realityPortal(t))
-	if version(backpackLink) != "2" || version(xrayLink) != "1" {
-		t.Fatalf("link versions: backpack=%s xray=%s, want 2 and 1", version(backpackLink), version(xrayLink))
-	}
-}
-
-func TestABackpackTunnelGetsARelayPortTheBridgeSharesAndXrayTunnelsDoNot(t *testing.T) {
+func TestABackpackTunnelGetsARelayPortTheBridgeShares(t *testing.T) {
 	spec := backpackSpec()
 	spec.ForwardPorts = nil
 	portal, err := NewPortal(spec)
@@ -205,9 +138,6 @@ func TestABackpackTunnelGetsARelayPortTheBridgeSharesAndXrayTunnelsDoNot(t *test
 	}
 	if bridge.RelayPort != portal.RelayPort {
 		t.Fatalf("bridge RelayPort = %d, want the portal's %d", bridge.RelayPort, portal.RelayPort)
-	}
-	if xray := realityPortal(t); xray.RelayPort != 0 {
-		t.Fatalf("an Xray tunnel got RelayPort %d, want none", xray.RelayPort)
 	}
 }
 
@@ -243,18 +173,11 @@ func decodeLink(t *testing.T, link string) string {
 	return string(raw)
 }
 
-func TestNewPortalRefusesOptionsItCannotWriteAndOptionsOnXrayTunnels(t *testing.T) {
+func TestNewPortalRefusesOptionsItCannotWrite(t *testing.T) {
 	spec := backpackSpec()
 	spec.Options = map[string]any{"no_such_option": true}
 	if _, err := NewPortal(spec); err == nil {
 		t.Fatal("NewPortal accepted an option the engine does not read")
-	}
-	xray := PortalSpec{
-		Name: "x1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
-		Options: map[string]any{"nodelay": true},
-	}
-	if _, err := NewPortal(xray); err == nil || !strings.Contains(err.Error(), "BackPack") {
-		t.Fatalf("NewPortal(Xray with options) error = %v, want one saying options belong to BackPack", err)
 	}
 }
 
@@ -294,7 +217,7 @@ func TestADirectPortalGetsAnAddressPairAndItsBridgeGetsTheMirror(t *testing.T) {
 
 func TestADirectTunnelNeedsBackpackAndAKnownCarrier(t *testing.T) {
 	cases := map[string]func(*PortalSpec){
-		"xray engine":     func(s *PortalSpec) { s.Engine = model.TunnelEngineXray; s.Security = model.TunnelSecurityNone },
+		"xray engine":     func(s *PortalSpec) { s.Engine = "xray" },
 		"no carrier":      func(s *PortalSpec) { delete(s.Options, "carrier") },
 		"unknown carrier": func(s *PortalSpec) { s.Options["carrier"] = "smoke" },
 		"reverse option":  func(s *PortalSpec) { s.Options["edge_ip"] = "198.51.100.7" },
@@ -384,7 +307,6 @@ func TestNewPortalRefusesARakhshTunnelThatCannotWork(t *testing.T) {
 	cases := map[string]func(*PortalSpec){
 		"no carrier":      func(s *PortalSpec) { s.Transport = "" },
 		"unknown carrier": func(s *PortalSpec) { s.Transport = "smoke" },
-		"xray security":   func(s *PortalSpec) { s.Security, s.ServerName = model.TunnelSecurityReality, "www.example.com" },
 		"unknown option":  func(s *PortalSpec) { s.Options = map[string]any{"bogus": 1} },
 		"unknown mode":    func(s *PortalSpec) { s.Mode = "mesh" },
 		"bad forward":     func(s *PortalSpec) { s.ForwardPorts = []string{`443=127.0.0.1:2096"`} },
@@ -416,7 +338,6 @@ func TestParseSetupLinkRefusesARakhshLinkItCannotUse(t *testing.T) {
 		mutate  func(map[string]any)
 		wantErr string
 	}{
-		{"xray fields", func(p map[string]any) { p["publicKey"], p["shortId"] = "abc", "def" }, "Xray"},
 		{"no bridge secret", func(p map[string]any) { delete(p, "rakhshSecret") }, "secret key"},
 		{"no portal public key", func(p map[string]any) { delete(p, "rakhshPeer") }, "peer public key"},
 		{"unknown carrier", func(p map[string]any) { p["transport"] = "smoke" }, "carrier"},
@@ -439,8 +360,8 @@ func TestParseSetupLinkRefusesARakhshLinkItCannotUse(t *testing.T) {
 	}
 	future := map[string]any{"v": 9, "name": "a", "address": "203.0.113.10", "port": 8443, "uuid": portal.UUID}
 	raw, _ := json.Marshal(future)
-	if _, err := ParseSetupLink("dalan://tunnel/" + base64.RawURLEncoding.EncodeToString(raw)); err == nil || !strings.Contains(err.Error(), "versions 1 to 4") {
-		t.Fatalf("a version 9 link gave %v, want one that says this panel understands versions 1 to 4", err)
+	if _, err := ParseSetupLink("dalan://tunnel/" + base64.RawURLEncoding.EncodeToString(raw)); err == nil || !strings.Contains(err.Error(), "versions 2 to 4") {
+		t.Fatalf("a version 9 link gave %v, want one that says this panel understands versions 2 to 4", err)
 	}
 }
 
@@ -467,5 +388,33 @@ func TestARakhshLinkLeavesTheEntryServersBindAddressBehind(t *testing.T) {
 	}
 	if portal.Options["bind"] != "192.0.2.5" {
 		t.Fatalf("the entry end keeps its own bind: %v", portal.Options)
+	}
+}
+
+func TestNewPortalRefusesTheXrayEngine(t *testing.T) {
+	spec := backpackSpec()
+	spec.Engine = "xray"
+	_, err := NewPortal(spec)
+	if err == nil || err.Error() != `tunnel engine "xray" is not supported` {
+		t.Fatalf("NewPortal with the xray engine: err = %v, want the engine refused", err)
+	}
+}
+
+func TestAnEmptyEngineMeansBackpack(t *testing.T) {
+	spec := backpackSpec()
+	spec.Engine = ""
+	portal, err := NewPortal(spec)
+	if err != nil || portal.Engine != model.TunnelEngineBackpack {
+		t.Fatalf("NewPortal with no engine = %+v, %v; want a BackPack tunnel", portal, err)
+	}
+}
+
+func TestParseSetupLinkRefusesAnXrayVersionOneLink(t *testing.T) {
+	link := "dalan://tunnel/" + base64.RawURLEncoding.EncodeToString([]byte(
+		`{"v":1,"name":"a","address":"203.0.113.10","port":8443,"uuid":"8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10","security":"none"}`))
+	_, err := ParseSetupLink(link)
+	want := "tunnel link is version 1; this panel understands versions 2 to 4"
+	if err == nil || err.Error() != want {
+		t.Fatalf("ParseSetupLink of an Xray link: err = %v, want %q", err, want)
 	}
 }

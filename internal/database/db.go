@@ -219,6 +219,9 @@ func initModels() error {
 	if err := migrateClientEmailLowerIndex(); err != nil {
 		return err
 	}
+	if err := migrateRemoveXrayTunnels(); err != nil {
+		return err
+	}
 	if IsPostgres() {
 		if err := resyncPostgresSequences(db, models); err != nil {
 			log.Printf("Error resyncing postgres sequences: %v", err)
@@ -413,6 +416,66 @@ func migrateSyncOrphanColumns() error {
 		return err
 	}
 	return db.Exec("UPDATE clients SET sync_orphaned_by = 0 WHERE sync_orphaned_by IS NULL").Error
+}
+
+// The Xray tunnel engine is gone: its tunnels, their riders and pool slots are removed, and nodes
+// enrolled through them are flagged to enrol again. Safe to run on every start.
+func migrateRemoveXrayTunnels() error {
+	return db.Transaction(func(tx *gorm.DB) error {
+		var doomed []model.ServerTunnel
+		if err := tx.Where("engine = ? OR engine = ? OR engine IS NULL", "xray", "").Find(&doomed).Error; err != nil {
+			return err
+		}
+		if len(doomed) == 0 {
+			return nil
+		}
+		ids := make([]int, 0, len(doomed))
+		gone := map[string]bool{}
+		for _, t := range doomed {
+			ids = append(ids, t.Id)
+			gone[t.Name] = true
+		}
+		var riders []model.ServerTunnel
+		if err := tx.Where("parent_id IN ?", ids).Find(&riders).Error; err != nil {
+			return err
+		}
+		for _, r := range riders {
+			ids = append(ids, r.Id)
+			gone[r.Name] = true
+		}
+		if err := tx.Model(&model.NodeEnrolment{}).
+			Where("node_id > 0 AND (tunnel_id IN ? OR data_tunnel_id IN ?)", ids, ids).
+			Update("needs_reenrol", true).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("id IN ?", ids).Delete(&model.ServerTunnel{}).Error; err != nil {
+			return err
+		}
+		var pools []model.TunnelPool
+		if err := tx.Find(&pools).Error; err != nil {
+			return err
+		}
+		for _, p := range pools {
+			kept := make([]string, 0, len(p.Members))
+			for _, m := range p.Members {
+				if !gone[m] {
+					kept = append(kept, m)
+				}
+			}
+			active := p.Active
+			if gone[active] {
+				active = ""
+			}
+			if len(kept) == len(p.Members) && active == p.Active {
+				continue
+			}
+			p.Members, p.Active = kept, active
+			if err := tx.Save(&p).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // The client identity checks match emails case-insensitively; without an

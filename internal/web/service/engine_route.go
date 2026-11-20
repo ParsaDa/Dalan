@@ -9,9 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mhsanaei/3x-ui/v3/internal/database"
-	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
-	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/link"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/netproxy"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/outbound"
@@ -121,11 +118,6 @@ func (s *EngineRouteService) resolve(route EngineRoute) (proxyURL string, closeR
 			return s.openCore(chosen, all)
 		}
 	}
-	if name, ok := strings.CutPrefix(tag, "tunnel-"); ok {
-		if portal := s.xrayPortal(name); portal != nil {
-			return fmt.Sprintf("socks5://127.0.0.1:%d", xrayreverse.ProbePort(*portal)), func() {}, nil
-		}
-	}
 	return "", nil, fmt.Errorf("the panel has no outbound named %q (is Xray running?)", tag)
 }
 
@@ -153,19 +145,7 @@ func (s *EngineRouteService) openCore(chosen map[string]any, all []any) (string,
 	return "socks5://" + addr, closeCore, nil
 }
 
-// xrayPortal finds the entry end of an Xray tunnel by name; it is no outbound of the running core, only a probe port.
-func (s *EngineRouteService) xrayPortal(name string) *model.ServerTunnel {
-	var tunnels []model.ServerTunnel
-	database.GetDB().Where("name = ? AND role = ? AND enable = ? AND manage_port = 0", name, model.TunnelRolePortal, true).Find(&tunnels)
-	for i := range tunnels {
-		if tunnels[i].Engine == "" || tunnels[i].Engine == model.TunnelEngineXray {
-			return &tunnels[i]
-		}
-	}
-	return nil
-}
-
-// Choices lists what the install dialogs offer: the panel's setting, direct, every usable outbound and the Xray tunnels.
+// Choices lists what the install dialogs offer: the panel's setting, direct, every usable outbound.
 func (s *EngineRouteService) Choices() ([]EngineRouteChoice, error) {
 	choices := []EngineRouteChoice{{Via: RoutePanel, Kind: "panel"}, {Via: RouteDirect, Kind: "direct"}}
 	seen := map[string]bool{}
@@ -185,16 +165,6 @@ func (s *EngineRouteService) Choices() ([]EngineRouteChoice, error) {
 		}
 		seen[tag] = true
 		choices = append(choices, EngineRouteChoice{Via: RouteOutbound, Value: tag, Kind: outboundKind(tag)})
-	}
-	var tunnels []model.ServerTunnel
-	if err := database.GetDB().Where("role = ? AND enable = ? AND manage_port = 0", model.TunnelRolePortal, true).Order("id").Find(&tunnels).Error; err != nil {
-		return nil, err
-	}
-	for _, t := range tunnels {
-		tag := "tunnel-" + t.Name
-		if (t.Engine == "" || t.Engine == model.TunnelEngineXray) && !seen[tag] {
-			choices = append(choices, EngineRouteChoice{Via: RouteOutbound, Value: tag, Kind: "tunnel"})
-		}
 	}
 	return choices, nil
 }

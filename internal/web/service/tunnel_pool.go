@@ -11,7 +11,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/pool"
-	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/tunnelroute"
 )
 
 var poolNamePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,25}$`)
@@ -32,7 +32,7 @@ func (s *TunnelPoolService) List() ([]model.TunnelPool, error) {
 		return nil, err
 	}
 	for i := range pools {
-		pools[i].Active = xrayreverse.ActiveMember(pools[i], tunnels)
+		pools[i].Active = tunnelroute.ActiveMember(pools[i], tunnels)
 	}
 	return pools, nil
 }
@@ -164,7 +164,7 @@ func (s *TunnelPoolService) moveTo(p model.TunnelPool, member string, byName map
 		return
 	}
 	logger.Infof("tunnel pool %s: traffic moves from %s to %s", p.Name, p.Active, member)
-	err := s.tunnels.xrayService.OverrideBalancer(xrayreverse.PoolBalancerTag(p.Name), xrayreverse.PortalOutboundTag(member))
+	err := s.tunnels.xrayService.OverrideBalancer(tunnelroute.PoolBalancerTag(p.Name), tunnelroute.PortalOutboundTag(member))
 	if err != nil && !errors.Is(err, ErrXrayNotRunning) {
 		logger.Warning("tunnel pool", p.Name, "could not move the live balancer, it follows at the next Xray start:", err)
 	}

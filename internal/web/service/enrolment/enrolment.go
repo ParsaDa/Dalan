@@ -23,11 +23,16 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/enrol"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/panel"
+
+	"gorm.io/gorm"
 )
 
 const (
 	linkLifetime     = 30 * time.Minute
 	tunnelNamePrefix = "node-"
+	// The defaults ride as ordinary TLS web traffic, the most likely carrier to survive a filter.
+	defaultWebsocketCarrier = "wssmux"
+	defaultRakhshCarrier    = "wss"
 	// mainPanelTokenPrefix names the API token a node issues to its main panel; a random suffix follows.
 	mainPanelTokenPrefix = "dalan-main-panel-"
 	joinTimeout          = 30 * time.Second
@@ -41,18 +46,17 @@ var namePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,25}$`)
 
 // Spec is what an operator chooses when inviting a node.
 type Spec struct {
-	Name       string `json:"name" example:"de1"`
-	PanelURL   string `json:"panelUrl" example:"https://panel.example.com:2053/"`
-	Address    string `json:"address" example:"203.0.113.10"`
-	Port       int    `json:"port" example:"8443"`
-	Security   string `json:"security" example:"reality"`
-	ServerName string `json:"serverName" example:"www.example.com"`
-	// TunnelId, when set, carries the node's management on that existing entry tunnel; the address
-	// and security fields are then taken from it.
+	Name     string `json:"name" example:"de1"`
+	PanelURL string `json:"panelUrl" example:"https://panel.example.com:2053/"`
+	Address  string `json:"address" example:"203.0.113.10"`
+	Port     int    `json:"port" example:"8443"`
+	// Engine is "backpack" (the default when empty) or "rakhsh"; Transport and Options are passed to the tunnel.
+	Engine    string         `json:"engine,omitempty" example:"backpack"`
+	Transport string         `json:"transport,omitempty" example:"wssmux"`
+	Options   map[string]any `json:"options,omitempty"`
+	// TunnelId, when set, carries the node's management on that existing entry tunnel the node already dials;
+	// without it the node gets a tunnel of its own, named after it.
 	TunnelId int `json:"tunnelId,omitempty" example:"0"`
-	// WithTunnel also makes an ordinary entry tunnel named after the node, and the management
-	// rides on it; the node's other end of it is stored when the node joins.
-	WithTunnel bool `json:"withTunnel,omitempty" example:"true"`
 }
 
 // Invitation is a new enrolment with the link that is shown once and never stored.
@@ -120,36 +124,33 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 		return nil, fmt.Errorf("node name %q must be lower-case letters, digits and dashes, at most 26 characters", spec.Name)
 	}
 	db := database.GetDB()
-	var taken int64
-	if err := db.Model(&model.Node{}).Where("name = ?", name).Count(&taken).Error; err != nil {
+	var stale []model.NodeEnrolment
+	if err := db.Where("name = ? AND needs_reenrol = ?", name, true).Limit(1).Find(&stale).Error; err != nil {
 		return nil, err
 	}
-	if taken == 0 {
-		if err := db.Model(&model.NodeEnrolment{}).Where("name = ?", name).Count(&taken).Error; err != nil {
+	if len(stale) == 0 {
+		var taken int64
+		if err := db.Model(&model.Node{}).Where("name = ?", name).Count(&taken).Error; err != nil {
 			return nil, err
 		}
-	}
-	if taken > 0 {
-		return nil, fmt.Errorf("a node or enrolment named %q already exists", name)
+		if taken == 0 {
+			if err := db.Model(&model.NodeEnrolment{}).Where("name = ?", name).Count(&taken).Error; err != nil {
+				return nil, err
+			}
+		}
+		if taken > 0 {
+			return nil, fmt.Errorf("a node or enrolment named %q already exists", name)
+		}
 	}
 	offer, err := enrol.NewOffer(spec.PanelURL)
 	if err != nil {
 		return nil, err
 	}
-	if spec.WithTunnel && spec.TunnelId > 0 {
-		return nil, errors.New("the node already rides on an existing tunnel; it does not need one of its own")
-	}
 	var portal, data *model.ServerTunnel
-	switch {
-	case spec.TunnelId > 0:
+	if spec.TunnelId > 0 {
 		portal, err = s.tunnels.CreateManagementRider(spec.TunnelId, tunnelNamePrefix+name)
-	case spec.WithTunnel:
-		portal, data, err = s.createTunnelWithChannel(name, spec)
-	default:
-		portal, err = s.tunnels.CreateManagementPortal(tunnel.PortalSpec{
-			Name: tunnelNamePrefix + name, Address: spec.Address, Port: spec.Port,
-			Security: spec.Security, ServerName: spec.ServerName,
-		})
+	} else {
+		portal, data, err = s.createNodeTunnel(name, spec)
 	}
 	if err != nil {
 		return nil, err
@@ -161,7 +162,14 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 	if data != nil {
 		row.DataTunnelId = data.Id
 	}
-	if err := db.Create(&row).Error; err != nil {
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		if len(stale) > 0 {
+			if err := tx.Delete(&model.NodeEnrolment{}, stale[0].Id).Error; err != nil {
+				return err
+			}
+		}
+		return tx.Create(&row).Error
+	}); err != nil {
 		if delErr := s.remove(&row); delErr != nil {
 			logger.Warning("enrolments: removing the tunnel of a failed enrolment:", delErr)
 		}
@@ -174,12 +182,26 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 	}, nil
 }
 
-// createTunnelWithChannel makes the node's ordinary entry tunnel and its management channel on the same port.
-func (s *Service) createTunnelWithChannel(name string, spec Spec) (channel, data *model.ServerTunnel, err error) {
-	data, err = s.tunnels.CreatePortal(tunnel.PortalSpec{
-		Name: name, Address: spec.Address, Port: spec.Port, Security: spec.Security, ServerName: spec.ServerName,
-	}, nil)
-	if err != nil {
+// createNodeTunnel makes the node's entry tunnel and its management channel on the same port.
+func (s *Service) createNodeTunnel(name string, spec Spec) (channel, data *model.ServerTunnel, err error) {
+	portalSpec := tunnel.PortalSpec{
+		Name: name, Address: spec.Address, Port: spec.Port,
+		Engine: spec.Engine, Transport: spec.Transport, Options: spec.Options,
+	}
+	switch portalSpec.Engine {
+	case "", model.TunnelEngineBackpack:
+		portalSpec.Engine = model.TunnelEngineBackpack
+		if portalSpec.Transport == "" {
+			portalSpec.Transport = defaultWebsocketCarrier
+		}
+	case model.TunnelEngineRakhsh:
+		if portalSpec.Transport == "" {
+			portalSpec.Transport = defaultRakhshCarrier
+		}
+	default:
+		return nil, nil, fmt.Errorf("tunnel engine %q is not supported", spec.Engine)
+	}
+	if data, err = s.tunnels.CreatePortal(portalSpec, nil); err != nil {
 		return nil, nil, err
 	}
 	channel, err = s.tunnels.CreateManagementRider(data.Id, tunnelNamePrefix+name)
@@ -251,13 +273,8 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 	if err := db.First(&portal, row.TunnelId).Error; err != nil {
 		return nil, ErrGone
 	}
-	// A BackPack or Rakhsh tunnel is already set up on the node, so the channel is a forward on it, not a tunnel to import.
-	onExternal := portal.ParentId > 0 && model.ExternalEngine(portal.Engine)
-	var setup string
-	if !onExternal {
-		if setup, err = tunnel.SetupLink(portal); err != nil {
-			return nil, err
-		}
+	if portal.ParentId == 0 || !model.ExternalEngine(portal.Engine) {
+		return nil, ErrGone
 	}
 
 	// The conditional update is the single point where a link is spent; a concurrent second request loses here.
@@ -275,7 +292,7 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 		// The hop is loopback to loopback inside the tunnel, and the node's certificate names its public host.
 		TlsVerifyMode: "skip",
 	}
-	if err := s.nodes.Create(node); err != nil {
+	if err := s.storeNode(node); err != nil {
 		if delErr := s.remove(&row); delErr != nil {
 			logger.Warning("enrolments: removing an enrolment whose node could not be stored:", delErr)
 		}
@@ -284,21 +301,40 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 	if err := db.Model(&model.NodeEnrolment{}).Where("id = ?", row.Id).Update("node_id", node.Id).Error; err != nil {
 		return nil, err
 	}
-	if onExternal {
-		if err := db.Model(&model.ServerTunnel{}).Where("id = ?", portal.Id).Update("manage_target", info.Port).Error; err != nil {
-			return nil, err
-		}
-		if err := s.tunnels.ReconcileEngines(); err != nil {
-			logger.Warning("enrolments: applying the node's forward to its tunnel:", err)
-		}
+	if err := db.Model(&model.ServerTunnel{}).Where("id = ?", portal.Id).Update("manage_target", info.Port).Error; err != nil {
+		return nil, err
 	}
-	grant := enrol.Grant{Tunnel: setup}
+	if err := s.tunnels.ReconcileEngines(); err != nil {
+		logger.Warning("enrolments: applying the node's forward to its tunnel:", err)
+	}
+	var grant enrol.Grant
 	if row.DataTunnelId > 0 {
 		if grant.DataTunnel, err = s.grantDataTunnel(row.DataTunnelId, node.Id); err != nil {
 			return nil, err
 		}
 	}
 	return sealReply(grant)
+}
+
+// storeNode adds the node, or points the record of a node that is enrolling again at its new tunnel,
+// so its inbounds and history stay attached.
+func (s *Service) storeNode(node *model.Node) error {
+	var existing []model.Node
+	if err := database.GetDB().Where("name = ?", node.Name).Limit(1).Find(&existing).Error; err != nil {
+		return err
+	}
+	if len(existing) == 0 {
+		return s.nodes.Create(node)
+	}
+	kept := existing[0]
+	kept.Scheme, kept.Address, kept.PublicAddress, kept.Port = node.Scheme, node.Address, node.PublicAddress, node.Port
+	kept.BasePath, kept.ApiToken, kept.Enable, kept.AllowPrivateAddress = node.BasePath, node.ApiToken, true, true
+	kept.TlsVerifyMode, kept.PinnedCertSha256 = node.TlsVerifyMode, ""
+	if err := s.nodes.Update(kept.Id, &kept); err != nil {
+		return err
+	}
+	node.Id = kept.Id
+	return nil
 }
 
 // grantDataTunnel ties the node's traffic tunnel to the node, so deleting it reaches the node's end too.
@@ -370,9 +406,6 @@ func (s *Service) Join(ctx context.Context, rawLink string) error {
 	grant, err := enrol.Redeem(ctx, client, link, enrol.NodeInfo{
 		Token: link.Token, Port: port, BasePath: basePath, Scheme: scheme, APIToken: token.Token,
 	})
-	if err == nil && grant.Tunnel != "" {
-		_, err = s.tunnels.ImportManagementBridge(grant.Tunnel, port)
-	}
 	if err == nil && grant.DataTunnel != "" {
 		_, err = s.tunnels.Import(grant.DataTunnel, "")
 	}

@@ -18,7 +18,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
-	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/tunnelroute"
 
 	"gorm.io/gorm"
 )
@@ -56,7 +56,7 @@ type TunnelService struct {
 type TunnelOutbound struct {
 	Tag    string `json:"tag" example:"tunnel-de1"`
 	Name   string `json:"name" example:"de1"`
-	Engine string `json:"engine" example:"xray"`
+	Engine string `json:"engine" example:"backpack"`
 }
 
 // RoutableOutbounds lists the enabled entry tunnels that exist as outbounds in the generated Xray config.
@@ -67,10 +67,10 @@ func (s *TunnelService) RoutableOutbounds() ([]TunnelOutbound, error) {
 	}
 	out := make([]TunnelOutbound, 0, len(tunnels))
 	for _, t := range tunnels {
-		if !xrayreverse.Routable(t) {
+		if !tunnelroute.Routable(t) {
 			continue
 		}
-		out = append(out, TunnelOutbound{Tag: xrayreverse.PortalOutboundTag(t.Name), Name: t.Name, Engine: t.Engine})
+		out = append(out, TunnelOutbound{Tag: tunnelroute.PortalOutboundTag(t.Name), Name: t.Name, Engine: t.Engine})
 	}
 	return out, nil
 }
@@ -82,7 +82,7 @@ func (s *TunnelService) ListWithTraffic() ([]model.ServerTunnel, error) {
 		return nil, err
 	}
 	var rows []model.OutboundTraffics
-	if err := database.GetDB().Where("tag LIKE ?", xrayreverse.PortalOutboundTag("")+"%").Find(&rows).Error; err != nil {
+	if err := database.GetDB().Where("tag LIKE ?", tunnelroute.PortalOutboundTag("")+"%").Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	byTag := make(map[string]model.OutboundTraffics, len(rows))
@@ -90,8 +90,8 @@ func (s *TunnelService) ListWithTraffic() ([]model.ServerTunnel, error) {
 		byTag[r.Tag] = r
 	}
 	for i := range tunnels {
-		if t := &tunnels[i]; xrayreverse.Routable(*t) {
-			r := byTag[xrayreverse.PortalOutboundTag(t.Name)]
+		if t := &tunnels[i]; tunnelroute.Routable(*t) {
+			r := byTag[tunnelroute.PortalOutboundTag(t.Name)]
 			t.Up, t.Down = r.Up, r.Down
 		}
 	}
@@ -370,13 +370,14 @@ func (s *TunnelService) deleteLocal(t *model.ServerTunnel) error {
 	return nil
 }
 
-const tunnelProbeTimeout = 8 * time.Second
-
 // Status sends one request through an entry tunnel and reports whether it came back, how fast and from where.
 func (s *TunnelService) Status(id int) (tunnel.Status, error) {
 	t, err := s.get(id)
 	if err != nil {
 		return tunnel.Status{}, err
+	}
+	if t.ManagePort > 0 {
+		return tunnel.Status{}, errors.New("a management tunnel is tested by its node's status, not by a request through it")
 	}
 	if t.Engine == model.TunnelEngineRakhsh {
 		return s.rakhshStatus(t), nil
@@ -387,14 +388,7 @@ func (s *TunnelService) Status(id int) (tunnel.Status, error) {
 	if t.Engine == model.TunnelEngineBackpack {
 		return s.backpackStatus(t), nil
 	}
-	if t.ManagePort > 0 {
-		return tunnel.Status{}, errors.New("a management tunnel is tested by its node's status, not by a request through it")
-	}
-	if t.Role != model.TunnelRolePortal {
-		return tunnel.Status{}, errors.New("only the entry end of a tunnel can be tested from this server")
-	}
-	addr := fmt.Sprintf("127.0.0.1:%d", xrayreverse.ProbePort(*t))
-	return tunnel.ProbeVia(addr, tunnel.DefaultProbeURL, tunnelProbeTimeout), nil
+	return tunnel.Status{}, fmt.Errorf("tunnel engine %q is not supported", t.Engine)
 }
 
 // applyChange lets every engine pick up a stored change; a missing engine binary is reported by Status.

@@ -22,7 +22,7 @@ import (
 
 const (
 	linkPrefix  = "dalan://enrol/"
-	linkVersion = 1
+	linkVersion = 2
 	// RedeemPath is where a panel accepts enrolments, relative to its base path.
 	RedeemPath = "dalan/enrol"
 
@@ -69,10 +69,9 @@ type NodeInfo struct {
 	APIToken string `json:"apiToken"`
 }
 
-// Grant is the panel's answer: the dialling end of the node's management tunnel, as a tunnel setup link,
-// and the dialling end of the node's own traffic tunnel when the invitation asked for one.
+// Grant is the panel's answer: the dialling end of the node's own tunnel as a tunnel setup link, or
+// nothing when the node rides on a tunnel it already has.
 type Grant struct {
-	Tunnel     string `json:"tunnel"`
 	DataTunnel string `json:"dataTunnel,omitempty"`
 }
 

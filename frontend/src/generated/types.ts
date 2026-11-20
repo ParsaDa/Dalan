@@ -895,6 +895,7 @@ export interface NodeEnrolment {
   expiresAt: number;
   id: number;
   name: string;
+  needsReenrol: boolean;
   nodeId: number;
   tunnelId: number;
   usedAt: number;
@@ -1110,13 +1111,9 @@ export interface ServerTunnel {
   parentId: number;
   port: number;
   rakhshPeerPublic: string;
-  realityPublicKey: string;
   relayPort: number;
   role: string;
   routeInbounds: string[];
-  security: string;
-  serverName: string;
-  shortId: string;
   transport: string;
   up: number;
   uuid: string;

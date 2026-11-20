@@ -14,4 +14,6 @@ type NodeEnrolment struct {
 	NodeId     int    `json:"nodeId" gorm:"column:node_id;default:0" example:"0"`
 	// DataTunnelId is the ordinary entry tunnel made for the node's traffic; 0 when none was asked for.
 	DataTunnelId int `json:"dataTunnelId" gorm:"column:data_tunnel_id;default:0" example:"0"`
+	// NeedsReenrol marks a node enrolled through the removed Xray tunnel: it has to be enrolled again.
+	NeedsReenrol bool `json:"needsReenrol" gorm:"column:needs_reenrol;default:false" example:"false"`
 }

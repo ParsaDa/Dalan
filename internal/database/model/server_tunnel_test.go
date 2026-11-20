@@ -8,7 +8,7 @@ import (
 
 func TestExternalEngineNamesTheEnginesRunAsOwnProcesses(t *testing.T) {
 	for engine, want := range map[string]bool{
-		TunnelEngineXray:     false,
+		"xray":               false,
 		"":                   false,
 		TunnelEngineBackpack: true,
 		TunnelEngineRakhsh:   true,

@@ -1,5 +1,7 @@
 # Reverse node enrolment and management channel — design
 
+> **Superseded in part (2026-11-20):** nodes no longer enrol over an Xray tunnel. Enrolment creates a BackPack (default) or Rakhsh tunnel for the node and the Xray engine is removed; see `2026-11-20-node-link-on-engines-design.md`. The sealed exchange, one-time link and `NodeEnrolment` record below still stand.
+
 Approved by the owner on 2026-11-15. Item 1 of "What is left" in `dalan/HANDOFF.md`; design §7.2.
 
 ## Why

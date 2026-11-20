@@ -38,7 +38,7 @@ func TestANodeEnrolsThroughThePublicRouteAndDeletingItClosesItsTunnel(t *testing
 
 	added := doHostReq(t, engine, http.MethodPost, "/secret/panel/api/enrolments/add", map[string]any{
 		"name": "de1", "panelUrl": "http://203.0.113.10:2053/secret/", "address": "203.0.113.10", "port": 8443,
-		"security": "reality", "serverName": "www.example.com",
+		"engine": "backpack", "transport": "wssmux",
 	})
 	if !added.Success {
 		t.Fatalf("add failed: %s", added.Msg)
@@ -80,8 +80,8 @@ func TestANodeEnrolsThroughThePublicRouteAndDeletingItClosesItsTunnel(t *testing
 	if w.Code != http.StatusOK {
 		t.Fatalf("enrolment: status %d body %q", w.Code, w.Body.String())
 	}
-	if grant, err := openReply(w.Body.Bytes()); err != nil || !strings.HasPrefix(grant.Tunnel, "dalan://tunnel/") {
-		t.Fatalf("reply = %+v, %v; want a tunnel link", grant, err)
+	if grant, err := openReply(w.Body.Bytes()); err != nil || !strings.HasPrefix(grant.DataTunnel, "dalan://tunnel/") {
+		t.Fatalf("reply = %+v, %v; want the node's tunnel link", grant, err)
 	}
 	if w := postRaw(engine, "/secret/"+enrol.RedeemPath, body); w.Code != http.StatusGone {
 		t.Fatalf("second use of the link: status %d, want 410", w.Code)
@@ -112,7 +112,7 @@ func TestANodeEnrolsThroughThePublicRouteAndDeletingItClosesItsTunnel(t *testing
 func TestAPendingEnrolmentCanBeCancelled(t *testing.T) {
 	engine := newEnrolmentEngine(t)
 	added := doHostReq(t, engine, http.MethodPost, "/secret/panel/api/enrolments/add", map[string]any{
-		"name": "de1", "panelUrl": "http://203.0.113.10:2053/", "address": "203.0.113.10", "port": 8443, "security": "none",
+		"name": "de1", "panelUrl": "http://203.0.113.10:2053/", "address": "203.0.113.10", "port": 8443,
 	})
 	if !added.Success {
 		t.Fatalf("add failed: %s", added.Msg)
