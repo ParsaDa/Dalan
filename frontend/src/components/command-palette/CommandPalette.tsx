@@ -23,6 +23,7 @@ import {
   MoonOutlined,
   PlusOutlined,
   ReloadOutlined,
+  ThunderboltOutlined,
   SafetyOutlined,
   SearchOutlined,
   SettingOutlined,
@@ -37,6 +38,7 @@ import { activateOnKey } from '@/utils/a11y';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
 import { useAllSettings } from '@/api/queries/useAllSettings';
 import { useTheme } from '@/hooks/useTheme';
+import type { EffectsPref } from '@/lib/theme/effects';
 import { PANEL_ROUTES } from '@/routes/panelRoutes';
 import type { ClientRecord, InboundOption } from '@/schemas/client';
 import { commandPaletteStore, useCommandPalette } from './useCommandPalette';
@@ -90,7 +92,15 @@ export default function CommandPalette() {
   const { t } = useTranslation();
   const [messageApi, messageContextHolder] = message.useMessage();
   const navigate = useNavigate();
-  const { isDark, isUltra, toggleTheme, toggleUltra, antdThemeConfig } = useTheme();
+  const {
+    isDark,
+    isUltra,
+    toggleTheme,
+    toggleUltra,
+    antdThemeConfig,
+    effectsPref,
+    setEffectsPref,
+  } = useTheme();
   const { isOpen, close } = useCommandPalette();
   const { allSetting } = useAllSettings();
   const { data: inbounds = [] } = useInboundOptions();
@@ -251,6 +261,12 @@ export default function CommandPalette() {
     }
     close();
   }, [isDark, isUltra, toggleTheme, toggleUltra, close]);
+
+  const cycleEffects = useCallback(() => {
+    const order: EffectsPref[] = ['auto', 'full', 'light', 'off'];
+    setEffectsPref(order[(order.indexOf(effectsPref) + 1) % order.length]);
+    close();
+  }, [effectsPref, setEffectsPref, close]);
 
   const trimmedQuery = query.trim();
   const isDebouncing = isOpen && trimmedQuery.length > 0 && trimmedQuery !== debouncedQuery;
@@ -557,6 +573,15 @@ export default function CommandPalette() {
         action: cycleTheme,
       },
       {
+        id: 'act-cycle-effects',
+        category: 'actions',
+        title: t('pages.settings.effects'),
+        subtitle: t(`pages.settings.effects_${effectsPref}`),
+        keywords: ['effects', 'animation', 'blur', 'glow', 'motion'],
+        icon: <ThunderboltOutlined aria-hidden />,
+        action: cycleEffects,
+      },
+      {
         id: 'act-add-inbound',
         category: 'actions',
         title: t('pages.inbounds.addInbound'),
@@ -598,6 +623,8 @@ export default function CommandPalette() {
     copySubscription,
     restartXray,
     cycleTheme,
+    cycleEffects,
+    effectsPref,
   ]);
 
   const clampedActiveIndex = Math.min(activeIndex, Math.max(0, items.length - 1));

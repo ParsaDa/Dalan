@@ -11,27 +11,6 @@
   gap: 8px;
 }
 
-.node-accent-swatch {
-  width: 26px;
-  height: 26px;
-  border: 2px solid transparent;
-  border-radius: 50%;
-  cursor: pointer;
-  transition:
-    transform var(--dl-d-fast) var(--dl-e-out),
-    box-shadow var(--dl-d-base);
-}
-
-.node-accent-swatch:hover {
-  transform: scale(1.12);
-}
-
-.node-accent-swatch.on {
-  box-shadow:
-    0 0 0 2px var(--dl-surface),
-    0 0 0 4px var(--dl-text);
-}
-
 .node-accent-auto {
   height: 26px;
   padding: 0 12px;

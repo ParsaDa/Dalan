@@ -1476,6 +1476,13 @@
       "information": "信息",
       "profile": "资料",
       "language": "语言",
+      "effects": "Effects",
+      "effectsDesc": "Auto lightens itself on weak devices; the system reduced-motion setting always turns effects off.",
+      "effects_auto": "Auto",
+      "effects_full": "Full",
+      "effects_light": "Light",
+      "effects_off": "Off",
+      "accentColour": "Panel colour",
       "telegramBotLanguage": "Telegram 机器人语言",
       "security": {
         "admin": "管理员凭据",

@@ -327,4 +327,20 @@ describe('CommandPalette component', () => {
     const themeItems = screen.getAllByText(/Theme/i);
     expect(themeItems.length).toBe(1);
   });
+
+  it('steps the effects level from the palette and closes it', () => {
+    localStorage.removeItem('dalan-effects');
+    renderPalette();
+    act(() => {
+      commandPaletteStore.open();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText(/Type a command or search/i), {
+      target: { value: 'effects' },
+    });
+    fireEvent.click(screen.getByText('Effects'));
+
+    expect(localStorage.getItem('dalan-effects')).toBe('full');
+    expect(commandPaletteStore.getSnapshot()).toBe(false);
+  });
 });

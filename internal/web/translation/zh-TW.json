@@ -1476,6 +1476,13 @@
       "information": "資訊",
       "profile": "資料",
       "language": "語言",
+      "effects": "Effects",
+      "effectsDesc": "Auto lightens itself on weak devices; the system reduced-motion setting always turns effects off.",
+      "effects_auto": "Auto",
+      "effects_full": "Full",
+      "effects_light": "Light",
+      "effects_off": "Off",
+      "accentColour": "Panel colour",
       "telegramBotLanguage": "Telegram 機器人語言",
       "security": {
         "admin": "管理員憑證",

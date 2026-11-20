@@ -1480,6 +1480,13 @@
       "information": "اطلاعات",
       "profile": "پروفایل",
       "language": "زبان",
+      "effects": "جلوه‌ها",
+      "effectsDesc": "خودکار روی دستگاه ضعیف خودش سبک می‌شود؛ «کاهش حرکت» سیستم همیشه جلوه‌ها را خاموش می‌کند.",
+      "effects_auto": "خودکار",
+      "effects_full": "کامل",
+      "effects_light": "سبک",
+      "effects_off": "خاموش",
+      "accentColour": "رنگ پنل",
       "telegramBotLanguage": "زبان ربات تلگرام",
       "security": {
         "admin": "اعتبارنامه‌های ادمین",

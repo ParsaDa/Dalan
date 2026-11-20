@@ -1476,6 +1476,13 @@
       "information": "Thông tin",
       "profile": "Hồ sơ",
       "language": "Ngôn ngữ",
+      "effects": "Effects",
+      "effectsDesc": "Auto lightens itself on weak devices; the system reduced-motion setting always turns effects off.",
+      "effects_auto": "Auto",
+      "effects_full": "Full",
+      "effects_light": "Light",
+      "effects_off": "Off",
+      "accentColour": "Panel colour",
       "telegramBotLanguage": "Ngôn ngữ của Bot Telegram",
       "security": {
         "admin": "Thông tin đăng nhập quản trị viên",

@@ -1476,6 +1476,13 @@
       "information": "Informasi",
       "profile": "Profil",
       "language": "Bahasa",
+      "effects": "Effects",
+      "effectsDesc": "Auto lightens itself on weak devices; the system reduced-motion setting always turns effects off.",
+      "effects_auto": "Auto",
+      "effects_full": "Full",
+      "effects_light": "Light",
+      "effects_off": "Off",
+      "accentColour": "Panel colour",
       "telegramBotLanguage": "Bahasa Bot Telegram",
       "security": {
         "admin": "Kredensial admin",

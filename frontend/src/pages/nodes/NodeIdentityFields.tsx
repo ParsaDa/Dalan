@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Input, Select } from 'antd';
 
 import Flag, { FLAG_COUNTRIES } from '@/components/ui/Flag';
-import { ACCENTS, isCustomAccentAllowed } from '@/lib/theme/accents';
+import AccentSwatches from '@/components/ui/AccentSwatches';
+import { isCustomAccentAllowed } from '@/lib/theme/accents';
 import './NodeIdentityFields.css';
 
 interface ValueProps {
@@ -76,18 +77,7 @@ export function AccentPicker({ id, value = '', onChange }: ValueProps) {
       >
         {t('pages.nodes.accentAuto')}
       </button>
-      {ACCENTS.map((accent) => (
-        <button
-          key={accent.id}
-          type="button"
-          role="radio"
-          aria-checked={value === accent.id}
-          aria-label={accent.id}
-          className={`node-accent-swatch${value === accent.id ? ' on' : ''}`}
-          style={{ background: accent.fill }}
-          onClick={() => onChange?.(accent.id)}
-        />
-      ))}
+      <AccentSwatches value={value} onChange={(id) => onChange?.(id)} />
       <Input
         className="node-accent-hex"
         aria-label={t('pages.nodes.accentCustom')}

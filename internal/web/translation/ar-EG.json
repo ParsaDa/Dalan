@@ -1476,6 +1476,13 @@
       "information": "المعلومات",
       "profile": "الملف الشخصي",
       "language": "اللغة",
+      "effects": "Effects",
+      "effectsDesc": "Auto lightens itself on weak devices; the system reduced-motion setting always turns effects off.",
+      "effects_auto": "Auto",
+      "effects_full": "Full",
+      "effects_light": "Light",
+      "effects_off": "Off",
+      "accentColour": "Panel colour",
       "telegramBotLanguage": "لغة بوت Telegram",
       "security": {
         "admin": "بيانات الأدمن",
