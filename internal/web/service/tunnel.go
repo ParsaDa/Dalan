@@ -56,7 +56,7 @@ type TunnelService struct {
 type TunnelOutbound struct {
 	Tag    string `json:"tag" example:"tunnel-de1"`
 	Name   string `json:"name" example:"de1"`
-	Engine string `json:"engine" example:"xray"`
+	Engine string `json:"engine" example:"backpack"`
 }
 
 // RoutableOutbounds lists the enabled entry tunnels that exist as outbounds in the generated Xray config.
