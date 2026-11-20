@@ -258,13 +258,8 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 	if err := db.First(&portal, row.TunnelId).Error; err != nil {
 		return nil, ErrGone
 	}
-	// A BackPack or Rakhsh tunnel is already set up on the node, so the channel is a forward on it, not a tunnel to import.
-	onExternal := portal.ParentId > 0 && model.ExternalEngine(portal.Engine)
-	var setup string
-	if !onExternal {
-		if setup, err = tunnel.SetupLink(portal); err != nil {
-			return nil, err
-		}
+	if portal.ParentId == 0 || !model.ExternalEngine(portal.Engine) {
+		return nil, ErrGone
 	}
 
 	// The conditional update is the single point where a link is spent; a concurrent second request loses here.
@@ -291,15 +286,13 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 	if err := db.Model(&model.NodeEnrolment{}).Where("id = ?", row.Id).Update("node_id", node.Id).Error; err != nil {
 		return nil, err
 	}
-	if onExternal {
-		if err := db.Model(&model.ServerTunnel{}).Where("id = ?", portal.Id).Update("manage_target", info.Port).Error; err != nil {
-			return nil, err
-		}
-		if err := s.tunnels.ReconcileEngines(); err != nil {
-			logger.Warning("enrolments: applying the node's forward to its tunnel:", err)
-		}
+	if err := db.Model(&model.ServerTunnel{}).Where("id = ?", portal.Id).Update("manage_target", info.Port).Error; err != nil {
+		return nil, err
 	}
-	grant := enrol.Grant{Tunnel: setup}
+	if err := s.tunnels.ReconcileEngines(); err != nil {
+		logger.Warning("enrolments: applying the node's forward to its tunnel:", err)
+	}
+	var grant enrol.Grant
 	if row.DataTunnelId > 0 {
 		if grant.DataTunnel, err = s.grantDataTunnel(row.DataTunnelId, node.Id); err != nil {
 			return nil, err
@@ -377,9 +370,6 @@ func (s *Service) Join(ctx context.Context, rawLink string) error {
 	grant, err := enrol.Redeem(ctx, client, link, enrol.NodeInfo{
 		Token: link.Token, Port: port, BasePath: basePath, Scheme: scheme, APIToken: token.Token,
 	})
-	if err == nil && grant.Tunnel != "" {
-		_, err = s.tunnels.ImportManagementBridge(grant.Tunnel, port)
-	}
 	if err == nil && grant.DataTunnel != "" {
 		_, err = s.tunnels.Import(grant.DataTunnel, "")
 	}

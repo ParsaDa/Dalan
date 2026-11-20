@@ -50,7 +50,7 @@ func TestANodeAndThePanelExchangeSecretsThatNeverAppearOnTheWire(t *testing.T) {
 		t.Fatalf("panel read %+v, want %+v", got, info)
 	}
 
-	reply, err := sealReply(Grant{Tunnel: "dalan://tunnel/the-bridge-end"})
+	reply, err := sealReply(Grant{DataTunnel: "dalan://tunnel/the-bridge-end"})
 	if err != nil {
 		t.Fatalf("seal reply: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestANodeAndThePanelExchangeSecretsThatNeverAppearOnTheWire(t *testing.T) {
 		t.Fatalf("reply carries the tunnel link in the clear: %s", reply)
 	}
 	grant, err := openReply(reply)
-	if err != nil || grant.Tunnel != "dalan://tunnel/the-bridge-end" {
+	if err != nil || grant.DataTunnel != "dalan://tunnel/the-bridge-end" {
 		t.Fatalf("node read %+v, %v", grant, err)
 	}
 }
@@ -85,7 +85,7 @@ func TestAReplyCannotBeReplayedAsARequest(t *testing.T) {
 	if err != nil {
 		t.Fatalf("OpenRequest: %v", err)
 	}
-	reply, _ := sealReply(Grant{Tunnel: "dalan://tunnel/x"})
+	reply, _ := sealReply(Grant{DataTunnel: "dalan://tunnel/x"})
 	var req, rep map[string]string
 	_ = json.Unmarshal(body, &req)
 	_ = json.Unmarshal(reply, &rep)
@@ -121,7 +121,7 @@ func TestRedeemPostsToThePanelAndReportsARefusalInThePanelsWords(t *testing.T) {
 			http.Error(w, "this enrolment link has expired", http.StatusGone)
 			return
 		}
-		reply, _ := seal(Grant{Tunnel: "dalan://tunnel/for-" + info.APIToken})
+		reply, _ := seal(Grant{DataTunnel: "dalan://tunnel/for-" + info.APIToken})
 		_, _ = w.Write(reply)
 	}))
 	t.Cleanup(panel.Close)
@@ -129,11 +129,23 @@ func TestRedeemPostsToThePanelAndReportsARefusalInThePanelsWords(t *testing.T) {
 	offer, link = newOffer(t, panel.URL+"/base/")
 
 	grant, err := Redeem(context.Background(), panel.Client(), link, NodeInfo{Token: link.Token, Port: 1, Scheme: "http", APIToken: "tok"})
-	if err != nil || grant.Tunnel != "dalan://tunnel/for-tok" {
+	if err != nil || grant.DataTunnel != "dalan://tunnel/for-tok" {
 		t.Fatalf("Redeem = %+v, %v", grant, err)
 	}
 	_, err = Redeem(context.Background(), panel.Client(), link, NodeInfo{Token: link.Token, Port: 1, Scheme: "http", APIToken: "refuse-me"})
 	if err == nil || !strings.Contains(err.Error(), "this enrolment link has expired") {
 		t.Fatalf("Redeem on a refusal: err = %v, want the panel's message", err)
+	}
+}
+
+func TestAVersionOneLinkIsRefusedBecauseItsPanelHandsOutAnXrayTunnel(t *testing.T) {
+	raw, err := json.Marshal(linkPayload{Version: 1, URL: "http://203.0.113.10:2053/", ID: "id", Token: "token", Key: "key"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = ParseLink(linkPrefix + b64.EncodeToString(raw))
+	want := "enrolment link is version 1; this panel understands version 2"
+	if err == nil || err.Error() != want {
+		t.Fatalf("ParseLink of a version 1 link: err = %v, want %q", err, want)
 	}
 }

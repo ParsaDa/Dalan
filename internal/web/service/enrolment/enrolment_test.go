@@ -106,9 +106,6 @@ func TestRedeemingAnEnrolmentRegistersTheNodeOnItsManagementPort(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Redeem: %v", err)
 	}
-	if grant.Tunnel != "" {
-		t.Fatalf("granted management tunnel %q, want none: the channel is a forward on the node's own tunnel", grant.Tunnel)
-	}
 	bridge, err := tunnel.ParseSetupLink(grant.DataTunnel)
 	if err != nil {
 		t.Fatalf("granted tunnel link: %v", err)
@@ -238,12 +235,14 @@ func TestTwoEnrolmentsGetDifferentManagementPortsAndNamesMustBeFree(t *testing.T
 // fakeMainPanel answers an enrolment the way a main panel does and records what the node told it.
 func fakeMainPanel(t *testing.T, refuse bool) (link string, told *enrol.NodeInfo) {
 	t.Helper()
-	portal, err := tunnel.NewPortal(tunnel.PortalSpec{Name: "node-de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone})
+	portal, err := tunnel.NewPortal(tunnel.PortalSpec{
+		Name: "de1", Address: "203.0.113.10", Port: 8443, Engine: model.TunnelEngineBackpack, Transport: "wssmux",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	setup, _ := tunnel.SetupLink(portal)
-	return fakeMainPanelGranting(t, refuse, enrol.Grant{Tunnel: setup})
+	return fakeMainPanelGranting(t, refuse, enrol.Grant{DataTunnel: setup})
 }
 
 func fakeMainPanelGranting(t *testing.T, refuse bool, grant enrol.Grant) (link string, told *enrol.NodeInfo) {
@@ -270,7 +269,7 @@ func fakeMainPanelGranting(t *testing.T, refuse bool, grant enrol.Grant) (link s
 	return offer.Link, told
 }
 
-func TestJoiningAMainPanelStoresTheManagementBridgeAndATokenThePanelHolds(t *testing.T) {
+func TestJoiningAMainPanelStoresItsTunnelAndATokenThePanelHolds(t *testing.T) {
 	newDB(t)
 	link, told := fakeMainPanel(t, false)
 	if err := (&Service{}).Join(context.Background(), link); err != nil {
@@ -280,9 +279,9 @@ func TestJoiningAMainPanelStoresTheManagementBridgeAndATokenThePanelHolds(t *tes
 	if err != nil {
 		t.Fatal(err)
 	}
-	bridge := tunnelByName(t, "node-de1")
-	if bridge == nil || bridge.Role != model.TunnelRoleBridge || bridge.ManagePort != port {
-		t.Fatalf("bridge = %+v, want a bridge delivering to this panel's port %d", bridge, port)
+	bridge := tunnelByName(t, "de1")
+	if bridge == nil || bridge.Role != model.TunnelRoleBridge || bridge.Engine != model.TunnelEngineBackpack || bridge.Transport != "wssmux" || bridge.ManagePort != 0 {
+		t.Fatalf("bridge = %+v, want an ordinary BackPack bridge on wssmux", bridge)
 	}
 	if told.Port != port || told.Scheme != "http" || told.BasePath == "" {
 		t.Fatalf("the panel was told %+v, want this panel's port %d over http with its base path", told, port)
@@ -292,7 +291,7 @@ func TestJoiningAMainPanelStoresTheManagementBridgeAndATokenThePanelHolds(t *tes
 		t.Fatalf("the token sent to the main panel matches %+v (ok=%v), want a node-admin token", row, ok)
 	}
 
-	// Joining again replaces the old channel: one management bridge, one token.
+	// Joining another panel updates the same tunnel and leaves one token.
 	link2, told2 := fakeMainPanel(t, false)
 	if err := (&Service{}).Join(context.Background(), link2); err != nil {
 		t.Fatalf("second Join: %v", err)
@@ -312,7 +311,7 @@ func TestARefusedJoinLeavesNoTokenAndNoTunnel(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "refused") {
 		t.Fatalf("Join = %v, want the panel's refusal", err)
 	}
-	if got := tunnelByName(t, "node-de1"); got != nil {
+	if got := tunnelByName(t, "de1"); got != nil {
 		t.Fatalf("a refused join stored a tunnel: %+v", got)
 	}
 	tokens, err := (&panel.ApiTokenService{}).List()
@@ -338,54 +337,8 @@ func TestARefusedJoinKeepsTheChannelToTheCurrentMainPanel(t *testing.T) {
 	if _, ok := (&panel.ApiTokenService{}).MatchToken(told.APIToken); !ok {
 		t.Fatalf("a refused join revoked the current main panel's token")
 	}
-	if got := tunnelByName(t, "node-de1"); got == nil {
-		t.Fatalf("a refused join removed the current management tunnel")
-	}
-}
-
-func TestAnEnrolmentOnAnExistingTunnelAddsAClientToItInsteadOfOpeningAPort(t *testing.T) {
-	newDB(t)
-	svc := &Service{}
-	parent, err := svc.tunnels.CreatePortal(tunnel.PortalSpec{
-		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
-	}, nil)
-	if err != nil {
-		t.Fatalf("CreatePortal: %v", err)
-	}
-	spec := Spec{Name: "de1", PanelURL: "http://203.0.113.10:2053/", TunnelId: parent.Id}
-	created, err := svc.Create(spec)
-	if err != nil {
-		t.Fatalf("Create: %v", err)
-	}
-	link, err := enrol.ParseLink(created.Link)
-	if err != nil {
-		t.Fatalf("ParseLink: %v", err)
-	}
-	rider := tunnelByName(t, "node-de1")
-	if rider == nil || rider.ParentId != parent.Id || rider.Port != 8443 || rider.ManagePort == 0 {
-		t.Fatalf("channel after Create = %+v, want one riding on tunnel %d", rider, parent.Id)
-	}
-
-	grant, err := redeem(t, svc, link, enrol.NodeInfo{
-		Token: link.Token, Port: 2053, BasePath: "/x/", Scheme: "https", APIToken: "node-token-1",
-	})
-	if err != nil {
-		t.Fatalf("Redeem: %v", err)
-	}
-	bridge, err := tunnel.ParseSetupLink(grant.Tunnel)
-	if err != nil || bridge.UUID != rider.UUID || bridge.UUID == parent.UUID || bridge.Port != 8443 {
-		t.Fatalf("granted bridge = %+v (%v), want the rider's own client on the tunnel's port", bridge, err)
-	}
-	var node model.Node
-	if err := database.GetDB().Where("name = ?", "de1").First(&node).Error; err != nil || node.Port != rider.ManagePort {
-		t.Fatalf("node = %+v (%v), want it behind the rider's management port %d", node, err, rider.ManagePort)
-	}
-
-	if err := svc.NodeDeleted(node.Id); err != nil {
-		t.Fatalf("NodeDeleted: %v", err)
-	}
-	if tunnelByName(t, "node-de1") != nil || tunnelByName(t, "tr1") == nil {
-		t.Fatal("removing the node must close its channel and keep the tunnel it rode on")
+	if got := tunnelByName(t, "de1"); got == nil {
+		t.Fatalf("a refused join removed the current tunnel to the main panel")
 	}
 }
 
@@ -412,11 +365,22 @@ func TestAnEnrolmentOnABackpackTunnelForwardsToTheNodesPanelPort(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Redeem: %v", err)
 	}
-	if grant.Tunnel != "" {
-		t.Fatalf("granted %q, want no tunnel to import: the node already has the BackPack tunnel", grant.Tunnel)
+	if grant.DataTunnel != "" {
+		t.Fatalf("granted %q, want no tunnel to import: the node already has the BackPack tunnel", grant.DataTunnel)
 	}
-	if rider := tunnelByName(t, "node-de1"); rider == nil || rider.ManageTarget != 2053 {
-		t.Fatalf("channel after Redeem = %+v, want the forward aimed at the node's panel port 2053", rider)
+	rider := tunnelByName(t, "node-de1")
+	if rider == nil || rider.ParentId != parent.Id || rider.ManageTarget != 2053 || rider.ManagePort == 0 {
+		t.Fatalf("channel after Redeem = %+v, want a rider on tunnel %d aimed at the node's panel port 2053", rider, parent.Id)
+	}
+	var node model.Node
+	if err := database.GetDB().Where("name = ?", "de1").First(&node).Error; err != nil || node.Port != rider.ManagePort {
+		t.Fatalf("node = %+v (%v), want it behind the rider's management port %d", node, err, rider.ManagePort)
+	}
+	if err := svc.NodeDeleted(node.Id); err != nil {
+		t.Fatalf("NodeDeleted: %v", err)
+	}
+	if tunnelByName(t, "node-de1") != nil || tunnelByName(t, "bp1") == nil {
+		t.Fatal("removing the node must close its channel and keep the tunnel it rode on")
 	}
 }
 
@@ -449,9 +413,6 @@ func TestANodeWithATunnelGetsAnOrdinaryTunnelThatItsManagementRidesOn(t *testing
 	if err != nil || dataBridge.UUID != data.UUID || dataBridge.Name != "de1" {
 		t.Fatalf("granted data bridge = %+v (%v), want the data tunnel's own client", dataBridge, err)
 	}
-	if grant.Tunnel != "" {
-		t.Fatalf("granted management tunnel %q, want none: the channel rides on the data tunnel", grant.Tunnel)
-	}
 	var node model.Node
 	if err := database.GetDB().Where("name = ?", "de1").First(&node).Error; err != nil {
 		t.Fatal(err)
@@ -480,31 +441,6 @@ func TestCancellingAPendingEnrolmentWithATunnelRemovesBothTunnels(t *testing.T) 
 	}
 	if tunnelByName(t, "de1") != nil || tunnelByName(t, "node-de1") != nil {
 		t.Fatal("a cancelled enrolment left a tunnel behind")
-	}
-}
-
-func TestJoiningWithADataTunnelStoresItNextToTheManagementBridge(t *testing.T) {
-	newDB(t)
-	manage, err := tunnel.NewPortal(tunnel.PortalSpec{Name: "node-de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone})
-	if err != nil {
-		t.Fatal(err)
-	}
-	data, err := tunnel.NewPortal(tunnel.PortalSpec{Name: "de1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone})
-	if err != nil {
-		t.Fatal(err)
-	}
-	manageLink, _ := tunnel.SetupLink(manage)
-	dataLink, _ := tunnel.SetupLink(data)
-	link, _ := fakeMainPanelGranting(t, false, enrol.Grant{Tunnel: manageLink, DataTunnel: dataLink})
-	if err := (&Service{}).Join(context.Background(), link); err != nil {
-		t.Fatalf("Join: %v", err)
-	}
-	got := tunnelByName(t, "de1")
-	if got == nil || got.Role != model.TunnelRoleBridge || got.ManagePort != 0 || got.UUID != data.UUID {
-		t.Fatalf("data bridge = %+v, want an ordinary bridge with the granted identity", got)
-	}
-	if tunnelByName(t, "node-de1") == nil {
-		t.Fatal("the management bridge is missing")
 	}
 }
 
