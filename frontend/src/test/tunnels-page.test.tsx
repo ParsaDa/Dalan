@@ -12,19 +12,15 @@ const portal = {
   id: 1,
   name: 'de1',
   role: 'portal',
-  engine: 'xray',
+  engine: 'backpack',
   enable: true,
   address: '203.0.113.10',
   port: 8443,
   uuid: '8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10',
-  security: 'reality',
-  serverName: 'www.example.com',
-  realityPublicKey: 'pub',
   rakhshPeerPublic: '',
-  shortId: 'a1b2c3d4',
   routeInbounds: ['inbound-443'],
   exitOutbound: '',
-  transport: '',
+  transport: 'wssmux',
   fallbackTransports: null,
   forwardPorts: null,
   acceptUdp: false,
@@ -35,9 +31,6 @@ const backpackPortal = {
   ...portal,
   id: 3,
   name: 'bp1',
-  engine: 'backpack',
-  security: 'none',
-  transport: 'wssmux',
   fallbackTransports: ['quic'],
   forwardPorts: ['443=127.0.0.1:2096'],
   routeInbounds: null,
@@ -149,47 +142,23 @@ test('imports a pasted setup link', async () => {
   );
 });
 
-test('creates an entry tunnel from the form', async () => {
+test('offers only the BackPack and Rakhsh engines for a new tunnel', async () => {
   openTunnels();
   await screen.findByText('de1');
 
   fireEvent.click(screen.getByRole('button', { name: 'New tunnel' }));
-  fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'tr1' } });
-  fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
-  fireEvent.change(screen.getByLabelText('Port'), { target: { value: '9443' } });
-  fireEvent.change(screen.getByLabelText('Server name (SNI)'), {
-    target: { value: 'www.example.org' },
-  });
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
 
-  await waitFor(() =>
-    expect(HttpUtil.post).toHaveBeenCalledWith(
-      '/panel/api/tunnels/add',
-      {
-        name: 'tr1',
-        address: '198.51.100.7',
-        port: 9443,
-        engine: 'xray',
-        security: 'reality',
-        serverName: 'www.example.org',
-        routeInbounds: [],
-      },
-      { headers: { 'Content-Type': 'application/json' } },
-    ),
-  );
+  expect(await screen.findByLabelText('BackPack')).toBeTruthy();
+  expect(screen.getByLabelText('Rakhsh')).toBeTruthy();
+  expect(screen.queryByLabelText('Xray (built in)')).toBeNull();
+  expect(screen.queryByLabelText('Server name (SNI)')).toBeNull();
 });
 
-test('shows a working entry tunnel as connected with its latency and exit', async () => {
+test('shows a working tunnel as connected with its latency and exit', async () => {
   openTunnels();
 
   expect(await screen.findByText('Connected · 182 ms')).toBeTruthy();
   expect(screen.getByText('Exits from DE · 203.0.113.77')).toBeTruthy();
-  expect(screen.getByText('Tested from the entry server')).toBeTruthy();
-  expect(HttpUtil.get).not.toHaveBeenCalledWith(
-    '/panel/api/tunnels/status/2',
-    expect.anything(),
-    expect.anything(),
-  );
 });
 
 test('shows a tunnel that does not answer as down', async () => {
@@ -330,14 +299,6 @@ test('installs the BackPack engine through a node when this server cannot reach 
   );
 });
 
-test('does not mention the BackPack engine while only Xray tunnels exist', async () => {
-  engineInstalled = false;
-  openTunnels();
-  await screen.findByText('de1');
-
-  expect(screen.queryByRole('button', { name: 'Install BackPack' })).toBeNull();
-});
-
 test('creates a BackPack entry tunnel with its transport and forwarded ports', async () => {
   openTunnels();
   await screen.findByText('de1');
@@ -405,9 +366,6 @@ test('makes the other end on a chosen node from the same form', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'New tunnel' }));
   fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'tr2' } });
   fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
-  fireEvent.change(screen.getByLabelText('Server name (SNI)'), {
-    target: { value: 'www.example.org' },
-  });
   fireEvent.mouseDown(await screen.findByLabelText('Create the other end on a node'));
   fireEvent.click(await screen.findByText('nl1'));
   fireEvent.click(screen.getByRole('button', { name: 'OK' }));
@@ -495,7 +453,7 @@ const directPortal = {
   options: { carrier: 'udp', local_ip: '10.10.7.1/30', peer_ip: '10.10.7.2', mtu: 1400 },
 };
 
-test('says on every tunnel whether it is reverse or direct, Xray ones included', async () => {
+test('says on every tunnel whether it is reverse or direct', async () => {
   listed = [portal, directPortal];
   openTunnels();
 
@@ -619,7 +577,7 @@ test('edits an entry tunnel in place from its stored values', async () => {
   );
 });
 
-test('edits only the exit outbound of an exit end of an Xray tunnel', async () => {
+test('edits the exit outbound of an exit end without asking for an address', async () => {
   openTunnels();
 
   fireEvent.click(await screen.findByRole('button', { name: 'Edit ir1' }));
@@ -630,7 +588,7 @@ test('edits only the exit outbound of an exit end of an Xray tunnel', async () =
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
       '/panel/api/tunnels/update/2',
-      { exitOutbound: 'warp' },
+      { exitOutbound: 'warp', options: {} },
       { headers: { 'Content-Type': 'application/json' } },
     ),
   );

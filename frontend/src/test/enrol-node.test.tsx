@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import EnrolNode from '@/pages/nodes/EnrolNode';
+import EnrolNode, { EnrolNodeDialog } from '@/pages/nodes/EnrolNode';
 import { ClipboardManager, HttpUtil, Msg } from '@/utils';
 import { renderWithProviders } from './test-utils';
 
@@ -49,9 +49,6 @@ async function openDialog() {
 test('offers a command that installs Dalan on a fresh server and joins this panel in one go', async () => {
   vi.spyOn(ClipboardManager, 'copyText').mockResolvedValue(true);
   fireEvent.change(await openDialog(), { target: { value: 'tr1' } });
-  fireEvent.change(screen.getByLabelText('Server name (SNI)'), {
-    target: { value: 'www.example.org' },
-  });
   fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
 
   expect(await screen.findByText(installCommand)).toBeTruthy();
@@ -60,12 +57,9 @@ test('offers a command that installs Dalan on a fresh server and joins this pane
   await waitFor(() => expect(ClipboardManager.copyText).toHaveBeenCalledWith(installCommand));
 });
 
-test('creates an enrolment for this panel and shows the one-time command to copy', async () => {
+test('creates a BackPack tunnel on wssmux for the node by default and shows the one-time command', async () => {
   vi.spyOn(ClipboardManager, 'copyText').mockResolvedValue(true);
   fireEvent.change(await openDialog(), { target: { value: 'tr1' } });
-  fireEvent.change(screen.getByLabelText('Server name (SNI)'), {
-    target: { value: 'www.example.org' },
-  });
   fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
 
   await waitFor(() =>
@@ -76,9 +70,8 @@ test('creates an enrolment for this panel and shows the one-time command to copy
         panelUrl: `${window.location.origin}/`,
         address: window.location.hostname,
         port: 8443,
-        security: 'reality',
-        serverName: 'www.example.org',
-        withTunnel: true,
+        engine: 'backpack',
+        transport: 'wssmux',
       },
       { headers: { 'Content-Type': 'application/json' } },
     ),
@@ -90,34 +83,36 @@ test('creates an enrolment for this panel and shows the one-time command to copy
   await waitFor(() => expect(ClipboardManager.copyText).toHaveBeenCalledWith(command));
 });
 
+test('asks for a Rakhsh tunnel on wss when Rakhsh is chosen', async () => {
+  fireEvent.change(await openDialog(), { target: { value: 'tr1' } });
+  fireEvent.click(screen.getByLabelText('Rakhsh'));
+  fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/enrolments/add',
+      expect.objectContaining({ name: 'tr1', engine: 'rakhsh', transport: 'wss' }),
+      expect.anything(),
+    ),
+  );
+});
+
+test('has no Xray, REALITY or site-name choice', async () => {
+  await openDialog();
+
+  expect(screen.queryByLabelText('Server name (SNI)')).toBeNull();
+  expect(screen.queryByLabelText('Xray')).toBeNull();
+  expect(screen.queryByText('REALITY')).toBeNull();
+});
+
 test('refuses a name the tunnel cannot carry without calling the panel', async () => {
   fireEvent.change(await openDialog(), { target: { value: 'DE 1' } });
-  fireEvent.change(screen.getByLabelText('Server name (SNI)'), {
-    target: { value: 'www.example.org' },
-  });
   fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
 
   expect(
     await screen.findByText('Lower-case letters, digits and dashes, at most 26 characters.'),
   ).toBeTruthy();
   expect(HttpUtil.post).not.toHaveBeenCalled();
-});
-
-test('a REALITY tunnel is not requested without a site to imitate, but an unencrypted one is', async () => {
-  fireEvent.change(await openDialog(), { target: { value: 'tr1' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
-  expect(await screen.findByText('This field is required.')).toBeTruthy();
-  expect(HttpUtil.post).not.toHaveBeenCalled();
-
-  fireEvent.click(screen.getByLabelText('None (not encrypted)'));
-  fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
-  await waitFor(() =>
-    expect(HttpUtil.post).toHaveBeenCalledWith(
-      '/panel/api/enrolments/add',
-      expect.objectContaining({ name: 'tr1', security: 'none', serverName: '' }),
-      expect.anything(),
-    ),
-  );
 });
 
 test('lists only the enrolments still waiting and cancels one', async () => {
@@ -132,40 +127,47 @@ test('lists only the enrolments still waiting and cancels one', async () => {
   await waitFor(() => expect(HttpUtil.post).toHaveBeenCalledWith('/panel/api/enrolments/del/2'));
 });
 
-test('carries a node on an existing tunnel without asking for an address of its own', async () => {
-  const portal = {
-    id: 4,
-    name: 'tr1',
-    role: 'portal',
-    engine: 'xray',
-    enable: true,
-    address: '203.0.113.10',
-    port: 8443,
-    uuid: '8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10',
-    security: 'none',
-    serverName: '',
-    realityPublicKey: '',
-    shortId: '',
-    routeInbounds: null,
-    exitOutbound: '',
-    transport: '',
-    fallbackTransports: null,
-    forwardPorts: null,
-    acceptUdp: false,
-    relayPort: 0,
-    managePort: 0,
-    mode: 'reverse',
-    options: null,
-    parentId: 0,
-  };
+const entryTunnel = (id: number, name: string, routeInbounds: string[] | null) => ({
+  id,
+  name,
+  role: 'portal',
+  engine: 'backpack',
+  enable: true,
+  address: '203.0.113.10',
+  port: 8443 + id,
+  uuid: '8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10',
+  routeInbounds,
+  exitOutbound: '',
+  transport: 'wssmux',
+  fallbackTransports: null,
+  forwardPorts: null,
+  acceptUdp: false,
+  relayPort: 0,
+  managePort: 0,
+  mode: 'reverse',
+  options: null,
+  parentId: 0,
+});
+
+test('carries a node on an existing tunnel, marks the one users ride, and asks for no address', async () => {
   vi.spyOn(HttpUtil, 'get').mockImplementation(
-    async (url) => new Msg(true, '', url === '/panel/api/tunnels/list' ? [portal] : listed),
+    async (url) =>
+      new Msg(
+        true,
+        '',
+        url === '/panel/api/tunnels/list'
+          ? [entryTunnel(4, 'tr1', ['inbound-443']), entryTunnel(5, 'spare', null)]
+          : listed,
+      ),
   );
   fireEvent.change(await openDialog(), { target: { value: 'tr2' } });
-  fireEvent.mouseDown(await screen.findByLabelText('Tunnel that carries it'));
-  fireEvent.click(await screen.findByText('tr1 · 203.0.113.10:8443'));
+  fireEvent.mouseDown(await screen.findByLabelText('How should it connect?'));
+
+  expect(await screen.findByText('spare · 203.0.113.10:8448')).toBeTruthy();
+  fireEvent.click(await screen.findByText('tr1 · 203.0.113.10:8447 · carries your users'));
 
   expect(screen.queryByLabelText('Address')).toBeNull();
+  expect(screen.queryByLabelText('Engine')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
 
   await waitFor(() =>
@@ -177,17 +179,8 @@ test('carries a node on an existing tunnel without asking for an address of its 
   );
 });
 
-test('makes a tunnel for the node by default and leaves it out when unticked', async () => {
-  fireEvent.change(await openDialog(), { target: { value: 'tr1' } });
-  fireEvent.click(screen.getByLabelText('None (not encrypted)'));
-  fireEvent.click(screen.getByLabelText('Also make a tunnel for this node\u2019s traffic'));
-  fireEvent.click(screen.getByRole('button', { name: 'Create command' }));
+test('opens prefilled with the name of a node that has to enrol again', async () => {
+  renderWithProviders(<EnrolNodeDialog open initialName="de1" onClose={() => {}} />);
 
-  await waitFor(() =>
-    expect(HttpUtil.post).toHaveBeenCalledWith(
-      '/panel/api/enrolments/add',
-      expect.not.objectContaining({ withTunnel: true }),
-      expect.anything(),
-    ),
-  );
+  expect(((await screen.findByLabelText('Node name')) as HTMLInputElement).value).toBe('de1');
 });

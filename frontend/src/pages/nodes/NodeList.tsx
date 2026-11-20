@@ -23,6 +23,7 @@ import {
 
 import EnrolNode from './EnrolNode';
 import NodeHistoryPanel from './NodeHistoryPanel';
+import ReenrolNotices from './ReenrolNotices';
 import type { NodeRecord } from '@/api/queries/useNodesQuery';
 import { isPanelUpdateAvailable } from '@/lib/panel-version';
 import { activateOnKey } from '@/utils/a11y';
@@ -605,6 +606,8 @@ export default function NodeList({
           </Button>
         )}
       </div>
+
+      <ReenrolNotices nodes={nodes} />
 
       {isMobile ? (
         <>

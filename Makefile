@@ -62,10 +62,15 @@ race: dist-stub ## Go tests with the race detector (needs a C compiler)
 # Two real panel processes (master + node); test-go only runs nodee2e as a skip.
 NODE_E2E_BIN = $(CURDIR)/.cache/node-e2e/x-ui$(shell go env GOEXE)
 NODE_E2E_XRAY = $(CURDIR)/.cache/node-e2e/xray$(shell go env GOEXE)
+NODE_E2E_BACKPACK = $(CURDIR)/.cache/node-e2e/backpack$(shell go env GOEXE)
+NODE_E2E_BACKPACK_SRC = $(CURDIR)/.cache/node-e2e/backpack-src
+BACKPACK_REF ?= v1.9.0
 node-e2e: dist-stub ## Master+node sync end to end with two real panel processes
 	go build -o $(NODE_E2E_BIN) .
 	go build -o $(NODE_E2E_XRAY) github.com/xtls/xray-core/main
-	XUI_NODE_E2E_BINARY=$(NODE_E2E_BIN) XUI_NODE_E2E_XRAY=$(NODE_E2E_XRAY) go test -count=1 -timeout 20m -v ./internal/nodee2e/
+	rm -rf $(NODE_E2E_BACKPACK_SRC) && git clone -q --depth 1 --branch $(BACKPACK_REF) https://github.com/AminMGMT/BackPack $(NODE_E2E_BACKPACK_SRC)
+	cd $(NODE_E2E_BACKPACK_SRC) && CGO_ENABLED=0 go build -o $(NODE_E2E_BACKPACK) .
+	XUI_NODE_E2E_BINARY=$(NODE_E2E_BIN) XUI_NODE_E2E_XRAY=$(NODE_E2E_XRAY) XUI_NODE_E2E_BACKPACK=$(NODE_E2E_BACKPACK) go test -count=1 -timeout 20m -v ./internal/nodee2e/
 
 .PHONY: test-fe
 test-fe: ## Frontend tests (vitest)

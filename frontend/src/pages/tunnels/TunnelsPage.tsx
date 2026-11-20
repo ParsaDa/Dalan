@@ -38,6 +38,7 @@ import TunnelEditModal from './TunnelEditModal';
 import TunnelEngineBar from './TunnelEngineBar';
 import TunnelOptionFields, { TunnelOptionField, cleanOptions } from './TunnelOptionFields';
 import TunnelPools from './TunnelPools';
+import { BACKPACK_TRANSPORTS } from './backpackTransports';
 import { RAKHSH_CARRIERS, isRawCarrier, needsPeerIp } from './rakhshCarriers';
 import { useNodesQuery } from '@/api/queries/useNodesQuery';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
@@ -59,20 +60,6 @@ import { ClipboardManager, SizeFormatter } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,30}$/;
-const BACKPACK_TRANSPORTS = [
-  'tcp',
-  'tcpmux',
-  'stealth',
-  'ws',
-  'wss',
-  'wsmux',
-  'wssmux',
-  'kcp',
-  'quic',
-  'udp',
-  'xdi',
-  'pck',
-].map((value) => ({ value, label: value }));
 
 const RAKHSH_FORWARD_PLACEHOLDER = '443=127.0.0.1:2096';
 
@@ -80,9 +67,7 @@ interface PortalFormValues {
   name: string;
   address: string;
   port: number;
-  engine: 'xray' | 'backpack' | 'rakhsh';
-  security: 'reality' | 'none';
-  serverName?: string;
+  engine: 'backpack' | 'rakhsh';
   routeInbounds?: string[];
   nodeId?: number;
   transport: string;
@@ -95,13 +80,12 @@ interface PortalFormValues {
 
 function TunnelStatusCell({ tunnel }: { tunnel: ServerTunnel }) {
   const { t } = useTranslation();
-  // Xray tunnels are tested from the entry end; BackPack and Rakhsh report their own state on both ends.
-  const testable =
-    tunnel.role === 'portal' || tunnel.engine === 'backpack' || tunnel.engine === 'rakhsh';
+  // Management riders are tested through their node's status; every other tunnel reports its own state.
+  const testable = !tunnel.managePort;
   const { data, isLoading, error } = useTunnelStatus(tunnel.id, testable && tunnel.enable);
 
   if (!testable) {
-    return <Typography.Text type="secondary">{t('pages.tunnels.statusExitOnly')}</Typography.Text>;
+    return <Typography.Text type="secondary">—</Typography.Text>;
   }
   if (!tunnel.enable) return <Typography.Text type="secondary">—</Typography.Text>;
   if (isLoading) return <Spin size="small" />;
@@ -154,7 +138,6 @@ export default function TunnelsPage() {
   const [saving, setSaving] = useState(false);
   const [portalForm] = Form.useForm<PortalFormValues>();
   const [importForm] = Form.useForm<{ link: string; exitOutbound?: string }>();
-  const security = Form.useWatch('security', portalForm);
   const engine = Form.useWatch('engine', portalForm);
   const mode = Form.useWatch('mode', portalForm) ?? 'reverse';
   const chosenNode = Form.useWatch('nodeId', portalForm);
@@ -250,25 +233,17 @@ export default function TunnelsPage() {
               mode: values.mode,
               options: cleanOptions(values.options),
             }
-          : values.engine === 'backpack'
-            ? {
-                ...common,
-                engine: 'backpack',
-                transport: direct ? '' : values.transport,
-                fallbackTransports: direct ? [] : (values.fallbackTransports ?? []),
-                forwardPorts: values.forwardPorts ?? [],
-                acceptUdp: values.acceptUdp ?? false,
-                routeInbounds: direct ? [] : (values.routeInbounds ?? []),
-                mode: values.mode,
-                options: cleanOptions(values.options),
-              }
-            : {
-                ...common,
-                engine: 'xray',
-                security: values.security,
-                serverName: values.security === 'reality' ? (values.serverName ?? '').trim() : '',
-                routeInbounds: values.routeInbounds ?? [],
-              };
+          : {
+              ...common,
+              engine: 'backpack',
+              transport: direct ? '' : values.transport,
+              fallbackTransports: direct ? [] : (values.fallbackTransports ?? []),
+              forwardPorts: values.forwardPorts ?? [],
+              acceptUdp: values.acceptUdp ?? false,
+              routeInbounds: direct ? [] : (values.routeInbounds ?? []),
+              mode: values.mode,
+              options: cleanOptions(values.options),
+            };
       const ok = report(await create(request));
       if (ok) {
         setPortalOpen(false);
@@ -370,16 +345,9 @@ export default function TunnelsPage() {
       render: (_, row) => <Typography.Text code>{`${row.address}:${row.port}`}</Typography.Text>,
     },
     {
-      title: t('pages.tunnels.security'),
-      dataIndex: 'security',
-      render: (value: string, row) =>
-        row.engine === 'backpack' || row.engine === 'rakhsh' ? (
-          <Tag>{row.transport}</Tag>
-        ) : value === 'reality' ? (
-          <Tag>{t('pages.tunnels.securityReality')}</Tag>
-        ) : (
-          <Tag color="warning">{t('pages.tunnels.securityNone')}</Tag>
-        ),
+      title: t('pages.tunnels.transport'),
+      dataIndex: 'transport',
+      render: (_, row) => <Tag>{row.transport}</Tag>,
     },
     {
       title: t('pages.tunnels.routeInbounds'),
@@ -544,9 +512,8 @@ export default function TunnelsPage() {
             portalForm.setFieldValue('transport', changed.engine === 'rakhsh' ? 'tcp' : 'tcpmux');
           }}
           initialValues={{
-            engine: 'xray',
+            engine: 'backpack',
             mode: 'reverse',
-            security: 'reality',
             port: 8443,
             routeInbounds: [],
             transport: 'tcpmux',
@@ -583,7 +550,6 @@ export default function TunnelsPage() {
           <Form.Item name="engine" label={t('pages.tunnels.engine')}>
             <Radio.Group
               options={[
-                { value: 'xray', label: t('pages.tunnels.engineXray') },
                 { value: 'backpack', label: t('pages.tunnels.engineBackpack') },
                 { value: 'rakhsh', label: t('pages.tunnels.engineRakhsh') },
               ]}
@@ -663,7 +629,7 @@ export default function TunnelsPage() {
                 pinned={rakhshNeedsPeerIp ? ['peer_ip'] : []}
               />
             </>
-          ) : engine === 'backpack' ? (
+          ) : (
             <>
               {direct ? (
                 carrierOption && <TunnelOptionField option={carrierOption} required />
@@ -710,27 +676,6 @@ export default function TunnelsPage() {
                 mode={mode}
                 skip={direct ? ['carrier', 'local_ip', 'peer_ip'] : []}
               />
-            </>
-          ) : (
-            <>
-              <Form.Item name="security" label={t('pages.tunnels.security')}>
-                <Select
-                  options={[
-                    { value: 'reality', label: t('pages.tunnels.securityReality') },
-                    { value: 'none', label: t('pages.tunnels.securityNone') },
-                  ]}
-                />
-              </Form.Item>
-              {security !== 'none' && (
-                <Form.Item
-                  name="serverName"
-                  label={t('pages.tunnels.serverName')}
-                  extra={t('pages.tunnels.serverNameHint')}
-                  rules={[{ required: true, whitespace: true }]}
-                >
-                  <Input placeholder="www.example.com" autoComplete="off" />
-                </Form.Item>
-              )}
             </>
           )}
           {!direct && (

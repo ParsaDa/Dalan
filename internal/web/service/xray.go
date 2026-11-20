@@ -18,7 +18,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tor"
 	"github.com/mhsanaei/3x-ui/v3/internal/tuic"
-	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/tunnelroute"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/json_util"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/maskcompat"
 	"github.com/mhsanaei/3x-ui/v3/internal/xray"
@@ -498,11 +498,11 @@ func (s *XrayService) GetXrayConfig() (*xray.Config, error) {
 
 	if tunnels, err := (&TunnelService{}).GetAll(); err != nil {
 		logger.Warning("read tunnels for config injection failed:", err)
-	} else if err := xrayreverse.Apply(xrayConfig, tunnels); err != nil {
+	} else if err := tunnelroute.Apply(xrayConfig, tunnels); err != nil {
 		logger.Warning("tunnel injection skipped:", err)
 	} else if pools, err := (&TunnelPoolService{}).List(); err != nil {
 		logger.Warning("read tunnel pools for config injection failed:", err)
-	} else if err := xrayreverse.ApplyPools(xrayConfig, tunnels, pools); err != nil {
+	} else if err := tunnelroute.ApplyPools(xrayConfig, tunnels, pools); err != nil {
 		logger.Warning("tunnel pool injection skipped:", err)
 	}
 

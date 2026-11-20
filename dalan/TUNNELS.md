@@ -14,29 +14,29 @@ Both servers need Dalan.
 | Name | Short, lower-case: `de1` |
 | Address | This server's public IP or domain, as the exit server will reach it |
 | Port | A free port on this server; open it in the firewall |
-| Security | REALITY (recommended) |
-| Server name (SNI) | A real HTTPS site reachable from this server; the tunnel imitates it |
+| Engine | BackPack (default) or Rakhsh |
+| Transport | How the tunnel looks on the wire; `wssmux` for BackPack, `wss` for Rakhsh |
 | Inbounds that leave through this tunnel | The inbounds of this server whose users should exit from the other server |
 
 Then press the copy button on the tunnel's row to copy its **setup link**.
 
 **On the exit server**, open **Tunnels → Import link**, paste the link, and confirm. Leave *Exit outbound* empty to leave directly from that server, or name one of its outbounds (for example a WARP outbound).
 
-Xray restarts on each server within 30 seconds and the exit server connects.
+The engine starts on each server within 30 seconds and the exit server connects.
 
 ## What to know
 
-- The setup link holds the tunnel's secret. Treat it like a password. It does not contain the entry server's REALITY private key.
-- "None" security sends the tunnel unencrypted and recognisable. It exists for links that are already private; do not use it across a filtered network.
+- The setup link holds the tunnel's secret. Treat it like a password. It does not contain the entry server's own private key.
+- A transport such as `tcp` is plain and recognisable. Across a filtered network use a disguised one (`wssmux`, `wss`, `quic`).
 - The entry end appears in Xray as an outbound named `tunnel-<name>`. Routing rules and balancers can use that tag.
 - For traffic that arrives through a tunnel, the exit server refuses private and loopback destinations. Users cannot reach the exit server's own network.
 - Deleting a tunnel on one server does not delete it on the other.
 
-## Three engines
+## Two engines
 
-**Xray (built in)** is the default. It needs nothing installed, works everywhere Dalan runs, and routes whole inbounds of the entry server through the tunnel.
+The Xray tunnel engine of earlier versions was removed in 0.6.0; see "Upgrading" below.
 
-**BackPack** is for links that are filtered hard or lose packets. It is a separate program that Dalan installs and runs for you. Like an Xray tunnel it appears in Xray as an outbound named `tunnel-<name>` that routing rules, balancers and inbound routes can use. It can also open raw ports on the entry server and carry them to the exit server.
+**BackPack** is the default, for links that are filtered hard or lose packets. It is a separate program that Dalan installs and runs for you. It appears in Xray as an outbound named `tunnel-<name>` that routing rules, balancers and inbound routes can use. It can also open raw ports on the entry server and carry them to the exit server.
 
 **Rakhsh** is a Rust tunnel core that Dalan installs the same way. It carries several lanes at once over one or more links (each link has its own carrier and address), encrypts every record, can resume a broken session and offers many carriers, from `tcp`, `wss` and `quic` to raw ones. See "A Rakhsh tunnel" below.
 
@@ -79,7 +79,7 @@ What it does not do: Dalan does not switch carriers by measured packet loss (the
 
 ### Reverse and direct
 
-Every tunnel is labelled **Reverse** or **Direct** in the Tunnels page (the Xray ones are always reverse), and in the Outbounds table.
+Every tunnel is labelled **Reverse** or **Direct** in the Tunnels page and in the Outbounds table.
 
 - **Reverse** (the default): the exit server dials the entry server, so the entry server never needs to reach the exit server. It passes filtering that only blocks inbound connections, works with CDN transports (`ws`, `wss`) and carries Xray traffic.
 - **Direct** (BackPack layer 3, BackPack 1.9.0 and newer): the entry server dials the exit server and they exchange IP packets through an encrypted GRE link. It is for games and anything that needs the lowest ping, because the packets are not wrapped in a TCP stream. Choose **BackPack**, then **Direct**, then a *carrier* (`udp`, `pck`, `quic`, `sni` or `xdi`) and the ports to forward (`27015`, or `27015=10.10.7.2:27015`, with *Accept UDP* for UDP games). The panel picks a private `/30` in `10.10.0.0/16` for the link and shows nothing about it; the two ends get mirrored addresses.
@@ -96,11 +96,7 @@ The pencil in the tunnel list changes a tunnel without deleting it. On an entry 
 
 ## Status
 
-On the entry server the Tunnels page tests each enabled tunnel once a minute by sending a real request through it. A working tunnel shows **Connected**, the round-trip time, and the country and address the request left from. **Down** means the request did not come back; hover it for the reason.
-
-The exit server cannot test a tunnel by itself, so its rows say so.
-
-The test uses a loopback port per tunnel (62900 + the tunnel's id). If an inbound already uses that port, that tunnel is not tested.
+The Tunnels page shows the state each engine reports for every enabled tunnel, on both servers: **Connected** (BackPack has no latency figure; Rakhsh shows how many lanes are up) or **Down**, with the engine's reason on hover. A node's management tunnel is not tested on its own; its state is the node's status in the node list.
 
 ## Nodes that dial in
 
@@ -116,11 +112,12 @@ Both servers need Dalan.
    | This panel's address | The panel as the new node can reach it, with its path: `https://panel.example.com:2053/secret/` |
    | Address | This server's public IP or domain, as the node will dial the tunnel |
    | Port | A free port on this server for this node's tunnel; open it in the firewall |
-   | Security, Server name (SNI) | As for any tunnel; REALITY is recommended |
+   | Engine | BackPack (default) or Rakhsh |
+   | Transport | `wssmux` for BackPack, `wss` for Rakhsh unless you pick another |
 
-   Instead of a new tunnel you can pick **Tunnel that carries it**: an existing entry tunnel. The node is then managed over that tunnel, with the same address, port and disguise and nothing new to open. On an Xray tunnel the node gets a second client on the tunnel's own port; on a BackPack tunnel (which the node must already have) the panel adds a loopback forward to the node's panel port. A tunnel that carries a node cannot be deleted until that node is removed; if it goes down, the node's management goes down with it.
+   **How should it connect?** A new tunnel for this node (the default) makes an entry tunnel named after the node, on its own port. Its management rides on that tunnel as a loopback forward to the node's panel port, so one port serves both, and the tunnel can be picked as an exit in Outbounds, Routing and the inbound form as soon as the node has joined. Deleting that tunnel removes the node's end of it too; it cannot be deleted while the node exists.
 
-   **Also make a tunnel for this node's traffic** (on by default for a new tunnel) adds an ordinary entry tunnel named after the node, on the same port and with the same disguise. The node's management rides on it, so one port serves both, and the tunnel can be picked as an exit in Outbounds, Routing and the inbound form as soon as the node has joined. Deleting that tunnel removes the node's end of it too; it cannot be deleted while the node exists.
+   Instead you can pick an existing entry tunnel (the one users ride is marked). The node is then managed over that tunnel, with the same engine, address, port and disguise and nothing new to open; the node must already have its end of that tunnel. A tunnel that carries a node cannot be deleted until that node is removed; if it goes down, the node's management goes down with it.
 
 2. Press **Create command** and copy the command. It is shown once, works once and expires after 30 minutes.
 3. On the node, run it:
@@ -129,7 +126,7 @@ Both servers need Dalan.
    dalan enrol 'dalan://enrol/...'
    ```
 
-   Xray restarts on the node and the node appears online in the main panel's node list within a minute.
+   The node starts its tunnel and appears online in the main panel's node list within a minute.
 
 What to know:
 
@@ -194,4 +191,7 @@ Everything a BackPack or Rakhsh process prints goes to the panel log as `BackPac
 - A direct tunnel as an Xray outbound, and a direct tunnel through a CDN (neither is possible with a layer-3 link).
 - BackPack's `spoof` carrier and its Naive and Xray helper sections.
 - One shared port for the management tunnels of all nodes.
-- Xray tunnels over transports other than REALITY on TCP.
+
+## Upgrading from a version with Xray tunnels
+
+Version 0.6.0 removes the Xray tunnel engine. On the first start after the upgrade Dalan deletes every Xray tunnel, the management tunnels that rode on them and their places in spare pools; traffic that went through them stops until you make a BackPack or Rakhsh tunnel. A node that joined through an Xray tunnel stays in the node list with a notice, **must be enrolled again**. Press **Enrol again**, run the new command on the node, and the same node record (its inbounds and history) is pointed at the new tunnel. The node's engine binary has to be installed first (`x-ui install-engines`).

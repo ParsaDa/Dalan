@@ -393,7 +393,8 @@ func assertEveryRemoteCallCovered(t *testing.T, covered map[string]bool) {
 // A node-sync token drives inbounds only; managing tunnels needs an admin or node-admin token.
 func TestMasterNodeTunnelContract(t *testing.T) {
 	portal, err := tunnel.NewPortal(tunnel.PortalSpec{
-		Name: "tr1", Address: "203.0.113.10", Port: 8443, Security: model.TunnelSecurityNone,
+		Name: "tr1", Address: "203.0.113.10", Port: 8443,
+		Engine: model.TunnelEngineBackpack, Transport: "wssmux",
 	})
 	if err != nil {
 		t.Fatalf("NewPortal: %v", err)

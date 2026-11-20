@@ -59,24 +59,6 @@ func (s *TunnelService) freeManagePort() (int, error) {
 	return 0, fmt.Errorf("no free management port between %d and %d", managePortFirst, managePortLast)
 }
 
-// CreateManagementPortal makes the listening end of a node's management tunnel on a free loopback port.
-func (s *TunnelService) CreateManagementPortal(spec tunnel.PortalSpec) (*model.ServerTunnel, error) {
-	portal, err := tunnel.NewPortal(spec)
-	if err != nil {
-		return nil, err
-	}
-	if portal.Engine != model.TunnelEngineXray {
-		return nil, errors.New("a management tunnel runs on the Xray engine")
-	}
-	if portal.ManagePort, err = s.freeManagePort(); err != nil {
-		return nil, err
-	}
-	if err := s.create(&portal); err != nil {
-		return nil, err
-	}
-	return &portal, nil
-}
-
 const nodeCallTimeout = 20 * time.Second
 
 func (s *TunnelService) remoteFor(nodeID int) (*runtime.Remote, error) {
@@ -155,14 +137,14 @@ func (s *TunnelService) deleteNodeEnd(t *model.ServerTunnel) error {
 	return nil
 }
 
-// CreateManagementRider opens a node's management channel on an existing tunnel: same port and
-// identity, a client and a loopback port of its own, so no second address gets exposed.
+// CreateManagementRider opens a node's management channel on an existing tunnel: the same address and
+// port, and a loopback port of its own on this server, so no second address gets exposed.
 func (s *TunnelService) CreateManagementRider(parentId int, name string) (*model.ServerTunnel, error) {
 	parent, err := s.get(parentId)
 	if err != nil {
 		return nil, err
 	}
-	if parent.Role != model.TunnelRolePortal || parent.ManagePort > 0 || parent.ParentId > 0 {
+	if parent.Role != model.TunnelRolePortal || parent.ManagePort > 0 || parent.ParentId > 0 || !model.ExternalEngine(parent.Engine) {
 		return nil, errors.New("a node's management can only ride on the entry end of an ordinary tunnel")
 	}
 	if parent.Mode == model.TunnelModeDirect {
@@ -170,9 +152,7 @@ func (s *TunnelService) CreateManagementRider(parentId int, name string) (*model
 	}
 	rider := model.ServerTunnel{
 		Name: name, Role: model.TunnelRolePortal, Engine: parent.Engine, Enable: true,
-		Address: parent.Address, Port: parent.Port, UUID: uuid.NewString(), Security: parent.Security,
-		ServerName: parent.ServerName, RealityPublicKey: parent.RealityPublicKey, ShortId: parent.ShortId,
-		ParentId: parent.Id,
+		Address: parent.Address, Port: parent.Port, UUID: uuid.NewString(), ParentId: parent.Id,
 	}
 	if rider.ManagePort, err = s.freeManagePort(); err != nil {
 		return nil, err
@@ -181,37 +161,6 @@ func (s *TunnelService) CreateManagementRider(parentId int, name string) (*model
 		return nil, err
 	}
 	return &rider, nil
-}
-
-// ImportManagementBridge stores the dialling end that delivers to this panel's port, replacing any earlier one.
-func (s *TunnelService) ImportManagementBridge(link string, panelPort int) (*model.ServerTunnel, error) {
-	bridge, err := tunnel.ParseSetupLink(link)
-	if err != nil {
-		return nil, err
-	}
-	if bridge.Engine != model.TunnelEngineXray {
-		return nil, errors.New("a management tunnel runs on the Xray engine")
-	}
-	bridge.ManagePort = panelPort
-	// A node answers to one main panel, so the older management channel is replaced, or kept if this one fails.
-	err = database.GetDB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("role = ? AND manage_port > 0", model.TunnelRoleBridge).Delete(&model.ServerTunnel{}).Error; err != nil {
-			return err
-		}
-		var sameName int64
-		if err := tx.Model(&model.ServerTunnel{}).Where("name = ?", bridge.Name).Count(&sameName).Error; err != nil {
-			return err
-		}
-		if sameName > 0 {
-			return fmt.Errorf("a tunnel with the name %q already exists", bridge.Name)
-		}
-		return tx.Create(&bridge).Error
-	})
-	if err != nil {
-		return nil, err
-	}
-	s.applyChange()
-	return &bridge, nil
 }
 
 // DeleteNodeTunnel removes the entry tunnel made for a node's traffic; one already gone is not an error.

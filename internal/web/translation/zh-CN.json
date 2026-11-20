@@ -2530,11 +2530,6 @@
       "address": "Address",
       "addressHint": "The address the other server will dial: this server's public IP or domain.",
       "port": "Port",
-      "security": "Security",
-      "securityReality": "REALITY",
-      "securityNone": "None (not encrypted)",
-      "serverName": "Server name (SNI)",
-      "serverNameHint": "A real HTTPS site this tunnel imitates, for example a large well-known site reachable from this server.",
       "routeInbounds": "Inbounds that leave through this tunnel",
       "routeInboundsHint": "Traffic of the selected inbounds on this server exits from the other server.",
       "exitOutbound": "Exit outbound",
@@ -2549,10 +2544,8 @@
       "status": "Status",
       "statusConnected": "Connected",
       "statusDown": "Down",
-      "statusExitOnly": "Tested from the entry server",
       "statusExit": "Exits from",
       "engine": "Engine",
-      "engineXray": "Xray (built in)",
       "engineBackpack": "BackPack",
       "transport": "Transport",
       "fallbackTransports": "Fallback transports",
@@ -2663,13 +2656,15 @@
         "add": "Create node enrolment",
         "del": "Cancel enrolment"
       },
-      "tunnel": "Tunnel that carries it",
+      "tunnel": "How should it connect?",
       "tunnelNew": "A new tunnel only for this node",
+      "tunnelCarriesUsers": "carries your users",
       "tunnelHint": "Pick an existing tunnel to manage the node over it. Nothing else is opened: same address, port and disguise, and the node needs no second tunnel.",
-      "withTunnel": "Also make a tunnel for this node’s traffic",
-      "withTunnelHint": "Makes an ordinary tunnel named after the node on the same port, so its traffic can be routed through it. The management channel rides on it, so no second address is exposed.",
       "installTitle": "On a server without Dalan, this installs it and joins this panel in one go:",
-      "copyInstall": "Copy install command"
+      "copyInstall": "Copy install command",
+      "needsReenrol": "{name} must be enrolled again",
+      "needsReenrolHint": "This node joined through an Xray tunnel, which Dalan no longer has. Enrol it again to bring it back; its settings and inbounds stay.",
+      "reenrol": "Enrol again"
     },
     "tor": {
       "toasts": {

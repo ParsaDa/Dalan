@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
-	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/xrayreverse"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/tunnelroute"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/json_util"
 	"github.com/mhsanaei/3x-ui/v3/internal/xray"
 )
@@ -28,7 +28,7 @@ func Apply(cfg *xray.Config, exits []model.TorExit) error {
 			return fmt.Errorf("tor: outbounds section is unparsable: %w", err)
 		}
 	}
-	if err := xrayreverse.EnableOutboundStats(cfg); err != nil {
+	if err := tunnelroute.EnableOutboundStats(cfg); err != nil {
 		return err
 	}
 	raw, err := json.Marshal(append(outbounds, added...))

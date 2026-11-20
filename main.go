@@ -207,10 +207,12 @@ func runWebServer() {
 			}
 			log.Println("Sub server restarted successfully.")
 		case sys.SIGUSR1:
-			logger.Info("Received USR1 signal, restarting xray-core...")
-			err := server.RestartXray()
-			if err != nil {
+			logger.Info("Received USR1 signal, restarting xray-core and tunnel engines...")
+			if err := server.RestartXray(); err != nil {
 				logger.Error("Failed to restart xray-core:", err)
+			}
+			if err := server.ReconcileEngines(); err != nil {
+				logger.Error("Failed to apply tunnel engines:", err)
 			}
 
 		default:

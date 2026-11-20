@@ -2,10 +2,8 @@
 package tunnel
 
 import (
-	"crypto/ecdh"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,8 +22,7 @@ import (
 
 const (
 	setupLinkPrefix = "dalan://tunnel/"
-	// Version 2 links describe BackPack tunnels; a panel that only knows version 1 refuses them by number.
-	setupLinkXray     = 1
+	// Version 1 was the Xray tunnel and is gone; a link that old is refused by number.
 	setupLinkBackpack = 2
 	// Version 3 carries BackPack options and the direct mode; a panel that stops at version 2 refuses it by number.
 	setupLinkBackpackOptions = 3
@@ -35,19 +32,16 @@ const (
 
 var errNotASetupLink = errors.New("not a Dalan tunnel link")
 
-// Names become Xray tags, so they are kept to what a tag and a file name both accept.
+// Names become engine tags, so they are kept to what a tag and a file name both accept.
 var namePattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,30}$`)
 
 // PortalSpec is what an operator chooses when creating the listening end of a tunnel.
 type PortalSpec struct {
-	Name       string
-	Address    string
-	Port       int
-	Security   string
-	ServerName string
+	Name    string
+	Address string
+	Port    int
 
-	// Engine is "xray" when empty. The fields below belong to the BackPack and Rakhsh engines;
-	// for Rakhsh, Transport is the carrier.
+	// Engine is "backpack" when empty. For Rakhsh, Transport is the carrier.
 	Engine             string
 	Transport          string
 	FallbackTransports []string
@@ -59,15 +53,11 @@ type PortalSpec struct {
 }
 
 type setupPayload struct {
-	Version    int    `json:"v"`
-	Name       string `json:"name"`
-	Address    string `json:"address"`
-	Port       int    `json:"port"`
-	UUID       string `json:"uuid"`
-	Security   string `json:"security"`
-	ServerName string `json:"serverName,omitempty"`
-	PublicKey  string `json:"publicKey,omitempty"`
-	ShortId    string `json:"shortId,omitempty"`
+	Version int    `json:"v"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	Port    int    `json:"port"`
+	UUID    string `json:"uuid"`
 
 	Transport          string         `json:"transport,omitempty"`
 	FallbackTransports []string       `json:"fallbackTransports,omitempty"`
@@ -88,16 +78,6 @@ func validateEndpoint(name, address string, port int) error {
 		return errors.New("tunnel address is required")
 	case port < 1 || port > 65535:
 		return fmt.Errorf("tunnel port %d is out of range", port)
-	}
-	return nil
-}
-
-func validateXray(security, serverName string) error {
-	switch {
-	case security != model.TunnelSecurityNone && security != model.TunnelSecurityReality:
-		return fmt.Errorf("tunnel security %q is not supported", security)
-	case security == model.TunnelSecurityReality && strings.TrimSpace(serverName) == "":
-		return errors.New("a REALITY tunnel needs a server name")
 	}
 	return nil
 }
@@ -150,18 +130,11 @@ func NewPortal(spec PortalSpec) (model.ServerTunnel, error) {
 		return model.ServerTunnel{}, err
 	}
 	portal := model.ServerTunnel{
-		Name: spec.Name, Role: model.TunnelRolePortal, Engine: model.TunnelEngineXray, Enable: true,
+		Name: spec.Name, Role: model.TunnelRolePortal, Engine: model.TunnelEngineBackpack, Enable: true,
 		Address: strings.TrimSpace(spec.Address), Port: spec.Port, UUID: uuid.NewString(),
 	}
 	switch spec.Engine {
-	case "", model.TunnelEngineXray:
-		if err := validateXray(spec.Security, spec.ServerName); err != nil {
-			return model.ServerTunnel{}, err
-		}
-		portal.Security = spec.Security
-	case model.TunnelEngineBackpack:
-		portal.Engine = model.TunnelEngineBackpack
-		portal.Security = model.TunnelSecurityNone
+	case "", model.TunnelEngineBackpack:
 		portal.ForwardPorts, portal.AcceptUDP = spec.ForwardPorts, spec.AcceptUDP
 		portal.Mode = model.TunnelModeReverse
 		portal.Options = maps.Clone(spec.Options)
@@ -197,31 +170,10 @@ func NewPortal(spec PortalSpec) (model.ServerTunnel, error) {
 	default:
 		return model.ServerTunnel{}, fmt.Errorf("tunnel engine %q is not supported", spec.Engine)
 	}
-	if len(spec.Options) > 0 || spec.Mode == model.TunnelModeDirect {
-		return model.ServerTunnel{}, errors.New("options and the direct mode belong to the BackPack engine")
-	}
-	if spec.Security == model.TunnelSecurityReality {
-		key, err := ecdh.X25519().GenerateKey(rand.Reader)
-		if err != nil {
-			return model.ServerTunnel{}, err
-		}
-		shortID := make([]byte, 8)
-		if _, err := rand.Read(shortID); err != nil {
-			return model.ServerTunnel{}, err
-		}
-		portal.ServerName = strings.TrimSpace(spec.ServerName)
-		portal.RealityPrivateKey = base64.RawURLEncoding.EncodeToString(key.Bytes())
-		portal.RealityPublicKey = base64.RawURLEncoding.EncodeToString(key.PublicKey().Bytes())
-		portal.ShortId = hex.EncodeToString(shortID)
-	}
-	return portal, nil
 }
 
 func newRakhshPortal(portal model.ServerTunnel, spec PortalSpec) (model.ServerTunnel, error) {
-	if spec.Security == model.TunnelSecurityReality || spec.ServerName != "" {
-		return model.ServerTunnel{}, errors.New("REALITY belongs to the Xray engine; Rakhsh sets its server name with the sni option")
-	}
-	portal.Engine, portal.Security = model.TunnelEngineRakhsh, model.TunnelSecurityNone
+	portal.Engine = model.TunnelEngineRakhsh
 	portal.Transport = spec.Transport
 	portal.ForwardPorts = spec.ForwardPorts
 	portal.Options = maps.Clone(spec.Options)
@@ -270,12 +222,9 @@ func SetupLink(portal model.ServerTunnel) (string, error) {
 		return "", errors.New("a setup link can only be made from the portal end of a tunnel")
 	}
 	payload := setupPayload{
-		Version: setupLinkXray, Name: portal.Name, Address: portal.Address, Port: portal.Port,
-		UUID: portal.UUID, Security: portal.Security, ServerName: portal.ServerName,
-		PublicKey: portal.RealityPublicKey, ShortId: portal.ShortId,
+		Version: setupLinkBackpack, Name: portal.Name, Address: portal.Address, Port: portal.Port, UUID: portal.UUID,
 	}
 	if portal.Engine == model.TunnelEngineBackpack {
-		payload.Version = setupLinkBackpack
 		payload.Transport, payload.FallbackTransports = portal.Transport, portal.FallbackTransports
 		payload.RelayPort = portal.RelayPort
 		if portal.Mode == model.TunnelModeDirect || len(portal.Options) > 0 {
@@ -325,24 +274,15 @@ func ParseSetupLink(link string) (model.ServerTunnel, error) {
 		return model.ServerTunnel{}, errors.New("tunnel link has no valid uuid")
 	}
 	bridge := model.ServerTunnel{
-		Name: p.Name, Role: model.TunnelRoleBridge, Engine: model.TunnelEngineXray, Enable: true,
-		Address: p.Address, Port: p.Port, UUID: p.UUID, Security: p.Security,
+		Name: p.Name, Role: model.TunnelRoleBridge, Enable: true,
+		Address: p.Address, Port: p.Port, UUID: p.UUID,
 	}
 	switch p.Version {
-	case setupLinkXray:
-		if err := validateXray(p.Security, p.ServerName); err != nil {
-			return model.ServerTunnel{}, err
-		}
-		if p.Security == model.TunnelSecurityReality && (p.PublicKey == "" || p.ShortId == "") {
-			return model.ServerTunnel{}, errors.New("tunnel link is missing its REALITY public key or short id")
-		}
-		bridge.ServerName, bridge.RealityPublicKey, bridge.ShortId = p.ServerName, p.PublicKey, p.ShortId
 	case setupLinkBackpack:
 		if err := validateBackpackTransports(p.Transport, p.FallbackTransports); err != nil {
 			return model.ServerTunnel{}, err
 		}
 		bridge.Engine = model.TunnelEngineBackpack
-		bridge.Security = model.TunnelSecurityNone
 		bridge.Transport, bridge.FallbackTransports = p.Transport, p.FallbackTransports
 		if p.RelayPort != 0 && (p.RelayPort < backpack.RelayPortMin || p.RelayPort > backpack.RelayPortMax) {
 			return model.ServerTunnel{}, fmt.Errorf("tunnel link has a relay port outside %d-%d", backpack.RelayPortMin, backpack.RelayPortMax)
@@ -350,7 +290,6 @@ func ParseSetupLink(link string) (model.ServerTunnel, error) {
 		bridge.RelayPort = p.RelayPort
 	case setupLinkBackpackOptions:
 		bridge.Engine = model.TunnelEngineBackpack
-		bridge.Security = model.TunnelSecurityNone
 		bridge.Mode, bridge.Options = model.TunnelModeReverse, p.Options
 		switch p.Mode {
 		case "", model.TunnelModeReverse:
@@ -378,22 +317,19 @@ func ParseSetupLink(link string) (model.ServerTunnel, error) {
 	case setupLinkRakhsh:
 		return parseRakhshLink(bridge, p)
 	default:
-		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands versions %d to %d", p.Version, setupLinkXray, setupLinkRakhsh)
+		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands versions %d to %d", p.Version, setupLinkBackpack, setupLinkRakhsh)
 	}
 	return bridge, nil
 }
 
 func parseRakhshLink(bridge model.ServerTunnel, p setupPayload) (model.ServerTunnel, error) {
-	if p.PublicKey != "" || p.ShortId != "" || p.ServerName != "" {
-		return model.ServerTunnel{}, errors.New("tunnel link mixes Xray fields into a Rakhsh tunnel")
-	}
 	if p.RelayPort != 0 && (p.RelayPort < backpack.RelayPortMin || p.RelayPort > backpack.RelayPortMax) {
 		return model.ServerTunnel{}, fmt.Errorf("tunnel link has a relay port outside %d-%d", backpack.RelayPortMin, backpack.RelayPortMax)
 	}
 	if p.Mode != "" && p.Mode != model.TunnelModeReverse && p.Mode != model.TunnelModeDirect {
 		return model.ServerTunnel{}, fmt.Errorf("tunnel link has the unknown mode %q", p.Mode)
 	}
-	bridge.Engine, bridge.Security = model.TunnelEngineRakhsh, model.TunnelSecurityNone
+	bridge.Engine = model.TunnelEngineRakhsh
 	bridge.Transport, bridge.RelayPort = p.Transport, p.RelayPort
 	bridge.Mode, bridge.Options = model.TunnelModeReverse, p.Options
 	if p.Mode == model.TunnelModeDirect {

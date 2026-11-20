@@ -1,4 +1,4 @@
-package xrayreverse
+package tunnelroute
 
 import (
 	"encoding/json"

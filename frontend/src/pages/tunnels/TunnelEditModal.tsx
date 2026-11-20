@@ -59,19 +59,17 @@ export default function TunnelEditModal({
                   forwardPorts: values.forwardPorts ?? [],
                   options: cleanOptions(values.options),
                 }
-              : backpack
-                ? {
-                    transport: mode === 'direct' ? '' : values.transport,
-                    fallbackTransports: values.fallbackTransports ?? [],
-                    forwardPorts: values.forwardPorts ?? [],
-                    acceptUdp: values.acceptUdp ?? false,
-                    options: cleanOptions(values.options),
-                  }
-                : { serverName: (values.serverName ?? '').trim() }),
+              : {
+                  transport: mode === 'direct' ? '' : values.transport,
+                  fallbackTransports: values.fallbackTransports ?? [],
+                  forwardPorts: values.forwardPorts ?? [],
+                  acceptUdp: values.acceptUdp ?? false,
+                  options: cleanOptions(values.options),
+                }),
           }
         : {
             exitOutbound: (values.exitOutbound ?? '').trim(),
-            ...(backpack || rakhsh ? { options: cleanOptions(values.options) } : {}),
+            options: cleanOptions(values.options),
           };
       if (await onSubmit(tunnel.id, body)) onClose();
     } finally {
@@ -143,7 +141,7 @@ export default function TunnelEditModal({
                   />
                 </Form.Item>
               </>
-            ) : backpack ? (
+            ) : (
               <>
                 {mode === 'reverse' && (
                   <>
@@ -184,17 +182,6 @@ export default function TunnelEditModal({
                   <Switch />
                 </Form.Item>
               </>
-            ) : (
-              tunnel.security === 'reality' && (
-                <Form.Item
-                  name="serverName"
-                  label={t('pages.tunnels.serverName')}
-                  extra={t('pages.tunnels.serverNameHint')}
-                  rules={[{ required: true, whitespace: true }]}
-                >
-                  <Input autoComplete="off" />
-                </Form.Item>
-              )
             )}
             {(mode === 'reverse' || rakhsh) && (
               <Form.Item

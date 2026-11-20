@@ -65,12 +65,3 @@ func TestNodeManagementRidesAsAnExtraLoopbackForwardOfItsTunnelOnEitherEngine(t 
 		})
 	}
 }
-
-func TestAnXrayTunnelKeepsItsForwardsAndLosesOnlyItsRiders(t *testing.T) {
-	parent := parentOf(model.TunnelEngineXray)
-	rider := model.ServerTunnel{Id: 5, Name: "node-de1", Engine: model.TunnelEngineXray, Enable: true, ParentId: 4, ManagePort: 61005, ManageTarget: 2053}
-	got := engine.WithManagement([]model.ServerTunnel{parent, rider})
-	if len(got) != 1 || len(got[0].ForwardPorts) != 1 {
-		t.Fatalf("got %+v, want the parent alone with its own forward", got)
-	}
-}
