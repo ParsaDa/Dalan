@@ -78,8 +78,7 @@ body.dark {
   --dl-mint-text: #34d399;
   --dl-glow-alpha: 14%;
   --dl-scrim: rgba(8, 8, 10, 0.6);
-  --dl-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 48px -28px rgba(0, 0, 0, 0.7);
+  --dl-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 48px -28px rgba(0, 0, 0, 0.7);
 }
 
 body.light {
@@ -105,8 +104,7 @@ body.light {
   --dl-mint-text: #047a55;
   --dl-glow-alpha: 16%;
   --dl-scrim: rgba(40, 34, 24, 0.35);
-  --dl-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 24px 48px -30px rgba(70, 52, 20, 0.35);
+  --dl-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 24px 48px -30px rgba(70, 52, 20, 0.35);
 }
 
 body[data-effects='full'] {
@@ -122,27 +120,123 @@ body[data-effects='off'] {
 }
 
 /* Accent: fill, line (3:1 for strokes) and text (4.5:1) per theme. */
-body.dark[data-accent='saffron'] { --dl-acc: #FFB020; --dl-acc-line: #FFB020; --dl-acc-text: #FFB020; }
-body.light[data-accent='saffron'] { --dl-acc: #FFB020; --dl-acc-line: #B57A04; --dl-acc-text: #906102; }
-body.dark[data-accent='rose'] { --dl-acc: #FF3D6E; --dl-acc-line: #FF3D6E; --dl-acc-text: #FE6380; }
-body.light[data-accent='rose'] { --dl-acc: #FF3D6E; --dl-acc-line: #F93669; --dl-acc-text: #D3034F; }
-body.dark[data-accent='sun'] { --dl-acc: #FFC83D; --dl-acc-line: #FFC83D; --dl-acc-text: #FFC83D; }
-body.light[data-accent='sun'] { --dl-acc: #FFC83D; --dl-acc-line: #A98006; --dl-acc-text: #866505; }
-body.dark[data-accent='tulip'] { --dl-acc: #F062C8; --dl-acc-line: #F062C8; --dl-acc-text: #F466CC; }
-body.light[data-accent='tulip'] { --dl-acc: #F062C8; --dl-acc-line: #DB4EB5; --dl-acc-text: #BB2D98; }
-body.dark[data-accent='cobalt'] { --dl-acc: #4C8DFF; --dl-acc-line: #4C8DFF; --dl-acc-text: #619AFF; }
-body.light[data-accent='cobalt'] { --dl-acc: #4C8DFF; --dl-acc-line: #4283F4; --dl-acc-text: #2766D4; }
-body.dark[data-accent='iris'] { --dl-acc: #9B8CFF; --dl-acc-line: #9B8CFF; --dl-acc-text: #9D90FE; }
-body.light[data-accent='iris'] { --dl-acc: #9B8CFF; --dl-acc-line: #8675E6; --dl-acc-text: #6C59C7; }
-body.dark[data-accent='lime'] { --dl-acc: #B6F23C; --dl-acc-line: #B6F23C; --dl-acc-text: #B6F23C; }
-body.light[data-accent='lime'] { --dl-acc: #B6F23C; --dl-acc-line: #6A9206; --dl-acc-text: #547500; }
-body.dark[data-accent='cyan'] { --dl-acc: #2CCCE4; --dl-acc-line: #2CCCE4; --dl-acc-text: #2CCCE4; }
-body.light[data-accent='cyan'] { --dl-acc: #2CCCE4; --dl-acc-line: #0494A6; --dl-acc-text: #037685; }
-body.dark[data-accent='amethyst'] { --dl-acc: #C27CF5; --dl-acc-line: #C27CF5; --dl-acc-text: #C680F9; }
-body.light[data-accent='amethyst'] { --dl-acc: #C27CF5; --dl-acc-line: #AC67DE; --dl-acc-text: #904ABF; }
-body.dark[data-accent='ice'] { --dl-acc: #8EC2FF; --dl-acc-line: #8EC2FF; --dl-acc-text: #8EC2FF; }
-body.light[data-accent='ice'] { --dl-acc: #8EC2FF; --dl-acc-line: #5889C3; --dl-acc-text: #3C6DA4; }
-body.dark[data-accent='sand'] { --dl-acc: #E2BE8A; --dl-acc-line: #E2BE8A; --dl-acc-text: #E2BE8A; }
-body.light[data-accent='sand'] { --dl-acc: #E2BE8A; --dl-acc-line: #A3814F; --dl-acc-text: #856533; }
-body.dark[data-accent='steel'] { --dl-acc: #9AA8BC; --dl-acc-line: #9AA8BC; --dl-acc-text: #9AA8BC; }
-body.light[data-accent='steel'] { --dl-acc: #9AA8BC; --dl-acc-line: #7A879A; --dl-acc-text: #5F6C7E; }
+body.dark[data-accent='saffron'] {
+  --dl-acc: #ffb020;
+  --dl-acc-line: #ffb020;
+  --dl-acc-text: #ffb020;
+}
+body.light[data-accent='saffron'] {
+  --dl-acc: #ffb020;
+  --dl-acc-line: #b57a04;
+  --dl-acc-text: #906102;
+}
+body.dark[data-accent='rose'] {
+  --dl-acc: #ff3d6e;
+  --dl-acc-line: #ff3d6e;
+  --dl-acc-text: #fe6380;
+}
+body.light[data-accent='rose'] {
+  --dl-acc: #ff3d6e;
+  --dl-acc-line: #f93669;
+  --dl-acc-text: #d3034f;
+}
+body.dark[data-accent='sun'] {
+  --dl-acc: #ffc83d;
+  --dl-acc-line: #ffc83d;
+  --dl-acc-text: #ffc83d;
+}
+body.light[data-accent='sun'] {
+  --dl-acc: #ffc83d;
+  --dl-acc-line: #a98006;
+  --dl-acc-text: #866505;
+}
+body.dark[data-accent='tulip'] {
+  --dl-acc: #f062c8;
+  --dl-acc-line: #f062c8;
+  --dl-acc-text: #f466cc;
+}
+body.light[data-accent='tulip'] {
+  --dl-acc: #f062c8;
+  --dl-acc-line: #db4eb5;
+  --dl-acc-text: #bb2d98;
+}
+body.dark[data-accent='cobalt'] {
+  --dl-acc: #4c8dff;
+  --dl-acc-line: #4c8dff;
+  --dl-acc-text: #619aff;
+}
+body.light[data-accent='cobalt'] {
+  --dl-acc: #4c8dff;
+  --dl-acc-line: #4283f4;
+  --dl-acc-text: #2766d4;
+}
+body.dark[data-accent='iris'] {
+  --dl-acc: #9b8cff;
+  --dl-acc-line: #9b8cff;
+  --dl-acc-text: #9d90fe;
+}
+body.light[data-accent='iris'] {
+  --dl-acc: #9b8cff;
+  --dl-acc-line: #8675e6;
+  --dl-acc-text: #6c59c7;
+}
+body.dark[data-accent='lime'] {
+  --dl-acc: #b6f23c;
+  --dl-acc-line: #b6f23c;
+  --dl-acc-text: #b6f23c;
+}
+body.light[data-accent='lime'] {
+  --dl-acc: #b6f23c;
+  --dl-acc-line: #6a9206;
+  --dl-acc-text: #547500;
+}
+body.dark[data-accent='cyan'] {
+  --dl-acc: #2ccce4;
+  --dl-acc-line: #2ccce4;
+  --dl-acc-text: #2ccce4;
+}
+body.light[data-accent='cyan'] {
+  --dl-acc: #2ccce4;
+  --dl-acc-line: #0494a6;
+  --dl-acc-text: #037685;
+}
+body.dark[data-accent='amethyst'] {
+  --dl-acc: #c27cf5;
+  --dl-acc-line: #c27cf5;
+  --dl-acc-text: #c680f9;
+}
+body.light[data-accent='amethyst'] {
+  --dl-acc: #c27cf5;
+  --dl-acc-line: #ac67de;
+  --dl-acc-text: #904abf;
+}
+body.dark[data-accent='ice'] {
+  --dl-acc: #8ec2ff;
+  --dl-acc-line: #8ec2ff;
+  --dl-acc-text: #8ec2ff;
+}
+body.light[data-accent='ice'] {
+  --dl-acc: #8ec2ff;
+  --dl-acc-line: #5889c3;
+  --dl-acc-text: #3c6da4;
+}
+body.dark[data-accent='sand'] {
+  --dl-acc: #e2be8a;
+  --dl-acc-line: #e2be8a;
+  --dl-acc-text: #e2be8a;
+}
+body.light[data-accent='sand'] {
+  --dl-acc: #e2be8a;
+  --dl-acc-line: #a3814f;
+  --dl-acc-text: #856533;
+}
+body.dark[data-accent='steel'] {
+  --dl-acc: #9aa8bc;
+  --dl-acc-line: #9aa8bc;
+  --dl-acc-text: #9aa8bc;
+}
+body.light[data-accent='steel'] {
+  --dl-acc: #9aa8bc;
+  --dl-acc-line: #7a879a;
+  --dl-acc-text: #5f6c7e;
+}

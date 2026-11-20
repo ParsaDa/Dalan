@@ -1,0 +1,387 @@
+/* Global Dalan look for the Ant Design pages: glow, glass, controls, motion, effects levels. */
+
+body {
+  background: var(--dl-bg);
+  color: var(--dl-text);
+  transition: background-color var(--dl-d-base);
+}
+
+/* ambient background */
+.dl-bgfx {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dl-glow {
+  position: absolute;
+  width: 980px;
+  height: 980px;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--dl-acc) var(--dl-glow-alpha), transparent),
+    transparent
+  );
+  will-change: transform;
+}
+
+.dl-glow.g1 {
+  top: -420px;
+  inset-inline-start: -260px;
+  animation: dl-drift1 38s var(--dl-e-io) infinite alternate;
+}
+
+.dl-glow.g2 {
+  top: 120px;
+  inset-inline-end: -420px;
+  opacity: 0.75;
+  animation: dl-drift2 46s var(--dl-e-io) infinite alternate;
+}
+
+.dl-glow.g3 {
+  bottom: -560px;
+  inset-inline-start: 30%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, #34d399 7%, transparent),
+    transparent
+  );
+  animation: dl-drift1 52s var(--dl-e-io) infinite alternate-reverse;
+}
+
+@keyframes dl-drift1 {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(140px, 90px, 0);
+  }
+}
+
+@keyframes dl-drift2 {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-120px, 140px, 0);
+  }
+}
+
+body[data-effects='light'] .dl-glow {
+  animation: none;
+}
+
+body[data-effects='off'] .dl-bgfx {
+  display: none;
+}
+
+body.dl-paused .dl-glow {
+  animation-play-state: paused;
+}
+
+/* glass surfaces */
+body .dl-glass,
+body .ant-card {
+  background: var(--dl-glass);
+  border: 1px solid var(--dl-glass-border);
+  border-radius: var(--dl-r-lg);
+  box-shadow: var(--dl-shadow);
+  backdrop-filter: blur(var(--dl-blur)) saturate(1.4);
+}
+
+body .ant-card .ant-card-head {
+  border-bottom-color: var(--dl-line-soft);
+}
+
+body .ant-card .ant-card-head-title {
+  font-weight: 750;
+}
+
+body .ant-table-wrapper .ant-table,
+body .ant-modal .ant-modal-content,
+body .ant-drawer .ant-drawer-content,
+body .ant-popover .ant-popover-inner,
+body .ant-dropdown .ant-dropdown-menu,
+body .ant-select-dropdown {
+  background: var(--dl-glass-dense);
+  backdrop-filter: blur(calc(var(--dl-blur) + 6px)) saturate(1.4);
+}
+
+body .ant-modal .ant-modal-content {
+  border: 1px solid var(--dl-glass-border);
+  border-radius: var(--dl-r-xl);
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.6);
+  padding: 24px;
+}
+
+body .ant-modal-mask,
+body .ant-drawer-mask {
+  background: var(--dl-scrim);
+  backdrop-filter: blur(4px);
+}
+
+body .ant-table-wrapper .ant-table {
+  border: 1px solid var(--dl-glass-border);
+  border-radius: var(--dl-r-lg);
+  overflow: hidden;
+}
+
+body .ant-table-wrapper .ant-table-thead > tr > th {
+  background: transparent;
+  color: var(--dl-muted);
+  font-size: 12px;
+  font-weight: 750;
+  border-bottom: 1px solid var(--dl-glass-border);
+}
+
+body .ant-table-wrapper .ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--dl-line-soft);
+}
+
+body .ant-table-wrapper .ant-table-tbody > tr:hover > td {
+  background: color-mix(in srgb, var(--dl-acc) 6%, transparent);
+}
+
+/* accent-driven controls */
+body .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled) {
+  background: var(--dl-acc);
+  color: var(--dl-on-acc);
+  border-color: transparent;
+  box-shadow: 0 12px 26px -14px var(--dl-acc);
+}
+
+body .ant-btn-primary:not(.ant-btn-dangerous):not(:disabled):hover {
+  background: var(--dl-acc);
+  color: var(--dl-on-acc);
+  box-shadow: 0 14px 30px -12px var(--dl-acc);
+  filter: brightness(1.05);
+}
+
+body .ant-btn {
+  transition:
+    transform var(--dl-d-fast) var(--dl-e-out),
+    box-shadow var(--dl-d-base),
+    background var(--dl-d-base);
+}
+
+body .ant-btn:active {
+  transform: scale(0.97);
+}
+
+body .ant-switch.ant-switch-checked,
+body .ant-switch.ant-switch-checked:hover:not(.ant-switch-disabled) {
+  background: var(--dl-acc);
+}
+
+body .ant-switch.ant-switch-checked .ant-switch-handle::before {
+  background: var(--dl-on-acc);
+}
+
+body .ant-checkbox-checked .ant-checkbox-inner,
+body .ant-radio-checked .ant-radio-inner {
+  background: var(--dl-acc);
+  border-color: var(--dl-acc);
+}
+
+body .ant-checkbox-checked .ant-checkbox-inner::after {
+  border-color: var(--dl-on-acc);
+}
+
+body .ant-radio-checked .ant-radio-inner::after {
+  background: var(--dl-on-acc);
+}
+
+body .ant-tabs .ant-tabs-ink-bar {
+  background: var(--dl-acc);
+  box-shadow: 0 0 14px var(--dl-acc);
+}
+
+body .ant-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--dl-acc-text);
+}
+
+body .ant-segmented {
+  background: var(--dl-glass);
+  border: 1px solid var(--dl-glass-border);
+  border-radius: 13px;
+  backdrop-filter: blur(var(--dl-blur));
+}
+
+body .ant-segmented .ant-segmented-item-selected,
+body .ant-segmented .ant-segmented-thumb {
+  background: var(--dl-surface-hi);
+  color: var(--dl-text);
+}
+
+body .ant-progress .ant-progress-bg {
+  background: linear-gradient(
+    calc(90deg * var(--dl-dir)),
+    color-mix(in srgb, var(--dl-acc-line) 70%, var(--dl-acc)),
+    var(--dl-acc-line)
+  );
+}
+
+body .ant-progress .ant-progress-inner {
+  background: var(--dl-track);
+}
+
+a {
+  color: var(--dl-acc-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--dl-acc-line);
+  outline-offset: 2px;
+}
+
+body .ant-input,
+body .ant-input-affix-wrapper,
+body .ant-input-number,
+body .ant-select:not(.ant-select-customize-input) .ant-select-selector,
+body .ant-picker {
+  background: var(--dl-input);
+  border-color: var(--dl-ctl-border);
+  border-radius: var(--dl-r-sm);
+}
+
+body .ant-input:focus,
+body .ant-input-focused,
+body .ant-input-affix-wrapper-focused,
+body .ant-select-focused .ant-select-selector,
+body .ant-picker-focused {
+  border-color: var(--dl-acc-line);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--dl-acc) 22%, transparent);
+}
+
+body .ant-tag {
+  border-radius: 99px;
+  font-weight: 750;
+}
+
+/* motion helpers */
+@keyframes dl-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dl-route-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes dl-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dl-route {
+  animation: dl-route-in var(--dl-d-slow) var(--dl-e-out) both;
+}
+
+.dl-stagger > * {
+  animation: dl-rise var(--dl-d-slow) var(--dl-e-out) both;
+}
+
+.dl-stagger > :nth-child(1) {
+  animation-delay: 0ms;
+}
+.dl-stagger > :nth-child(2) {
+  animation-delay: 40ms;
+}
+.dl-stagger > :nth-child(3) {
+  animation-delay: 80ms;
+}
+.dl-stagger > :nth-child(4) {
+  animation-delay: 120ms;
+}
+.dl-stagger > :nth-child(5) {
+  animation-delay: 160ms;
+}
+.dl-stagger > :nth-child(6) {
+  animation-delay: 200ms;
+}
+.dl-stagger > :nth-child(7) {
+  animation-delay: 240ms;
+}
+.dl-stagger > :nth-child(8) {
+  animation-delay: 280ms;
+}
+.dl-stagger > :nth-child(9) {
+  animation-delay: 320ms;
+}
+.dl-stagger > :nth-child(10) {
+  animation-delay: 360ms;
+}
+.dl-stagger > :nth-child(11) {
+  animation-delay: 400ms;
+}
+.dl-stagger > :nth-child(12) {
+  animation-delay: 440ms;
+}
+
+/* effects levels */
+body[data-effects='light'] .dl-route,
+body[data-effects='light'] .dl-stagger > * {
+  animation-duration: var(--dl-d-base);
+}
+
+body[data-effects='off'] .dl-route,
+body[data-effects='off'] .dl-stagger > * {
+  animation-name: dl-fade-in;
+  animation-duration: var(--dl-d-fast);
+  animation-delay: 0ms;
+}
+
+body[data-effects='off'] .dl-glass,
+body[data-effects='off'] .ant-card,
+body[data-effects='off'] .ant-segmented {
+  background: var(--dl-surface);
+  backdrop-filter: none;
+}
+
+body[data-effects='off'] .ant-table-wrapper .ant-table,
+body[data-effects='off'] .ant-modal .ant-modal-content,
+body[data-effects='off'] .ant-drawer .ant-drawer-content,
+body[data-effects='off'] .ant-popover .ant-popover-inner,
+body[data-effects='off'] .ant-dropdown .ant-dropdown-menu,
+body[data-effects='off'] .ant-select-dropdown {
+  background: var(--dl-surface);
+  backdrop-filter: none;
+}
+
+body[data-effects='off'] .ant-modal-mask,
+body[data-effects='off'] .ant-drawer-mask {
+  backdrop-filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dl-glow {
+    animation: none !important;
+  }
+
+  .dl-route,
+  .dl-stagger > * {
+    animation-name: dl-fade-in !important;
+    animation-duration: 120ms !important;
+    animation-delay: 0ms !important;
+  }
+}
