@@ -2528,6 +2528,19 @@
         ],
         "type": "object"
       },
+      "CurrentUser": {
+        "description": "CurrentUser is the signed-in admin as the panel header shows it; it never carries the hash.",
+        "properties": {
+          "username": {
+            "example": "admin",
+            "type": "string"
+          }
+        },
+        "required": [
+          "username"
+        ],
+        "type": "object"
+      },
       "EngineRouteChoice": {
         "description": "EngineRouteChoice is one entry the install dialogs offer.",
         "properties": {
@@ -15787,6 +15800,44 @@
                       "type": "string"
                     },
                     "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/setting/user": {
+      "get": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Return the signed-in admin as the panel header greets them. Only the username; the password hash never leaves the server.",
+        "operationId": "get_panel_api_setting_user",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/CurrentUser"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "username": "admin"
                   }
                 }
               }

@@ -452,3 +452,8 @@ type HostGroup struct {
 	ShuffleHost            bool     `json:"shuffleHost"`
 	RandomCount            int      `json:"randomCount" validate:"omitempty,min=1,max=100"`
 }
+
+// CurrentUser is the signed-in admin as the panel header shows it; it never carries the hash.
+type CurrentUser struct {
+	Username string `json:"username" example:"admin"`
+}

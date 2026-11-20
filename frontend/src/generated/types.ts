@@ -583,6 +583,10 @@ export interface ClientsSummary {
   total: number;
 }
 
+export interface CurrentUser {
+  username: string;
+}
+
 export interface EngineRouteChoice {
   kind: string;
   value: string;

@@ -628,6 +628,9 @@ export const EXAMPLES: Record<string, unknown> = {
     "onlineCount": 1,
     "total": 2000
   },
+  "CurrentUser": {
+    "username": "admin"
+  },
   "EngineRouteChoice": {
     "kind": "tor",
     "value": "tor-de",

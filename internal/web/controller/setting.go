@@ -72,6 +72,7 @@ func (a *SettingController) initRouter(g *gin.RouterGroup) {
 	g.POST("/update", a.updateSetting)
 	g.POST("/validateRegex", a.validateRegex)
 	g.POST("/updateUser", a.updateUser)
+	g.GET("/user", a.currentUser)
 	g.POST("/restartPanel", a.restartPanel)
 	g.GET("/getDefaultJsonConfig", a.getDefaultXrayConfig)
 	g.GET("/apiTokens", a.listApiTokens)
@@ -193,6 +194,15 @@ func (a *SettingController) updateSetting(c *gin.Context) {
 }
 
 // updateUser updates the current user's username and password.
+func (a *SettingController) currentUser(c *gin.Context) {
+	user := session.GetLoginUser(c)
+	if user == nil {
+		pureJsonMsg(c, http.StatusUnauthorized, false, "")
+		return
+	}
+	jsonObj(c, entity.CurrentUser{Username: user.Username}, nil)
+}
+
 func (a *SettingController) updateUser(c *gin.Context) {
 	form := &updateUserForm{}
 	err := c.ShouldBind(form)

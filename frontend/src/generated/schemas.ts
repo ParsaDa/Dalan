@@ -2502,6 +2502,19 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "CurrentUser": {
+    "description": "CurrentUser is the signed-in admin as the panel header shows it; it never carries the hash.",
+    "properties": {
+      "username": {
+        "example": "admin",
+        "type": "string"
+      }
+    },
+    "required": [
+      "username"
+    ],
+    "type": "object"
+  },
   "EngineRouteChoice": {
     "description": "EngineRouteChoice is one entry the install dialogs offer.",
     "properties": {

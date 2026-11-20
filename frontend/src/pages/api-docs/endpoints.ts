@@ -2347,6 +2347,13 @@ export const sections: readonly Section[] = [
         body: '{\n  "oldUsername": "admin",\n  "oldPassword": "admin",\n  "newUsername": "newadmin",\n  "newPassword": "newpass"\n}',
       },
       {
+        method: 'GET',
+        path: '/panel/api/setting/user',
+        summary:
+          'Return the signed-in admin as the panel header greets them. Only the username; the password hash never leaves the server.',
+        responseSchema: 'CurrentUser',
+      },
+      {
         method: 'POST',
         path: '/panel/api/setting/restartPanel',
         summary:
