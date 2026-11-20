@@ -27,6 +27,8 @@ import { HttpUtil, LanguageManager } from '@/utils';
 import { FormField, rhfZodValidate } from '@/components/form/rhf';
 import { setMessageInstance } from '@/utils/messageBus';
 import { pauseAnimationsUntilLeave, useTheme } from '@/hooks/useTheme';
+import DalanLogo from '@/components/ui/DalanLogo';
+import PanelBackground from '@/components/ui/PanelBackground';
 import { LoginFormSchema, TwoFactorCodeSchema, type LoginFormValues } from '@/schemas/login';
 import './LoginPage.css';
 
@@ -138,6 +140,7 @@ export default function LoginPage() {
   return (
     <ConfigProvider theme={antdThemeConfig}>
       {messageContextHolder}
+      <PanelBackground />
       <Layout className={pageClass}>
         <Layout.Content className="login-content">
           <div className="login-toolbar">
@@ -185,8 +188,8 @@ export default function LoginPage() {
             ) : (
               <div className="login-card">
                 <div className="brand">
+                  <DalanLogo size={48} />
                   <span className="brand-name">Dalan</span>
-                  <span className="brand-accent" aria-hidden="true" />
                 </div>
                 <h2 className="welcome">
                   <b key={headlineIndex}>{headlineWords[headlineIndex]}</b>

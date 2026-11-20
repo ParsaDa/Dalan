@@ -13,6 +13,7 @@ import {
 import { ClipboardManager, LanguageManager } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
 import { useTheme } from '@/hooks/useTheme';
+import PanelBackground from '@/components/ui/PanelBackground';
 import SubAppsTab from './SubAppsTab';
 import SubConfigsTab from './SubConfigsTab';
 import SubHeader from './SubHeader';
@@ -136,6 +137,7 @@ export default function SubPage() {
   return (
     <ConfigProvider theme={antdThemeConfig} direction={direction}>
       {messageContextHolder}
+      <PanelBackground />
       <Layout className={pageClass} dir={direction}>
         <Layout.Content className="sub-content">
           <Card className="sub-card">

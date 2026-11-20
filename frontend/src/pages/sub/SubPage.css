@@ -533,3 +533,24 @@ a.sub-row-title:hover {
     display: none;
   }
 }
+
+/* Dalan look: the shared glow sits behind a glass card */
+body .subscription-page,
+body .subscription-page.is-dark,
+body .subscription-page.is-dark.is-ultra {
+  --bg-page: transparent;
+  --bg-card: var(--dl-glass);
+  background: transparent;
+}
+
+body .subscription-page .sub-card {
+  border: 1px solid var(--dl-glass-border);
+  border-radius: var(--dl-r-xl);
+  box-shadow: var(--dl-shadow);
+  backdrop-filter: blur(var(--dl-blur)) saturate(1.4);
+}
+
+body[data-effects='off'] .subscription-page .sub-card {
+  background: var(--dl-surface);
+  backdrop-filter: none;
+}
