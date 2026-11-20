@@ -394,3 +394,21 @@ body[data-effects='off'] .ant-drawer-mask {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Value+unit strings keep Latin order inside an RTL page ("30 GB / 250 GB"). */
+[dir='rtl']
+  :is(
+    .ov-tile-detail,
+    .ov-tile-number,
+    .ov-legend-num,
+    .ov-foot-value,
+    .ov-foot-part,
+    .ov-strip-value,
+    .ov-sub
+  ) {
+  unicode-bidi: plaintext;
+}
+
+[dir='rtl'] .ov-tile-detail {
+  text-align: right;
+}

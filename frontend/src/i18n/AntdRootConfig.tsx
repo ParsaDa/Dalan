@@ -4,6 +4,8 @@ import { ConfigProvider } from 'antd';
 import type { ConfigProviderProps } from 'antd/es/config-provider';
 import type { Locale } from 'antd/es/locale';
 
+import { isRtlLanguage } from '@/i18n/direction';
+
 const antdLocaleLoaders: Record<string, () => Promise<{ default: Locale }>> = {
   'ar-EG': () => import('antd/es/locale/ar_EG'),
   'es-ES': () => import('antd/es/locale/es_ES'),
@@ -22,9 +24,11 @@ const antdLocaleLoaders: Record<string, () => Promise<{ default: Locale }>> = {
 
 // Undefined keeps antd's built-in en_US.
 let antdLocale: Locale | undefined;
+let antdDirection: 'ltr' | 'rtl' = 'ltr';
 
 export async function loadAntdLocale(language: string): Promise<void> {
   antdLocale = (await antdLocaleLoaders[language]?.())?.default;
+  antdDirection = isRtlLanguage(language) ? 'rtl' : 'ltr';
 }
 
 // A Form.Item tooltip icon sits inside its <label>, so its "question-circle" name
@@ -35,7 +39,7 @@ const FORM_CONFIG: ConfigProviderProps['form'] = {
 
 export function AntdRootConfig({ children }: { children: ReactNode }) {
   return (
-    <ConfigProvider locale={antdLocale} form={FORM_CONFIG}>
+    <ConfigProvider locale={antdLocale} direction={antdDirection} form={FORM_CONFIG}>
       {children}
     </ConfigProvider>
   );
