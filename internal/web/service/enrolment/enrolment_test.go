@@ -486,3 +486,47 @@ func TestAnEnrolmentRefusesAnUnknownEngineAndLeavesNothingBehind(t *testing.T) {
 		t.Fatal("the refused enrolment left a tunnel behind")
 	}
 }
+
+func TestANodeFlaggedToEnrolAgainKeepsItsRecordWhenItJoinsAgain(t *testing.T) {
+	newDB(t)
+	svc := &Service{}
+	_, first := createEnrolment(t, svc, "de1", 8443)
+	if _, err := redeem(t, svc, first, enrol.NodeInfo{Token: first.Token, Port: 2053, BasePath: "/", Scheme: "https", APIToken: "old-token"}); err != nil {
+		t.Fatalf("first Redeem: %v", err)
+	}
+	var old model.Node
+	if err := database.GetDB().Where("name = ?", "de1").First(&old).Error; err != nil {
+		t.Fatal(err)
+	}
+	// What the Xray-removal migration leaves behind: no tunnels, and the enrolment flagged.
+	if err := database.GetDB().Where("name IN ?", []string{"de1", "node-de1"}).Delete(&model.ServerTunnel{}).Error; err != nil {
+		t.Fatal(err)
+	}
+	if err := database.GetDB().Model(&model.NodeEnrolment{}).Where("name = ?", "de1").Update("needs_reenrol", true).Error; err != nil {
+		t.Fatal(err)
+	}
+
+	_, second := createEnrolment(t, svc, "de1", 8443)
+	if _, err := redeem(t, svc, second, enrol.NodeInfo{Token: second.Token, Port: 2054, BasePath: "/", Scheme: "https", APIToken: "new-token"}); err != nil {
+		t.Fatalf("second Redeem: %v", err)
+	}
+
+	if got := nodeCount(t); got != 1 {
+		t.Fatalf("%d nodes after enrolling again, want the one record kept", got)
+	}
+	node, err := (&service.NodeService{}).GetById(old.Id)
+	if err != nil {
+		t.Fatalf("the old node record is gone: %v", err)
+	}
+	portal := tunnelByName(t, "node-de1")
+	if node.Port != portal.ManagePort || node.ApiToken != "new-token" {
+		t.Fatalf("node = port %d token %q, want the new management port %d and token", node.Port, node.ApiToken, portal.ManagePort)
+	}
+	var rows []model.NodeEnrolment
+	if err := database.GetDB().Where("name = ?", "de1").Find(&rows).Error; err != nil {
+		t.Fatal(err)
+	}
+	if len(rows) != 1 || rows[0].NodeId != old.Id || rows[0].NeedsReenrol {
+		t.Fatalf("enrolments named de1 = %+v, want one tied to node %d and no longer flagged", rows, old.Id)
+	}
+}

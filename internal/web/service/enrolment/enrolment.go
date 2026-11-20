@@ -23,6 +23,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/enrol"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/panel"
+	"gorm.io/gorm"
 )
 
 const (
@@ -122,17 +123,23 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 		return nil, fmt.Errorf("node name %q must be lower-case letters, digits and dashes, at most 26 characters", spec.Name)
 	}
 	db := database.GetDB()
-	var taken int64
-	if err := db.Model(&model.Node{}).Where("name = ?", name).Count(&taken).Error; err != nil {
+	var stale []model.NodeEnrolment
+	if err := db.Where("name = ? AND needs_reenrol = ?", name, true).Limit(1).Find(&stale).Error; err != nil {
 		return nil, err
 	}
-	if taken == 0 {
-		if err := db.Model(&model.NodeEnrolment{}).Where("name = ?", name).Count(&taken).Error; err != nil {
+	if len(stale) == 0 {
+		var taken int64
+		if err := db.Model(&model.Node{}).Where("name = ?", name).Count(&taken).Error; err != nil {
 			return nil, err
 		}
-	}
-	if taken > 0 {
-		return nil, fmt.Errorf("a node or enrolment named %q already exists", name)
+		if taken == 0 {
+			if err := db.Model(&model.NodeEnrolment{}).Where("name = ?", name).Count(&taken).Error; err != nil {
+				return nil, err
+			}
+		}
+		if taken > 0 {
+			return nil, fmt.Errorf("a node or enrolment named %q already exists", name)
+		}
 	}
 	offer, err := enrol.NewOffer(spec.PanelURL)
 	if err != nil {
@@ -154,7 +161,14 @@ func (s *Service) Create(spec Spec) (*Invitation, error) {
 	if data != nil {
 		row.DataTunnelId = data.Id
 	}
-	if err := db.Create(&row).Error; err != nil {
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		if len(stale) > 0 {
+			if err := tx.Delete(&model.NodeEnrolment{}, stale[0].Id).Error; err != nil {
+				return err
+			}
+		}
+		return tx.Create(&row).Error
+	}); err != nil {
 		if delErr := s.remove(&row); delErr != nil {
 			logger.Warning("enrolments: removing the tunnel of a failed enrolment:", delErr)
 		}
@@ -277,7 +291,7 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 		// The hop is loopback to loopback inside the tunnel, and the node's certificate names its public host.
 		TlsVerifyMode: "skip",
 	}
-	if err := s.nodes.Create(node); err != nil {
+	if err := s.storeNode(node); err != nil {
 		if delErr := s.remove(&row); delErr != nil {
 			logger.Warning("enrolments: removing an enrolment whose node could not be stored:", delErr)
 		}
@@ -299,6 +313,27 @@ func (s *Service) Redeem(body []byte, remoteIP string) ([]byte, error) {
 		}
 	}
 	return sealReply(grant)
+}
+
+// storeNode adds the node, or points the record of a node that is enrolling again at its new tunnel,
+// so its inbounds and history stay attached.
+func (s *Service) storeNode(node *model.Node) error {
+	var existing []model.Node
+	if err := database.GetDB().Where("name = ?", node.Name).Limit(1).Find(&existing).Error; err != nil {
+		return err
+	}
+	if len(existing) == 0 {
+		return s.nodes.Create(node)
+	}
+	kept := existing[0]
+	kept.Scheme, kept.Address, kept.PublicAddress, kept.Port = node.Scheme, node.Address, node.PublicAddress, node.Port
+	kept.BasePath, kept.ApiToken, kept.Enable, kept.AllowPrivateAddress = node.BasePath, node.ApiToken, true, true
+	kept.TlsVerifyMode, kept.PinnedCertSha256 = node.TlsVerifyMode, ""
+	if err := s.nodes.Update(kept.Id, &kept); err != nil {
+		return err
+	}
+	node.Id = kept.Id
+	return nil
 }
 
 // grantDataTunnel ties the node's traffic tunnel to the node, so deleting it reaches the node's end too.
