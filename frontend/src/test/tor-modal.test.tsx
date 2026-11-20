@@ -48,7 +48,7 @@ interface Server {
   addError: string;
   bridgesError: string;
   tests: Array<{ country: string; resolve: (m: Msg) => void }>;
-  posts: Array<{ url: string; body: unknown }>;
+  posts: Array<{ url: string; body: unknown; config?: unknown }>;
 }
 
 function fakeServer(over: Partial<Server> = {}): Server {
@@ -76,35 +76,37 @@ function fakeServer(over: Partial<Server> = {}): Server {
       return new Msg(true, '', { bridges: server.bridges } as never);
     return new Msg(false, `Unexpected GET ${url}`, null);
   });
-  vi.spyOn(HttpUtil, 'post').mockImplementation(async (url: string, body?: unknown) => {
-    server.posts.push({ url, body });
-    if (url === '/panel/api/tor/add') {
-      if (server.addError) return new Msg(false, server.addError, null);
-      const country = (body as { country: string }).country;
-      server.exits.push(exit(server.exits.length + 1, country));
-      return new Msg(true, '', null);
-    }
-    if (url.startsWith('/panel/api/tor/del/')) {
-      const id = Number(url.split('/').pop());
-      server.exits = server.exits.filter((e) => e.id !== id);
-      return new Msg(true, '', null);
-    }
-    if (url === '/panel/api/tor/test') {
-      return new Promise<Msg>((resolve) => {
-        server.tests.push({ country: (body as { country: string }).country, resolve });
-      });
-    }
-    if (url === '/panel/api/tor/engine/install') {
-      server.installed = true;
-      return new Msg(true, '', null);
-    }
-    if (url === '/panel/api/tor/bridges') {
-      if (server.bridgesError) return new Msg(false, server.bridgesError, null);
-      server.bridges = (body as { bridges: string }).bridges;
-      return new Msg(true, '', null);
-    }
-    return new Msg(false, `Unexpected POST ${url}`, null);
-  });
+  vi.spyOn(HttpUtil, 'post').mockImplementation(
+    async (url: string, body?: unknown, config?: unknown) => {
+      server.posts.push({ url, body, config });
+      if (url === '/panel/api/tor/add') {
+        if (server.addError) return new Msg(false, server.addError, null);
+        const country = (body as { country: string }).country;
+        server.exits.push(exit(server.exits.length + 1, country));
+        return new Msg(true, '', null);
+      }
+      if (url.startsWith('/panel/api/tor/del/')) {
+        const id = Number(url.split('/').pop());
+        server.exits = server.exits.filter((e) => e.id !== id);
+        return new Msg(true, '', null);
+      }
+      if (url === '/panel/api/tor/test') {
+        return new Promise<Msg>((resolve) => {
+          server.tests.push({ country: (body as { country: string }).country, resolve });
+        });
+      }
+      if (url === '/panel/api/tor/engine/install') {
+        server.installed = true;
+        return new Msg(true, '', null);
+      }
+      if (url === '/panel/api/tor/bridges') {
+        if (server.bridgesError) return new Msg(false, server.bridgesError, null);
+        server.bridges = (body as { bridges: string }).bridges;
+        return new Msg(true, '', null);
+      }
+      return new Msg(false, `Unexpected POST ${url}`, null);
+    },
+  );
   return server;
 }
 
@@ -286,6 +288,10 @@ describe('TorModal', () => {
     expect(server.posts.find((p) => p.url === '/panel/api/tor/engine/install')?.body).toEqual({
       route: { via: 'panel', value: '' },
     });
+    // The server reads this body as JSON; sent as a form it fails with "invalid character 'r'".
+    expect(
+      server.posts.find((p) => p.url === '/panel/api/tor/engine/install')?.config,
+    ).toMatchObject({ headers: { 'Content-Type': 'application/json' } });
     await waitFor(() => expect(screen.getByText('Installed')).toBeTruthy());
   });
 
