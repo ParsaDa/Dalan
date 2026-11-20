@@ -15,8 +15,9 @@ _openapi:
       url: '#list-the-tunnel-ends-stored-on-this-panel'
     - depth: 2
       title: Setup link of an entry tunnel. Importing it on the other server creates
-        the matching exit end. The link never contains the REALITY private key.
-      url: '#setup-link-of-an-entry-tunnel-importing-it-on-the-other-server-creates-the-matching-exit-end-the-link-never-contains-the-reality-private-key'
+        the matching exit end. The link never contains the entry end’s secret
+        key.
+      url: '#setup-link-of-an-entry-tunnel-importing-it-on-the-other-server-creates-the-matching-exit-end-the-link-never-contains-the-entry-ends-secret-key'
     - depth: 2
       title: 'Send one request through an entry tunnel and report whether it came
         back, the round-trip time and the address and country it left from. A
@@ -80,15 +81,15 @@ _openapi:
       url: '#node-side-of-an-engine-update-through-a-node-the-first-call-starts-downloading-a-release-of-the-engine-named-in-engine-backpack-or-rakhsh-and-answers-pending-until-it-is-done-then-each-call-returns-the-part-of-the-archive-that-starts-at-offset-the-checksums-come-with-the-first-part-needs-an-admin-or-node-admin-token'
     - depth: 2
       title: 'Create the entry end of a tunnel on this server. Secrets are generated
-        by the panel. With the default engine (xray), routeInbounds lists the
-        local inbound tags whose traffic leaves through the tunnel. With engine
-        "rakhsh", send transport (the carrier, such as wss or quic),
-        forwardPorts and options (see /options?engine=rakhsh); the entry end
-        gets a relay port like BackPack, so the tunnel is also an Xray outbound,
-        and the setup link carries the exit end secret key. With engine
-        "backpack", send transport, forwardPorts (for example
-        "443=127.0.0.1:2096") and optionally fallbackTransports, acceptUdp and
-        options (see /options) instead of security, serverName and
+        by the panel. routeInbounds lists the local inbound tags whose traffic
+        leaves through the tunnel. The engine is "backpack" (default) or
+        "rakhsh"; the former Xray engine was removed. With engine "rakhsh", send
+        transport (the carrier, such as wss or quic), forwardPorts and options
+        (see /options?engine=rakhsh); the entry end gets a relay port like
+        BackPack, so the tunnel is also an Xray outbound, and the setup link
+        carries the exit end secret key. With engine "backpack", send transport,
+        forwardPorts (for example "443=127.0.0.1:2096") and optionally
+        fallbackTransports, acceptUdp and options (see /options) and
         routeInbounds. With mode "direct" and engine "rakhsh" the entry end
         dials the exit end, which listens, and the tunnel stays an Xray
         outbound; options.l3_addr adds a routed tun device and needs root. With
@@ -100,15 +101,15 @@ _openapi:
         node through its management channel; exitOutbound then names the
         outbound traffic leaves from there. If the node does not take its end,
         nothing is created.'
-      url: '#create-the-entry-end-of-a-tunnel-on-this-server-secrets-are-generated-by-the-panel-with-the-default-engine-xray-routeinbounds-lists-the-local-inbound-tags-whose-traffic-leaves-through-the-tunnel-with-engine-rakhsh-send-transport-the-carrier-such-as-wss-or-quic-forwardports-and-options-see-optionsenginerakhsh-the-entry-end-gets-a-relay-port-like-backpack-so-the-tunnel-is-also-an-xray-outbound-and-the-setup-link-carries-the-exit-end-secret-key-with-engine-backpack-send-transport-forwardports-for-example-4431270012096-and-optionally-fallbacktransports-acceptudp-and-options-see-options-instead-of-security-servername-and-routeinbounds-with-mode-direct-and-engine-rakhsh-the-entry-end-dials-the-exit-end-which-listens-and-the-tunnel-stays-an-xray-outbound-optionsl3_addr-adds-a-routed-tun-device-and-needs-root-with-mode-direct-and-engine-backpack-the-entry-end-dials-the-exit-end-over-a-layer-3-link-send-optionscarrier-udp-pck-quic-sni-xdi-or-spoof-and-forwardports-and-the-panel-picks-the-tunnel-addresses-this-mode-needs-root-and-devnettun-on-both-servers-and-the-tunnel-is-not-an-xray-outbound-send-nodeid-to-also-create-the-dialling-end-on-that-node-through-its-management-channel-exitoutbound-then-names-the-outbound-traffic-leaves-from-there-if-the-node-does-not-take-its-end-nothing-is-created'
+      url: '#create-the-entry-end-of-a-tunnel-on-this-server-secrets-are-generated-by-the-panel-routeinbounds-lists-the-local-inbound-tags-whose-traffic-leaves-through-the-tunnel-the-engine-is-backpack-default-or-rakhsh-the-former-xray-engine-was-removed-with-engine-rakhsh-send-transport-the-carrier-such-as-wss-or-quic-forwardports-and-options-see-optionsenginerakhsh-the-entry-end-gets-a-relay-port-like-backpack-so-the-tunnel-is-also-an-xray-outbound-and-the-setup-link-carries-the-exit-end-secret-key-with-engine-backpack-send-transport-forwardports-for-example-4431270012096-and-optionally-fallbacktransports-acceptudp-and-options-see-options-and-routeinbounds-with-mode-direct-and-engine-rakhsh-the-entry-end-dials-the-exit-end-which-listens-and-the-tunnel-stays-an-xray-outbound-optionsl3_addr-adds-a-routed-tun-device-and-needs-root-with-mode-direct-and-engine-backpack-the-entry-end-dials-the-exit-end-over-a-layer-3-link-send-optionscarrier-udp-pck-quic-sni-xdi-or-spoof-and-forwardports-and-the-panel-picks-the-tunnel-addresses-this-mode-needs-root-and-devnettun-on-both-servers-and-the-tunnel-is-not-an-xray-outbound-send-nodeid-to-also-create-the-dialling-end-on-that-node-through-its-management-channel-exitoutbound-then-names-the-outbound-traffic-leaves-from-there-if-the-node-does-not-take-its-end-nothing-is-created'
     - depth: 2
       title: Change a tunnel in place. On an entry end send the shared settings
         (address, port, transport, fallbackTransports, forwardPorts, acceptUdp,
-        options, routeInbounds, or serverName on a REALITY tunnel); when this
-        panel made the other end on a node, the node is sent its end first and a
-        refusal there changes nothing. On an exit end only exitOutbound and
-        options are read. The name, role, engine, mode and secrets never change.
-      url: '#change-a-tunnel-in-place-on-an-entry-end-send-the-shared-settings-address-port-transport-fallbacktransports-forwardports-acceptudp-options-routeinbounds-or-servername-on-a-reality-tunnel-when-this-panel-made-the-other-end-on-a-node-the-node-is-sent-its-end-first-and-a-refusal-there-changes-nothing-on-an-exit-end-only-exitoutbound-and-options-are-read-the-name-role-engine-mode-and-secrets-never-change'
+        options, routeInbounds); when this panel made the other end on a node,
+        the node is sent its end first and a refusal there changes nothing. On
+        an exit end only exitOutbound and options are read. The name, role,
+        engine, mode and secrets never change.
+      url: '#change-a-tunnel-in-place-on-an-entry-end-send-the-shared-settings-address-port-transport-fallbacktransports-forwardports-acceptudp-options-routeinbounds-when-this-panel-made-the-other-end-on-a-node-the-node-is-sent-its-end-first-and-a-refusal-there-changes-nothing-on-an-exit-end-only-exitoutbound-and-options-are-read-the-name-role-engine-mode-and-secrets-never-change'
     - depth: 2
       title: Create the exit end of a tunnel from the setup link of an entry server.
         exitOutbound is the local outbound traffic leaves from; empty means
@@ -156,9 +157,9 @@ _openapi:
       - content: List the tunnel ends stored on this panel.
         id: list-the-tunnel-ends-stored-on-this-panel
       - content: Setup link of an entry tunnel. Importing it on the other server creates
-          the matching exit end. The link never contains the REALITY private
+          the matching exit end. The link never contains the entry end’s secret
           key.
-        id: setup-link-of-an-entry-tunnel-importing-it-on-the-other-server-creates-the-matching-exit-end-the-link-never-contains-the-reality-private-key
+        id: setup-link-of-an-entry-tunnel-importing-it-on-the-other-server-creates-the-matching-exit-end-the-link-never-contains-the-entry-ends-secret-key
       - content: 'Send one request through an entry tunnel and report whether it came
           back, the round-trip time and the address and country it left from. A
           tunnel that is down is a normal answer with connected=false and the
@@ -216,17 +217,17 @@ _openapi:
           the first part). Needs an admin or node-admin token.'
         id: node-side-of-an-engine-update-through-a-node-the-first-call-starts-downloading-a-release-of-the-engine-named-in-engine-backpack-or-rakhsh-and-answers-pending-until-it-is-done-then-each-call-returns-the-part-of-the-archive-that-starts-at-offset-the-checksums-come-with-the-first-part-needs-an-admin-or-node-admin-token
       - content: 'Create the entry end of a tunnel on this server. Secrets are generated
-          by the panel. With the default engine (xray), routeInbounds lists the
-          local inbound tags whose traffic leaves through the tunnel. With
-          engine "rakhsh", send transport (the carrier, such as wss or quic),
-          forwardPorts and options (see /options?engine=rakhsh); the entry end
-          gets a relay port like BackPack, so the tunnel is also an Xray
-          outbound, and the setup link carries the exit end secret key. With
-          engine "backpack", send transport, forwardPorts (for example
-          "443=127.0.0.1:2096") and optionally fallbackTransports, acceptUdp and
-          options (see /options) instead of security, serverName and
-          routeInbounds. With mode "direct" and engine "rakhsh" the entry end
-          dials the exit end, which listens, and the tunnel stays an Xray
+          by the panel. routeInbounds lists the local inbound tags whose traffic
+          leaves through the tunnel. The engine is "backpack" (default) or
+          "rakhsh"; the former Xray engine was removed. With engine "rakhsh",
+          send transport (the carrier, such as wss or quic), forwardPorts and
+          options (see /options?engine=rakhsh); the entry end gets a relay port
+          like BackPack, so the tunnel is also an Xray outbound, and the setup
+          link carries the exit end secret key. With engine "backpack", send
+          transport, forwardPorts (for example "443=127.0.0.1:2096") and
+          optionally fallbackTransports, acceptUdp and options (see /options)
+          and routeInbounds. With mode "direct" and engine "rakhsh" the entry
+          end dials the exit end, which listens, and the tunnel stays an Xray
           outbound; options.l3_addr adds a routed tun device and needs root.
           With mode "direct" and engine "backpack" the entry end dials the exit
           end over a layer-3 link: send options.carrier (udp, pck, quic, sni,
@@ -236,15 +237,14 @@ _openapi:
           dialling end on that node through its management channel; exitOutbound
           then names the outbound traffic leaves from there. If the node does
           not take its end, nothing is created.'
-        id: create-the-entry-end-of-a-tunnel-on-this-server-secrets-are-generated-by-the-panel-with-the-default-engine-xray-routeinbounds-lists-the-local-inbound-tags-whose-traffic-leaves-through-the-tunnel-with-engine-rakhsh-send-transport-the-carrier-such-as-wss-or-quic-forwardports-and-options-see-optionsenginerakhsh-the-entry-end-gets-a-relay-port-like-backpack-so-the-tunnel-is-also-an-xray-outbound-and-the-setup-link-carries-the-exit-end-secret-key-with-engine-backpack-send-transport-forwardports-for-example-4431270012096-and-optionally-fallbacktransports-acceptudp-and-options-see-options-instead-of-security-servername-and-routeinbounds-with-mode-direct-and-engine-rakhsh-the-entry-end-dials-the-exit-end-which-listens-and-the-tunnel-stays-an-xray-outbound-optionsl3_addr-adds-a-routed-tun-device-and-needs-root-with-mode-direct-and-engine-backpack-the-entry-end-dials-the-exit-end-over-a-layer-3-link-send-optionscarrier-udp-pck-quic-sni-xdi-or-spoof-and-forwardports-and-the-panel-picks-the-tunnel-addresses-this-mode-needs-root-and-devnettun-on-both-servers-and-the-tunnel-is-not-an-xray-outbound-send-nodeid-to-also-create-the-dialling-end-on-that-node-through-its-management-channel-exitoutbound-then-names-the-outbound-traffic-leaves-from-there-if-the-node-does-not-take-its-end-nothing-is-created
+        id: create-the-entry-end-of-a-tunnel-on-this-server-secrets-are-generated-by-the-panel-routeinbounds-lists-the-local-inbound-tags-whose-traffic-leaves-through-the-tunnel-the-engine-is-backpack-default-or-rakhsh-the-former-xray-engine-was-removed-with-engine-rakhsh-send-transport-the-carrier-such-as-wss-or-quic-forwardports-and-options-see-optionsenginerakhsh-the-entry-end-gets-a-relay-port-like-backpack-so-the-tunnel-is-also-an-xray-outbound-and-the-setup-link-carries-the-exit-end-secret-key-with-engine-backpack-send-transport-forwardports-for-example-4431270012096-and-optionally-fallbacktransports-acceptudp-and-options-see-options-and-routeinbounds-with-mode-direct-and-engine-rakhsh-the-entry-end-dials-the-exit-end-which-listens-and-the-tunnel-stays-an-xray-outbound-optionsl3_addr-adds-a-routed-tun-device-and-needs-root-with-mode-direct-and-engine-backpack-the-entry-end-dials-the-exit-end-over-a-layer-3-link-send-optionscarrier-udp-pck-quic-sni-xdi-or-spoof-and-forwardports-and-the-panel-picks-the-tunnel-addresses-this-mode-needs-root-and-devnettun-on-both-servers-and-the-tunnel-is-not-an-xray-outbound-send-nodeid-to-also-create-the-dialling-end-on-that-node-through-its-management-channel-exitoutbound-then-names-the-outbound-traffic-leaves-from-there-if-the-node-does-not-take-its-end-nothing-is-created
       - content: Change a tunnel in place. On an entry end send the shared settings
           (address, port, transport, fallbackTransports, forwardPorts,
-          acceptUdp, options, routeInbounds, or serverName on a REALITY tunnel);
-          when this panel made the other end on a node, the node is sent its end
-          first and a refusal there changes nothing. On an exit end only
-          exitOutbound and options are read. The name, role, engine, mode and
-          secrets never change.
-        id: change-a-tunnel-in-place-on-an-entry-end-send-the-shared-settings-address-port-transport-fallbacktransports-forwardports-acceptudp-options-routeinbounds-or-servername-on-a-reality-tunnel-when-this-panel-made-the-other-end-on-a-node-the-node-is-sent-its-end-first-and-a-refusal-there-changes-nothing-on-an-exit-end-only-exitoutbound-and-options-are-read-the-name-role-engine-mode-and-secrets-never-change
+          acceptUdp, options, routeInbounds); when this panel made the other end
+          on a node, the node is sent its end first and a refusal there changes
+          nothing. On an exit end only exitOutbound and options are read. The
+          name, role, engine, mode and secrets never change.
+        id: change-a-tunnel-in-place-on-an-entry-end-send-the-shared-settings-address-port-transport-fallbacktransports-forwardports-acceptudp-options-routeinbounds-when-this-panel-made-the-other-end-on-a-node-the-node-is-sent-its-end-first-and-a-refusal-there-changes-nothing-on-an-exit-end-only-exitoutbound-and-options-are-read-the-name-role-engine-mode-and-secrets-never-change
       - content: Create the exit end of a tunnel from the setup link of an entry server.
           exitOutbound is the local outbound traffic leaves from; empty means
           direct. A link for a tunnel name that is already an exit end here

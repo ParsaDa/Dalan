@@ -106,13 +106,31 @@ func (p *panel) node(name string) (nodeRow, bool) {
 	return nodeRow{}, false
 }
 
+// installBackpack puts the BackPack engine next to a panel's Xray, where the panel looks for it.
+func (p *panel) installBackpack(src string) {
+	p.t.Helper()
+	data, err := os.ReadFile(src)
+	if err != nil {
+		p.t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(p.dir, "bin", "backpack"), data, 0o755); err != nil {
+		p.t.Fatal(err)
+	}
+}
+
 // The master never dials the node: the only address it holds for it is its own loopback.
 func TestANodeEnrolsByDiallingInAndIsManagedThroughItsTunnel(t *testing.T) {
+	backpackBinary := os.Getenv("XUI_NODE_E2E_BACKPACK")
+	if backpackBinary == "" {
+		t.Skip("XUI_NODE_E2E_BACKPACK is not set; a node enrols over a BackPack tunnel")
+	}
 	bin := panelBinary(t)
 	master := newPanel(t, bin, "enrol-master")
 	node := newPanel(t, bin, "enrol-node")
 	master.installXray()
 	node.installXray()
+	master.installBackpack(backpackBinary)
+	node.installBackpack(backpackBinary)
 	master.start()
 	node.start()
 
@@ -120,7 +138,8 @@ func TestANodeEnrolsByDiallingInAndIsManagedThroughItsTunnel(t *testing.T) {
 		Link string `json:"link"`
 	}
 	obj := master.call(http.MethodPost, "/panel/api/enrolments/add", map[string]any{
-		"name": "abroad", "panelUrl": master.url() + "/", "address": "127.0.0.1", "port": freePort(t), "security": "none",
+		"name": "abroad", "panelUrl": master.url() + "/", "address": "127.0.0.1", "port": freePort(t),
+		"engine": "backpack", "transport": "tcpmux",
 	})
 	if err := json.Unmarshal(obj, &invitation); err != nil || !strings.HasPrefix(invitation.Link, "dalan://enrol/") {
 		t.Fatalf("enrolments/add = %s (%v)", obj, err)
