@@ -8,6 +8,7 @@
     "inbounds",
     "clients",
     "server",
+    "dashboard",
     "settings",
     "xray-settings",
     "subscription-server",

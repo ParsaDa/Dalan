@@ -52,6 +52,8 @@ type AllSetting struct {
 	TgRunTime       string `json:"tgRunTime" form:"tgRunTime"`
 	TgBotBackup     bool   `json:"tgBotBackup" form:"tgBotBackup"`
 	TgCpu           int    `json:"tgCpu" form:"tgCpu" validate:"gte=0,lte=100"`
+	TrafficCapGB    int    `json:"trafficCapGB" form:"trafficCapGB" validate:"gte=0"`
+	TrafficResetDay int    `json:"trafficResetDay" form:"trafficResetDay" validate:"gte=1,lte=28"`
 	TgMemory        int    `json:"tgMemory" form:"tgMemory" validate:"gte=0,lte=100"`
 	TgLang          string `json:"tgLang" form:"tgLang"`
 	TgEnabledEvents string `json:"tgEnabledEvents" form:"tgEnabledEvents"`

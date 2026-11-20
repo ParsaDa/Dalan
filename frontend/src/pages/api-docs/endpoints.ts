@@ -2396,6 +2396,58 @@ export const sections: readonly Section[] = [
   },
 
   {
+    id: 'dashboard',
+    title: 'Dashboard',
+    description:
+      'What the dashboard shows beyond live status: alerts that need attention, the activity log of changes, and this server’s traffic against its monthly plan.',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/panel/api/alerts/list',
+        summary:
+          'Open alerts, the most serious first: node.offline and xray.down, then node.load, cpu.high and memory.high (85% opens, below 80% resolves), then clients.expiring (value = clients expiring within 7 days). An alert disappears from this list once its condition clears.',
+        responseSchema: 'Alert',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/activity/list',
+        summary:
+          'The activity log, newest first: every successful change made through the panel or the API, sign-ins, and system events such as a node going offline. Entries older than 90 days are pruned.',
+        params: [
+          { name: 'page', in: 'query', type: 'number', desc: 'Page, from 1.' },
+          {
+            name: 'pageSize',
+            in: 'query',
+            type: 'number',
+            desc: 'Entries per page, 1–200 (default 50).',
+          },
+          {
+            name: 'category',
+            in: 'query',
+            type: 'string',
+            desc: 'Action prefix such as client, tunnel, node, xray, settings or session.',
+          },
+          {
+            name: 'nodeId',
+            in: 'query',
+            type: 'number',
+            desc: 'Only entries about this node; 0 is this server.',
+          },
+          { name: 'days', in: 'query', type: 'number', desc: 'Only the last N days.' },
+        ],
+        responseSchema: 'ActivityPage',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/server/monthlyTraffic',
+        summary:
+          'Bytes this server sent and received on its real interfaces since the last monthly reset, with the plan from settings (capGB 0 = no plan) and the next reset time.',
+        responseSchema: 'TrafficUsage',
+      },
+    ],
+  },
+
+  {
     id: 'api-tokens',
     title: 'API Tokens',
     description:

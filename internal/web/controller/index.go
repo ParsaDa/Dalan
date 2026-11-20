@@ -5,6 +5,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/middleware"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
@@ -132,6 +133,7 @@ func (a *IndexController) login(c *gin.Context) {
 		logger.Warning("Unable to save session:", err)
 		return
 	}
+	(&service.ActivityService{}).Record(model.ActorYou, "session.signin", remoteIP, 0)
 
 	jsonMsg(c, I18nWeb(c, "pages.login.toasts.successLogin"), nil)
 }

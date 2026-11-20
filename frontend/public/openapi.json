@@ -26,6 +26,116 @@
       }
     },
     "schemas": {
+      "Activity": {
+        "description": "Activity is one change made through the panel, kept for the activity log.\nNodeId 0 is this server; Actor is \"you\", \"api\" or \"system\".",
+        "properties": {
+          "action": {
+            "example": "client.add",
+            "type": "string"
+          },
+          "actor": {
+            "example": "you",
+            "type": "string"
+          },
+          "at": {
+            "example": 1763600000,
+            "format": "int64",
+            "type": "integer"
+          },
+          "id": {
+            "example": 1,
+            "type": "integer"
+          },
+          "nodeId": {
+            "example": 0,
+            "type": "integer"
+          },
+          "target": {
+            "example": "sara.k",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "actor",
+          "at",
+          "id",
+          "nodeId",
+          "target"
+        ],
+        "type": "object"
+      },
+      "ActivityPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Activity"
+            },
+            "type": "array"
+          },
+          "total": {
+            "example": 42,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "type": "object"
+      },
+      "Alert": {
+        "description": "Alert is a condition that needs the admin's attention. It stays open while the\ncondition holds and gets ResolvedAt when it clears; one open row per Kind+Subject.",
+        "properties": {
+          "id": {
+            "example": 1,
+            "type": "integer"
+          },
+          "kind": {
+            "example": "node.offline",
+            "type": "string"
+          },
+          "nodeId": {
+            "example": 3,
+            "type": "integer"
+          },
+          "resolvedAt": {
+            "example": 0,
+            "format": "int64",
+            "type": "integer"
+          },
+          "startedAt": {
+            "example": 1763600000,
+            "format": "int64",
+            "type": "integer"
+          },
+          "subject": {
+            "example": "node:3",
+            "type": "string"
+          },
+          "updatedAt": {
+            "example": 1763600720,
+            "format": "int64",
+            "type": "integer"
+          },
+          "value": {
+            "example": 91.5,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "nodeId",
+          "resolvedAt",
+          "startedAt",
+          "subject",
+          "updatedAt",
+          "value"
+        ],
+        "type": "object"
+      },
       "AllSetting": {
         "properties": {
           "datepicker": {
@@ -570,9 +680,18 @@
           "timeLocation": {
             "type": "string"
           },
+          "trafficCapGB": {
+            "minimum": 0,
+            "type": "integer"
+          },
           "trafficDiff": {
             "maximum": 100,
             "minimum": 0,
+            "type": "integer"
+          },
+          "trafficResetDay": {
+            "maximum": 28,
+            "minimum": 1,
             "type": "integer"
           },
           "trustedProxyCIDRs": {
@@ -779,7 +898,9 @@
           "tgMemory",
           "tgRunTime",
           "timeLocation",
+          "trafficCapGB",
           "trafficDiff",
+          "trafficResetDay",
           "trustedProxyCIDRs",
           "twoFactorEnable",
           "twoFactorToken",
@@ -1361,9 +1482,18 @@
           "timeLocation": {
             "type": "string"
           },
+          "trafficCapGB": {
+            "minimum": 0,
+            "type": "integer"
+          },
           "trafficDiff": {
             "maximum": 100,
             "minimum": 0,
+            "type": "integer"
+          },
+          "trafficResetDay": {
+            "maximum": 28,
+            "minimum": 1,
             "type": "integer"
           },
           "trustedProxyCIDRs": {
@@ -1578,7 +1708,9 @@
           "tgMemory",
           "tgRunTime",
           "timeLocation",
+          "trafficCapGB",
           "trafficDiff",
+          "trafficResetDay",
           "trustedProxyCIDRs",
           "twoFactorEnable",
           "twoFactorToken",
@@ -5281,6 +5413,42 @@
         ],
         "type": "object"
       },
+      "TrafficUsage": {
+        "description": "TrafficUsage is this server's traffic against its monthly plan.",
+        "properties": {
+          "bytes": {
+            "example": 6300000000000,
+            "format": "int64",
+            "type": "integer"
+          },
+          "capGB": {
+            "example": 10000,
+            "type": "integer"
+          },
+          "nextReset": {
+            "example": 1764547200,
+            "format": "int64",
+            "type": "integer"
+          },
+          "periodStart": {
+            "example": 1761955200,
+            "format": "int64",
+            "type": "integer"
+          },
+          "resetDay": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bytes",
+          "capGB",
+          "nextReset",
+          "periodStart",
+          "resetDay"
+        ],
+        "type": "object"
+      },
       "TrialResult": {
         "description": "TrialResult is what a throwaway Tor learned about one country.",
         "properties": {
@@ -5536,6 +5704,10 @@
     {
       "name": "Settings",
       "description": "Panel configuration and user credentials. All endpoints live under /panel/api/setting and require a logged-in session or Bearer token."
+    },
+    {
+      "name": "Dashboard",
+      "description": "What the dashboard shows beyond live status: alerts that need attention, the activity log of changes, and this server’s traffic against its monthly plan."
     },
     {
       "name": "API Tokens",
@@ -16042,6 +16214,188 @@
                       "type": "string"
                     },
                     "obj": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/alerts/list": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Open alerts, the most serious first: node.offline and xray.down, then node.load, cpu.high and memory.high (85% opens, below 80% resolves), then clients.expiring (value = clients expiring within 7 days). An alert disappears from this list once its condition clears.",
+        "operationId": "get_panel_api_alerts_list",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/Alert"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "id": 1,
+                    "kind": "node.offline",
+                    "nodeId": 3,
+                    "resolvedAt": 0,
+                    "startedAt": 1763600000,
+                    "subject": "node:3",
+                    "updatedAt": 1763600720,
+                    "value": 91.5
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/activity/list": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "The activity log, newest first: every successful change made through the panel or the API, sign-ins, and system events such as a node going offline. Entries older than 90 days are pruned.",
+        "operationId": "get_panel_api_activity_list",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "description": "Page, from 1.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "description": "Entries per page, 1–200 (default 50).",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": true,
+            "description": "Action prefix such as client, tunnel, node, xray, settings or session.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "nodeId",
+            "in": "query",
+            "required": true,
+            "description": "Only entries about this node; 0 is this server.",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": true,
+            "description": "Only the last N days.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/ActivityPage"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "items": [
+                      {
+                        "action": "client.add",
+                        "actor": "you",
+                        "at": 1763600000,
+                        "id": 1,
+                        "nodeId": 0,
+                        "target": "sara.k"
+                      }
+                    ],
+                    "total": 42
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/server/monthlyTraffic": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Bytes this server sent and received on its real interfaces since the last monthly reset, with the plan from settings (capGB 0 = no plan) and the next reset time.",
+        "operationId": "get_panel_api_server_monthlyTraffic",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {
+                      "$ref": "#/components/schemas/TrafficUsage"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "bytes": 6300000000000,
+                    "capGB": 10000,
+                    "nextReset": 1764547200,
+                    "periodStart": 1761955200,
+                    "resetDay": 1
                   }
                 }
               }

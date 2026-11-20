@@ -10,6 +10,31 @@ export type staticEgressResolver = string;
 export type trafficLocalApplyAction = number;
 export type transportBits = number;
 
+export interface Activity {
+  action: string;
+  actor: string;
+  at: number;
+  id: number;
+  nodeId: number;
+  target: string;
+}
+
+export interface ActivityPage {
+  items: Activity[];
+  total: number;
+}
+
+export interface Alert {
+  id: number;
+  kind: string;
+  nodeId: number;
+  resolvedAt: number;
+  startedAt: number;
+  subject: string;
+  updatedAt: number;
+  value: number;
+}
+
 export interface AllSetting {
   datepicker: string;
   discordAdminIds: string;
@@ -180,7 +205,9 @@ export interface AllSetting {
   tgMemory: number;
   tgRunTime: string;
   timeLocation: string;
+  trafficCapGB: number;
   trafficDiff: number;
+  trafficResetDay: number;
   trustedProxyCIDRs: string;
   twoFactorEnable: boolean;
   twoFactorToken: string;
@@ -371,7 +398,9 @@ export interface AllSettingView {
   tgMemory: number;
   tgRunTime: string;
   timeLocation: string;
+  trafficCapGB: number;
   trafficDiff: number;
+  trafficResetDay: number;
   trustedProxyCIDRs: string;
   twoFactorEnable: boolean;
   twoFactorToken: string;
@@ -1185,6 +1214,14 @@ export interface Traffic {
   IsOutbound: boolean;
   Tag: string;
   Up: number;
+}
+
+export interface TrafficUsage {
+  bytes: number;
+  capGB: number;
+  nextReset: number;
+  periodStart: number;
+  resetDay: number;
 }
 
 export interface TrialResult {
