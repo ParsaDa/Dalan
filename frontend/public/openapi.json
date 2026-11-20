@@ -3940,6 +3940,11 @@
             "example": "de1",
             "type": "string"
           },
+          "needsReenrol": {
+            "description": "NeedsReenrol marks a node enrolled through the removed Xray tunnel: it has to be enrolled again.",
+            "example": false,
+            "type": "boolean"
+          },
           "nodeId": {
             "example": 0,
             "type": "integer"
@@ -3959,6 +3964,7 @@
           "expiresAt",
           "id",
           "name",
+          "needsReenrol",
           "nodeId",
           "tunnelId",
           "usedAt"
@@ -4854,7 +4860,7 @@
             "type": "boolean"
           },
           "engine": {
-            "example": "xray",
+            "example": "backpack",
             "type": "string"
           },
           "exitOutbound": {
@@ -4916,9 +4922,6 @@
             "example": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
             "type": "string"
           },
-          "realityPublicKey": {
-            "type": "string"
-          },
           "relayPort": {
             "description": "RelayPort is the loopback port both ends of a BackPack tunnel use to carry Xray traffic; zero means none.",
             "example": 63500,
@@ -4934,18 +4937,6 @@
               "type": "string"
             },
             "type": "array"
-          },
-          "security": {
-            "example": "reality",
-            "type": "string"
-          },
-          "serverName": {
-            "example": "www.example.com",
-            "type": "string"
-          },
-          "shortId": {
-            "example": "a1b2c3d4",
-            "type": "string"
           },
           "transport": {
             "description": "Transport, FallbackTransports, ForwardPorts and AcceptUDP belong to the BackPack engine.",
@@ -4981,13 +4972,9 @@
           "parentId",
           "port",
           "rakhshPeerPublic",
-          "realityPublicKey",
           "relayPort",
           "role",
           "routeInbounds",
-          "security",
-          "serverName",
-          "shortId",
           "transport",
           "up",
           "uuid"
@@ -13794,7 +13781,7 @@
                       "address": "203.0.113.10",
                       "down": 5242880,
                       "enable": true,
-                      "engine": "xray",
+                      "engine": "backpack",
                       "exitOutbound": "direct",
                       "fallbackTransports": [
                         ""
@@ -13811,15 +13798,11 @@
                       "parentId": 0,
                       "port": 8443,
                       "rakhshPeerPublic": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
-                      "realityPublicKey": "",
                       "relayPort": 63500,
                       "role": "portal",
                       "routeInbounds": [
                         ""
                       ],
-                      "security": "reality",
-                      "serverName": "www.example.com",
-                      "shortId": "a1b2c3d4",
                       "transport": "wssmux",
                       "up": 1048576,
                       "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
@@ -14302,7 +14285,7 @@
                     "address": "203.0.113.10",
                     "down": 5242880,
                     "enable": true,
-                    "engine": "xray",
+                    "engine": "backpack",
                     "exitOutbound": "direct",
                     "fallbackTransports": [
                       ""
@@ -14319,15 +14302,11 @@
                     "parentId": 0,
                     "port": 8443,
                     "rakhshPeerPublic": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
-                    "realityPublicKey": "",
                     "relayPort": 63500,
                     "role": "portal",
                     "routeInbounds": [
                       ""
                     ],
-                    "security": "reality",
-                    "serverName": "www.example.com",
-                    "shortId": "a1b2c3d4",
                     "transport": "wssmux",
                     "up": 1048576,
                     "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
@@ -14404,7 +14383,7 @@
                     "address": "203.0.113.10",
                     "down": 5242880,
                     "enable": true,
-                    "engine": "xray",
+                    "engine": "backpack",
                     "exitOutbound": "direct",
                     "fallbackTransports": [
                       ""
@@ -14421,15 +14400,11 @@
                     "parentId": 0,
                     "port": 8443,
                     "rakhshPeerPublic": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
-                    "realityPublicKey": "",
                     "relayPort": 63500,
                     "role": "portal",
                     "routeInbounds": [
                       ""
                     ],
-                    "security": "reality",
-                    "serverName": "www.example.com",
-                    "shortId": "a1b2c3d4",
                     "transport": "wssmux",
                     "up": 1048576,
                     "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
@@ -14488,7 +14463,7 @@
                     "address": "203.0.113.10",
                     "down": 5242880,
                     "enable": true,
-                    "engine": "xray",
+                    "engine": "backpack",
                     "exitOutbound": "direct",
                     "fallbackTransports": [
                       ""
@@ -14505,15 +14480,11 @@
                     "parentId": 0,
                     "port": 8443,
                     "rakhshPeerPublic": "MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=",
-                    "realityPublicKey": "",
                     "relayPort": 63500,
                     "role": "portal",
                     "routeInbounds": [
                       ""
                     ],
-                    "security": "reality",
-                    "serverName": "www.example.com",
-                    "shortId": "a1b2c3d4",
                     "transport": "wssmux",
                     "up": 1048576,
                     "uuid": "8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10"
@@ -15394,6 +15365,7 @@
                       "expiresAt": 1700001800,
                       "id": 1,
                       "name": "de1",
+                      "needsReenrol": false,
                       "nodeId": 0,
                       "tunnelId": 3,
                       "usedAt": 0

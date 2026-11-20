@@ -26,6 +26,8 @@ const STREAM_CARRIERS = [
   'shabdiz-tcp',
 ];
 
+export const RAKHSH_STREAM_CARRIERS = STREAM_CARRIERS.map((value) => ({ value, label: value }));
+
 export const RAKHSH_CARRIERS = [...STREAM_CARRIERS, ...RAW_CARRIERS].map((value) => ({
   value,
   label: value,

@@ -34,16 +34,6 @@ export type NewPortalValues =
       name: string;
       address: string;
       port: number;
-      engine: 'xray';
-      security: 'reality' | 'none';
-      serverName: string;
-      routeInbounds: string[];
-      nodeId?: number;
-    }
-  | {
-      name: string;
-      address: string;
-      port: number;
       engine: 'backpack';
       transport: string;
       fallbackTransports: string[];
@@ -70,7 +60,6 @@ export type NewPortalValues =
 export interface TunnelEditValues {
   address?: string;
   port?: number;
-  serverName?: string;
   transport?: string;
   fallbackTransports?: string[];
   forwardPorts?: string[];

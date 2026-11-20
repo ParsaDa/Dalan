@@ -14,7 +14,7 @@ import type { EnrolmentFormValues } from '@/schemas/enrolment';
 export type { Invitation, NodeEnrolment };
 
 export type EnrolmentRequest =
-  | (Omit<EnrolmentFormValues, 'tunnelId' | 'withTunnel'> & { withTunnel?: true })
+  | Omit<EnrolmentFormValues, 'tunnelId'>
   | { name: string; panelUrl: string; tunnelId: number };
 
 const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
@@ -30,6 +30,12 @@ async function fetchEnrolments(): Promise<NodeEnrolment[]> {
 export function useWaitingEnrolments(enabled: boolean) {
   const query = useQuery({ queryKey: ENROLMENTS_KEY, queryFn: fetchEnrolments, enabled });
   return (query.data ?? []).filter((row) => row.nodeId === 0);
+}
+
+// Joined nodes whose old Xray tunnel is gone and that must be enrolled again.
+export function useNodesToEnrolAgain() {
+  const query = useQuery({ queryKey: ENROLMENTS_KEY, queryFn: fetchEnrolments });
+  return (query.data ?? []).filter((row) => row.needsReenrol && row.nodeId > 0);
 }
 
 export function useEnrolmentMutations() {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import {
@@ -12,7 +12,6 @@ import {
   Popconfirm,
   Radio,
   Select,
-  Switch,
   Typography,
   message,
 } from 'antd';
@@ -26,46 +25,70 @@ import {
 } from '@/api/queries/useEnrolments';
 import { useTunnelsQuery } from '@/api/queries/useTunnels';
 import { FormField, rhfZodValidate } from '@/components/form/rhf';
-import {
-  EnrolmentFormSchema,
-  RealityServerNameSchema,
-  type EnrolmentFormValues,
-} from '@/schemas/enrolment';
+import { EnrolmentFormSchema, type EnrolmentFormValues } from '@/schemas/enrolment';
 import { ClipboardManager } from '@/utils';
+import { BACKPACK_TRANSPORTS } from '../tunnels/backpackTransports';
+import { RAKHSH_STREAM_CARRIERS } from '../tunnels/rakhshCarriers';
 
-function defaultValues(): EnrolmentFormValues {
+const DEFAULT_TRANSPORT = { backpack: 'wssmux', rakhsh: 'wss' } as const;
+
+function defaultValues(name = ''): EnrolmentFormValues {
   return {
-    name: '',
+    name,
     panelUrl: window.location.origin + withBasePath('/'),
     address: window.location.hostname,
     port: 8443,
-    security: 'reality',
-    serverName: '',
+    engine: 'backpack',
+    transport: DEFAULT_TRANSPORT.backpack,
     tunnelId: 0,
-    withTunnel: true,
   };
 }
 
 export default function EnrolNode() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button icon={<ApiOutlined aria-hidden />} onClick={() => setOpen(true)}>
+        {t('pages.enrolments.title')}
+      </Button>
+      <EnrolNodeDialog open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+interface EnrolNodeDialogProps {
+  open: boolean;
+  onClose: () => void;
+  initialName?: string;
+}
+
+export function EnrolNodeDialog({ open, onClose, initialName }: EnrolNodeDialogProps) {
+  return open ? <EnrolNodeModal onClose={onClose} initialName={initialName} /> : null;
+}
+
+function EnrolNodeModal({ onClose, initialName }: Omit<EnrolNodeDialogProps, 'open'>) {
+  const { t } = useTranslation();
   const [invitation, setInvitation] = useState<Invitation | null>(null);
   const [messageApi, messageContextHolder] = message.useMessage();
-  const methods = useForm<EnrolmentFormValues>({ defaultValues: defaultValues() });
-  const security = useWatch({ control: methods.control, name: 'security' });
+  const methods = useForm<EnrolmentFormValues>({ defaultValues: defaultValues(initialName) });
+  const engine = useWatch({ control: methods.control, name: 'engine' });
   const tunnelId = useWatch({ control: methods.control, name: 'tunnelId' });
   const { tunnels } = useTunnelsQuery();
   const carriers = tunnels.filter(
-    (row) => row.role === 'portal' && !row.managePort && !row.parentId && row.enable,
+    (row) =>
+      row.role === 'portal' &&
+      !row.managePort &&
+      !row.parentId &&
+      row.enable &&
+      (row.engine === 'backpack' || row.engine === 'rakhsh'),
   );
-  const waiting = useWaitingEnrolments(open);
+  const waiting = useWaitingEnrolments(true);
   const { create, creating, cancel } = useEnrolmentMutations();
 
-  const show = () => {
-    methods.reset(defaultValues());
-    setInvitation(null);
-    setOpen(true);
-  };
+  useEffect(() => {
+    methods.setValue('transport', DEFAULT_TRANSPORT[engine]);
+  }, [engine, methods]);
 
   const submit = methods.handleSubmit(async (values) => {
     const parsed = EnrolmentFormSchema.parse(values);
@@ -77,9 +100,8 @@ export default function EnrolNode() {
             panelUrl: parsed.panelUrl,
             address: parsed.address,
             port: parsed.port,
-            security: parsed.security,
-            serverName: parsed.security === 'reality' ? parsed.serverName : '',
-            ...(parsed.withTunnel ? { withTunnel: true } : {}),
+            engine: parsed.engine,
+            transport: parsed.transport,
           },
     );
     if (created) setInvitation(created);
@@ -99,17 +121,13 @@ export default function EnrolNode() {
   return (
     <>
       {messageContextHolder}
-      <Button icon={<ApiOutlined aria-hidden />} onClick={show}>
-        {t('pages.enrolments.title')}
-      </Button>
       <Modal
         title={t('pages.enrolments.title')}
-        open={open}
-        onCancel={() => setOpen(false)}
-        destroyOnHidden
+        open
+        onCancel={onClose}
         footer={
           invitation ? (
-            <Button type="primary" onClick={() => setOpen(false)}>
+            <Button type="primary" onClick={onClose}>
               {t('close')}
             </Button>
           ) : (
@@ -176,7 +194,11 @@ export default function EnrolNode() {
                       { value: 0, label: t('pages.enrolments.tunnelNew') },
                       ...carriers.map((row) => ({
                         value: row.id,
-                        label: `${row.name} · ${row.address}:${row.port}`,
+                        label:
+                          `${row.name} · ${row.address}:${row.port}` +
+                          ((row.routeInbounds ?? []).length > 0
+                            ? ` · ${t('pages.enrolments.tunnelCarriesUsers')}`
+                            : ''),
                       })),
                     ]}
                   />
@@ -184,6 +206,14 @@ export default function EnrolNode() {
               )}
               {tunnelId === 0 && (
                 <>
+                  <FormField name="engine" label={t('pages.tunnels.engine')}>
+                    <Radio.Group
+                      options={[
+                        { value: 'backpack', label: t('pages.tunnels.engineBackpack') },
+                        { value: 'rakhsh', label: t('pages.tunnels.engineRakhsh') },
+                      ]}
+                    />
+                  </FormField>
                   <FormField
                     name="address"
                     label={t('pages.tunnels.address')}
@@ -199,31 +229,10 @@ export default function EnrolNode() {
                   >
                     <InputNumber min={1} max={65535} style={{ width: '100%' }} />
                   </FormField>
-                  <FormField name="security" label={t('pages.tunnels.security')}>
-                    <Radio.Group
-                      options={[
-                        { value: 'reality', label: t('pages.tunnels.securityReality') },
-                        { value: 'none', label: t('pages.tunnels.securityNone') },
-                      ]}
+                  <FormField name="transport" label={t('pages.tunnels.transport')}>
+                    <Select
+                      options={engine === 'rakhsh' ? RAKHSH_STREAM_CARRIERS : BACKPACK_TRANSPORTS}
                     />
-                  </FormField>
-                  {security === 'reality' && (
-                    <FormField
-                      name="serverName"
-                      label={t('pages.tunnels.serverName')}
-                      extra={t('pages.tunnels.serverNameHint')}
-                      rules={{ validate: rhfZodValidate(RealityServerNameSchema) }}
-                    >
-                      <Input placeholder="www.example.com" autoComplete="off" />
-                    </FormField>
-                  )}
-                  <FormField
-                    name="withTunnel"
-                    label={t('pages.enrolments.withTunnel')}
-                    extra={t('pages.enrolments.withTunnelHint')}
-                    valueProp="checked"
-                  >
-                    <Switch />
                   </FormField>
                 </>
               )}
