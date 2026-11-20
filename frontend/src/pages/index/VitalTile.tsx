@@ -2,6 +2,7 @@ import { useId, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { Card, theme } from 'antd';
 
+import { CountUp } from '@/components/ui';
 import { Sparkline } from '@/components/viz';
 import { mean, peak } from './useOverviewHistory';
 
@@ -55,7 +56,9 @@ export default function VitalTile({
       </div>
 
       <div className="ov-tile-value">
-        <span className="ov-tile-number">{available ? percent.toFixed(1) : '—'}</span>
+        <span className="ov-tile-number">
+          {available ? <CountUp value={percent} format={(v) => v.toFixed(1)} /> : '—'}
+        </span>
         {available && <span className="ov-tile-unit">%</span>}
       </div>
 

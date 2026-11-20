@@ -485,3 +485,93 @@
 .index-page .ip-hidden {
   filter: blur(6px);
 }
+
+/* Dalan dashboard */
+.ov-page > .dl-frame {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ov-gap);
+}
+
+.ov-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ov-greeting {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.ov-status-line {
+  margin: 0;
+  color: var(--dl-muted);
+  font-weight: 600;
+}
+
+.ntabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px;
+}
+
+.ntab {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--dl-glass-border);
+  border-radius: 99px;
+  background: var(--dl-glass);
+  color: var(--dl-muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(var(--dl-blur));
+  transition:
+    background var(--dl-d-base),
+    color var(--dl-d-base),
+    border-color var(--dl-d-base);
+}
+
+.ntab.on {
+  border-color: var(--dl-acc-line);
+  background: color-mix(in srgb, var(--dl-acc) 16%, var(--dl-glass));
+  color: var(--dl-text);
+}
+
+.ntab-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dl-muted);
+}
+
+.ntab-dot.ok {
+  background: var(--dl-ok);
+}
+
+.ntab-dot.bad {
+  background: var(--dl-bad);
+}
+
+.node-vitals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--ov-gap);
+}
+
+.node-vitals .node-error {
+  grid-column: 1 / -1;
+  color: var(--dl-bad-text);
+}
+
+body[data-effects='off'] .ntab {
+  background: var(--dl-surface);
+  backdrop-filter: none;
+}

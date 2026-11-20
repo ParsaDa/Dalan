@@ -144,6 +144,11 @@
       }
     },
     "index": {
+      "thisServer": "This server",
+      "greetMorning": "Good morning",
+      "greetAfternoon": "Good afternoon",
+      "greetEvening": "Good evening",
+      "nodesStatusLine": "{online} of {total} nodes online",
       "cpu": "CPU",
       "swap": "Takas",
       "storage": "Depolama",

@@ -144,6 +144,11 @@
       }
     },
     "index": {
+      "thisServer": "این سرور",
+      "greetMorning": "صبح بخیر",
+      "greetAfternoon": "عصر بخیر",
+      "greetEvening": "شب بخیر",
+      "nodesStatusLine": "{online} از {total} نود آنلاین است",
       "cpu": "پردازنده",
       "swap": "سواپ",
       "storage": "ذخیره‌سازی",
