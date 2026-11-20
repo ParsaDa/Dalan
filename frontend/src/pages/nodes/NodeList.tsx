@@ -27,6 +27,7 @@ import ReenrolNotices from './ReenrolNotices';
 import type { NodeRecord } from '@/api/queries/useNodesQuery';
 import { isPanelUpdateAvailable } from '@/lib/panel-version';
 import { activateOnKey } from '@/utils/a11y';
+import { formatUptime } from '@/lib/format-uptime';
 import './NodeList.css';
 
 interface NodeListProps {
@@ -143,17 +144,6 @@ function formatPct(p?: number, available = true): string {
   if (!available) return '—';
   if (typeof p !== 'number' || Number.isNaN(p)) return '-';
   return `${p.toFixed(1)}%`;
-}
-
-function formatUptime(secs?: number, available = true): string {
-  if (!available) return '—';
-  if (!secs) return '-';
-  const days = Math.floor(secs / 86400);
-  const hours = Math.floor((secs % 86400) / 3600);
-  if (days > 0) return `${days}d ${hours}h`;
-  const mins = Math.floor((secs % 3600) / 60);
-  if (hours > 0) return `${hours}h ${mins}m`;
-  return `${mins}m`;
 }
 
 // Stable per language: the columns memo depends on it, and a fresh function each

@@ -24,14 +24,16 @@ async function renderSidebar() {
   return view;
 }
 
-test('shows the Dalan name on the collapsed rail and when expanded', async () => {
+test('shows the logo mark on the collapsed rail and adds the Dalan name when expanded', async () => {
   const view = await renderSidebar();
   const brand = () => view.container.querySelector('.brand-text')?.textContent;
 
-  expect(brand()).toBe('DL');
+  expect(view.container.querySelector('.sider-brand .dl-logo')).not.toBeNull();
+  expect(brand()).toBeUndefined();
 
   fireEvent.mouseEnter(view.container.querySelector('.ant-sidebar')!);
 
+  expect(view.container.querySelector('.sider-brand .dl-logo')).not.toBeNull();
   expect(brand()).toBe('Dalan');
 });
 

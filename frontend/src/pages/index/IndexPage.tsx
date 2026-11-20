@@ -19,11 +19,16 @@ import {
 } from '@/models/status';
 import { useTheme } from '@/hooks/useTheme';
 import { useStatusQuery } from '@/api/queries/useStatusQuery';
+import { useNodesQuery } from '@/api/queries/useNodesQuery';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import AppSidebar from '@/layouts/AppSidebar';
 import { LazyMount } from '@/components/utility';
 import { setMessageInstance } from '@/utils/messageBus';
 import OverviewActionBar from './OverviewActionBar';
+import NodeAccentScope from '@/components/ui/NodeAccentScope';
+import DashboardHeader from './DashboardHeader';
+import NodeTabs from './NodeTabs';
+import NodeVitals from './NodeVitals';
 import VitalTile from './VitalTile';
 import ThroughputCard from './ThroughputCard';
 import ConnectionsCard from './ConnectionsCard';
@@ -46,6 +51,11 @@ export default function IndexPage() {
   const { isDark, isUltra, antdThemeConfig } = useTheme();
   const { status, fetched, fetchError, refresh } = useStatusQuery();
   const { isMobile } = useMediaQuery();
+  const { nodes, totals } = useNodesQuery();
+  const [startHour] = useState(() => new Date().getHours());
+  const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
+  const activeNode =
+    nodes.find((node) => node.id === activeNodeId && node.enable !== false) ?? null;
   const [messageApi, messageContextHolder] = message.useMessage();
   useEffect(() => {
     setMessageInstance(messageApi);
@@ -194,110 +204,126 @@ export default function IndexPage() {
                 />
               ) : (
                 <div className="ov-page">
-                  <OverviewActionBar
-                    status={status}
-                    isMobile={isMobile}
-                    accessLogEnable={accessLogEnable}
-                    panelVersion={displayVersion}
-                    latestVersion={panelUpdateInfo.latestVersion}
-                    updateAvailable={panelUpdateInfo.updateAvailable}
-                    onStopXray={stopXray}
-                    onRestartXray={restartXray}
-                    onOpenLogs={() => setLogsOpen(true)}
-                    onOpenXrayLogs={() => setXrayLogsOpen(true)}
-                    onOpenAmneziaWGLogs={() => setAmneziawgLogsOpen(true)}
-                    onOpenConfig={openConfig}
-                    onOpenBackup={() => setBackupOpen(true)}
-                    onOpenSystemHistory={() => setSysHistoryOpen(true)}
-                    onOpenXrayMetrics={() => setXrayMetricsOpen(true)}
-                    onOpenPanelUpdate={() => setPanelUpdateOpen(true)}
-                    onOpenVersionSwitch={() => setVersionOpen(true)}
-                  />
-
-                  {health && (
-                    <div className="ov-health" style={{ color: health.color }}>
-                      <span className="ov-health-mark" />
-                      {health.text}
-                    </div>
+                  <DashboardHeader online={totals.online} total={totals.total} hour={startHour} />
+                  {nodes.length > 0 && (
+                    <NodeTabs
+                      nodes={nodes}
+                      activeId={activeNode?.id ?? null}
+                      onSelect={setActiveNodeId}
+                    />
                   )}
+                  <NodeAccentScope node={activeNode}>
+                    {activeNode ? (
+                      <NodeVitals node={activeNode} />
+                    ) : (
+                      <>
+                        <OverviewActionBar
+                          status={status}
+                          isMobile={isMobile}
+                          accessLogEnable={accessLogEnable}
+                          panelVersion={displayVersion}
+                          latestVersion={panelUpdateInfo.latestVersion}
+                          updateAvailable={panelUpdateInfo.updateAvailable}
+                          onStopXray={stopXray}
+                          onRestartXray={restartXray}
+                          onOpenLogs={() => setLogsOpen(true)}
+                          onOpenXrayLogs={() => setXrayLogsOpen(true)}
+                          onOpenAmneziaWGLogs={() => setAmneziawgLogsOpen(true)}
+                          onOpenConfig={openConfig}
+                          onOpenBackup={() => setBackupOpen(true)}
+                          onOpenSystemHistory={() => setSysHistoryOpen(true)}
+                          onOpenXrayMetrics={() => setXrayMetricsOpen(true)}
+                          onOpenPanelUpdate={() => setPanelUpdateOpen(true)}
+                          onOpenVersionSwitch={() => setVersionOpen(true)}
+                        />
 
-                  <hr className="ov-rule" />
+                        {health && (
+                          <div className="ov-health" style={{ color: health.color }}>
+                            <span className="ov-health-mark" />
+                            {health.text}
+                          </div>
+                        )}
 
-                  <div className="ov-vitals">
-                    <VitalTile
-                      icon={<DashboardOutlined aria-hidden />}
-                      label={t('pages.index.cpu')}
-                      available={status.metricAvailable('cpu')}
-                      percent={status.cpu.percent}
-                      statusColor={status.cpu.color}
-                      detail={
-                        status.resourceScope === 'container'
-                          ? `${status.logicalPro} vCPU`
-                          : `${CPUFormatter.cpuCoreFormat(status.cpuCores)} / ${status.logicalPro}T · ${CPUFormatter.cpuSpeedFormat(status.cpuSpeedMhz)}`
-                      }
-                      footLeft={`${t('pages.index.avg')} ${mean(history.series.cpu).toFixed(0)}%`}
-                      footRight={`${t('pages.index.peak')} ${peak(history.series.cpu).toFixed(0)}%`}
-                      data={history.series.cpu}
-                      isMobile={isMobile}
-                    />
-                    <VitalTile
-                      icon={<DatabaseOutlined aria-hidden />}
-                      label={t('pages.index.memory')}
-                      percent={status.mem.percent}
-                      statusColor={status.mem.color}
-                      detail={`${SizeFormatter.sizeFormat(status.mem.current)} / ${SizeFormatter.sizeFormat(status.mem.total)}`}
-                      footLeft={`${t('pages.index.avg')} ${mean(history.series.mem).toFixed(0)}%`}
-                      footRight={`${t('pages.index.peak')} ${peak(history.series.mem).toFixed(0)}%`}
-                      data={history.series.mem}
-                      isMobile={isMobile}
-                    />
-                    <VitalTile
-                      icon={<SwapOutlined aria-hidden />}
-                      label={t('pages.index.swap')}
-                      available={status.metricAvailable('swap')}
-                      percent={status.swap.percent}
-                      statusColor={status.swap.color}
-                      detail={`${SizeFormatter.sizeFormat(status.swap.current)} / ${SizeFormatter.sizeFormat(status.swap.total)}`}
-                      footLeft={`${t('pages.index.avg')} ${mean(history.series.swap).toFixed(1)}%`}
-                      footRight={`${t('pages.index.peak')} ${peak(history.series.swap).toFixed(0)}%`}
-                      data={history.series.swap}
-                      isMobile={isMobile}
-                    />
-                    <VitalTile
-                      icon={<HddOutlined aria-hidden />}
-                      label={t('pages.index.storage')}
-                      percent={status.disk.percent}
-                      statusColor={status.disk.color}
-                      detail={`${SizeFormatter.sizeFormat(status.disk.current)} / ${SizeFormatter.sizeFormat(totalDisk)}`}
-                      footLeft={`${t('pages.index.free')} ${SizeFormatter.sizeFormat(freeDisk)}`}
-                      footRight={`${t('pages.index.avg')} ${mean(history.series.diskUsage).toFixed(1)}%`}
-                      data={history.series.diskUsage}
-                      isMobile={isMobile}
-                    />
-                  </div>
+                        <hr className="ov-rule" />
 
-                  <div className="ov-mid">
-                    <ThroughputCard
-                      status={status}
-                      up={history.series.netUp}
-                      down={history.series.netDown}
-                      labels={history.labels}
-                      isMobile={isMobile}
-                    />
-                    <ConnectionsCard
-                      status={status}
-                      tcp={history.series.tcpCount}
-                      udp={history.series.udpCount}
-                      labels={history.labels}
-                      isMobile={isMobile}
-                    />
-                  </div>
+                        <div className="ov-vitals">
+                          <VitalTile
+                            icon={<DashboardOutlined aria-hidden />}
+                            label={t('pages.index.cpu')}
+                            available={status.metricAvailable('cpu')}
+                            percent={status.cpu.percent}
+                            statusColor={status.cpu.color}
+                            detail={
+                              status.resourceScope === 'container'
+                                ? `${status.logicalPro} vCPU`
+                                : `${CPUFormatter.cpuCoreFormat(status.cpuCores)} / ${status.logicalPro}T · ${CPUFormatter.cpuSpeedFormat(status.cpuSpeedMhz)}`
+                            }
+                            footLeft={`${t('pages.index.avg')} ${mean(history.series.cpu).toFixed(0)}%`}
+                            footRight={`${t('pages.index.peak')} ${peak(history.series.cpu).toFixed(0)}%`}
+                            data={history.series.cpu}
+                            isMobile={isMobile}
+                          />
+                          <VitalTile
+                            icon={<DatabaseOutlined aria-hidden />}
+                            label={t('pages.index.memory')}
+                            percent={status.mem.percent}
+                            statusColor={status.mem.color}
+                            detail={`${SizeFormatter.sizeFormat(status.mem.current)} / ${SizeFormatter.sizeFormat(status.mem.total)}`}
+                            footLeft={`${t('pages.index.avg')} ${mean(history.series.mem).toFixed(0)}%`}
+                            footRight={`${t('pages.index.peak')} ${peak(history.series.mem).toFixed(0)}%`}
+                            data={history.series.mem}
+                            isMobile={isMobile}
+                          />
+                          <VitalTile
+                            icon={<SwapOutlined aria-hidden />}
+                            label={t('pages.index.swap')}
+                            available={status.metricAvailable('swap')}
+                            percent={status.swap.percent}
+                            statusColor={status.swap.color}
+                            detail={`${SizeFormatter.sizeFormat(status.swap.current)} / ${SizeFormatter.sizeFormat(status.swap.total)}`}
+                            footLeft={`${t('pages.index.avg')} ${mean(history.series.swap).toFixed(1)}%`}
+                            footRight={`${t('pages.index.peak')} ${peak(history.series.swap).toFixed(0)}%`}
+                            data={history.series.swap}
+                            isMobile={isMobile}
+                          />
+                          <VitalTile
+                            icon={<HddOutlined aria-hidden />}
+                            label={t('pages.index.storage')}
+                            percent={status.disk.percent}
+                            statusColor={status.disk.color}
+                            detail={`${SizeFormatter.sizeFormat(status.disk.current)} / ${SizeFormatter.sizeFormat(totalDisk)}`}
+                            footLeft={`${t('pages.index.free')} ${SizeFormatter.sizeFormat(freeDisk)}`}
+                            footRight={`${t('pages.index.avg')} ${mean(history.series.diskUsage).toFixed(1)}%`}
+                            data={history.series.diskUsage}
+                            isMobile={isMobile}
+                          />
+                        </div>
 
-                  <SystemStrip
-                    status={status}
-                    showIp={showIp}
-                    onToggleIp={() => setShowIp((v) => !v)}
-                  />
+                        <div className="ov-mid">
+                          <ThroughputCard
+                            status={status}
+                            up={history.series.netUp}
+                            down={history.series.netDown}
+                            labels={history.labels}
+                            isMobile={isMobile}
+                          />
+                          <ConnectionsCard
+                            status={status}
+                            tcp={history.series.tcpCount}
+                            udp={history.series.udpCount}
+                            labels={history.labels}
+                            isMobile={isMobile}
+                          />
+                        </div>
+
+                        <SystemStrip
+                          status={status}
+                          showIp={showIp}
+                          onToggleIp={() => setShowIp((v) => !v)}
+                        />
+                      </>
+                    )}
+                  </NodeAccentScope>
                 </div>
               )}
             </Spin>

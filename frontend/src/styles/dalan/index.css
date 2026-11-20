@@ -1,0 +1,18 @@
+@import '@fontsource-variable/manrope/index.css';
+@import '@fontsource-variable/vazirmatn/index.css';
+@import './tokens.css';
+@import './panel.css';
+
+body {
+  font-family: var(--dl-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+html:lang(fa) body,
+html:lang(ar) body {
+  font-family: var(--dl-font-fa);
+}
+
+.dl-num {
+  font-variant-numeric: tabular-nums;
+}

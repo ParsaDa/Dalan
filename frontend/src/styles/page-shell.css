@@ -6,34 +6,10 @@
 .nodes-page,
 .groups-page,
 .api-docs-page {
-  --bg-page: #e6e8ec;
-  --bg-card: #ffffff;
+  --bg-page: transparent;
+  --bg-card: var(--dl-glass);
   min-height: 100vh;
-  background: var(--bg-page);
-}
-
-.index-page.is-dark,
-.clients-page.is-dark,
-.inbounds-page.is-dark,
-.xray-page.is-dark,
-.settings-page.is-dark,
-.nodes-page.is-dark,
-.groups-page.is-dark,
-.api-docs-page.is-dark {
-  --bg-page: #1a1b1f;
-  --bg-card: #23252b;
-}
-
-.index-page.is-dark.is-ultra,
-.clients-page.is-dark.is-ultra,
-.inbounds-page.is-dark.is-ultra,
-.xray-page.is-dark.is-ultra,
-.settings-page.is-dark.is-ultra,
-.nodes-page.is-dark.is-ultra,
-.groups-page.is-dark.is-ultra,
-.api-docs-page.is-dark.is-ultra {
-  --bg-page: #000;
-  --bg-card: #101013;
+  background: transparent;
 }
 
 .index-page .ant-layout,
@@ -190,20 +166,10 @@ body.dark .ant-dropdown-menu-item-divider {
 /* Hosts page shares the standard panel page shell (background, transparent
    layout, content padding, summary-card padding). */
 .hosts-page {
-  --bg-page: #e6e8ec;
-  --bg-card: #ffffff;
+  --bg-page: transparent;
+  --bg-card: var(--dl-glass);
   min-height: 100vh;
-  background: var(--bg-page);
-}
-
-.hosts-page.is-dark {
-  --bg-page: #1a1b1f;
-  --bg-card: #23252b;
-}
-
-.hosts-page.is-dark.is-ultra {
-  --bg-page: #000;
-  --bg-card: #101013;
+  background: transparent;
 }
 
 .hosts-page .ant-layout,

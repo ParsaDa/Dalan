@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { DatabaseOutlined } from '@ant-design/icons';
 import { expect, within } from 'storybook/test';
 
+import { ThemeProvider } from '@/hooks/useTheme';
 import { Status } from '@/models/status';
 import VitalTile from './VitalTile';
 import SystemStrip from './SystemStrip';
@@ -16,23 +17,25 @@ function ContainerMetricsPreview({ unavailable = false }: { unavailable?: boolea
     appStats: { mem: 104857600, threads: 37, uptime: 50000 },
   });
   return (
-    <div style={{ maxWidth: 1000, display: 'grid', gap: 16 }}>
-      <div style={{ width: 340 }}>
-        <VitalTile
-          icon={<DatabaseOutlined />}
-          label="SWAP"
-          available={status.metricAvailable('swap')}
-          percent={status.swap.percent}
-          statusColor={status.swap.color}
-          detail="18.46 MiB / 512 MiB"
-          footLeft="Container"
-          footRight="2 vCPU"
-          data={unavailable ? [] : [3.5, 3.6, 3.6]}
-          isMobile={false}
-        />
+    <ThemeProvider>
+      <div style={{ maxWidth: 1000, display: 'grid', gap: 16 }}>
+        <div style={{ width: 340 }}>
+          <VitalTile
+            icon={<DatabaseOutlined />}
+            label="SWAP"
+            available={status.metricAvailable('swap')}
+            percent={status.swap.percent}
+            statusColor={status.swap.color}
+            detail="18.46 MiB / 512 MiB"
+            footLeft="Container"
+            footRight="2 vCPU"
+            data={unavailable ? [] : [3.5, 3.6, 3.6]}
+            isMobile={false}
+          />
+        </div>
+        <SystemStrip status={status} showIp={false} onToggleIp={() => undefined} />
       </div>
-      <SystemStrip status={status} showIp={false} onToggleIp={() => undefined} />
-    </div>
+    </ThemeProvider>
   );
 }
 

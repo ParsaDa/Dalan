@@ -1,10 +1,30 @@
-import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
 import { theme as antdTheme } from 'antd';
 import type { ThemeConfig } from 'antd';
 
+import { DEFAULT_ACCENT } from '@/lib/theme/accents';
+import type { AccentId } from '@/lib/theme/accents';
+import { readEffectsEnv, resolveEffects } from '@/lib/theme/effects';
+import type { Effects, EffectsPref } from '@/lib/theme/effects';
+
 const STORAGE_DARK = 'dark-mode';
 const STORAGE_ULTRA = 'isUltraDarkThemeEnabled';
+const STORAGE_EFFECTS = 'dalan-effects';
+const EFFECTS_PREFS: readonly EffectsPref[] = ['auto', 'full', 'light', 'off'];
+
+function readEffectsPref(): EffectsPref {
+  const raw = localStorage.getItem(STORAGE_EFFECTS);
+  return EFFECTS_PREFS.find((pref) => pref === raw) ?? 'auto';
+}
 
 function readBool(key: string, fallback: boolean): boolean {
   const raw = localStorage.getItem(key);
@@ -34,68 +54,91 @@ const initialDark = readBool(STORAGE_DARK, true);
 const initialUltra = readBool(STORAGE_ULTRA, false);
 applyDom(initialDark, initialUltra);
 
+const FONT_FAMILY = "'Manrope Variable', 'Vazirmatn Variable', system-ui, sans-serif";
+
+const SHARED_TOKENS = {
+  fontFamily: FONT_FAMILY,
+  borderRadius: 12,
+  borderRadiusLG: 18,
+  borderRadiusSM: 8,
+  controlHeight: 40,
+  controlHeightLG: 52,
+  motionDurationFast: '0.14s',
+  motionDurationMid: '0.24s',
+  motionDurationSlow: '0.42s',
+  motionEaseOut: 'cubic-bezier(0.22, 1, 0.36, 1)',
+};
+
 const DARK_TOKENS = {
-  colorBgBase: '#1a1b1f',
-  colorBgLayout: '#1a1b1f',
-  colorBgContainer: '#23252b',
-  colorBgElevated: '#2d2f37',
+  ...SHARED_TOKENS,
+  colorPrimary: '#ffb020',
+  colorBgBase: '#111114',
+  colorBgLayout: 'transparent',
+  colorBgContainer: '#1b1b20',
+  colorBgElevated: '#222228',
+  colorText: '#f4efe6',
+  colorTextSecondary: '#afaaa0',
+  colorBorder: '#8c877d',
+  colorBorderSecondary: 'rgba(255, 255, 255, 0.13)',
+  colorSuccess: '#34d399',
+  colorWarning: '#ff7a45',
+  colorError: '#f87171',
 };
 const ULTRA_DARK_TOKENS = {
+  ...DARK_TOKENS,
   colorBgBase: '#000',
-  colorBgLayout: '#000',
   colorBgContainer: '#101013',
   colorBgElevated: '#1a1a1e',
 };
-const DARK_LAYOUT_TOKENS = {
-  bodyBg: '#1a1b1f',
-  headerBg: '#15161a',
-  headerColor: '#ffffff',
-  footerBg: '#1a1b1f',
-  siderBg: '#15161a',
-  triggerBg: '#23252b',
-  triggerColor: '#ffffff',
+const TRANSPARENT_LAYOUT_TOKENS = {
+  bodyBg: 'transparent',
+  headerBg: 'transparent',
+  footerBg: 'transparent',
+  siderBg: 'transparent',
+  triggerBg: 'transparent',
 };
-const ULTRA_DARK_LAYOUT_TOKENS = {
-  bodyBg: '#000',
-  headerBg: '#050507',
-  headerColor: '#ffffff',
-  footerBg: '#000',
-  siderBg: '#050507',
-  triggerBg: '#1a1a1e',
-  triggerColor: '#ffffff',
+const DARK_LAYOUT_TOKENS = {
+  ...TRANSPARENT_LAYOUT_TOKENS,
+  headerColor: '#f4efe6',
+  triggerColor: '#f4efe6',
 };
 const DARK_MENU_TOKENS = {
-  darkItemBg: '#15161a',
-  darkSubMenuItemBg: '#1a1b1f',
-  darkPopupBg: '#23252b',
+  darkItemBg: 'transparent',
+  darkSubMenuItemBg: 'transparent',
+  darkPopupBg: '#222228',
 };
-const ULTRA_DARK_MENU_TOKENS = {
-  darkItemBg: '#050507',
-  darkSubMenuItemBg: '#000',
-  darkPopupBg: '#101013',
-};
-const DARK_CARD_TOKENS = {
-  colorBorderSecondary: 'rgba(255, 255, 255, 0.06)',
-};
-const ULTRA_DARK_CARD_TOKENS = {
-  colorBorderSecondary: 'rgba(255, 255, 255, 0.04)',
-};
+const ULTRA_DARK_MENU_TOKENS = { ...DARK_MENU_TOKENS, darkPopupBg: '#1a1a1e' };
 const STATISTIC_TOKENS = {
   contentFontSize: 17,
   titleFontSize: 11,
 };
-const LIGHT_CONTRAST_TOKENS = {
-  colorTextDescription: 'rgba(0, 0, 0, 0.58)',
-  colorTextTertiary: 'rgba(0, 0, 0, 0.58)',
+const LIGHT_TOKENS = {
+  ...SHARED_TOKENS,
+  colorPrimary: '#906102',
+  colorBgBase: '#f4efe6',
+  colorBgLayout: 'transparent',
+  colorBgContainer: '#ffffff',
+  colorBgElevated: '#ffffff',
+  colorText: '#111114',
+  colorTextSecondary: '#6b665c',
+  colorTextDescription: '#6b665c',
+  colorTextTertiary: '#6b665c',
   colorTextPlaceholder: '#767676',
-  colorError: '#cf1322',
-  colorErrorText: '#cf1322',
-  colorSuccessText: '#237804',
+  colorBorder: '#857f75',
+  colorBorderSecondary: 'rgba(17, 17, 20, 0.11)',
+  colorSuccess: '#047857',
+  colorSuccessText: '#047857',
+  colorWarning: '#c2410c',
+  colorError: '#b91c1c',
+  colorErrorText: '#b91c1c',
 };
-const LIGHT_BUTTON_TOKENS = {
-  colorPrimary: '#0958d9',
-  colorPrimaryHover: '#2468e5',
-  colorPrimaryActive: '#073ea8',
+// Text on an accent fill is ink in both themes, whatever the accent.
+const PRIMARY_BUTTON_TOKENS = { primaryColor: '#111114', fontWeight: 700 };
+// The light colorPrimary is a dark amber for text; ink on it fails 4.5:1, so buttons fill with saffron.
+const LIGHT_PRIMARY_BUTTON_TOKENS = {
+  ...PRIMARY_BUTTON_TOKENS,
+  colorPrimary: '#ffb020',
+  algorithm: true,
 };
 
 // hashed:false drops the `:where(.css-<hash>)` wrapper antd puts around every
@@ -117,10 +160,11 @@ export function buildAntdThemeConfig(isDark: boolean, isUltra: boolean): ThemeCo
     return {
       ...SHARED_STYLE_CONFIG,
       algorithm: antdTheme.defaultAlgorithm,
-      token: LIGHT_CONTRAST_TOKENS,
+      token: LIGHT_TOKENS,
       components: {
+        Layout: TRANSPARENT_LAYOUT_TOKENS,
         Statistic: STATISTIC_TOKENS,
-        Button: LIGHT_BUTTON_TOKENS,
+        Button: LIGHT_PRIMARY_BUTTON_TOKENS,
       },
     };
   }
@@ -129,10 +173,10 @@ export function buildAntdThemeConfig(isDark: boolean, isUltra: boolean): ThemeCo
     algorithm: antdTheme.darkAlgorithm,
     token: isUltra ? ULTRA_DARK_TOKENS : DARK_TOKENS,
     components: {
-      Layout: isUltra ? ULTRA_DARK_LAYOUT_TOKENS : DARK_LAYOUT_TOKENS,
+      Layout: DARK_LAYOUT_TOKENS,
       Menu: isUltra ? ULTRA_DARK_MENU_TOKENS : DARK_MENU_TOKENS,
-      Card: isUltra ? ULTRA_DARK_CARD_TOKENS : DARK_CARD_TOKENS,
       Statistic: STATISTIC_TOKENS,
+      Button: PRIMARY_BUTTON_TOKENS,
     },
   };
 }
@@ -156,6 +200,11 @@ interface ThemeContextValue {
   toggleTheme: () => void;
   toggleUltra: () => void;
   antdThemeConfig: ThemeConfig;
+  effectsPref: EffectsPref;
+  effects: Effects;
+  setEffectsPref: (pref: EffectsPref) => void;
+  accent: AccentId;
+  setAccent: (accent: AccentId) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -170,14 +219,73 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_ULTRA, String(isUltra));
   }, [isDark, isUltra]);
 
+  const [effectsPref, setEffectsPrefState] = useState<EffectsPref>(readEffectsPref);
+  const [reducedMotion, setReducedMotion] = useState(() => readEffectsEnv().reducedMotion);
+  const [accent, setAccent] = useState<AccentId>(DEFAULT_ACCENT);
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReducedMotion(query.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+
+  const effects = useMemo(
+    () => resolveEffects(effectsPref, { ...readEffectsEnv(), reducedMotion }),
+    [effectsPref, reducedMotion],
+  );
+
+  useLayoutEffect(() => {
+    document.body.dataset.effects = effects;
+  }, [effects]);
+
+  useLayoutEffect(() => {
+    document.body.dataset.accent = accent;
+  }, [accent]);
+
+  // Ambient motion and the 5 s refresh both stop while the tab is hidden.
+  useEffect(() => {
+    const sync = () => {
+      document.body.classList.toggle('dl-paused', document.hidden);
+    };
+    document.addEventListener('visibilitychange', sync);
+    return () => document.removeEventListener('visibilitychange', sync);
+  }, []);
+
+  const setEffectsPref = useCallback((pref: EffectsPref) => {
+    localStorage.setItem(STORAGE_EFFECTS, pref);
+    setEffectsPrefState(pref);
+  }, []);
+
   const toggleTheme = useCallback(() => setIsDark((v) => !v), []);
   const toggleUltra = useCallback(() => setIsUltra((v) => !v), []);
 
   const antdThemeConfig = useMemo(() => buildAntdThemeConfig(isDark, isUltra), [isDark, isUltra]);
 
   const value = useMemo<ThemeContextValue>(
-    () => ({ isDark, isUltra, toggleTheme, toggleUltra, antdThemeConfig }),
-    [isDark, isUltra, toggleTheme, toggleUltra, antdThemeConfig],
+    () => ({
+      isDark,
+      isUltra,
+      toggleTheme,
+      toggleUltra,
+      antdThemeConfig,
+      effectsPref,
+      effects,
+      setEffectsPref,
+      accent,
+      setAccent,
+    }),
+    [
+      isDark,
+      isUltra,
+      toggleTheme,
+      toggleUltra,
+      antdThemeConfig,
+      effectsPref,
+      effects,
+      setEffectsPref,
+      accent,
+    ],
   );
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

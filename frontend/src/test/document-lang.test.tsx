@@ -7,6 +7,7 @@ describe('readyI18n page language', () => {
     document.cookie = 'lang=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
     document.cookie = 'subLang=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
     document.documentElement.lang = 'en';
+    document.documentElement.dir = '';
   });
 
   it.each([
@@ -30,5 +31,19 @@ describe('readyI18n page language', () => {
     await readyI18n('panel');
 
     expect(document.documentElement.lang).toBe('en-US');
+  });
+
+  it.each([
+    ['fa-IR', 'rtl'],
+    ['ar-EG', 'rtl'],
+    ['zh-TW', 'ltr'],
+  ])('sets <html dir> for the %s panel locale to %s', async (locale, dir) => {
+    vi.resetModules();
+    document.cookie = `lang=${locale}; path=/`;
+    const { readyI18n } = await import('@/i18n/react');
+
+    await readyI18n('panel');
+
+    expect(document.documentElement.dir).toBe(dir);
   });
 });

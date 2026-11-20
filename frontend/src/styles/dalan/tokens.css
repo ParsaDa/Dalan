@@ -1,0 +1,285 @@
+/* Dalan design tokens (design system "Dalan", tokens.json). Prefixed --dl- so they never collide with antd. */
+
+@property --dl-acc {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffb020;
+}
+
+@property --dl-acc-line {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffb020;
+}
+
+@property --dl-acc-text {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffb020;
+}
+
+body {
+  --dl-d-fast: 140ms;
+  --dl-d-base: 240ms;
+  --dl-d-slow: 420ms;
+  --dl-d-sweep: 640ms;
+  --dl-d-count: 700ms;
+  --dl-stagger: 40ms;
+  --dl-e-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --dl-e-io: cubic-bezier(0.65, 0, 0.35, 1);
+  --dl-e-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dl-e-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --dl-r-xs: 8px;
+  --dl-r-sm: 12px;
+  --dl-r-md: 14px;
+  --dl-r-lg: 18px;
+  --dl-r-xl: 24px;
+  --dl-dir: 1;
+  --dl-font: 'Manrope Variable', 'Vazirmatn Variable', system-ui, sans-serif;
+  --dl-font-fa: 'Vazirmatn Variable', 'Manrope Variable', system-ui, sans-serif;
+  --dl-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --dl-acc: #ffb020;
+  --dl-acc-line: #ffb020;
+  --dl-acc-text: #ffb020;
+  --dl-on-acc: #111114;
+  --dl-blur: 24px;
+  transition:
+    --dl-acc var(--dl-d-sweep) var(--dl-e-io),
+    --dl-acc-line var(--dl-d-sweep) var(--dl-e-io),
+    --dl-acc-text var(--dl-d-sweep) var(--dl-e-io),
+    background-color var(--dl-d-base);
+}
+
+[dir='rtl'] body,
+body[dir='rtl'] {
+  --dl-dir: -1;
+}
+
+body.dark {
+  --dl-bg: #111114;
+  --dl-surface: #1b1b20;
+  --dl-surface-hi: rgba(255, 255, 255, 0.1);
+  --dl-text: #f4efe6;
+  --dl-muted: #afaaa0;
+  --dl-glass: rgba(255, 255, 255, 0.07);
+  --dl-glass-border: rgba(255, 255, 255, 0.13);
+  --dl-glass-dense: rgba(27, 27, 32, 0.88);
+  --dl-track: rgba(255, 255, 255, 0.09);
+  --dl-track-hi: rgba(255, 255, 255, 0.16);
+  --dl-ctl-border: #8c877d;
+  --dl-line-soft: rgba(255, 255, 255, 0.07);
+  --dl-input: rgba(0, 0, 0, 0.22);
+  --dl-ok: #34d399;
+  --dl-ok-text: #34d399;
+  --dl-warn: #ff7a45;
+  --dl-warn-text: #fe8759;
+  --dl-bad: #f87171;
+  --dl-bad-text: #ff8482;
+  --dl-mint-text: #34d399;
+  --dl-glow-alpha: 14%;
+  --dl-scrim: rgba(8, 8, 10, 0.6);
+  --dl-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 48px -28px rgba(0, 0, 0, 0.7);
+}
+
+body.light {
+  --dl-bg: #f4efe6;
+  --dl-surface: #ffffff;
+  --dl-surface-hi: #ffffff;
+  --dl-text: #111114;
+  --dl-muted: #6b665c;
+  --dl-glass: rgba(255, 255, 255, 0.6);
+  --dl-glass-border: rgba(17, 17, 20, 0.11);
+  --dl-glass-dense: rgba(255, 255, 255, 0.88);
+  --dl-track: rgba(17, 17, 20, 0.08);
+  --dl-track-hi: rgba(255, 255, 255, 0.9);
+  --dl-ctl-border: #857f75;
+  --dl-line-soft: rgba(17, 17, 20, 0.07);
+  --dl-input: rgba(255, 255, 255, 0.7);
+  --dl-ok: #047857;
+  --dl-ok-text: #047857;
+  --dl-warn: #c2410c;
+  --dl-warn-text: #c2410c;
+  --dl-bad: #b91c1c;
+  --dl-bad-text: #b91c1c;
+  --dl-mint-text: #047a55;
+  --dl-glow-alpha: 16%;
+  --dl-scrim: rgba(40, 34, 24, 0.35);
+  --dl-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 24px 48px -30px rgba(70, 52, 20, 0.35);
+}
+
+body[data-effects='full'] {
+  --dl-blur: 24px;
+}
+
+body[data-effects='light'] {
+  --dl-blur: 8px;
+}
+
+body[data-effects='off'] {
+  --dl-blur: 0px;
+}
+
+/* Accent: fill, line (3:1 for strokes) and text (4.5:1) per theme. */
+body.dark[data-accent='saffron'],
+body.dark .dl-frame[data-accent='saffron'] {
+  --dl-acc: #ffb020;
+  --dl-acc-line: #ffb020;
+  --dl-acc-text: #ffb020;
+}
+body.light[data-accent='saffron'],
+body.light .dl-frame[data-accent='saffron'] {
+  --dl-acc: #ffb020;
+  --dl-acc-line: #b57a04;
+  --dl-acc-text: #906102;
+}
+body.dark[data-accent='rose'],
+body.dark .dl-frame[data-accent='rose'] {
+  --dl-acc: #ff3d6e;
+  --dl-acc-line: #ff3d6e;
+  --dl-acc-text: #fe6380;
+}
+body.light[data-accent='rose'],
+body.light .dl-frame[data-accent='rose'] {
+  --dl-acc: #ff3d6e;
+  --dl-acc-line: #f93669;
+  --dl-acc-text: #d3034f;
+}
+body.dark[data-accent='sun'],
+body.dark .dl-frame[data-accent='sun'] {
+  --dl-acc: #ffc83d;
+  --dl-acc-line: #ffc83d;
+  --dl-acc-text: #ffc83d;
+}
+body.light[data-accent='sun'],
+body.light .dl-frame[data-accent='sun'] {
+  --dl-acc: #ffc83d;
+  --dl-acc-line: #a98006;
+  --dl-acc-text: #866505;
+}
+body.dark[data-accent='tulip'],
+body.dark .dl-frame[data-accent='tulip'] {
+  --dl-acc: #f062c8;
+  --dl-acc-line: #f062c8;
+  --dl-acc-text: #f466cc;
+}
+body.light[data-accent='tulip'],
+body.light .dl-frame[data-accent='tulip'] {
+  --dl-acc: #f062c8;
+  --dl-acc-line: #db4eb5;
+  --dl-acc-text: #bb2d98;
+}
+body.dark[data-accent='cobalt'],
+body.dark .dl-frame[data-accent='cobalt'] {
+  --dl-acc: #4c8dff;
+  --dl-acc-line: #4c8dff;
+  --dl-acc-text: #619aff;
+}
+body.light[data-accent='cobalt'],
+body.light .dl-frame[data-accent='cobalt'] {
+  --dl-acc: #4c8dff;
+  --dl-acc-line: #4283f4;
+  --dl-acc-text: #2766d4;
+}
+body.dark[data-accent='iris'],
+body.dark .dl-frame[data-accent='iris'] {
+  --dl-acc: #9b8cff;
+  --dl-acc-line: #9b8cff;
+  --dl-acc-text: #9d90fe;
+}
+body.light[data-accent='iris'],
+body.light .dl-frame[data-accent='iris'] {
+  --dl-acc: #9b8cff;
+  --dl-acc-line: #8675e6;
+  --dl-acc-text: #6c59c7;
+}
+body.dark[data-accent='lime'],
+body.dark .dl-frame[data-accent='lime'] {
+  --dl-acc: #b6f23c;
+  --dl-acc-line: #b6f23c;
+  --dl-acc-text: #b6f23c;
+}
+body.light[data-accent='lime'],
+body.light .dl-frame[data-accent='lime'] {
+  --dl-acc: #b6f23c;
+  --dl-acc-line: #6a9206;
+  --dl-acc-text: #547500;
+}
+body.dark[data-accent='cyan'],
+body.dark .dl-frame[data-accent='cyan'] {
+  --dl-acc: #2ccce4;
+  --dl-acc-line: #2ccce4;
+  --dl-acc-text: #2ccce4;
+}
+body.light[data-accent='cyan'],
+body.light .dl-frame[data-accent='cyan'] {
+  --dl-acc: #2ccce4;
+  --dl-acc-line: #0494a6;
+  --dl-acc-text: #037685;
+}
+body.dark[data-accent='amethyst'],
+body.dark .dl-frame[data-accent='amethyst'] {
+  --dl-acc: #c27cf5;
+  --dl-acc-line: #c27cf5;
+  --dl-acc-text: #c680f9;
+}
+body.light[data-accent='amethyst'],
+body.light .dl-frame[data-accent='amethyst'] {
+  --dl-acc: #c27cf5;
+  --dl-acc-line: #ac67de;
+  --dl-acc-text: #904abf;
+}
+body.dark[data-accent='ice'],
+body.dark .dl-frame[data-accent='ice'] {
+  --dl-acc: #8ec2ff;
+  --dl-acc-line: #8ec2ff;
+  --dl-acc-text: #8ec2ff;
+}
+body.light[data-accent='ice'],
+body.light .dl-frame[data-accent='ice'] {
+  --dl-acc: #8ec2ff;
+  --dl-acc-line: #5889c3;
+  --dl-acc-text: #3c6da4;
+}
+body.dark[data-accent='sand'],
+body.dark .dl-frame[data-accent='sand'] {
+  --dl-acc: #e2be8a;
+  --dl-acc-line: #e2be8a;
+  --dl-acc-text: #e2be8a;
+}
+body.light[data-accent='sand'],
+body.light .dl-frame[data-accent='sand'] {
+  --dl-acc: #e2be8a;
+  --dl-acc-line: #a3814f;
+  --dl-acc-text: #856533;
+}
+body.dark[data-accent='steel'],
+body.dark .dl-frame[data-accent='steel'] {
+  --dl-acc: #9aa8bc;
+  --dl-acc-line: #9aa8bc;
+  --dl-acc-text: #9aa8bc;
+}
+body.light[data-accent='steel'],
+body.light .dl-frame[data-accent='steel'] {
+  --dl-acc: #9aa8bc;
+  --dl-acc-line: #7a879a;
+  --dl-acc-text: #5f6c7e;
+}
+
+.dl-frame {
+  transition:
+    --dl-acc var(--dl-d-sweep) var(--dl-e-io),
+    --dl-acc-line var(--dl-d-sweep) var(--dl-e-io),
+    --dl-acc-text var(--dl-d-sweep) var(--dl-e-io);
+}
+
+body.dark .dl-frame[data-accent='custom'] {
+  --dl-acc: var(--dl-custom);
+  --dl-acc-line: var(--dl-custom);
+  --dl-acc-text: color-mix(in srgb, var(--dl-custom) 70%, white);
+}
+
+body.light .dl-frame[data-accent='custom'] {
+  --dl-acc: var(--dl-custom);
+  --dl-acc-line: color-mix(in srgb, var(--dl-custom) 80%, black);
+  --dl-acc-text: color-mix(in srgb, var(--dl-custom) 55%, black);
+}

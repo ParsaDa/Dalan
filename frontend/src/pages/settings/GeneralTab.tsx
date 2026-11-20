@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import AppearanceSettings from './AppearanceSettings';
 import { useTranslation } from 'react-i18next';
 import { Input, InputNumber, Select, Switch, Tabs } from 'antd';
 import {
@@ -345,6 +346,8 @@ export default function GeneralTab({ allSetting, updateSetting }: GeneralTabProp
                   options={langOptions}
                 />
               </SettingListItem>
+
+              <AppearanceSettings />
             </>
           ),
         },

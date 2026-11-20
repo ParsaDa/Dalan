@@ -27,4 +27,24 @@ describe('AntdRootConfig locale', () => {
 
     expect(document.querySelector('.ant-empty-description')?.textContent).toBe(emptyText);
   });
+
+  it.each([
+    ['fa-IR', 'ant-btn-rtl'],
+    ['en-US', null],
+  ])('mirrors antd components for the %s panel language', async (locale, rtlClass) => {
+    vi.resetModules();
+    document.cookie = `lang=${locale}; path=/`;
+    const { readyI18n } = await import('@/i18n/react');
+    const { AntdRootConfig } = await import('@/i18n/AntdRootConfig');
+    const { Button } = await import('antd');
+
+    await readyI18n('panel');
+    render(
+      <AntdRootConfig>
+        <Button>go</Button>
+      </AntdRootConfig>,
+    );
+
+    expect(document.querySelector('.ant-btn-rtl') !== null).toBe(rtlClass !== null);
+  });
 });

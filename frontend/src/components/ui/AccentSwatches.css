@@ -1,0 +1,26 @@
+.accent-swatch {
+  width: 26px;
+  height: 26px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    transform var(--dl-d-fast) var(--dl-e-out),
+    box-shadow var(--dl-d-base);
+}
+
+.accent-swatch:hover {
+  transform: scale(1.12);
+}
+
+.accent-swatch.on {
+  box-shadow:
+    0 0 0 2px var(--dl-surface),
+    0 0 0 4px var(--dl-text);
+}
+
+.accent-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

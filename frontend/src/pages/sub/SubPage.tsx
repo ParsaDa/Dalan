@@ -13,9 +13,11 @@ import {
 import { ClipboardManager, LanguageManager } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
 import { useTheme } from '@/hooks/useTheme';
+import PanelBackground from '@/components/ui/PanelBackground';
 import SubAppsTab from './SubAppsTab';
 import SubConfigsTab from './SubConfigsTab';
 import SubHeader from './SubHeader';
+import { isRtlLanguage } from '@/i18n/direction';
 import SubHero from './SubHero';
 import SubLinksTab from './SubLinksTab';
 import { buildSubApps, daysUntil, detectPlatform, resolveSubStatus } from './subPageModel';
@@ -58,7 +60,6 @@ const heroData = {
 
 const apps = buildSubApps({ subUrl, sId, subTitle });
 const initialPlatform = detectPlatform(navigator.userAgent);
-const RTL_LANGUAGES = new Set(['fa-IR', 'ar-EG']);
 
 export default function SubPage() {
   const { t } = useTranslation();
@@ -128,7 +129,7 @@ export default function SubPage() {
     return items;
   }, [t, copy, open]);
 
-  const direction = RTL_LANGUAGES.has(lang) ? 'rtl' : 'ltr';
+  const direction = isRtlLanguage(lang) ? 'rtl' : 'ltr';
   const pageClass = ['subscription-page', isDark && 'is-dark', isUltra && 'is-ultra']
     .filter(Boolean)
     .join(' ');
@@ -136,6 +137,7 @@ export default function SubPage() {
   return (
     <ConfigProvider theme={antdThemeConfig} direction={direction}>
       {messageContextHolder}
+      <PanelBackground />
       <Layout className={pageClass} dir={direction}>
         <Layout.Content className="sub-content">
           <Card className="sub-card">

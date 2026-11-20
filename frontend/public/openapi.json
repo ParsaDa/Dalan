@@ -3688,6 +3688,10 @@
       "Node": {
         "description": "Node represents a remote 3x-ui panel registered with the central panel.\nThe central panel polls each node's existing /panel/api/server/status\nendpoint over HTTP using the per-node ApiToken to populate the runtime\nstatus fields below.",
         "properties": {
+          "accent": {
+            "example": "tulip",
+            "type": "string"
+          },
           "activeCount": {
             "example": 23,
             "type": "integer"
@@ -3713,6 +3717,10 @@
           "configDirtyAt": {
             "format": "int64",
             "type": "integer"
+          },
+          "country": {
+            "example": "NL",
+            "type": "string"
           },
           "cpuPct": {
             "example": 23.5,
@@ -3877,6 +3885,7 @@
           }
         },
         "required": [
+          "accent",
           "activeCount",
           "address",
           "allowPrivateAddress",
@@ -3884,6 +3893,7 @@
           "clientCount",
           "configDirty",
           "configDirtyAt",
+          "country",
           "cpuPct",
           "createdAt",
           "depletedCount",
@@ -3974,6 +3984,9 @@
       "NodeMutationRequest": {
         "description": "NodeMutationRequest is the node write/probe contract. ApiToken is accepted\nonly as input. On update, nil means keep the stored token; replacement and\nclearing are explicit and mutually exclusive.",
         "properties": {
+          "accent": {
+            "type": "string"
+          },
           "address": {
             "type": "string"
           },
@@ -3989,6 +4002,9 @@
           },
           "clearApiToken": {
             "type": "boolean"
+          },
+          "country": {
+            "type": "string"
           },
           "enable": {
             "type": "boolean"
@@ -4047,9 +4063,11 @@
           }
         },
         "required": [
+          "accent",
           "address",
           "allowPrivateAddress",
           "basePath",
+          "country",
           "enable",
           "id",
           "inboundSyncMode",
@@ -4068,6 +4086,10 @@
       "NodeView": {
         "description": "NodeView is the browser/API read contract for nodes. Credentials are\nwrite-only: responses expose only whether a node has a token configured.",
         "properties": {
+          "accent": {
+            "example": "tulip",
+            "type": "string"
+          },
           "activeCount": {
             "example": 20,
             "type": "integer"
@@ -4096,6 +4118,10 @@
             "example": 0,
             "format": "int64",
             "type": "integer"
+          },
+          "country": {
+            "example": "NL",
+            "type": "string"
           },
           "cpuPct": {
             "example": 12.5,
@@ -4252,6 +4278,7 @@
           }
         },
         "required": [
+          "accent",
           "activeCount",
           "address",
           "allowPrivateAddress",
@@ -4259,6 +4286,7 @@
           "clientCount",
           "configDirty",
           "configDirtyAt",
+          "country",
           "cpuPct",
           "createdAt",
           "depletedCount",
@@ -11813,6 +11841,7 @@
                   "success": true,
                   "obj": [
                     {
+                      "accent": "tulip",
                       "activeCount": 20,
                       "address": "node.example.com",
                       "allowPrivateAddress": false,
@@ -11820,6 +11849,7 @@
                       "clientCount": 25,
                       "configDirty": false,
                       "configDirtyAt": 0,
+                      "country": "NL",
                       "cpuPct": 12.5,
                       "createdAt": 1700000000,
                       "depletedCount": 1,
@@ -12018,6 +12048,7 @@
                 "example": {
                   "success": true,
                   "obj": {
+                    "accent": "tulip",
                     "activeCount": 20,
                     "address": "node.example.com",
                     "allowPrivateAddress": false,
@@ -12025,6 +12056,7 @@
                     "clientCount": 25,
                     "configDirty": false,
                     "configDirtyAt": 0,
+                    "country": "NL",
                     "cpuPct": 12.5,
                     "createdAt": 1700000000,
                     "depletedCount": 1,
@@ -12172,6 +12204,7 @@
                 "example": {
                   "success": true,
                   "obj": {
+                    "accent": "tulip",
                     "activeCount": 20,
                     "address": "node.example.com",
                     "allowPrivateAddress": false,
@@ -12179,6 +12212,7 @@
                     "clientCount": 25,
                     "configDirty": false,
                     "configDirtyAt": 0,
+                    "country": "NL",
                     "cpuPct": 12.5,
                     "createdAt": 1700000000,
                     "depletedCount": 1,
@@ -19143,6 +19177,7 @@
               "type": "nodes",
               "payload": [
                 {
+                  "accent": "tulip",
                   "activeCount": 20,
                   "address": "node.example.com",
                   "allowPrivateAddress": false,
@@ -19150,6 +19185,7 @@
                   "clientCount": 25,
                   "configDirty": false,
                   "configDirtyAt": 0,
+                  "country": "NL",
                   "cpuPct": 12.5,
                   "createdAt": 1700000000,
                   "depletedCount": 1,
