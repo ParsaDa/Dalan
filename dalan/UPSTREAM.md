@@ -38,6 +38,7 @@ Dalan features live in new files and packages, so a conflict means upstream chan
 | `internal/web/controller/node.go` | `del` closes the management tunnel of a deleted node |
 | `main.go` | `enrol` and `install-engines` commands (their code is in `enrol_cmd.go` and `engines_cmd.go`) and their help lines |
 | `x-ui.sh` | `enrol` case, added by `scripts/dalan/rebrand.sh` |
+| sponsors (`internal/web/service/panel/sponsor.go`, `frontend/src/{components/sponsor,pages/sponsors}`, the `/sponsors` routes, their i18n keys) | deleted: the panel must not fetch ads from a third-party repository; if a sync brings them back, delete them again |
 | `install.sh` | `install-engines` step and the `XUI_ENROL` step before the final summary, added by `scripts/dalan/rebrand.sh` |
 | `Dockerfile`, `DockerEntrypoint.sh` | copy and source `DockerPrepare.sh` (platform `PORT`, `DALAN_*` variables); `main.go` also starts the front door (`internal/frontdoor`) |
 | `.github/workflows/ci.yml` | shellcheck list includes `DockerPrepare.sh` and `deploy/test/container-prepare.sh` |
