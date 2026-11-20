@@ -6,8 +6,6 @@ import TunnelsPage from '@/pages/tunnels/TunnelsPage';
 import { HttpUtil, Msg } from '@/utils';
 import { renderWithProviders } from './test-utils';
 
-vi.mock('@/layouts/AppSidebar', () => ({ default: () => null }));
-
 const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
 
 const option = (key: string, extra: Record<string, unknown>) => ({

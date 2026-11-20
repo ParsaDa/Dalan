@@ -54,7 +54,6 @@ import {
   type TunnelMode,
   type TunnelOptionValues,
 } from '@/api/queries/useTunnels';
-import AppSidebar from '@/layouts/AppSidebar';
 import { selectTagRender } from '@/components/form/SelectTag';
 import { ClipboardManager, SizeFormatter } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
@@ -403,7 +402,6 @@ export default function TunnelsPage() {
       {messageContextHolder}
       {modalContextHolder}
       <Layout className={pageClass}>
-        <AppSidebar />
         <Layout className="content-shell">
           <Layout.Content id="content-layout" className="content-area">
             <Spin aria-live="off" spinning={!fetched} delay={200} size="large">

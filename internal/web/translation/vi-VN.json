@@ -15,6 +15,15 @@
   "copy": "Sao chép",
   "copied": "Đã sao chép",
   "more": "thêm",
+  "morePage": {
+    "panel": "Panel",
+    "server": "Server",
+    "account": "Account",
+    "dark": "Dark",
+    "light": "Light",
+    "language": "Language",
+    "outboundsRouting": "Outbounds and routing"
+  },
   "download": "Tải xuống",
   "regenerate": "Tạo lại",
   "jsonEditor": "Trình chỉnh sửa JSON",
@@ -121,14 +130,12 @@
     "routing": "Định tuyến",
     "outbounds": "Outbound",
     "apiDocs": "Tài liệu API",
-    "donate": "Quyên góp",
     "hosts": "Hosts",
-    "docs": "Tài liệu",
-    "openMenu": "Mở menu",
-    "pinSidebar": "Ghim thanh bên",
-    "unpinSidebar": "Bỏ ghim thanh bên",
     "subFormats": "Sub Formats",
-    "tunnels": "Tunnels"
+    "tunnels": "Tunnels",
+    "activity": "Activity",
+    "torPia": "Tor and PIA",
+    "logs": "Logs"
   },
   "pages": {
     "login": {
@@ -3089,9 +3096,6 @@
     "statusUp": "HOẠT ĐỘNG"
   },
   "commandPalette": {
-    "title": "Bảng lệnh",
-    "placeholder": "Nhập lệnh hoặc tìm kiếm khách hàng, cổng vào, trang...",
-    "search": "Tìm kiếm...",
     "navigation": "Điều hướng",
     "actions": "Hành động",
     "navigate": "Điều hướng",
@@ -3100,5 +3104,81 @@
     "restartXray": "Khởi động lại dịch vụ Xray",
     "restartXraySuccess": "Dịch vụ Xray đã được khởi động lại thành công",
     "settings": "Cài đặt"
+  },
+  "shell": {
+    "brand": "Dalan",
+    "nav": {
+      "main": "Main navigation",
+      "overview": "Overview",
+      "usersAccess": "Users and access",
+      "network": "Network",
+      "system": "System",
+      "home": "Home",
+      "users": "Users",
+      "connections": "Connections",
+      "servers": "Servers",
+      "more": "More",
+      "help": "Help",
+      "collapse": "Collapse menu",
+      "expand": "Expand menu",
+      "collapseShort": "Collapse"
+    },
+    "greeting": {
+      "morning": "Good morning, {name}",
+      "afternoon": "Good afternoon, {name}",
+      "evening": "Good evening, {name}",
+      "morningBare": "Good morning",
+      "afternoonBare": "Good afternoon",
+      "eveningBare": "Good evening"
+    },
+    "status": {
+      "healthy": "all systems healthy",
+      "attention": "needs attention",
+      "highLoad": "running under high load",
+      "notAnswering": "not answering",
+      "paused": "Paused",
+      "online": "Online",
+      "offline": "Offline",
+      "offlineShort": "offline",
+      "highLoadShort": "High load",
+      "updated": "updated {n}s ago"
+    },
+    "ms": "{n} ms",
+    "search": {
+      "label": "Search",
+      "field": "Search users, inbounds, nodes…",
+      "everything": "Search everything",
+      "placeholder": "Search users, inbounds, nodes, settings…",
+      "nothing": "Nothing found for “{q}”. Search looks across every node.",
+      "across": "Searching {n} servers"
+    },
+    "mode": {
+      "label": "Mode",
+      "simple": "Simple",
+      "advanced": "Advanced"
+    },
+    "effects": {
+      "label": "Effects",
+      "full": "Full",
+      "light": "Light",
+      "off": "Off"
+    },
+    "theme": {
+      "toLight": "Switch to light theme",
+      "toDark": "Switch to dark theme"
+    },
+    "notifications": "Notifications",
+    "account": "Account",
+    "servers": "Servers",
+    "addNode": "Add node",
+    "allServers": "All {n} servers",
+    "findServer": "Find a server",
+    "quick": {
+      "label": "Add",
+      "title": "Quick add on {name}",
+      "user": "New user",
+      "connection": "New connection",
+      "server": "New server"
+    }
   }
 }

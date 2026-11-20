@@ -15,6 +15,15 @@
   "copy": "کپی",
   "copied": "کپی شد",
   "more": "بیشتر",
+  "morePage": {
+    "panel": "پنل",
+    "server": "سرور",
+    "account": "حساب",
+    "dark": "تیره",
+    "light": "روشن",
+    "language": "زبان",
+    "outboundsRouting": "خروجی‌ها و مسیریابی"
+  },
   "download": "دانلود",
   "regenerate": "تولید مجدد",
   "jsonEditor": "ویرایشگر JSON",
@@ -111,24 +120,22 @@
   },
   "menu": {
     "theme": "تم",
-    "dashboard": "نمای کلی",
+    "dashboard": "داشبورد",
     "inbounds": "ورودی‌ها",
     "clients": "کلاینت‌ها",
     "groups": "گروه‌ها",
     "nodes": "نودها",
-    "settings": "تنظیمات پنل",
-    "xray": "پیکربندی Xray",
+    "settings": "تنظیمات",
+    "xray": "تنظیمات Xray",
     "routing": "مسیریابی",
     "outbounds": "خروجی‌ها",
     "apiDocs": "مستندات API",
-    "donate": "حمایت مالی",
     "hosts": "میزبان‌ها",
-    "docs": "مستندات",
-    "openMenu": "باز کردن منو",
-    "pinSidebar": "ثابت کردن نوار کناری",
-    "unpinSidebar": "برداشتن تثبیت نوار کناری",
     "subFormats": "Sub Formats",
-    "tunnels": "تانل‌ها"
+    "tunnels": "تانل‌ها",
+    "activity": "فعالیت‌ها",
+    "torPia": "تور و PIA",
+    "logs": "لاگ‌ها"
   },
   "pages": {
     "login": {
@@ -3089,9 +3096,6 @@
     "statusUp": "وصل"
   },
   "commandPalette": {
-    "title": "پالت دستورات",
-    "placeholder": "جستجوی کلاینت‌ها، اینباندها، صفحات یا تایپ دستور...",
-    "search": "جستجو...",
     "navigation": "ناوبری و صفحات",
     "actions": "دستورات سیستمی",
     "navigate": "پیمایش",
@@ -3100,5 +3104,81 @@
     "restartXray": "راه‌اندازی مجدد سرویس Xray",
     "restartXraySuccess": "سرویس Xray با موفقیت مجدداً راه‌اندازی شد",
     "settings": "تنظیمات"
+  },
+  "shell": {
+    "brand": "دالان",
+    "nav": {
+      "main": "ناوبری اصلی",
+      "overview": "نمای کلی",
+      "usersAccess": "کاربران و دسترسی",
+      "network": "شبکه",
+      "system": "سیستم",
+      "home": "خانه",
+      "users": "کاربران",
+      "connections": "اتصال‌ها",
+      "servers": "سرورها",
+      "more": "بیشتر",
+      "help": "راهنما",
+      "collapse": "جمع کردن منو",
+      "expand": "باز کردن منو",
+      "collapseShort": "جمع کردن"
+    },
+    "greeting": {
+      "morning": "صبح بخیر، {name}",
+      "afternoon": "ظهر بخیر، {name}",
+      "evening": "عصر بخیر، {name}",
+      "morningBare": "صبح بخیر",
+      "afternoonBare": "ظهر بخیر",
+      "eveningBare": "عصر بخیر"
+    },
+    "status": {
+      "healthy": "همه چیز سالم است",
+      "attention": "نیاز به توجه دارد",
+      "highLoad": "زیر بار زیاد کار می‌کند",
+      "notAnswering": "پاسخ نمی‌دهد",
+      "paused": "متوقف",
+      "online": "آنلاین",
+      "offline": "آفلاین",
+      "offlineShort": "قطع",
+      "highLoadShort": "بار زیاد",
+      "updated": "{n} ثانیه پیش به‌روز شد"
+    },
+    "ms": "{n} میلی‌ثانیه",
+    "search": {
+      "label": "جستجو",
+      "field": "جستجوی کاربر، ورودی، نود…",
+      "everything": "جستجو در همه چیز",
+      "placeholder": "جستجوی کاربر، ورودی، نود، تنظیمات…",
+      "nothing": "چیزی برای «{q}» پیدا نشد. جستجو همه‌ی نودها را می‌گردد.",
+      "across": "جستجو در {n} سرور"
+    },
+    "mode": {
+      "label": "حالت",
+      "simple": "ساده",
+      "advanced": "پیشرفته"
+    },
+    "effects": {
+      "label": "افکت‌ها",
+      "full": "کامل",
+      "light": "سبک",
+      "off": "خاموش"
+    },
+    "theme": {
+      "toLight": "رفتن به پوسته روشن",
+      "toDark": "رفتن به پوسته تیره"
+    },
+    "notifications": "اعلان‌ها",
+    "account": "حساب",
+    "servers": "سرورها",
+    "addNode": "افزودن نود",
+    "allServers": "همه {n} سرور",
+    "findServer": "پیدا کردن سرور",
+    "quick": {
+      "label": "افزودن",
+      "title": "افزودن سریع در {name}",
+      "user": "کاربر جدید",
+      "connection": "اتصال جدید",
+      "server": "سرور جدید"
+    }
   }
 }

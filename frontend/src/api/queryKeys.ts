@@ -19,6 +19,7 @@ export const keys = {
     list: () => ['sub-balancers', 'list'] as const,
   },
   settings: {
+    currentUser: () => ['settings', 'currentUser'] as const,
     root: () => ['settings'] as const,
     all: () => ['settings', 'all'] as const,
     defaults: () => ['settings', 'defaults'] as const,

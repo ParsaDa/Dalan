@@ -15,6 +15,29 @@ import { DEFAULT_ACCENT } from '@/lib/theme/accents';
 import type { AccentId } from '@/lib/theme/accents';
 import { readEffectsEnv, resolveEffects } from '@/lib/theme/effects';
 import type { Effects, EffectsPref } from '@/lib/theme/effects';
+import { deriveAccent } from '@/lib/theme/deriveAccent';
+import type { ResolvedAccent } from '@/lib/theme/nodeAccent';
+
+const DL_ROOT_PREFIXES = ['t-', 'fx-', 'ac-'];
+const CUSTOM_VARS = ['--acc', '--acc-line', '--acc-text', '--on-acc'];
+
+// <body> is the design's .dl root, so portals (modals, toasts, popups) inherit theme and accent.
+function applyDlRoot(isDark: boolean, effects: Effects, accent: ResolvedAccent) {
+  const body = document.body;
+  for (const cls of [...body.classList]) {
+    if (DL_ROOT_PREFIXES.some((p) => cls.startsWith(p))) body.classList.remove(cls);
+  }
+  const id = accent.kind === 'preset' ? accent.id : 'saffron';
+  body.classList.add('dl', isDark ? 't-dark' : 't-light', `fx-${effects}`, `ac-${id}`);
+  for (const v of CUSTOM_VARS) body.style.removeProperty(v);
+  if (accent.kind === 'custom') {
+    const d = deriveAccent(accent.hex, isDark ? 'dark' : 'light');
+    body.style.setProperty('--acc', d.fill);
+    body.style.setProperty('--acc-line', d.line);
+    body.style.setProperty('--acc-text', d.text);
+    body.style.setProperty('--on-acc', d.on);
+  }
+}
 
 const STORAGE_DARK = 'dark-mode';
 const STORAGE_ULTRA = 'isUltraDarkThemeEnabled';
@@ -205,6 +228,8 @@ interface ThemeContextValue {
   setEffectsPref: (pref: EffectsPref) => void;
   accent: AccentId;
   setAccent: (accent: AccentId) => void;
+  // The open node's accent replaces the panel accent in the whole frame; null restores it.
+  setFrameAccent: (accent: ResolvedAccent | null) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -243,10 +268,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     document.body.dataset.accent = accent;
   }, [accent]);
 
+  const [frameAccent, setFrameAccent] = useState<ResolvedAccent | null>(null);
+  useLayoutEffect(() => {
+    applyDlRoot(isDark, effects, frameAccent ?? { kind: 'preset', id: accent });
+  }, [isDark, effects, accent, frameAccent]);
+
   // Ambient motion and the 5 s refresh both stop while the tab is hidden.
   useEffect(() => {
     const sync = () => {
       document.body.classList.toggle('dl-paused', document.hidden);
+      document.body.classList.toggle('paused', document.hidden);
     };
     document.addEventListener('visibilitychange', sync);
     return () => document.removeEventListener('visibilitychange', sync);
@@ -274,6 +305,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setEffectsPref,
       accent,
       setAccent,
+      setFrameAccent,
     }),
     [
       isDark,

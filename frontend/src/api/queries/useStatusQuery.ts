@@ -33,6 +33,7 @@ export function useStatusQuery() {
   return {
     status,
     fetched: query.data !== undefined || query.isError,
+    updatedAt: query.dataUpdatedAt,
     fetchError: query.error ? (query.error as Error).message : '',
     refresh,
   };

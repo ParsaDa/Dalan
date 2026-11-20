@@ -15,6 +15,15 @@
   "copy": "複製",
   "copied": "已複製",
   "more": "更多",
+  "morePage": {
+    "panel": "Panel",
+    "server": "Server",
+    "account": "Account",
+    "dark": "Dark",
+    "light": "Light",
+    "language": "Language",
+    "outboundsRouting": "Outbounds and routing"
+  },
   "download": "下載",
   "regenerate": "重新產生",
   "jsonEditor": "JSON 編輯器",
@@ -121,14 +130,12 @@
     "routing": "路由",
     "outbounds": "出站",
     "apiDocs": "API 文件",
-    "donate": "捐贈",
     "hosts": "主機",
-    "docs": "文件",
-    "openMenu": "開啟選單",
-    "pinSidebar": "固定側邊欄",
-    "unpinSidebar": "取消固定側邊欄",
     "subFormats": "Sub Formats",
-    "tunnels": "Tunnels"
+    "tunnels": "Tunnels",
+    "activity": "Activity",
+    "torPia": "Tor and PIA",
+    "logs": "Logs"
   },
   "pages": {
     "login": {
@@ -3089,9 +3096,6 @@
     "statusUp": "恢復"
   },
   "commandPalette": {
-    "title": "命令面板",
-    "placeholder": "輸入命令或搜尋客戶端、入站、頁面...",
-    "search": "搜尋...",
     "navigation": "頁面導航",
     "actions": "系統操作",
     "navigate": "導航",
@@ -3100,5 +3104,81 @@
     "restartXray": "重啟 Xray 服務",
     "restartXraySuccess": "Xray 服務已成功重啟",
     "settings": "設定"
+  },
+  "shell": {
+    "brand": "Dalan",
+    "nav": {
+      "main": "Main navigation",
+      "overview": "Overview",
+      "usersAccess": "Users and access",
+      "network": "Network",
+      "system": "System",
+      "home": "Home",
+      "users": "Users",
+      "connections": "Connections",
+      "servers": "Servers",
+      "more": "More",
+      "help": "Help",
+      "collapse": "Collapse menu",
+      "expand": "Expand menu",
+      "collapseShort": "Collapse"
+    },
+    "greeting": {
+      "morning": "Good morning, {name}",
+      "afternoon": "Good afternoon, {name}",
+      "evening": "Good evening, {name}",
+      "morningBare": "Good morning",
+      "afternoonBare": "Good afternoon",
+      "eveningBare": "Good evening"
+    },
+    "status": {
+      "healthy": "all systems healthy",
+      "attention": "needs attention",
+      "highLoad": "running under high load",
+      "notAnswering": "not answering",
+      "paused": "Paused",
+      "online": "Online",
+      "offline": "Offline",
+      "offlineShort": "offline",
+      "highLoadShort": "High load",
+      "updated": "updated {n}s ago"
+    },
+    "ms": "{n} ms",
+    "search": {
+      "label": "Search",
+      "field": "Search users, inbounds, nodes…",
+      "everything": "Search everything",
+      "placeholder": "Search users, inbounds, nodes, settings…",
+      "nothing": "Nothing found for “{q}”. Search looks across every node.",
+      "across": "Searching {n} servers"
+    },
+    "mode": {
+      "label": "Mode",
+      "simple": "Simple",
+      "advanced": "Advanced"
+    },
+    "effects": {
+      "label": "Effects",
+      "full": "Full",
+      "light": "Light",
+      "off": "Off"
+    },
+    "theme": {
+      "toLight": "Switch to light theme",
+      "toDark": "Switch to dark theme"
+    },
+    "notifications": "Notifications",
+    "account": "Account",
+    "servers": "Servers",
+    "addNode": "Add node",
+    "allServers": "All {n} servers",
+    "findServer": "Find a server",
+    "quick": {
+      "label": "Add",
+      "title": "Quick add on {name}",
+      "user": "New user",
+      "connection": "New connection",
+      "server": "New server"
+    }
   }
 }

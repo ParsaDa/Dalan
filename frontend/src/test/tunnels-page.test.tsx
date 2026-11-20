@@ -6,8 +6,6 @@ import TunnelsPage from '@/pages/tunnels/TunnelsPage';
 import { ClipboardManager, HttpUtil, Msg } from '@/utils';
 import { renderWithProviders } from './test-utils';
 
-vi.mock('@/layouts/AppSidebar', () => ({ default: () => null }));
-
 const portal = {
   id: 1,
   name: 'de1',
