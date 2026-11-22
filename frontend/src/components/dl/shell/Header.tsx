@@ -1,3 +1,4 @@
+import { fmtInt } from '../numbers';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -48,7 +49,7 @@ export default function Header() {
           <span className={frame.tone === 'ok' ? '' : `pill ${frame.tone}`}>{frame.word}</span>
           <span>·</span>
           <span className="num" aria-live="polite">
-            {t('shell.status.updated', { n: frame.ago })}
+            {t('shell.status.updated', { n: fmtInt(frame.ago) })}
           </span>
         </div>
       </div>

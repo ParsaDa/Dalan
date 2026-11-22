@@ -3,6 +3,7 @@ import { useId } from 'react';
 
 import Flag from '@/components/ui/Flag';
 import Icon from './Icon';
+import { useNum } from './numbers';
 import type { IconName } from './Icon';
 
 export type Status = 'ok' | 'warn' | 'bad' | 'off';
@@ -77,6 +78,7 @@ export function Meter({
   small?: boolean;
 }) {
   const high = value >= HIGH_USAGE;
+  const num = useNum();
   return (
     <div className="meter">
       <div className="row" style={small ? { fontSize: 12.5 } : undefined}>
@@ -86,7 +88,7 @@ export function Meter({
             {highLabel}
           </Pill>
         )}
-        <span className="v num">{shown ?? `${Math.round(value * 100)}%`}</span>
+        <span className="v num">{shown ?? num.pct(value)}</span>
       </div>
       <Bar value={value} tone={high ? 'warn' : undefined} />
       {note && (

@@ -1,3 +1,4 @@
+import { fmtInt } from '../numbers';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
@@ -68,7 +69,7 @@ export default function NodeTabs({ phone }: { phone?: boolean }) {
             {st === 'bad'
               ? t('shell.status.offlineShort')
               : n.latencyMs
-                ? t('shell.ms', { n: n.latencyMs })
+                ? t('shell.ms', { n: fmtInt(n.latencyMs ?? 0) })
                 : ''}
           </span>
         )}
@@ -104,17 +105,17 @@ export default function NodeTabs({ phone }: { phone?: boolean }) {
             type="button"
             className="ntab"
             style={{ flex: 'none', height: 36, padding: '0 14px' }}
-            aria-label={t('shell.allServers', { n: direct.length + 1 })}
+            aria-label={t('shell.allServers', { n: fmtInt(direct.length + 1) })}
             onClick={() => setMore(true)}
           >
-            +{hidden}
+            +{fmtInt(hidden)}
           </button>
         )}
       </div>
       <Sheet
         open={more}
         onClose={() => setMore(false)}
-        label={t('shell.allServers', { n: direct.length + 1 })}
+        label={t('shell.allServers', { n: fmtInt(direct.length + 1) })}
       >
         <label className="search" style={{ minWidth: 0, marginBottom: 10, cursor: 'text' }}>
           <Icon name="search" />
