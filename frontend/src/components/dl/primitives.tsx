@@ -88,7 +88,9 @@ export function Meter({
             {highLabel}
           </Pill>
         )}
-        <span className="v num">{shown ?? num.pct(value)}</span>
+        <span className="v num">
+          <bdi>{shown ?? num.pct(value)}</bdi>
+        </span>
       </div>
       <Bar value={value} tone={high ? 'warn' : undefined} />
       {note && (

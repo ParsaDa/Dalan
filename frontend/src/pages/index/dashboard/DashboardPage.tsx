@@ -43,6 +43,8 @@ import { AlertsTile } from './AlertsTile';
 import { tunnelRow } from './tunnelRow';
 import type { NodeRef } from './tunnelRow';
 import { fmtInt, useNum } from '@/components/dl/numbers';
+import { accentScope } from '@/components/dl/accentScope';
+import { useTheme } from '@/hooks/useTheme';
 import { XRAY_RESTART_STEPS, runXrayRestart } from './xrayRestart';
 import { useSparkHistory } from './useSparkHistory';
 import { useOverviewHistory } from '../useOverviewHistory';
@@ -457,6 +459,8 @@ function NodeCard({
   onOpen: () => void;
 }) {
   const { t } = useTranslation();
+  const { isDark } = useTheme();
+  const scope = accentScope(node.accent ?? '', node.country ?? '', isDark);
   const st = nodeStatus(node);
   const offline = st === 'bad';
   const stw = t(
@@ -471,9 +475,15 @@ function NodeCard({
   return (
     <button
       type="button"
-      className={`tile edge${offline ? ' st-bad' : st === 'warn' ? ' st-warn' : ''} ac-${node.accent || 'saffron'}`}
+      className={`tile edge${offline ? ' st-bad' : st === 'warn' ? ' st-warn' : ''} ${scope.className}`}
       onClick={onOpen}
-      style={{ textAlign: 'start', font: 'inherit', color: 'inherit', cursor: 'pointer' }}
+      style={{
+        textAlign: 'start',
+        font: 'inherit',
+        color: 'inherit',
+        cursor: 'pointer',
+        ...scope.style,
+      }}
     >
       <div className="row" style={{ marginBottom: 14 }}>
         <FlagDot country={node.country} size={34} />
@@ -506,7 +516,7 @@ function NodeCard({
           <span className="mut">
             {t('dashboard.nodes.traffic')}{' '}
             <b className="num" style={{ color: 'var(--tx)' }}>
-              {SizeFormatter.sizeFormat(traffic)}
+              <bdi>{SizeFormatter.sizeFormat(traffic)}</bdi>
             </b>
           </span>
           <span className="mut">
@@ -665,7 +675,9 @@ function NodeView({ node, nodes }: { node: NodeRecord; nodes: NodeRecord[] }) {
               <dt>{t('dashboard.usage.clients')}</dt>
               <dd className="num">{node.clientCount ?? 0}</dd>
               <dt>{t('dashboard.nodes.traffic')}</dt>
-              <dd className="num">{SizeFormatter.sizeFormat(traffic.get(node.id) ?? 0)}</dd>
+              <dd className="num">
+                <bdi>{SizeFormatter.sizeFormat(traffic.get(node.id) ?? 0)}</bdi>
+              </dd>
               <dt>{t('dashboard.nodes.version')}</dt>
               <dd className="num">{node.panelVersion || '–'}</dd>
             </dl>

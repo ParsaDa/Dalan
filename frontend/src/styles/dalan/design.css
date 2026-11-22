@@ -2332,3 +2332,39 @@ body.dl {
     display: none;
   }
 }
+.dl .dropmenu.end {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+}
+.dl .dropmenu .nav.dng {
+  color: var(--bad-t);
+}
+.dl .dropmenu .nav:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.dl details.more-opts {
+  border-top: 1px solid var(--line-soft);
+  padding-top: 12px;
+  margin-bottom: 8px;
+}
+.dl details.more-opts > summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 750;
+  color: var(--tx);
+}
+.dl details.more-opts > summary::-webkit-details-marker {
+  display: none;
+}
+.dl details.more-opts > summary svg {
+  width: 18px;
+  height: 18px;
+  transition: transform var(--d-base) var(--e-out);
+}
+.dl details.more-opts:not([open]) > summary svg {
+  transform: rotate(calc(-90deg * var(--dir)));
+}
