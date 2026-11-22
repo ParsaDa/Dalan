@@ -3154,7 +3154,6 @@
         "system": "System",
         "api": "API"
       },
-      "other": "<b>{who}</b> {action} <b>{target}</b>",
       "act": {
         "client": {
           "add": "<b>{who}</b> added client <b>{target}</b>",
@@ -3222,7 +3221,8 @@
         "session": {
           "signin": "<b>{who}</b> signed in from <b>{target}</b>"
         }
-      }
+      },
+      "generic": "<b>{who}</b> {action} <b>{target}</b>"
     },
     "alerts": {
       "title": "Alerts",

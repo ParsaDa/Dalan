@@ -54,7 +54,7 @@ export function activitySentence(t: TFunction, i18nExists: (k: string) => boolea
   const key = `dashboard.activity.act.${a.action}`;
   const text = i18nExists(key)
     ? t(key, { who, target: a.target })
-    : t('dashboard.activity.other', { who, action: a.action, target: a.target });
+    : t('dashboard.activity.generic', { who, action: a.action, target: a.target });
   return boldRuns(text);
 }
 
