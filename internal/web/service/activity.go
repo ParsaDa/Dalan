@@ -15,6 +15,7 @@ type ActivityFilter struct {
 	Page     int
 	PageSize int
 	Category string
+	Actor    string
 	NodeId   *int
 	Since    int64
 }
@@ -46,6 +47,9 @@ func (s *ActivityService) List(f ActivityFilter) (ActivityPage, error) {
 	q := database.GetDB().Model(&model.Activity{})
 	if f.Category != "" {
 		q = q.Where("action LIKE ?", f.Category+".%")
+	}
+	if f.Actor != "" {
+		q = q.Where("actor = ?", f.Actor)
 	}
 	if f.NodeId != nil {
 		q = q.Where("node_id = ?", *f.NodeId)

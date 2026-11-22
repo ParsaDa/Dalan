@@ -2428,6 +2428,12 @@ export const sections: readonly Section[] = [
             desc: 'Action prefix such as client, tunnel, node, xray, settings or session.',
           },
           {
+            name: 'actor',
+            in: 'query',
+            type: 'string',
+            desc: 'Who made the change: you, api or system.',
+          },
+          {
             name: 'nodeId',
             in: 'query',
             type: 'number',

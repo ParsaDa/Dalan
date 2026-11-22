@@ -31,7 +31,7 @@ func (a *DashboardController) alerts(c *gin.Context) {
 }
 
 func (a *DashboardController) activity(c *gin.Context) {
-	f := service.ActivityFilter{Category: c.Query("category")}
+	f := service.ActivityFilter{Category: c.Query("category"), Actor: c.Query("actor")}
 	f.Page, _ = strconv.Atoi(c.Query("page"))
 	f.PageSize, _ = strconv.Atoi(c.Query("pageSize"))
 	if raw := c.Query("nodeId"); raw != "" {

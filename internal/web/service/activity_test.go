@@ -44,6 +44,22 @@ func TestActivityListFiltersAndPages(t *testing.T) {
 	}
 }
 
+func TestActivityListFiltersByActor(t *testing.T) {
+	dbtest.InitDB(t, filepath.Join(t.TempDir(), "x-ui.db"))
+	s := &ActivityService{}
+	seedActivity(t, s, 100, "client.add", 0)
+	activityNow = func() time.Time { return time.Unix(200, 0) }
+	s.Record(model.ActorSystem, "node.offline", "Paris", 3)
+
+	got, err := s.List(ActivityFilter{Actor: model.ActorSystem})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Total != 1 || got.Items[0].Action != "node.offline" {
+		t.Fatalf("system filter = %+v, want only node.offline", got)
+	}
+}
+
 func TestActivityPruneKeepsTheRetentionWindow(t *testing.T) {
 	dbtest.InitDB(t, filepath.Join(t.TempDir(), "x-ui.db"))
 	s := &ActivityService{}

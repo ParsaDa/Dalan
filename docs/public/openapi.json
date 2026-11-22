@@ -16303,6 +16303,15 @@
             }
           },
           {
+            "name": "actor",
+            "in": "query",
+            "required": true,
+            "description": "Who made the change: you, api or system.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "nodeId",
             "in": "query",
             "required": true,
