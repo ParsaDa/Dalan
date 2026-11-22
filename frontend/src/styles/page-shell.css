@@ -1,4 +1,3 @@
-.index-page,
 .clients-page,
 .inbounds-page,
 .xray-page,
@@ -12,8 +11,6 @@
   background: transparent;
 }
 
-.index-page .ant-layout,
-.index-page .ant-layout-content,
 .clients-page .ant-layout,
 .clients-page .ant-layout-content,
 .inbounds-page .ant-layout,
@@ -31,7 +28,6 @@
   background: transparent;
 }
 
-.index-page .content-shell,
 .clients-page .content-shell,
 .inbounds-page .content-shell,
 .xray-page .content-shell,
@@ -42,7 +38,6 @@
   background: transparent;
 }
 
-.index-page .content-area,
 .clients-page .content-area,
 .inbounds-page .content-area,
 .xray-page .content-area,

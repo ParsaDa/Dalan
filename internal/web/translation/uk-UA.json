@@ -152,19 +152,10 @@
     },
     "index": {
       "thisServer": "This server",
-      "greetMorning": "Good morning",
-      "greetAfternoon": "Good afternoon",
-      "greetEvening": "Good evening",
-      "nodesStatusLine": "{online} of {total} nodes online",
       "cpu": "ЦП",
       "swap": "Підкачка",
-      "storage": "Сховище",
       "memory": "Пам’ять",
-      "xrayStatus": "Xray",
-      "stopXray": "Стоп",
       "restartXray": "Перезапуск",
-      "startXray": "Запуск",
-      "stopXrayDisabledHint": "Xray не запущено",
       "stopXrayConfirmTitle": "Зупинити Xray?",
       "stopXrayConfirmContent": "Зупинка Xray негайно розірве всі проксі-з'єднання. Продовжити?",
       "stopXrayConfirmOk": "Зупинити Xray",
@@ -181,7 +172,6 @@
       "currentCommit": "Поточний коміт",
       "latestCommit": "Останній коміт",
       "updateChannelChanged": "Канал оновлення змінено",
-      "xrayStatusUnknown": "Невідомо",
       "xrayStatusRunning": "Запущено",
       "xrayStatusStop": "Зупинено",
       "xrayStatusError": "Помилка",
@@ -224,10 +214,7 @@
       "xrayObservatoryDead": "Недоступний",
       "xrayObservatoryLastSeen": "Остання активність",
       "xrayObservatoryLastTry": "Остання спроба",
-      "connectionCount": "Статистика з'єднання",
-      "ipAddresses": "IP-адреси",
       "toggleIpVisibility": "Перемкнути видимість IP",
-      "overallSpeed": "Загальна швидкість",
       "upload": "Завантаження",
       "download": "Завантажити",
       "sent": "Відправлено",
@@ -290,16 +277,6 @@
       "importDatabasePgDesc": "Натисніть, щоб вибрати та завантажити резервну копію PostgreSQL (.dump), базу даних SQLite (.db) або міграційний дамп SQLite для відновлення бази даних. Це замінить усі поточні дані.",
       "migrationDownload": "Завантажити файл міграції",
       "migrationDownloadPgDesc": "Натисніть, щоб завантажити базу даних SQLite (.db), створену з ваших даних PostgreSQL і готову для запуску панелі на SQLite.",
-      "avg": "середнє",
-      "peak": "пік",
-      "free": "вільно",
-      "openSockets": "відкритих сокетів",
-      "throughputSub": "Разом за інтерфейсом",
-      "avgWindow": "Середнє за період",
-      "healthWarm": "{list} — підвищене навантаження",
-      "healthCritical": "{list} — критичний рівень",
-      "panel": "Панель",
-      "threads": "Потоки",
       "uptime": "Час роботи",
       "logLevelDebug": "Налагодження",
       "logLevelInfo": "Інформація",
@@ -3179,6 +3156,193 @@
       "user": "New user",
       "connection": "New connection",
       "server": "New server"
+    }
+  },
+  "dashboard": {
+    "open": "Open",
+    "ago": {
+      "now": "now",
+      "min": "{n} min",
+      "hour": "{n} h",
+      "day": "{n} d"
+    },
+    "activity": {
+      "title": "Activity",
+      "viewAll": "View all",
+      "empty": "Nothing has happened yet. Changes you make show up here.",
+      "who": {
+        "you": "You",
+        "system": "System",
+        "api": "API"
+      },
+      "other": "<b>{who}</b> {action} <b>{target}</b>",
+      "act": {
+        "client": {
+          "add": "<b>{who}</b> added client <b>{target}</b>",
+          "update": "<b>{who}</b> edited client <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted client <b>{target}</b>",
+          "bulkAdd": "<b>{who}</b> added <b>{target}</b> clients",
+          "bulkDelete": "<b>{who}</b> deleted <b>{target}</b> clients",
+          "bulkAdjust": "<b>{who}</b> changed limits for <b>{target}</b> clients",
+          "bulkEnable": "<b>{who}</b> turned on <b>{target}</b> clients",
+          "bulkDisable": "<b>{who}</b> paused <b>{target}</b> clients",
+          "resetTraffic": "<b>{who}</b> reset traffic for <b>{target}</b>"
+        },
+        "group": {
+          "add": "<b>{who}</b> created group <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted group <b>{target}</b>"
+        },
+        "inbound": {
+          "add": "<b>{who}</b> added inbound <b>{target}</b>",
+          "update": "<b>{who}</b> edited inbound <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted inbound <b>{target}</b>",
+          "enable": "<b>{who}</b> turned on inbound <b>{target}</b>",
+          "disable": "<b>{who}</b> turned off inbound <b>{target}</b>"
+        },
+        "tunnel": {
+          "add": "<b>{who}</b> added tunnel <b>{target}</b>",
+          "update": "<b>{who}</b> edited tunnel <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted tunnel <b>{target}</b>",
+          "enable": "<b>{who}</b> started tunnel <b>{target}</b>",
+          "disable": "<b>{who}</b> paused tunnel <b>{target}</b>"
+        },
+        "node": {
+          "add": "<b>{who}</b> added node <b>{target}</b>",
+          "update": "<b>{who}</b> edited node <b>{target}</b>",
+          "delete": "<b>{who}</b> removed node <b>{target}</b>",
+          "enable": "<b>{who}</b> turned on node <b>{target}</b>",
+          "disable": "<b>{who}</b> turned off node <b>{target}</b>",
+          "offline": "<b>{who}</b>: <b>{target}</b> went offline",
+          "online": "<b>{who}</b>: <b>{target}</b> is back online"
+        },
+        "host": {
+          "add": "<b>{who}</b> added host <b>{target}</b>",
+          "update": "<b>{who}</b> edited host <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted host <b>{target}</b>"
+        },
+        "tor": {
+          "add": "<b>{who}</b> added Tor exit <b>{target}</b>",
+          "delete": "<b>{who}</b> removed Tor exit <b>{target}</b>"
+        },
+        "xray": {
+          "restart": "<b>{who}</b> restarted Xray",
+          "stop": "<b>{who}</b> stopped Xray",
+          "install": "<b>{who}</b> installed Xray <b>{target}</b>",
+          "crash": "<b>{who}</b>: Xray stopped unexpectedly",
+          "config": "<b>{who}</b> changed the Xray config"
+        },
+        "panel": {
+          "update": "<b>{who}</b> updated the panel"
+        },
+        "settings": {
+          "update": "<b>{who}</b> changed settings"
+        },
+        "account": {
+          "update": "<b>{who}</b> changed the sign-in details"
+        },
+        "session": {
+          "signin": "<b>{who}</b> signed in from <b>{target}</b>"
+        }
+      }
+    },
+    "alerts": {
+      "title": "Alerts",
+      "count": "{n} need attention",
+      "none": "Nothing needs attention",
+      "noneHint": "Offline nodes, high load, a stopped Xray and expiring users show up here.",
+      "offline": "{node} is offline",
+      "offlineSub": "No heartbeat for {since}",
+      "nodeLoad": "{node} at {pct}%",
+      "sustained": "Sustained for {since}",
+      "cpu": "This server's CPU at {pct}%",
+      "memory": "This server's memory at {pct}%",
+      "xray": "Xray is not running",
+      "xraySub": "Users cannot connect until it starts",
+      "expiring": "{n} users expire this week",
+      "expiringSub": "Renew or notify them from Clients",
+      "review": "Review"
+    },
+    "high": "High",
+    "live": "Live",
+    "health": {
+      "title": "Server health",
+      "memory": "Memory",
+      "disk": "Disk"
+    },
+    "xray": {
+      "core": "Xray core",
+      "runningFor": "Running · uptime {n} d",
+      "uptime": "uptime {n} d",
+      "stoppedSub": "Stopped · users cannot connect",
+      "starting": "Starting…",
+      "stopping": "Stopping…",
+      "started": "Xray started",
+      "stopped": "Xray stopped",
+      "restarting": "Restarting Xray",
+      "restartingSub": "on {where} · users reconnect on their own",
+      "stepSend": "Asking Xray to restart",
+      "stepWait": "Waiting for Xray to run again",
+      "stepDone": "Users can connect",
+      "restarted": "Xray restarted · users reconnect on their own",
+      "restartFailed": "Xray did not come back: {error}"
+    },
+    "tunnels": {
+      "title": "Tunnels",
+      "count": "{on} of {n} on",
+      "none": "No tunnels yet",
+      "add": "Add a tunnel",
+      "route": "This server → {to}",
+      "up": "Up",
+      "down": "Down",
+      "testing": "Testing",
+      "reverse": "reverse",
+      "direct": "direct",
+      "layer3": "layer 3",
+      "toggle": "{name} tunnel",
+      "started": "{name} started",
+      "paused": "{name} paused"
+    },
+    "usage": {
+      "title": "Usage and online users",
+      "onlineNow": "online now",
+      "throughput": "throughput",
+      "mbits": "Mbit/s",
+      "clients": "Clients",
+      "monthly": "Monthly traffic",
+      "plan": "of {cap} GB plan · resets in {n} days"
+    },
+    "nodes": {
+      "connected": "Connected nodes",
+      "counts": "{direct} direct · {chained} chained",
+      "latency": "{n} ms latency",
+      "lastSeen": "last seen {ago} ago",
+      "traffic": "Traffic",
+      "unreachable": "Unreachable",
+      "behind": "{n} behind it · {names}",
+      "managed": "Managed through this panel",
+      "offlineTitle": "{name} is not answering",
+      "offlineBody": "Last heartbeat {ago} ago. Settings stay as they were.",
+      "reconnect": "Check the node",
+      "lastLogs": "Open logs",
+      "thisNode": "This node",
+      "country": "Country",
+      "link": "Link to this server",
+      "panelLink": "Panel connection",
+      "inbounds": "Inbounds",
+      "version": "Panel version",
+      "manage": "Manage",
+      "behindTitle": "Nodes behind {name}",
+      "behindSub": "Reached through {name}, shown only here",
+      "via": "via {name} · {n} ms"
+    },
+    "tools": {
+      "title": "Server tools",
+      "versions": "Panel {panel} · Xray {xray}",
+      "panelLogs": "Panel logs",
+      "xrayLogs": "Xray access log",
+      "awgLogs": "AmneziaWG logs",
+      "backup": "Backup and restore",
+      "metrics": "Xray metrics"
     }
   }
 }

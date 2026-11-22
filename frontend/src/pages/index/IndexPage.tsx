@@ -1,39 +1,21 @@
 import { lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, ConfigProvider, Layout, Modal, Result, Spin, message } from 'antd';
-import {
-  CopyOutlined,
-  CloudDownloadOutlined,
-  DashboardOutlined,
-  DatabaseOutlined,
-  HddOutlined,
-  SwapOutlined,
-} from '@ant-design/icons';
+import { Button, ConfigProvider, Modal, message } from 'antd';
+import { CopyOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 
-import { HttpUtil, CPUFormatter, SizeFormatter, ClipboardManager, FileManager } from '@/utils';
-import {
-  USAGE_CRIT_COLOR,
-  USAGE_CRIT_PERCENT,
-  USAGE_WARN_COLOR,
-  USAGE_WARN_PERCENT,
-} from '@/models/status';
+import { HttpUtil, ClipboardManager, FileManager } from '@/utils';
 import { useTheme } from '@/hooks/useTheme';
 import { useStatusQuery } from '@/api/queries/useStatusQuery';
-import { useNodesQuery } from '@/api/queries/useNodesQuery';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { LazyMount } from '@/components/utility';
 import { setMessageInstance } from '@/utils/messageBus';
-import OverviewActionBar from './OverviewActionBar';
-import NodeAccentScope from '@/components/ui/NodeAccentScope';
-import DashboardHeader from './DashboardHeader';
-import NodeTabs from './NodeTabs';
-import NodeVitals from './NodeVitals';
-import VitalTile from './VitalTile';
-import ThroughputCard from './ThroughputCard';
-import ConnectionsCard from './ConnectionsCard';
-import SystemStrip from './SystemStrip';
-import { mean, peak, useOverviewHistory } from './useOverviewHistory';
 import type { PanelUpdateInfo } from './PanelUpdateModal';
+import DashboardPage from './dashboard/DashboardPage';
+import { ToolsTile } from './dashboard/ToolsTile';
+import { Btn, Empty } from '@/components/dl/primitives';
+import { Modal as DlModal } from '@/components/dl/overlays';
+import { IlloOffline } from '@/components/dl/Illustrations';
+import Mark from '@/components/dl/Mark';
 const JsonEditor = lazy(() => import('@/components/form/JsonEditor'));
 const PanelUpdateModal = lazy(() => import('./PanelUpdateModal'));
 const LogModal = lazy(() => import('./LogModal'));
@@ -43,18 +25,12 @@ const XrayMetricsModal = lazy(() => import('./XrayMetricsModal'));
 const XrayLogModal = lazy(() => import('./XrayLogModal'));
 const AmneziaWGLogModal = lazy(() => import('./AmneziaWGLogModal'));
 const VersionModal = lazy(() => import('./VersionModal'));
-import './IndexPage.css';
 
 export default function IndexPage() {
   const { t } = useTranslation();
-  const { isDark, isUltra, antdThemeConfig } = useTheme();
+  const { antdThemeConfig } = useTheme();
   const { status, fetched, fetchError, refresh } = useStatusQuery();
   const { isMobile } = useMediaQuery();
-  const { nodes, totals } = useNodesQuery();
-  const [startHour] = useState(() => new Date().getHours());
-  const [activeNodeId, setActiveNodeId] = useState<number | null>(null);
-  const activeNode =
-    nodes.find((node) => node.id === activeNodeId && node.enable !== false) ?? null;
   const [messageApi, messageContextHolder] = message.useMessage();
   useEffect(() => {
     setMessageInstance(messageApi);
@@ -70,7 +46,6 @@ export default function IndexPage() {
 
   const basePath = window.X_UI_BASE_PATH || '';
 
-  const [showIp, setShowIp] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
   const [backupOpen, setBackupOpen] = useState(false);
   const [panelUpdateOpen, setPanelUpdateOpen] = useState(false);
@@ -83,8 +58,6 @@ export default function IndexPage() {
   const [configText, setConfigText] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingTip, setLoadingTip] = useState(t('loading'));
-
-  const history = useOverviewHistory(status, fetched && !fetchError);
 
   useEffect(() => {
     HttpUtil.post<{ accessLogEnable?: boolean; devChannelEnable?: boolean }>(
@@ -109,16 +82,6 @@ export default function IndexPage() {
     setLoading(busy);
     if (tip) setLoadingTip(tip);
   }, []);
-
-  const stopXray = useCallback(async () => {
-    await HttpUtil.post('/panel/api/server/stopXrayService');
-    await refresh();
-  }, [refresh]);
-
-  const restartXray = useCallback(async () => {
-    await HttpUtil.post('/panel/api/server/restartXrayService');
-    await refresh();
-  }, [refresh]);
 
   async function handleChannelChange(dev: boolean) {
     const res = await HttpUtil.post('/panel/api/server/setUpdateChannel', { dev });
@@ -149,267 +112,151 @@ export default function IndexPage() {
     FileManager.downloadTextFile(configText, 'config.json');
   }
 
-  const pageClass = `index-page ${isDark ? 'is-dark' : ''} ${isUltra ? 'is-ultra' : ''}`.trim();
-  const totalDisk = status.disk.total;
-  const freeDisk = Math.max(0, totalDisk - status.disk.current);
-
-  const health = useMemo(() => {
-    const items = [
-      { name: t('pages.index.cpu'), value: status.cpu.percent },
-      { name: t('pages.index.memory'), value: status.mem.percent },
-      { name: t('pages.index.swap'), value: status.swap.percent },
-      { name: t('pages.index.storage'), value: status.disk.percent },
-    ];
-    const list = (xs: typeof items) => xs.map((i) => `${i.name} ${i.value.toFixed(0)}%`).join(', ');
-    const crit = items.filter((i) => i.value >= USAGE_CRIT_PERCENT);
-    if (crit.length)
-      return {
-        text: t('pages.index.healthCritical', { list: list(crit) }),
-        color: USAGE_CRIT_COLOR,
-      };
-    const warm = items.filter((i) => i.value >= USAGE_WARN_PERCENT);
-    if (warm.length)
-      return { text: t('pages.index.healthWarm', { list: list(warm) }), color: USAGE_WARN_COLOR };
-    return null;
-  }, [status, t]);
-
   return (
     <ConfigProvider theme={antdThemeConfig}>
       {messageContextHolder}
-      <Layout className={pageClass}>
-        <Layout className="content-shell">
-          <Layout.Content className="content-area">
-            <Spin
-              aria-live="off"
-              spinning={loading || !fetched}
-              delay={200}
-              description={loading ? loadingTip : t('loading')}
-              size="large"
-            >
-              {!fetched ? (
-                <div className="loading-spacer" />
-              ) : fetchError ? (
-                <Result
-                  status="error"
-                  title={t('somethingWentWrong')}
-                  subTitle={fetchError}
-                  extra={
-                    <Button type="primary" onClick={refresh}>
-                      {t('refresh')}
-                    </Button>
-                  }
-                />
-              ) : (
-                <div className="ov-page">
-                  <DashboardHeader online={totals.online} total={totals.total} hour={startHour} />
-                  {nodes.length > 0 && (
-                    <NodeTabs
-                      nodes={nodes}
-                      activeId={activeNode?.id ?? null}
-                      onSelect={setActiveNodeId}
-                    />
-                  )}
-                  <NodeAccentScope node={activeNode}>
-                    {activeNode ? (
-                      <NodeVitals node={activeNode} />
-                    ) : (
-                      <>
-                        <OverviewActionBar
-                          status={status}
-                          isMobile={isMobile}
-                          accessLogEnable={accessLogEnable}
-                          panelVersion={displayVersion}
-                          latestVersion={panelUpdateInfo.latestVersion}
-                          updateAvailable={panelUpdateInfo.updateAvailable}
-                          onStopXray={stopXray}
-                          onRestartXray={restartXray}
-                          onOpenLogs={() => setLogsOpen(true)}
-                          onOpenXrayLogs={() => setXrayLogsOpen(true)}
-                          onOpenAmneziaWGLogs={() => setAmneziawgLogsOpen(true)}
-                          onOpenConfig={openConfig}
-                          onOpenBackup={() => setBackupOpen(true)}
-                          onOpenSystemHistory={() => setSysHistoryOpen(true)}
-                          onOpenXrayMetrics={() => setXrayMetricsOpen(true)}
-                          onOpenPanelUpdate={() => setPanelUpdateOpen(true)}
-                          onOpenVersionSwitch={() => setVersionOpen(true)}
-                        />
-
-                        {health && (
-                          <div className="ov-health" style={{ color: health.color }}>
-                            <span className="ov-health-mark" />
-                            {health.text}
-                          </div>
-                        )}
-
-                        <hr className="ov-rule" />
-
-                        <div className="ov-vitals">
-                          <VitalTile
-                            icon={<DashboardOutlined aria-hidden />}
-                            label={t('pages.index.cpu')}
-                            available={status.metricAvailable('cpu')}
-                            percent={status.cpu.percent}
-                            statusColor={status.cpu.color}
-                            detail={
-                              status.resourceScope === 'container'
-                                ? `${status.logicalPro} vCPU`
-                                : `${CPUFormatter.cpuCoreFormat(status.cpuCores)} / ${status.logicalPro}T · ${CPUFormatter.cpuSpeedFormat(status.cpuSpeedMhz)}`
-                            }
-                            footLeft={`${t('pages.index.avg')} ${mean(history.series.cpu).toFixed(0)}%`}
-                            footRight={`${t('pages.index.peak')} ${peak(history.series.cpu).toFixed(0)}%`}
-                            data={history.series.cpu}
-                            isMobile={isMobile}
-                          />
-                          <VitalTile
-                            icon={<DatabaseOutlined aria-hidden />}
-                            label={t('pages.index.memory')}
-                            percent={status.mem.percent}
-                            statusColor={status.mem.color}
-                            detail={`${SizeFormatter.sizeFormat(status.mem.current)} / ${SizeFormatter.sizeFormat(status.mem.total)}`}
-                            footLeft={`${t('pages.index.avg')} ${mean(history.series.mem).toFixed(0)}%`}
-                            footRight={`${t('pages.index.peak')} ${peak(history.series.mem).toFixed(0)}%`}
-                            data={history.series.mem}
-                            isMobile={isMobile}
-                          />
-                          <VitalTile
-                            icon={<SwapOutlined aria-hidden />}
-                            label={t('pages.index.swap')}
-                            available={status.metricAvailable('swap')}
-                            percent={status.swap.percent}
-                            statusColor={status.swap.color}
-                            detail={`${SizeFormatter.sizeFormat(status.swap.current)} / ${SizeFormatter.sizeFormat(status.swap.total)}`}
-                            footLeft={`${t('pages.index.avg')} ${mean(history.series.swap).toFixed(1)}%`}
-                            footRight={`${t('pages.index.peak')} ${peak(history.series.swap).toFixed(0)}%`}
-                            data={history.series.swap}
-                            isMobile={isMobile}
-                          />
-                          <VitalTile
-                            icon={<HddOutlined aria-hidden />}
-                            label={t('pages.index.storage')}
-                            percent={status.disk.percent}
-                            statusColor={status.disk.color}
-                            detail={`${SizeFormatter.sizeFormat(status.disk.current)} / ${SizeFormatter.sizeFormat(totalDisk)}`}
-                            footLeft={`${t('pages.index.free')} ${SizeFormatter.sizeFormat(freeDisk)}`}
-                            footRight={`${t('pages.index.avg')} ${mean(history.series.diskUsage).toFixed(1)}%`}
-                            data={history.series.diskUsage}
-                            isMobile={isMobile}
-                          />
-                        </div>
-
-                        <div className="ov-mid">
-                          <ThroughputCard
-                            status={status}
-                            up={history.series.netUp}
-                            down={history.series.netDown}
-                            labels={history.labels}
-                            isMobile={isMobile}
-                          />
-                          <ConnectionsCard
-                            status={status}
-                            tcp={history.series.tcpCount}
-                            udp={history.series.udpCount}
-                            labels={history.labels}
-                            isMobile={isMobile}
-                          />
-                        </div>
-
-                        <SystemStrip
-                          status={status}
-                          showIp={showIp}
-                          onToggleIp={() => setShowIp((v) => !v)}
-                        />
-                      </>
-                    )}
-                  </NodeAccentScope>
-                </div>
-              )}
-            </Spin>
-          </Layout.Content>
-        </Layout>
-
-        <LazyMount when={panelUpdateOpen}>
-          <PanelUpdateModal
-            open={panelUpdateOpen}
-            info={panelUpdateInfo}
-            devChannelEnable={devChannelEnable}
-            onChannelChange={handleChannelChange}
-            onClose={() => setPanelUpdateOpen(false)}
-            onBusy={setBusy}
-          />
-        </LazyMount>
-        <LazyMount when={logsOpen}>
-          <LogModal open={logsOpen} onClose={() => setLogsOpen(false)} />
-        </LazyMount>
-        <LazyMount when={backupOpen}>
-          <BackupModal
-            open={backupOpen}
-            basePath={basePath}
-            onClose={() => setBackupOpen(false)}
-            onBusy={setBusy}
-          />
-        </LazyMount>
-        <LazyMount when={sysHistoryOpen}>
-          <SystemHistoryModal
-            open={sysHistoryOpen}
-            status={status}
-            onClose={() => setSysHistoryOpen(false)}
-          />
-        </LazyMount>
-        <LazyMount when={xrayMetricsOpen}>
-          <XrayMetricsModal open={xrayMetricsOpen} onClose={() => setXrayMetricsOpen(false)} />
-        </LazyMount>
-        <LazyMount when={xrayLogsOpen}>
-          <XrayLogModal open={xrayLogsOpen} onClose={() => setXrayLogsOpen(false)} />
-        </LazyMount>
-        <LazyMount when={amneziawgLogsOpen}>
-          <AmneziaWGLogModal open={amneziawgLogsOpen} onClose={() => setAmneziawgLogsOpen(false)} />
-        </LazyMount>
-        <LazyMount when={versionOpen}>
-          <VersionModal
-            open={versionOpen}
-            status={status}
-            onClose={() => setVersionOpen(false)}
-            onBusy={setBusy}
-          />
-        </LazyMount>
-
-        <LazyMount when={configTextOpen}>
-          <Modal
-            open={configTextOpen}
-            title={t('pages.index.config')}
-            width={isMobile ? '100%' : 900}
-            style={isMobile ? { top: 20, maxWidth: 'calc(100vw - 16px)' } : { top: 20 }}
-            onCancel={() => setConfigTextOpen(false)}
-            footer={[
-              <Button
-                key="download"
-                onClick={downloadConfig}
-                size={isMobile ? 'small' : 'middle'}
-                icon={<CloudDownloadOutlined aria-hidden />}
-              >
-                {isMobile ? 'Download' : 'config.json'}
-              </Button>,
-              <Button
-                key="copy"
-                type="primary"
-                onClick={copyConfig}
-                size={isMobile ? 'small' : 'middle'}
-                icon={<CopyOutlined aria-hidden />}
-              >
-                Copy
-              </Button>,
-            ]}
+      <DlModal open={loading} onClose={() => {}} label={loadingTip} width={420}>
+        <div className="row" aria-live="polite">
+          <Mark size={40} motion="loop" />
+          <b>{loadingTip}</b>
+        </div>
+      </DlModal>
+      {!fetched ? (
+        <div className="grid" aria-busy="true" aria-label={t('loading')}>
+          {[0, 1, 2].map((i) => (
+            <section key={i} className="tile s4 col" style={{ gap: 14 }}>
+              <div className="row sp">
+                <div className="sk" style={{ height: 16, width: '40%' }} />
+                <div className="sk" style={{ height: 22, width: 70, borderRadius: 99 }} />
+              </div>
+              <div className="sk" style={{ height: 40, width: '55%' }} />
+              <div className="sk" style={{ height: 56 }} />
+              <div className="sk" style={{ height: 8, borderRadius: 99 }} />
+            </section>
+          ))}
+        </div>
+      ) : fetchError ? (
+        <section className="tile edge st-bad">
+          <Empty
+            art={<IlloOffline />}
+            title={t('somethingWentWrong')}
+            actions={
+              <Btn kind="pri" icon="refresh" onClick={refresh}>
+                {t('refresh')}
+              </Btn>
+            }
           >
-            <JsonEditor
-              value={configText}
-              onChange={setConfigText}
-              minHeight={isMobile ? '300px' : 'calc(100vh - 220px)'}
-              maxHeight={isMobile ? '70vh' : 'calc(100vh - 220px)'}
-              readOnly
+            {fetchError}
+          </Empty>
+        </section>
+      ) : (
+        <DashboardPage
+          tools={
+            <ToolsTile
+              panelVersion={displayVersion}
+              latestVersion={panelUpdateInfo.latestVersion}
+              updateAvailable={panelUpdateInfo.updateAvailable}
+              xrayVersion={status.xray.version}
+              actions={{
+                onLogs: () => setLogsOpen(true),
+                onXrayLogs: accessLogEnable ? () => setXrayLogsOpen(true) : undefined,
+                onAmneziaWGLogs: status.amneziawg.configured
+                  ? () => setAmneziawgLogsOpen(true)
+                  : undefined,
+                onConfig: openConfig,
+                onBackup: () => setBackupOpen(true),
+                onHistory: () => setSysHistoryOpen(true),
+                onMetrics: () => setXrayMetricsOpen(true),
+                onUpdate: () => setPanelUpdateOpen(true),
+                onVersion: () => setVersionOpen(true),
+              }}
             />
-          </Modal>
-        </LazyMount>
-      </Layout>
+          }
+        />
+      )}
+
+      <LazyMount when={panelUpdateOpen}>
+        <PanelUpdateModal
+          open={panelUpdateOpen}
+          info={panelUpdateInfo}
+          devChannelEnable={devChannelEnable}
+          onChannelChange={handleChannelChange}
+          onClose={() => setPanelUpdateOpen(false)}
+          onBusy={setBusy}
+        />
+      </LazyMount>
+      <LazyMount when={logsOpen}>
+        <LogModal open={logsOpen} onClose={() => setLogsOpen(false)} />
+      </LazyMount>
+      <LazyMount when={backupOpen}>
+        <BackupModal
+          open={backupOpen}
+          basePath={basePath}
+          onClose={() => setBackupOpen(false)}
+          onBusy={setBusy}
+        />
+      </LazyMount>
+      <LazyMount when={sysHistoryOpen}>
+        <SystemHistoryModal
+          open={sysHistoryOpen}
+          status={status}
+          onClose={() => setSysHistoryOpen(false)}
+        />
+      </LazyMount>
+      <LazyMount when={xrayMetricsOpen}>
+        <XrayMetricsModal open={xrayMetricsOpen} onClose={() => setXrayMetricsOpen(false)} />
+      </LazyMount>
+      <LazyMount when={xrayLogsOpen}>
+        <XrayLogModal open={xrayLogsOpen} onClose={() => setXrayLogsOpen(false)} />
+      </LazyMount>
+      <LazyMount when={amneziawgLogsOpen}>
+        <AmneziaWGLogModal open={amneziawgLogsOpen} onClose={() => setAmneziawgLogsOpen(false)} />
+      </LazyMount>
+      <LazyMount when={versionOpen}>
+        <VersionModal
+          open={versionOpen}
+          status={status}
+          onClose={() => setVersionOpen(false)}
+          onBusy={setBusy}
+        />
+      </LazyMount>
+
+      <LazyMount when={configTextOpen}>
+        <Modal
+          open={configTextOpen}
+          title={t('pages.index.config')}
+          width={isMobile ? '100%' : 900}
+          style={isMobile ? { top: 20, maxWidth: 'calc(100vw - 16px)' } : { top: 20 }}
+          onCancel={() => setConfigTextOpen(false)}
+          footer={[
+            <Button
+              key="download"
+              onClick={downloadConfig}
+              size={isMobile ? 'small' : 'middle'}
+              icon={<CloudDownloadOutlined aria-hidden />}
+            >
+              {isMobile ? 'Download' : 'config.json'}
+            </Button>,
+            <Button
+              key="copy"
+              type="primary"
+              onClick={copyConfig}
+              size={isMobile ? 'small' : 'middle'}
+              icon={<CopyOutlined aria-hidden />}
+            >
+              Copy
+            </Button>,
+          ]}
+        >
+          <JsonEditor
+            value={configText}
+            onChange={setConfigText}
+            minHeight={isMobile ? '300px' : 'calc(100vh - 220px)'}
+            maxHeight={isMobile ? '70vh' : 'calc(100vh - 220px)'}
+            readOnly
+          />
+        </Modal>
+      </LazyMount>
     </ConfigProvider>
   );
 }

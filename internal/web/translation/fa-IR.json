@@ -152,19 +152,10 @@
     },
     "index": {
       "thisServer": "این سرور",
-      "greetMorning": "صبح بخیر",
-      "greetAfternoon": "عصر بخیر",
-      "greetEvening": "شب بخیر",
-      "nodesStatusLine": "{online} از {total} نود آنلاین است",
       "cpu": "پردازنده",
       "swap": "سواپ",
-      "storage": "ذخیره‌سازی",
       "memory": "حافظه",
-      "xrayStatus": "Xray",
-      "stopXray": "توقف",
       "restartXray": "راه‌اندازی مجدد",
-      "startXray": "شروع",
-      "stopXrayDisabledHint": "Xray در حال اجرا نیست",
       "stopXrayConfirmTitle": "Xray متوقف شود؟",
       "stopXrayConfirmContent": "توقف Xray بلافاصله همه اتصالات پراکسی را قطع می‌کند. آیا مطمئن هستید؟",
       "stopXrayConfirmOk": "توقف Xray",
@@ -181,7 +172,6 @@
       "currentCommit": "کامیت فعلی",
       "latestCommit": "آخرین کامیت",
       "updateChannelChanged": "کانال به‌روزرسانی تغییر کرد",
-      "xrayStatusUnknown": "ناشناخته",
       "xrayStatusRunning": "در حال اجرا",
       "xrayStatusStop": "متوقف",
       "xrayStatusError": "خطا",
@@ -224,10 +214,7 @@
       "xrayObservatoryDead": "غیرفعال",
       "xrayObservatoryLastSeen": "آخرین مشاهده",
       "xrayObservatoryLastTry": "آخرین تلاش",
-      "connectionCount": "تعداد کانکشن ها",
-      "ipAddresses": "آدرس‌های IP",
       "toggleIpVisibility": "تغییر وضعیت نمایش IP",
-      "overallSpeed": "سرعت کلی",
       "upload": "آپلود",
       "download": "دانلود",
       "sent": "ارسال شده",
@@ -290,16 +277,6 @@
       "importDatabasePgDesc": "برای انتخاب و بارگذاری یک پشتیبان PostgreSQL (.dump)، پایگاه‌دادهٔ SQLite (.db) یا فایل مهاجرت SQLite جهت بازیابی پایگاه داده کلیک کنید. این کار همه داده‌های فعلی را جایگزین می‌کند.",
       "migrationDownload": "دانلود فایل مهاجرت",
       "migrationDownloadPgDesc": "برای دانلود یک پایگاه‌دادهٔ SQLite با پسوند ‎.db که از داده‌های PostgreSQL شما ساخته می‌شود کلیک کنید؛ آمادهٔ اجرای این پنل روی SQLite.",
-      "avg": "میانگین",
-      "peak": "اوج",
-      "free": "آزاد",
-      "openSockets": "اتصال باز",
-      "throughputSub": "کل اینترفیس",
-      "avgWindow": "میانگین بازه",
-      "healthWarm": "{list} — رو به گرم شدن",
-      "healthCritical": "{list} — بحرانی",
-      "panel": "پنل",
-      "threads": "نخ‌ها",
       "uptime": "مدت کارکرد",
       "logLevelDebug": "Debug",
       "logLevelInfo": "Info",
@@ -3179,6 +3156,193 @@
       "user": "کاربر جدید",
       "connection": "اتصال جدید",
       "server": "سرور جدید"
+    }
+  },
+  "dashboard": {
+    "open": "باز کردن",
+    "ago": {
+      "now": "همین الان",
+      "min": "{n} دقیقه",
+      "hour": "{n} ساعت",
+      "day": "{n} روز"
+    },
+    "activity": {
+      "title": "فعالیت‌ها",
+      "viewAll": "همه",
+      "empty": "هنوز کاری انجام نشده. تغییرات شما اینجا نشان داده می‌شود.",
+      "who": {
+        "you": "شما",
+        "system": "سیستم",
+        "api": "API"
+      },
+      "other": "<b>{who}</b> {action} <b>{target}</b>",
+      "act": {
+        "client": {
+          "add": "<b>{who}</b> کاربر <b>{target}</b> را اضافه کرد",
+          "update": "<b>{who}</b> کاربر <b>{target}</b> را ویرایش کرد",
+          "delete": "<b>{who}</b> کاربر <b>{target}</b> را حذف کرد",
+          "bulkAdd": "<b>{who}</b> تعداد <b>{target}</b> کاربر اضافه کرد",
+          "bulkDelete": "<b>{who}</b> تعداد <b>{target}</b> کاربر را حذف کرد",
+          "bulkAdjust": "<b>{who}</b> محدودیت <b>{target}</b> کاربر را تغییر داد",
+          "bulkEnable": "<b>{who}</b> تعداد <b>{target}</b> کاربر را فعال کرد",
+          "bulkDisable": "<b>{who}</b> تعداد <b>{target}</b> کاربر را متوقف کرد",
+          "resetTraffic": "<b>{who}</b> ترافیک <b>{target}</b> را صفر کرد"
+        },
+        "group": {
+          "add": "<b>{who}</b> گروه <b>{target}</b> را ساخت",
+          "delete": "<b>{who}</b> گروه <b>{target}</b> را حذف کرد"
+        },
+        "inbound": {
+          "add": "<b>{who}</b> ورودی <b>{target}</b> را اضافه کرد",
+          "update": "<b>{who}</b> ورودی <b>{target}</b> را ویرایش کرد",
+          "delete": "<b>{who}</b> ورودی <b>{target}</b> را حذف کرد",
+          "enable": "<b>{who}</b> ورودی <b>{target}</b> را روشن کرد",
+          "disable": "<b>{who}</b> ورودی <b>{target}</b> را خاموش کرد"
+        },
+        "tunnel": {
+          "add": "<b>{who}</b> تونل <b>{target}</b> را اضافه کرد",
+          "update": "<b>{who}</b> تونل <b>{target}</b> را ویرایش کرد",
+          "delete": "<b>{who}</b> تونل <b>{target}</b> را حذف کرد",
+          "enable": "<b>{who}</b> تونل <b>{target}</b> را روشن کرد",
+          "disable": "<b>{who}</b> تونل <b>{target}</b> را متوقف کرد"
+        },
+        "node": {
+          "add": "<b>{who}</b> نود <b>{target}</b> را اضافه کرد",
+          "update": "<b>{who}</b> نود <b>{target}</b> را ویرایش کرد",
+          "delete": "<b>{who}</b> نود <b>{target}</b> را حذف کرد",
+          "enable": "<b>{who}</b> نود <b>{target}</b> را روشن کرد",
+          "disable": "<b>{who}</b> نود <b>{target}</b> را خاموش کرد",
+          "offline": "<b>{who}</b>: <b>{target}</b> قطع شد",
+          "online": "<b>{who}</b>: <b>{target}</b> دوباره وصل شد"
+        },
+        "host": {
+          "add": "<b>{who}</b> میزبان <b>{target}</b> را اضافه کرد",
+          "update": "<b>{who}</b> میزبان <b>{target}</b> را ویرایش کرد",
+          "delete": "<b>{who}</b> میزبان <b>{target}</b> را حذف کرد"
+        },
+        "tor": {
+          "add": "<b>{who}</b> خروجی تور <b>{target}</b> را اضافه کرد",
+          "delete": "<b>{who}</b> خروجی تور <b>{target}</b> را حذف کرد"
+        },
+        "xray": {
+          "restart": "<b>{who}</b> Xray را دوباره راه‌اندازی کرد",
+          "stop": "<b>{who}</b> Xray را متوقف کرد",
+          "install": "<b>{who}</b> نسخه <b>{target}</b> از Xray را نصب کرد",
+          "crash": "<b>{who}</b>: Xray ناگهان متوقف شد",
+          "config": "<b>{who}</b> تنظیمات Xray را تغییر داد"
+        },
+        "panel": {
+          "update": "<b>{who}</b> پنل را به‌روز کرد"
+        },
+        "settings": {
+          "update": "<b>{who}</b> تنظیمات را تغییر داد"
+        },
+        "account": {
+          "update": "<b>{who}</b> اطلاعات ورود را تغییر داد"
+        },
+        "session": {
+          "signin": "<b>{who}</b> از <b>{target}</b> وارد شد"
+        }
+      }
+    },
+    "alerts": {
+      "title": "هشدارها",
+      "count": "{n} مورد نیاز به توجه",
+      "none": "همه چیز مرتب است",
+      "noneHint": "نودهای قطع، بار زیاد، توقف Xray و کاربرانی که منقضی می‌شوند اینجا نشان داده می‌شوند.",
+      "offline": "{node} قطع است",
+      "offlineSub": "{since} است که پاسخی نداده",
+      "nodeLoad": "{node} روی {pct}٪",
+      "sustained": "{since} ادامه داشته",
+      "cpu": "پردازنده این سرور {pct}٪",
+      "memory": "حافظه این سرور {pct}٪",
+      "xray": "Xray اجرا نمی‌شود",
+      "xraySub": "تا روشن نشود، کاربران وصل نمی‌شوند",
+      "expiring": "{n} کاربر این هفته منقضی می‌شوند",
+      "expiringSub": "از بخش کاربران تمدید یا خبرشان کنید",
+      "review": "بررسی"
+    },
+    "high": "زیاد",
+    "live": "زنده",
+    "health": {
+      "title": "سلامت سرور",
+      "memory": "حافظه",
+      "disk": "دیسک"
+    },
+    "xray": {
+      "core": "هسته Xray",
+      "runningFor": "در حال اجرا · {n} روز",
+      "uptime": "{n} روز روشن",
+      "stoppedSub": "متوقف · کاربران وصل نمی‌شوند",
+      "starting": "در حال روشن شدن…",
+      "stopping": "در حال توقف…",
+      "started": "Xray روشن شد",
+      "stopped": "Xray متوقف شد",
+      "restarting": "راه‌اندازی دوباره Xray",
+      "restartingSub": "روی {where} · کاربران خودشان دوباره وصل می‌شوند",
+      "stepSend": "درخواست راه‌اندازی دوباره",
+      "stepWait": "منتظر اجرای دوباره Xray",
+      "stepDone": "کاربران می‌توانند وصل شوند",
+      "restarted": "Xray دوباره راه افتاد · کاربران خودشان وصل می‌شوند",
+      "restartFailed": "Xray برنگشت: {error}"
+    },
+    "tunnels": {
+      "title": "تونل‌ها",
+      "count": "{on} از {n} روشن",
+      "none": "هنوز تونلی نیست",
+      "add": "افزودن تونل",
+      "route": "این سرور ← {to}",
+      "up": "وصل",
+      "down": "قطع",
+      "testing": "در حال آزمایش",
+      "reverse": "معکوس",
+      "direct": "مستقیم",
+      "layer3": "لایه ۳",
+      "toggle": "تونل {name}",
+      "started": "{name} روشن شد",
+      "paused": "{name} متوقف شد"
+    },
+    "usage": {
+      "title": "مصرف و کاربران آنلاین",
+      "onlineNow": "آنلاین الان",
+      "throughput": "سرعت",
+      "mbits": "مگابیت",
+      "clients": "کاربران",
+      "monthly": "ترافیک ماه",
+      "plan": "از {cap} گیگ · {n} روز تا شروع دوباره"
+    },
+    "nodes": {
+      "connected": "نودهای متصل",
+      "counts": "{direct} مستقیم · {chained} زنجیره‌ای",
+      "latency": "{n} میلی‌ثانیه",
+      "lastSeen": "{ago} پیش دیده شد",
+      "traffic": "ترافیک",
+      "unreachable": "در دسترس نیست",
+      "behind": "{n} نود پشت آن · {names}",
+      "managed": "از همین پنل مدیریت می‌شود",
+      "offlineTitle": "{name} پاسخ نمی‌دهد",
+      "offlineBody": "آخرین پاسخ {ago} پیش. تنظیمات همان‌طور که بود می‌ماند.",
+      "reconnect": "بررسی نود",
+      "lastLogs": "باز کردن لاگ‌ها",
+      "thisNode": "این نود",
+      "country": "کشور",
+      "link": "اتصال به این سرور",
+      "panelLink": "اتصال پنل",
+      "inbounds": "ورودی‌ها",
+      "version": "نسخه پنل",
+      "manage": "مدیریت",
+      "behindTitle": "نودهای پشت {name}",
+      "behindSub": "از راه {name}، فقط اینجا نشان داده می‌شوند",
+      "via": "از راه {name} · {n} میلی‌ثانیه"
+    },
+    "tools": {
+      "title": "ابزارهای سرور",
+      "versions": "پنل {panel} · Xray {xray}",
+      "panelLogs": "لاگ پنل",
+      "xrayLogs": "لاگ دسترسی Xray",
+      "awgLogs": "لاگ AmneziaWG",
+      "backup": "پشتیبان و بازیابی",
+      "metrics": "آمار Xray"
     }
   }
 }
