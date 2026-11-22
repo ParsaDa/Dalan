@@ -7,6 +7,7 @@ import {
   DashboardOutlined,
   ExportOutlined,
   GlobalOutlined,
+  HistoryOutlined,
   MenuOutlined,
   ImportOutlined,
   SettingOutlined,
@@ -27,6 +28,7 @@ const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
 const XrayPage = lazy(() => import('@/pages/xray/XrayPage'));
 const ApiDocsPage = lazy(() => import('@/pages/api-docs/ApiDocsPage'));
 const MorePage = lazy(() => import('@/pages/more/MorePage'));
+const ActivityPage = lazy(() => import('@/pages/activity/ActivityPage'));
 
 export interface PanelRoute {
   path: string;
@@ -39,6 +41,7 @@ export interface PanelRoute {
 // page cannot go missing from one of them.
 export const PANEL_ROUTES: PanelRoute[] = [
   { path: '/', titleKey: 'menu.dashboard', icon: DashboardOutlined, component: IndexPage },
+  { path: '/activity', titleKey: 'menu.activity', icon: HistoryOutlined, component: ActivityPage },
   { path: '/inbounds', titleKey: 'menu.inbounds', icon: ImportOutlined, component: InboundsPage },
   { path: '/clients', titleKey: 'menu.clients', icon: TeamOutlined, component: ClientsPage },
   { path: '/groups', titleKey: 'menu.groups', icon: TagsOutlined, component: GroupsPage },

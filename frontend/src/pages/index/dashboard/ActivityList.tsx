@@ -11,9 +11,15 @@ import { fmtInt } from '@/components/dl/numbers';
 
 // Bold runs come from <b>…</b> in the translation; elements are built, never parsed as HTML.
 export function boldRuns(text: string): ReactNode[] {
-  return text
-    .split(/(<b>.*?<\/b>)/g)
-    .map((part, i) => (part.startsWith('<b>') ? <b key={i}>{part.slice(3, -4)}</b> : part));
+  return text.split(/(<b>.*?<\/b>)/g).map((part, i) =>
+    part.startsWith('<b>') ? (
+      <b key={i}>
+        <bdi>{part.slice(3, -4)}</bdi>
+      </b>
+    ) : (
+      part
+    ),
+  );
 }
 
 export function relTime(t: TFunction, atSec: number, nowMs = Date.now()): string {
@@ -39,6 +45,10 @@ const AREA_ICON: Record<string, IconName> = {
   session: 'lock',
 };
 
+export function activityIcon(action: string): IconName {
+  return AREA_ICON[action.split('.')[0]] ?? 'activity';
+}
+
 export function activitySentence(t: TFunction, i18nExists: (k: string) => boolean, a: Activity) {
   const who = t(`dashboard.activity.who.${a.actor}`, { defaultValue: a.actor });
   const key = `dashboard.activity.act.${a.action}`;
@@ -63,7 +73,7 @@ export function ActivityList({
         return (
           <div className="li" key={a.id}>
             <span className="ico acc">
-              <Icon name={AREA_ICON[a.action.split('.')[0]] ?? 'activity'} />
+              <Icon name={activityIcon(a.action)} />
             </span>
             <div className="f1">{activitySentence(t, (k) => i18n.exists(k), a)}</div>
             {node && <Badge>{node.name}</Badge>}

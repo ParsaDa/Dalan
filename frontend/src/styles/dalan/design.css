@@ -2294,3 +2294,41 @@ body.dl {
 .dl .code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
+
+.dl .dropchip {
+  position: relative;
+}
+.dl .dropmenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-start: 0;
+  z-index: 30;
+  min-width: 200px;
+  max-height: 320px;
+  overflow: auto;
+  padding: 6px;
+  border-radius: var(--r-md);
+  background: var(--glass-dense);
+  border: 1px solid var(--glass-b);
+  backdrop-filter: blur(24px) saturate(1.4);
+  box-shadow: var(--shadow);
+  animation: dl-modalIn var(--d-base) var(--e-out) backwards;
+}
+.dl.fx-off .dropmenu {
+  background: var(--surf);
+  backdrop-filter: none;
+}
+.dl .dropmenu .nav {
+  height: 38px;
+}
+
+@media (max-width: 700px) {
+  .dl .only-wide {
+    display: none;
+  }
+}
+@media (min-width: 701px) {
+  .dl .only-narrow {
+    display: none;
+  }
+}

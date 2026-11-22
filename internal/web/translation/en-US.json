@@ -3344,5 +3344,44 @@
       "backup": "Backup and restore",
       "metrics": "Xray metrics"
     }
+  },
+  "activity": {
+    "sub": "Who did what, on which server, and when. Changes you make inside a node are recorded here too.",
+    "export": "Export CSV",
+    "filters": "Filter activity",
+    "area": {
+      "all": "Everything",
+      "client": "Clients",
+      "tunnel": "Tunnels",
+      "node": "Nodes",
+      "session": "Sign-ins",
+      "system": "System"
+    },
+    "server": "Server",
+    "any": "all",
+    "who": "Who",
+    "anyone": "anyone",
+    "when": "When",
+    "days": "Last {n} days",
+    "allTime": "All time",
+    "emptyTitle": "Nothing here yet",
+    "emptyBody": "Changes you make and things the system notices show up here.",
+    "col": {
+      "when": "When",
+      "who": "Who",
+      "what": "What",
+      "where": "Where",
+      "details": "Details"
+    },
+    "role": {
+      "you": "Owner",
+      "api": "API token",
+      "system": "Automatic"
+    },
+    "throughPanel": "through this panel",
+    "showing": "Showing {from}–{to} of {total}",
+    "prev": "Previous page",
+    "next": "Next page",
+    "code": "Action code"
   }
 }

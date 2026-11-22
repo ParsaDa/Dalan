@@ -18,6 +18,7 @@ export interface ActivityParams {
   page: number;
   pageSize: number;
   category?: string;
+  actor?: string;
   nodeId?: number;
   days?: number;
 }
