@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, within, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
@@ -110,12 +110,13 @@ test('lists both ends with their role and offers the setup link only for the ent
 
   expect(await screen.findByText('de1')).toBeTruthy();
   expect(screen.getByText('ir1')).toBeTruthy();
-  expect(screen.getByText('Entry (listens)')).toBeTruthy();
-  expect(screen.getByText('Exit (dials)')).toBeTruthy();
+  expect(screen.getByText(/Entry \(listens\)/)).toBeTruthy();
+  expect(screen.getByText(/Exit \(dials\)/)).toBeTruthy();
 
-  const copyButtons = screen.getAllByRole('button', { name: 'Copy setup link' });
-  expect(copyButtons).toHaveLength(1);
-  fireEvent.click(copyButtons[0]);
+  fireEvent.click(screen.getByRole('button', { name: 'Actions ir1' }));
+  expect(screen.queryByRole('menuitem', { name: 'Copy setup link' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Actions de1' }));
+  fireEvent.click(await screen.findByRole('menuitem', { name: 'Copy setup link' }));
 
   await waitFor(() => expect(ClipboardManager.copyText).toHaveBeenCalledWith('dalan://tunnel/abc'));
 });
@@ -129,7 +130,7 @@ test('imports a pasted setup link', async () => {
     await screen.findByPlaceholderText('Paste the setup link from the entry server'),
     { target: { value: '  dalan://tunnel/xyz ' } },
   );
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Import' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -155,7 +156,9 @@ test('offers only the BackPack and Rakhsh engines for a new tunnel', async () =>
 test('shows a working tunnel as connected with its latency and exit', async () => {
   openTunnels();
 
-  expect(await screen.findByText('Connected · 182 ms')).toBeTruthy();
+  const table = (await screen.findAllByRole('table'))[0];
+  expect(await within(table).findByText('Connected')).toBeTruthy();
+  expect(within(table).getByText('182 ms')).toBeTruthy();
   expect(screen.getByText('Exits from DE · 203.0.113.77')).toBeTruthy();
 });
 
@@ -163,8 +166,9 @@ test('shows a tunnel that does not answer as down', async () => {
   statusOfPortal = { connected: false, latencyMs: 0, exitIp: '', exitLoc: '', error: 'timeout' };
   openTunnels();
 
-  expect(await screen.findByText('Down')).toBeTruthy();
-  expect(screen.queryByText(/Connected/)).toBeNull();
+  const row = (await screen.findByText('de1')).closest('tr') as HTMLElement;
+  expect(await within(row).findByText('Down')).toBeTruthy();
+  expect(within(row).queryByText(/Connected/)).toBeNull();
 });
 
 test('shows a BackPack tunnel with its transport, forwarded ports and engine status', async () => {
@@ -172,7 +176,7 @@ test('shows a BackPack tunnel with its transport, forwarded ports and engine sta
   openTunnels();
 
   expect(await screen.findByText('bp1')).toBeTruthy();
-  expect(screen.getByText('BackPack')).toBeTruthy();
+  expect(within(screen.getAllByRole('table')[0]).getByText('BackPack')).toBeTruthy();
   expect(screen.getByText('wssmux')).toBeTruthy();
   expect(screen.getByText('443=127.0.0.1:2096')).toBeTruthy();
   expect(await screen.findByText('Connected')).toBeTruthy();
@@ -184,6 +188,7 @@ test('offers to install the BackPack engine when a BackPack tunnel has none', as
   engineInstalled = false;
   openTunnels();
 
+  fireEvent.click(await screen.findByRole('button', { name: 'BackPack options' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Install BackPack' }));
 
   await waitFor(() =>
@@ -210,6 +215,7 @@ test('installs the BackPack engine through the outbound chosen as the download r
   );
   openTunnels();
 
+  fireEvent.click(await screen.findByRole('button', { name: 'BackPack options' }));
   const picker = await screen.findByLabelText('Download route');
   await waitFor(() =>
     expect(HttpUtil.get).toHaveBeenCalledWith('/panel/api/tunnels/engine/routes', undefined, {
@@ -234,6 +240,7 @@ test('will not install through a link until an address is typed', async () => {
   engineInstalled = false;
   openTunnels();
 
+  fireEvent.click(await screen.findByRole('button', { name: 'BackPack options' }));
   fireEvent.mouseDown(await screen.findByLabelText('Download route'));
   fireEvent.click(await screen.findByText('A proxy address or share link'));
   const install = screen.getByRole('button', { name: 'Install BackPack' });
@@ -259,7 +266,8 @@ test('shows the installed BackPack engine release and updates it from this serve
   openTunnels();
   expect(await screen.findByText('BackPack engine v1.8.5')).toBeTruthy();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Update engine' }));
+  fireEvent.click(screen.getByRole('button', { name: 'BackPack options' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Update engine' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -283,8 +291,9 @@ test('installs the BackPack engine through a node when this server cannot reach 
   });
   openTunnels();
 
-  fireEvent.mouseDown(await screen.findByLabelText('Download through node'));
-  fireEvent.click(await screen.findByText('nl1'));
+  fireEvent.click(await screen.findByRole('button', { name: 'BackPack options' }));
+  fireEvent.click(await screen.findByRole('button', { name: /Download on/ }));
+  fireEvent.click(await screen.findByRole('option', { name: 'nl1' }));
   expect(screen.queryByLabelText('Download route')).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Install BackPack' }));
 
@@ -308,7 +317,7 @@ test('creates a BackPack entry tunnel with its transport and forwarded ports', a
   const ports = await screen.findByLabelText('Forwarded ports');
   fireEvent.change(ports, { target: { value: '443=127.0.0.1:2096' } });
   fireEvent.keyDown(ports, { key: 'Enter', keyCode: 13 });
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -340,7 +349,7 @@ test('creates a BackPack entry tunnel without any forwarded port', async () => {
   fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
   fireEvent.click(screen.getByRole('radio', { name: 'BackPack' }));
   await screen.findByLabelText('Forwarded ports');
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -366,7 +375,7 @@ test('makes the other end on a chosen node from the same form', async () => {
   fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
   fireEvent.mouseDown(await screen.findByLabelText('Create the other end on a node'));
   fireEvent.click(await screen.findByText('nl1'));
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -387,8 +396,9 @@ test('offers to remove only this end when the node holding the other end cannot 
   openTunnels();
   await screen.findByText('tr5');
 
-  fireEvent.click(screen.getByRole('button', { name: 'Delete tr5' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Actions tr5' }));
+  fireEvent.click(await screen.findByRole('menuitem', { name: 'Delete tr5' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Remove this end only' }));
 
   await waitFor(() =>
@@ -485,7 +495,7 @@ test('creates a direct tunnel with a carrier, no transport and no routed inbound
   fireEvent.keyDown(ports, { key: 'Enter', keyCode: 13 });
   fireEvent.mouseDown(await screen.findByLabelText('carrier'));
   fireEvent.click((await screen.findAllByText('pck')).at(-1) as HTMLElement);
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -518,7 +528,7 @@ test('refuses to create a direct tunnel before a carrier is chosen', async () =>
   fireEvent.click(screen.getByRole('radio', { name: 'BackPack' }));
   fireEvent.click(await screen.findByRole('radio', { name: 'Direct' }));
   await screen.findByLabelText('carrier');
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
 
   expect(await screen.findByText('This setting is required.')).toBeTruthy();
   expect(HttpUtil.post).not.toHaveBeenCalled();
@@ -536,7 +546,7 @@ test('sends the advanced options the operator set and leaves the rest to the eng
   fireEvent.click(await screen.findByText('Performance'));
   fireEvent.mouseDown(await screen.findByLabelText('nodelay'));
   fireEvent.click(await screen.findByText('Off'));
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -555,7 +565,7 @@ test('edits an entry tunnel in place from its stored values', async () => {
   const address = (await screen.findByLabelText('Address')) as HTMLInputElement;
   expect(address.value).toBe('203.0.113.10');
   fireEvent.change(address, { target: { value: '203.0.113.99' } });
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -581,7 +591,7 @@ test('edits the exit outbound of an exit end without asking for an address', asy
   fireEvent.click(await screen.findByRole('button', { name: 'Edit ir1' }));
   expect(screen.queryByLabelText('Address')).toBeNull();
   fireEvent.change(await screen.findByLabelText('Exit outbound'), { target: { value: 'warp' } });
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -601,8 +611,43 @@ test('keeps the edit dialog open and shows the node refusal when the update fail
 
   fireEvent.click(await screen.findByRole('button', { name: 'Edit bp1' }));
   expect(await screen.findByText(/also sent to the node/)).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
   expect(await screen.findByText('the node did not take the change')).toBeTruthy();
   expect(screen.getByLabelText('Address')).toBeTruthy();
+});
+
+test('the state chips list only the tunnels in that state', async () => {
+  listed = [portal, { ...portal, id: 4, name: 'nl2', enable: false }];
+  openTunnels();
+  const row = (await screen.findByText('de1')).closest('tr') as HTMLElement;
+  await within(row).findByText('Connected');
+
+  fireEvent.click(screen.getByRole('button', { name: /^Paused/ }));
+  expect(screen.queryByText('de1')).toBeNull();
+  expect(screen.getByText('nl2')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: /^Up/ }));
+  expect(screen.getByText('de1')).toBeTruthy();
+  expect(screen.queryByText('nl2')).toBeNull();
+});
+
+test('test all probes every tunnel again', async () => {
+  openTunnels();
+  const row = (await screen.findByText('de1')).closest('tr') as HTMLElement;
+  await within(row).findByText('Connected');
+  const probes = () =>
+    vi.mocked(HttpUtil.get).mock.calls.filter(([url]) => url === '/panel/api/tunnels/status/1')
+      .length;
+  const before = probes();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Test all' }));
+  await waitFor(() => expect(probes()).toBe(before + 1));
+});
+
+test('draws the last hour of probe latency for a tunnel', async () => {
+  statusOfPortal = { ...statusOfPortal, history: [180, 0, 182] };
+  openTunnels();
+  const row = (await screen.findByText('de1')).closest('tr') as HTMLElement;
+  await within(row).findByText('Connected');
+  expect(row.querySelector('svg.spark')).not.toBeNull();
 });

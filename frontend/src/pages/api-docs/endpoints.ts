@@ -2002,10 +2002,10 @@ export const sections: readonly Section[] = [
         method: 'GET',
         path: '/panel/api/tunnels/status/:id',
         summary:
-          'Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. A Rakhsh tunnel is judged by its lanes instead: connected while at least one lane is up, with lanesUp, targetLanes, latencyMs and lossPct from the engine. Only the entry end can be tested.',
+          'Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. A Rakhsh tunnel is judged by its lanes instead: connected while at least one lane is up, with lanesUp, targetLanes, latencyMs and lossPct from the engine. Only the entry end can be tested. history lists the latency of every probe in the last hour, oldest first, with 0 for a failed probe; it lives in memory and starts empty after a restart.',
         params: [{ name: 'id', in: 'path', type: 'number', desc: 'Tunnel ID.' }],
         response:
-          '{\n  "success": true,\n  "obj": {\n    "connected": true,\n    "latencyMs": 182,\n    "exitIp": "203.0.113.77",\n    "exitLoc": "DE",\n    "error": ""\n  }\n}',
+          '{\n  "success": true,\n  "obj": {\n    "connected": true,\n    "latencyMs": 182,\n    "exitIp": "203.0.113.77",\n    "exitLoc": "DE",\n    "error": "",\n    "history": [180, 0, 182]\n  }\n}',
       },
       {
         method: 'GET',

@@ -1,21 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Button,
-  Card,
-  Empty,
-  Form,
-  Input,
-  Modal,
-  Popconfirm,
-  Select,
-  Table,
-  Tag,
-  Typography,
-  message,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { Form, Input, Select, message } from 'antd';
+import Icon from '@/components/dl/Icon';
+import { FormModal, Modal as DlModal } from '@/components/dl/overlays';
+import { Btn, IconBtn, Sk, TileHead } from '@/components/dl/primitives';
 
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
 import {
@@ -79,78 +67,126 @@ export default function TunnelPools({ tunnels }: Props) {
     }
   };
 
-  const columns: ColumnsType<TunnelPool> = [
-    { title: t('pages.tunnels.name'), dataIndex: 'name' },
-    {
-      title: t('pages.tunnels.poolMembers'),
-      render: (_, row) =>
-        row.members.map((member) =>
-          member === row.active ? (
-            <Tag key={member} color="green">{`${member} · ${t('pages.tunnels.poolInUse')}`}</Tag>
-          ) : (
-            <Tag key={member}>{member}</Tag>
-          ),
-        ),
-    },
-    {
-      title: t('pages.tunnels.routeInbounds'),
-      render: (_, row) => row.routeInbounds.map((tag) => <Tag key={tag}>{tag}</Tag>),
-    },
-    {
-      width: 60,
-      render: (_, row) => (
-        <Popconfirm
-          title={t('pages.tunnels.poolDeleteConfirm')}
-          onConfirm={async () => report(await remove(row.id))}
-        >
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined aria-hidden />}
-            aria-label={`${t('delete')} ${row.name}`}
-          />
-        </Popconfirm>
-      ),
-    },
-  ];
+  const [deleting, setDeleting] = useState<TunnelPool | null>(null);
 
   return (
     <>
       {messageContextHolder}
-      <Card
-        title={t('pages.tunnels.pools')}
-        extra={
-          <Button
-            icon={<PlusOutlined aria-hidden />}
-            disabled={entryTunnels.length < 2}
-            onClick={() => {
-              form.resetFields();
-              setOpen(true);
+      <section className="tile">
+        <TileHead
+          icon="layers"
+          title={t('pages.tunnels.pools')}
+          right={
+            <Btn
+              size="sm"
+              icon="plus"
+              disabled={entryTunnels.length < 2}
+              onClick={() => {
+                form.resetFields();
+                setOpen(true);
+              }}
+            >
+              {t('pages.tunnels.newPool')}
+            </Btn>
+          }
+        />
+        <p className="mut" style={{ margin: '-6px 0 10px', fontSize: 12.5 }}>
+          {t('pages.tunnels.poolsHint')}
+        </p>
+        {loading ? (
+          <Sk h={56} />
+        ) : pools.length === 0 ? (
+          <div className="mut" style={{ fontSize: 13, padding: '10px 0' }}>
+            {t('pages.tunnels.poolsEmpty')}
+          </div>
+        ) : (
+          <div className="list">
+            {pools.map((pool) => (
+              <div className="li" key={pool.id}>
+                <span className="ico acc">
+                  <Icon name="layers" />
+                </span>
+                <div className="f1" style={{ minWidth: 0 }}>
+                  <b>{pool.name}</b>
+                  <div className="row wrap" style={{ gap: 4, marginTop: 6 }}>
+                    {pool.members.map((member) =>
+                      member === pool.active ? (
+                        <span key={member} className="badge acc">
+                          <bdi>{member}</bdi>
+                          {` · ${t('pages.tunnels.poolInUse')}`}
+                        </span>
+                      ) : (
+                        <span key={member} className="badge">
+                          {member}
+                        </span>
+                      ),
+                    )}
+                    {pool.routeInbounds.map((tag) => (
+                      <span key={tag} className="badge mono">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <IconBtn
+                  small
+                  icon="trash"
+                  label={`${t('delete')} ${pool.name}`}
+                  onClick={() => setDeleting(pool)}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+      <DlModal
+        open={deleting !== null}
+        onClose={() => setDeleting(null)}
+        label={t('pages.tunnels.poolDeleteConfirm')}
+        width={440}
+      >
+        <div className="row" style={{ gap: 12 }}>
+          <span className="ico bad">
+            <Icon name="trash" />
+          </span>
+          <h2 className="h3 f1">{t('pages.tunnels.poolDeleteConfirm')}</h2>
+        </div>
+        <div className="mfoot">
+          <Btn kind="ghost" onClick={() => setDeleting(null)}>
+            {t('cancel')}
+          </Btn>
+          <Btn
+            kind="dng"
+            icon="trash"
+            onClick={async () => {
+              const pool = deleting;
+              setDeleting(null);
+              if (pool) report(await remove(pool.id));
             }}
           >
-            {t('pages.tunnels.newPool')}
-          </Button>
-        }
-      >
-        <Typography.Paragraph type="secondary">{t('pages.tunnels.poolsHint')}</Typography.Paragraph>
-        <Table<TunnelPool>
-          rowKey="id"
-          size="small"
-          loading={loading}
-          columns={columns}
-          dataSource={pools}
-          pagination={false}
-          scroll={{ x: 'max-content' }}
-          locale={{ emptyText: <Empty description={t('pages.tunnels.poolsEmpty')} /> }}
-        />
-      </Card>
-      <Modal
-        title={t('pages.tunnels.newPool')}
+            {t('delete')}
+          </Btn>
+        </div>
+      </DlModal>
+      <FormModal
         open={open}
-        confirmLoading={saving}
-        onOk={submit}
-        onCancel={() => setOpen(false)}
-        destroyOnHidden
+        title={t('pages.tunnels.newPool')}
+        art={
+          <span className="ico acc">
+            <Icon name="layers" />
+          </span>
+        }
+        onClose={() => setOpen(false)}
+        footer={
+          <>
+            <Btn kind="ghost" onClick={() => setOpen(false)}>
+              {t('cancel')}
+            </Btn>
+            <Btn kind="pri" icon="check" disabled={saving} onClick={submit}>
+              {t('save')}
+            </Btn>
+          </>
+        }
       >
         <Form form={form} layout="vertical" initialValues={{ members: [], routeInbounds: [] }}>
           <Form.Item
@@ -178,7 +214,7 @@ export default function TunnelPools({ tunnels }: Props) {
             <Select mode="multiple" tagRender={selectTagRender} options={inboundTagOptions} />
           </Form.Item>
         </Form>
-      </Modal>
+      </FormModal>
     </>
   );
 }

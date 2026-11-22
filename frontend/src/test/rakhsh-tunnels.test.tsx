@@ -151,7 +151,7 @@ test('choosing Rakhsh loads Rakhsh options and drops the options of the engine i
   );
   expect(screen.queryByLabelText('keepalive_period')).toBeNull();
 
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
       '/panel/api/tunnels/add',
@@ -172,7 +172,7 @@ test('creates a Rakhsh tunnel with its carrier, forwarded ports and the options 
   fireEvent.click(await screen.findByText('Advanced options'));
   fireEvent.click(await screen.findByText('Carrier'));
   fireEvent.change(await screen.findByLabelText('sni'), { target: { value: 'www.example.com' } });
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -202,12 +202,12 @@ test('a raw carrier warns that it needs root and refuses to be created without p
   fireEvent.click((await screen.findAllByText('faketcp')).at(-1) as HTMLElement);
 
   expect(await screen.findByText(/forges packets/)).toBeTruthy();
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
   expect(await screen.findByText('This setting is required.')).toBeTruthy();
   expect(HttpUtil.post).not.toHaveBeenCalled();
 
   fireEvent.change(screen.getByLabelText('peer_ip'), { target: { value: '203.0.113.9' } });
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
       '/panel/api/tunnels/add',
@@ -239,7 +239,7 @@ test('adding two links submits them in order inside options.links', async () => 
   fireEvent.change(screen.getByLabelText('Link 2 address'), {
     target: { value: '198.51.100.7:7443' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -265,7 +265,7 @@ test('removing a link leaves the others in place', async () => {
   fireEvent.click(await screen.findByText('Advanced options'));
   fireEvent.click(await screen.findByText('Links'));
   fireEvent.click(await screen.findByRole('button', { name: 'Remove link 1' }));
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -293,7 +293,7 @@ test('the edit dialog shows the stored links and submits a change to one of them
   );
   expect((screen.getByLabelText('Link 2 sni') as HTMLInputElement).value).toBe('cdn.example.com');
   fireEvent.change(second, { target: { value: '203.0.113.10:7444' } });
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -327,7 +327,7 @@ test('the exit end of a Rakhsh tunnel edits only its exit outbound and its own o
   expect(screen.queryByText('limit')).toBeNull();
   expect(screen.getByText('sni')).toBeTruthy();
   fireEvent.change(await screen.findByLabelText('Exit outbound'), { target: { value: 'warp' } });
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -361,7 +361,7 @@ test('a Rakhsh tunnel with no lane up shows the engine reason', async () => {
   };
   openTunnels();
 
-  const tag = await screen.findByText('Down');
+  const tag = within((await screen.findAllByRole('table'))[0]).getByText('Down');
   expect(tag.closest('[title]')?.getAttribute('title')).toBe('no lane is up (0 of 4)');
 });
 
@@ -370,6 +370,7 @@ test('offers to install the Rakhsh engine, not BackPack, when only Rakhsh tunnel
   rakhshInstalled = false;
   openTunnels();
 
+  fireEvent.click(await screen.findByRole('button', { name: 'Rakhsh options' }));
   expect(screen.queryByRole('button', { name: 'Install BackPack' })).toBeNull();
   fireEvent.click(await screen.findByRole('button', { name: 'Install Rakhsh' }));
 
@@ -386,9 +387,9 @@ test('updates the installed Rakhsh engine and says which release it is', async (
   listed = [rakhshPortal];
   openTunnels();
 
-  const version = await screen.findByText('Rakhsh engine v0.1.0');
-  const bar = version.closest('.ant-space') as HTMLElement;
-  fireEvent.click(within(bar).getByRole('button', { name: 'Update engine' }));
+  await screen.findByText('Rakhsh engine v0.1.0');
+  fireEvent.click(screen.getByRole('button', { name: 'Rakhsh options' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Update engine' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(

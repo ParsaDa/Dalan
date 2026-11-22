@@ -163,3 +163,53 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 export function useToast() {
   return useContext(ToastContext);
 }
+
+// A dialog in the design's shape: title row with an optional icon, body, and the action row.
+export function FormModal({
+  open,
+  onClose,
+  title,
+  subtitle,
+  art,
+  width = 600,
+  children,
+  footer,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  subtitle?: ReactNode;
+  art?: ReactNode;
+  width?: number;
+  children: ReactNode;
+  footer: ReactNode;
+}) {
+  return (
+    <Modal open={open} onClose={onClose} label={title} width={width}>
+      <div className="row sp">
+        <div className="row">
+          {art}
+          <div>
+            <h2 className="h2">{title}</h2>
+            {subtitle && <div className="mut">{subtitle}</div>}
+          </div>
+        </div>
+        <button type="button" className="ib sm" aria-label="Close" onClick={onClose}>
+          <Icon name="x" />
+        </button>
+      </div>
+      <div
+        className="dl-form"
+        style={{
+          maxHeight: 'calc(100vh - 240px)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          paddingInlineEnd: 4,
+        }}
+      >
+        {children}
+      </div>
+      <div className="mfoot">{footer}</div>
+    </Modal>
+  );
+}

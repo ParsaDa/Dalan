@@ -24,9 +24,11 @@ _openapi:
         tunnel that is down is a normal answer with connected=false and the
         reason in error. A Rakhsh tunnel is judged by its lanes instead:
         connected while at least one lane is up, with lanesUp, targetLanes,
-        latencyMs and lossPct from the engine. Only the entry end can be
-        tested.'
-      url: '#send-one-request-through-an-entry-tunnel-and-report-whether-it-came-back-the-round-trip-time-and-the-address-and-country-it-left-from-a-tunnel-that-is-down-is-a-normal-answer-with-connectedfalse-and-the-reason-in-error-a-rakhsh-tunnel-is-judged-by-its-lanes-instead-connected-while-at-least-one-lane-is-up-with-lanesup-targetlanes-latencyms-and-losspct-from-the-engine-only-the-entry-end-can-be-tested'
+        latencyMs and lossPct from the engine. Only the entry end can be tested.
+        history lists the latency of every probe in the last hour, oldest first,
+        with 0 for a failed probe; it lives in memory and starts empty after a
+        restart.'
+      url: '#send-one-request-through-an-entry-tunnel-and-report-whether-it-came-back-the-round-trip-time-and-the-address-and-country-it-left-from-a-tunnel-that-is-down-is-a-normal-answer-with-connectedfalse-and-the-reason-in-error-a-rakhsh-tunnel-is-judged-by-its-lanes-instead-connected-while-at-least-one-lane-is-up-with-lanesup-targetlanes-latencyms-and-losspct-from-the-engine-only-the-entry-end-can-be-tested-history-lists-the-latency-of-every-probe-in-the-last-hour-oldest-first-with-0-for-a-failed-probe-it-lives-in-memory-and-starts-empty-after-a-restart'
     - depth: 2
       title: Whether an engine binary (BackPack or Rakhsh) is on this server, which
         release is installed (empty when it was placed by hand), and the release
@@ -166,8 +168,10 @@ _openapi:
           reason in error. A Rakhsh tunnel is judged by its lanes instead:
           connected while at least one lane is up, with lanesUp, targetLanes,
           latencyMs and lossPct from the engine. Only the entry end can be
-          tested.'
-        id: send-one-request-through-an-entry-tunnel-and-report-whether-it-came-back-the-round-trip-time-and-the-address-and-country-it-left-from-a-tunnel-that-is-down-is-a-normal-answer-with-connectedfalse-and-the-reason-in-error-a-rakhsh-tunnel-is-judged-by-its-lanes-instead-connected-while-at-least-one-lane-is-up-with-lanesup-targetlanes-latencyms-and-losspct-from-the-engine-only-the-entry-end-can-be-tested
+          tested. history lists the latency of every probe in the last hour,
+          oldest first, with 0 for a failed probe; it lives in memory and starts
+          empty after a restart.'
+        id: send-one-request-through-an-entry-tunnel-and-report-whether-it-came-back-the-round-trip-time-and-the-address-and-country-it-left-from-a-tunnel-that-is-down-is-a-normal-answer-with-connectedfalse-and-the-reason-in-error-a-rakhsh-tunnel-is-judged-by-its-lanes-instead-connected-while-at-least-one-lane-is-up-with-lanesup-targetlanes-latencyms-and-losspct-from-the-engine-only-the-entry-end-can-be-tested-history-lists-the-latency-of-every-probe-in-the-last-hour-oldest-first-with-0-for-a-failed-probe-it-lives-in-memory-and-starts-empty-after-a-restart
       - content: Whether an engine binary (BackPack or Rakhsh) is on this server, which
           release is installed (empty when it was placed by hand), and the
           release this Dalan version installs by default.

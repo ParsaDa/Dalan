@@ -62,7 +62,7 @@ test('shows each pool with the tunnel that carries its traffic marked', async ()
 
   expect(await screen.findByText('main')).toBeTruthy();
   expect(screen.getByText('de1')).toBeTruthy();
-  expect(screen.getByText('nl1 · in use')).toBeTruthy();
+  expect(screen.getByText('nl1').closest('.badge')?.textContent).toBe('nl1 · in use');
   expect(screen.getByText('in-1')).toBeTruthy();
 });
 
@@ -83,7 +83,7 @@ test('creates a pool from entry tunnels only, in the order they were picked', as
   expect(screen.queryByText('ir1')).toBeNull();
   await pickOption('nl1');
   await pickOption('de1');
-  fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
   await waitFor(() =>
     expect(HttpUtil.post).toHaveBeenCalledWith(
@@ -98,7 +98,7 @@ test('deletes a pool after confirmation', async () => {
   renderWithProviders(<TunnelPools tunnels={tunnels} />);
 
   fireEvent.click(await screen.findByRole('button', { name: 'Delete main' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'OK' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete' }));
 
   await waitFor(() => expect(HttpUtil.post).toHaveBeenCalledWith('/panel/api/tunnels/pools/del/7'));
 });

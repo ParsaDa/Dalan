@@ -1,41 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  Button,
-  Card,
-  ConfigProvider,
-  Empty,
-  Form,
-  Input,
-  InputNumber,
-  Layout,
-  Modal,
-  Popconfirm,
-  Radio,
-  Result,
-  Select,
-  Space,
-  Spin,
-  Switch,
-  Table,
-  Tag,
-  Typography,
-  message,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import {
-  CopyOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  ImportOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
+import { Alert, Form, Input, InputNumber, Radio, Select, Switch, message } from 'antd';
+import { useQueryClient } from '@tanstack/react-query';
 
-import { useTheme } from '@/hooks/useTheme';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
+
+import Icon from '@/components/dl/Icon';
+import { IlloEmpty, IlloOffline } from '@/components/dl/Illustrations';
+import { FormModal, Modal as DlModal } from '@/components/dl/overlays';
+import { Btn, Chip, Empty as DlEmpty, FlagDot, Sk, TileHead } from '@/components/dl/primitives';
+import { fmtInt } from '@/components/dl/numbers';
+import { EngineCard, FlowArrow, TunnelCard, TunnelRow } from './TunnelParts';
 import PortTest from './PortTest';
 import TunnelEditModal from './TunnelEditModal';
-import TunnelEngineBar from './TunnelEngineBar';
 import TunnelOptionFields, { TunnelOptionField, cleanOptions } from './TunnelOptionFields';
 import TunnelPools from './TunnelPools';
 import { BACKPACK_TRANSPORTS } from './backpackTransports';
@@ -46,7 +23,8 @@ import {
   fetchSetupLink,
   useTunnelMutations,
   useTunnelOptions,
-  useTunnelStatus,
+  TUNNELS_KEY,
+  useTunnelStatuses,
   useTunnelsQuery,
   type NewPortalValues,
   type ServerTunnel,
@@ -55,7 +33,7 @@ import {
   type TunnelOptionValues,
 } from '@/api/queries/useTunnels';
 import { selectTagRender } from '@/components/form/SelectTag';
-import { ClipboardManager, SizeFormatter } from '@/utils';
+import { ClipboardManager } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,30}$/;
@@ -77,61 +55,32 @@ interface PortalFormValues {
   options?: TunnelOptionValues;
 }
 
-function TunnelStatusCell({ tunnel }: { tunnel: ServerTunnel }) {
-  const { t } = useTranslation();
-  // Management riders are tested through their node's status; every other tunnel reports its own state.
-  const testable = !tunnel.managePort;
-  const { data, isLoading, error } = useTunnelStatus(tunnel.id, testable && tunnel.enable);
-
-  if (!testable) {
-    return <Typography.Text type="secondary">—</Typography.Text>;
-  }
-  if (!tunnel.enable) return <Typography.Text type="secondary">—</Typography.Text>;
-  if (isLoading) return <Spin size="small" />;
-  if (!data?.connected) {
-    return (
-      <Tag color="error" title={data?.error || (error as Error | null)?.message}>
-        {t('pages.tunnels.statusDown')}
-      </Tag>
-    );
-  }
-  const exit = [data.exitLoc, data.exitIp].filter(Boolean).join(' · ');
-  const lanes = data.targetLanes
-    ? t('pages.tunnels.statusLanes', { up: data.lanesUp ?? 0, total: data.targetLanes })
-    : '';
-  const loss = data.lossPct ? t('pages.tunnels.statusLoss', { pct: data.lossPct }) : '';
-  const connected = [
-    t('pages.tunnels.statusConnected'),
-    data.latencyMs > 0 ? `${data.latencyMs} ms` : '',
-    lanes,
-    loss,
-  ];
-  return (
-    <Space orientation="vertical" size={0}>
-      <Tag color="success">{connected.filter(Boolean).join(' · ')}</Tag>
-      {exit && (
-        <Typography.Text type="secondary">{`${t('pages.tunnels.statusExit')} ${exit}`}</Typography.Text>
-      )}
-    </Space>
-  );
-}
-
 export default function TunnelsPage() {
   const { t } = useTranslation();
-  const { isDark, isUltra, antdThemeConfig } = useTheme();
+  const queryClient = useQueryClient();
+  const { isMobile: narrow } = useMediaQuery(700);
   const [messageApi, messageContextHolder] = message.useMessage();
-  const [modal, modalContextHolder] = Modal.useModal();
   useEffect(() => {
     setMessageInstance(messageApi);
   }, [messageApi]);
 
-  const { tunnels, loading, fetched, fetchError, refetch } = useTunnelsQuery();
+  const { tunnels, fetched, fetchError, refetch } = useTunnelsQuery();
   const { create, importLink, update, setEnable, remove } = useTunnelMutations();
   const [editing, setEditing] = useState<ServerTunnel | null>(null);
   const { data: inboundOptions = [] } = useInboundOptions();
   const { nodes } = useNodesQuery();
+  const nodeRefs = useMemo(
+    () =>
+      nodes.map((n) => ({
+        id: n.id,
+        name: n.name ?? '',
+        country: n.country,
+        enable: n.enable,
+        transitive: n.transitive,
+      })),
+    [nodes],
+  );
 
-  const [engineNode, setEngineNode] = useState<number>();
   const [portalOpen, setPortalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -145,7 +94,6 @@ export default function TunnelsPage() {
   const chosenLinks = Form.useWatch(['options', 'links'], portalForm) as
     | { carrier?: string }[]
     | undefined;
-  const usesBackpack = tunnels.some((tunnel) => tunnel.engine === 'backpack');
   const usesRakhsh = tunnels.some((tunnel) => tunnel.engine === 'rakhsh');
   const { data: backpackCatalog = [] } = useTunnelOptions('backpack');
   const { data: rakhshCatalog = [] } = useTunnelOptions(
@@ -172,42 +120,10 @@ export default function TunnelsPage() {
     [inboundOptions],
   );
 
-  const engineNodePicker = (
-    <Select
-      size="small"
-      allowClear
-      aria-label={t('pages.tunnels.engineViaNode')}
-      placeholder={t('pages.tunnels.engineViaNode')}
-      style={{ minWidth: 200 }}
-      value={engineNode}
-      onChange={setEngineNode}
-      options={nodes
-        .filter((node) => node.enable)
-        .map((node) => ({ value: node.id, label: node.name }))}
-      tagRender={selectTagRender}
-    />
-  );
-
   const report = (msg: { success?: boolean; msg?: string } | null | undefined) => {
     if (msg?.success) return true;
     messageApi.error(msg?.msg || t('somethingWentWrong'));
     return false;
-  };
-
-  const removeTunnel = async (row: ServerTunnel) => {
-    const msg = await remove({ id: row.id });
-    if (msg?.success || !row.nodeId) {
-      report(msg);
-      return;
-    }
-    modal.confirm({
-      title: msg?.msg || t('somethingWentWrong'),
-      content: t('pages.tunnels.removeHereHint'),
-      okText: t('pages.tunnels.removeHere'),
-      okType: 'danger',
-      cancelText: t('cancel'),
-      onOk: async () => report(await remove({ id: row.id, here: true })),
-    });
   };
 
   const submitPortal = async () => {
@@ -284,220 +200,355 @@ export default function TunnelsPage() {
     }
   };
 
-  const columns: ColumnsType<ServerTunnel> = [
-    {
-      title: t('pages.tunnels.enabled'),
-      dataIndex: 'enable',
-      width: 90,
-      render: (enable: boolean, row) => (
-        <Switch
-          size="small"
-          checked={enable}
-          aria-label={`${t('pages.tunnels.enabled')} ${row.name}`}
-          onChange={async (checked) => report(await setEnable({ id: row.id, enable: checked }))}
-        />
-      ),
-    },
-    {
-      title: t('pages.tunnels.name'),
-      dataIndex: 'name',
-      render: (name: string, row) => (
-        <Space>
-          <Typography.Text strong>{name}</Typography.Text>
-          {row.engine === 'backpack' && <Tag>{t('pages.tunnels.engineBackpack')}</Tag>}
-          {row.engine === 'rakhsh' && <Tag>{t('pages.tunnels.engineRakhsh')}</Tag>}
-          {!row.managePort && (
-            <Tag color={row.mode === 'direct' ? 'purple' : 'cyan'}>
-              {row.mode === 'direct'
-                ? t('pages.tunnels.modeDirect')
-                : t('pages.tunnels.modeReverse')}
-            </Tag>
-          )}
-        </Space>
-      ),
-    },
-    {
-      title: t('pages.tunnels.role'),
-      dataIndex: 'role',
-      render: (role: string) =>
-        role === 'portal' ? (
-          <Tag color="blue">{t('pages.tunnels.rolePortal')}</Tag>
-        ) : (
-          <Tag color="green">{t('pages.tunnels.roleBridge')}</Tag>
-        ),
-    },
-    {
-      title: t('pages.tunnels.status'),
-      render: (_, row) => <TunnelStatusCell tunnel={row} />,
-    },
-    {
-      title: t('pages.tunnels.traffic'),
-      render: (_, row) =>
-        row.role === 'portal' &&
-        !row.managePort &&
-        (row.mode !== 'direct' || row.engine === 'rakhsh')
-          ? `↑ ${SizeFormatter.sizeFormat(row.up)} · ↓ ${SizeFormatter.sizeFormat(row.down)}`
-          : '',
-    },
-    {
-      title: t('pages.tunnels.address'),
-      render: (_, row) => <Typography.Text code>{`${row.address}:${row.port}`}</Typography.Text>,
-    },
-    {
-      title: t('pages.tunnels.transport'),
-      dataIndex: 'transport',
-      render: (_, row) => <Tag>{row.transport}</Tag>,
-    },
-    {
-      title: t('pages.tunnels.routeInbounds'),
-      render: (_, row) =>
-        row.role !== 'portal'
-          ? row.exitOutbound || 'direct'
-          : [
-              ...(row.engine === 'backpack' || row.engine === 'rakhsh' ? row.forwardPorts : []),
-              ...row.routeInbounds,
-            ].map((item) => <Tag key={item}>{item}</Tag>),
-    },
-    {
-      width: 150,
-      render: (_, row) => (
-        <Space>
-          {!row.managePort && (
-            <Button
-              type="text"
-              icon={<EditOutlined aria-hidden />}
-              aria-label={`${t('edit')} ${row.name}`}
-              title={t('edit')}
-              onClick={() => setEditing(row)}
-            />
-          )}
-          {row.role === 'portal' && (
-            <Button
-              type="text"
-              icon={<CopyOutlined aria-hidden />}
-              aria-label={t('pages.tunnels.copyLink')}
-              title={t('pages.tunnels.copyLink')}
-              onClick={() => copyLink(row.id)}
-            />
-          )}
-          <Popconfirm title={t('pages.tunnels.deleteConfirm')} onConfirm={() => removeTunnel(row)}>
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined aria-hidden />}
-              aria-label={`${t('delete')} ${row.name}`}
-            />
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
-
-  const pageClass = ['tunnels-page', isDark ? 'is-dark' : '', isUltra ? 'is-ultra' : '']
-    .filter(Boolean)
-    .join(' ');
+  const statuses = useTunnelStatuses(tunnels);
+  const statusOf = (id: number) => statuses[tunnels.findIndex((tu) => tu.id === id)]?.data;
+  const stateOf = (tu: ServerTunnel): 'ok' | 'bad' | 'off' | 'none' =>
+    !tu.enable
+      ? 'off'
+      : tu.managePort
+        ? 'none'
+        : statusOf(tu.id)?.connected
+          ? 'ok'
+          : statusOf(tu.id)
+            ? 'bad'
+            : 'none';
+  const [filter, setFilter] = useState<'all' | 'ok' | 'bad' | 'off' | 'backpack' | 'rakhsh'>('all');
+  const shown = tunnels.filter((tu) =>
+    filter === 'all'
+      ? true
+      : filter === 'backpack' || filter === 'rakhsh'
+        ? tu.engine === filter
+        : stateOf(tu) === filter,
+  );
+  const [deleting, setDeleting] = useState<ServerTunnel | null>(null);
+  const [removeHere, setRemoveHere] = useState<{ row: ServerTunnel; reason: string } | null>(null);
+  const testAll = () => queryClient.invalidateQueries({ queryKey: [...TUNNELS_KEY, 'status'] });
+  const flowTunnel =
+    tunnels.find((tu) => tu.enable && tu.role === 'portal' && tu.mode === 'reverse' && tu.nodeId) ??
+    tunnels.find((tu) => tu.enable && tu.nodeId);
+  const flowNode = flowTunnel ? nodes.find((n) => n.id === flowTunnel.nodeId) : undefined;
+  const count = (f: typeof filter) =>
+    tunnels.filter((tu) =>
+      f === 'backpack' || f === 'rakhsh' ? tu.engine === f : stateOf(tu) === f,
+    ).length;
 
   return (
-    <ConfigProvider theme={antdThemeConfig}>
+    <div className="col stag" style={{ gap: 18 }}>
       {messageContextHolder}
-      {modalContextHolder}
-      <Layout className={pageClass}>
-        <Layout className="content-shell">
-          <Layout.Content id="content-layout" className="content-area">
-            <Spin aria-live="off" spinning={!fetched} delay={200} size="large">
-              {!fetched ? (
-                <div className="loading-spacer" />
-              ) : fetchError ? (
-                <Result
-                  status="error"
-                  title={t('somethingWentWrong')}
-                  subTitle={fetchError}
-                  extra={
-                    <Button type="primary" loading={loading} onClick={() => refetch()}>
-                      {t('refresh')}
-                    </Button>
-                  }
-                />
-              ) : (
-                <Card
-                  title={t('pages.tunnels.title')}
-                  extra={
-                    <Space wrap>
-                      <Button
-                        icon={<ImportOutlined aria-hidden />}
-                        onClick={() => setImportOpen(true)}
-                      >
-                        {t('pages.tunnels.importLink')}
-                      </Button>
-                      <Button
-                        type="primary"
-                        icon={<PlusOutlined aria-hidden />}
-                        onClick={() => setPortalOpen(true)}
-                      >
-                        {t('pages.tunnels.newPortal')}
-                      </Button>
-                    </Space>
-                  }
+      <div className="pagehead">
+        <div>
+          <h2 className="h2" style={{ fontSize: 28 }}>
+            {t('pages.tunnels.title')}
+          </h2>
+          <p>{t('tunnels.subtitle')}</p>
+        </div>
+        <div className="row wrap">
+          <Btn icon="refresh" onClick={testAll}>
+            {t('tunnels.testAll')}
+          </Btn>
+          <Btn icon="down" onClick={() => setImportOpen(true)}>
+            {t('pages.tunnels.importLink')}
+          </Btn>
+          <Btn kind="pri" icon="plus" onClick={() => setPortalOpen(true)}>
+            {t('pages.tunnels.newPortal')}
+          </Btn>
+        </div>
+      </div>
+      {!fetched ? (
+        <section className="tile">
+          <Sk h={120} />
+        </section>
+      ) : fetchError ? (
+        <section className="tile edge st-bad">
+          <DlEmpty
+            art={<IlloOffline />}
+            title={t('somethingWentWrong')}
+            actions={
+              <Btn kind="pri" icon="refresh" onClick={() => refetch()}>
+                {t('refresh')}
+              </Btn>
+            }
+          >
+            {fetchError}
+          </DlEmpty>
+        </section>
+      ) : (
+        <>
+          <div className="grid">
+            <EngineCard
+              engine="backpack"
+              label={t('pages.tunnels.engineBackpack')}
+              blurb={t('tunnels.backpackBlurb')}
+              count={tunnels.filter((tu) => tu.engine === 'backpack').length}
+              nodes={nodeRefs}
+              report={report}
+            />
+            <EngineCard
+              engine="rakhsh"
+              label={t('pages.tunnels.engineRakhsh')}
+              blurb={t('tunnels.rakhshBlurb')}
+              count={tunnels.filter((tu) => tu.engine === 'rakhsh').length}
+              nodes={nodeRefs}
+              report={report}
+            />
+            <section
+              className="tile s4"
+              style={{
+                borderStyle: 'dashed',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                textAlign: 'center',
+                gap: 8,
+                minHeight: 170,
+              }}
+            >
+              <span className="ico">
+                <Icon name="plus" />
+              </span>
+              <div className="h3">{t('tunnels.moreEngines')}</div>
+              <div className="mut" style={{ fontSize: 12.5, maxWidth: 260 }}>
+                {t('tunnels.moreEnginesHint')}
+              </div>
+            </section>
+            <section className="tile s12" aria-label={t('tunnels.flowTitle')}>
+              <TileHead
+                icon="tunnel"
+                title={t('tunnels.flowTitle')}
+                right={
+                  <span className="mut" style={{ fontSize: 12.5, fontWeight: 650 }}>
+                    {t('tunnels.flowHint')}
+                  </span>
+                }
+              />
+              <div className="row wrap" style={{ gap: 14, alignItems: 'center' }}>
+                <div
+                  className="tile"
+                  style={{ padding: '14px 16px', display: 'flex', gap: 10, alignItems: 'center' }}
                 >
-                  <Typography.Paragraph type="secondary">
-                    {t('pages.tunnels.subtitle')}
-                  </Typography.Paragraph>
-                  {(usesBackpack || usesRakhsh) && (
-                    <div style={{ marginBottom: 12 }}>{engineNodePicker}</div>
-                  )}
-                  {usesBackpack && (
-                    <TunnelEngineBar
-                      engine="backpack"
-                      label={t('pages.tunnels.engineBackpack')}
-                      nodeId={engineNode}
-                      report={report}
+                  <span className="ico">
+                    <Icon name="users" />
+                  </span>
+                  <div>
+                    <b>{t('tunnels.flowUsers')}</b>
+                    <div className="mut" style={{ fontSize: 12 }}>
+                      {t('tunnels.flowUsersSub')}
+                    </div>
+                  </div>
+                </div>
+                <FlowArrow />
+                <div
+                  className="tile edge"
+                  style={{ padding: '14px 16px', display: 'flex', gap: 10, alignItems: 'center' }}
+                >
+                  <FlagDot size={28} />
+                  <div>
+                    <b>{t('pages.index.thisServer')}</b>
+                    <div className="mut" style={{ fontSize: 12 }}>
+                      {t('tunnels.flowEntry')}
+                    </div>
+                  </div>
+                </div>
+                <FlowArrow reverse={flowTunnel?.mode !== 'direct'} />
+                <div
+                  className="tile"
+                  style={{ padding: '14px 16px', display: 'flex', gap: 10, alignItems: 'center' }}
+                >
+                  <FlagDot country={flowNode?.country} size={28} />
+                  <div>
+                    <b>{flowNode?.name ?? t('tunnels.flowExitNode')}</b>
+                    <div className="mut" style={{ fontSize: 12 }}>
+                      {t(flowTunnel?.mode === 'direct' ? 'tunnels.flowDials' : 'tunnels.flowOpens')}
+                    </div>
+                  </div>
+                </div>
+                <span className="mut" style={{ fontWeight: 650, fontSize: 13 }}>
+                  {t('tunnels.flowInternet')}
+                </span>
+              </div>
+            </section>
+          </div>
+          {tunnels.some((tunnel) => tunnel.role === 'portal') && (
+            <div className="row mut" style={{ gap: 8, fontSize: 13, fontWeight: 650 }}>
+              <Icon name="info" size={16} />
+              <span className="f1">{t('pages.tunnels.linkHint')}</span>
+            </div>
+          )}
+          <div className="chips" role="group" aria-label={t('tunnels.filters')}>
+            {(['all', 'ok', 'bad', 'off', 'backpack', 'rakhsh'] as const).map((f) => (
+              <Chip
+                key={f}
+                on={filter === f}
+                count={fmtInt(f === 'all' ? tunnels.length : count(f))}
+                onClick={() => setFilter(f)}
+              >
+                {t(`tunnels.filter.${f}`)}
+              </Chip>
+            ))}
+          </div>
+          {tunnels.length === 0 ? (
+            <section className="tile">
+              <DlEmpty
+                art={<IlloEmpty size={130} />}
+                title={t('pages.tunnels.empty')}
+                actions={
+                  <Btn kind="pri" icon="plus" onClick={() => setPortalOpen(true)}>
+                    {t('pages.tunnels.newPortal')}
+                  </Btn>
+                }
+              />
+            </section>
+          ) : (
+            <section className="tile dense" style={{ padding: 20 }}>
+              {narrow ? (
+                <div className="list">
+                  {shown.map((row) => (
+                    <TunnelCard
+                      key={row.id}
+                      row={row}
+                      nodes={nodeRefs}
+                      status={statusOf(row.id)}
+                      state={stateOf(row)}
+                      onToggle={async (on) => report(await setEnable({ id: row.id, enable: on }))}
+                      onEdit={() => setEditing(row)}
+                      onCopy={() => copyLink(row.id)}
+                      onDelete={() => setDeleting(row)}
                     />
-                  )}
-                  {usesRakhsh && (
-                    <TunnelEngineBar
-                      engine="rakhsh"
-                      label={t('pages.tunnels.engineRakhsh')}
-                      nodeId={engineNode}
-                      report={report}
-                    />
-                  )}
-                  {tunnels.some((tunnel) => tunnel.role === 'portal') && (
-                    <Alert
-                      type="info"
-                      showIcon
-                      title={t('pages.tunnels.linkHint')}
-                      style={{ marginBottom: 12 }}
-                    />
-                  )}
-                  <Table<ServerTunnel>
-                    rowKey="id"
-                    size="small"
-                    loading={loading}
-                    columns={columns}
-                    dataSource={tunnels}
-                    pagination={false}
-                    scroll={{ x: 'max-content' }}
-                    locale={{ emptyText: <Empty description={t('pages.tunnels.empty')} /> }}
-                  />
-                </Card>
-              )}
-              {fetched && !fetchError && (
-                <div style={{ marginTop: 16 }}>
-                  <TunnelPools tunnels={tunnels} />
+                  ))}
+                </div>
+              ) : (
+                <div className="tblbox">
+                  <table className="tbl" style={{ minWidth: 1040 }}>
+                    <thead>
+                      <tr>
+                        <th>{t('tunnels.colTunnel')}</th>
+                        <th>{t('tunnels.colEngine')}</th>
+                        <th>{t('tunnels.colMode')}</th>
+                        <th>{t('tunnels.colLatency')}</th>
+                        <th>{t('tunnels.colLastHour')}</th>
+                        <th>{t('tunnels.colState')}</th>
+                        <th>{t('pages.tunnels.traffic')}</th>
+                        <th>{t('tunnels.colRoutes')}</th>
+                        <th>
+                          <span
+                            style={{
+                              position: 'absolute',
+                              width: 1,
+                              height: 1,
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {t('pages.nodes.actions')}
+                          </span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shown.map((row) => (
+                        <TunnelRow
+                          key={row.id}
+                          row={row}
+                          nodes={nodeRefs}
+                          status={statusOf(row.id)}
+                          state={stateOf(row)}
+                          onToggle={async (on) =>
+                            report(await setEnable({ id: row.id, enable: on }))
+                          }
+                          onEdit={() => setEditing(row)}
+                          onCopy={() => copyLink(row.id)}
+                          onDelete={() => setDeleting(row)}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
-            </Spin>
-          </Layout.Content>
-        </Layout>
-      </Layout>
+            </section>
+          )}
+          <TunnelPools tunnels={tunnels} />
+        </>
+      )}
 
-      <Modal
-        title={t('pages.tunnels.newPortal')}
+      <DlModal
+        open={deleting !== null}
+        onClose={() => setDeleting(null)}
+        label={t('pages.tunnels.deleteConfirm')}
+        width={440}
+      >
+        <div className="row" style={{ gap: 12 }}>
+          <span className="ico bad">
+            <Icon name="trash" />
+          </span>
+          <h2 className="h3 f1">{t('pages.tunnels.deleteConfirm')}</h2>
+        </div>
+        <div className="mfoot">
+          <Btn kind="ghost" onClick={() => setDeleting(null)}>
+            {t('cancel')}
+          </Btn>
+          <Btn
+            kind="dng"
+            icon="trash"
+            onClick={async () => {
+              const row = deleting;
+              setDeleting(null);
+              if (!row) return;
+              const msg = await remove({ id: row.id });
+              if (msg?.success || !row.nodeId) report(msg);
+              else setRemoveHere({ row, reason: msg?.msg || t('somethingWentWrong') });
+            }}
+          >
+            {t('delete')}
+          </Btn>
+        </div>
+      </DlModal>
+      <DlModal
+        open={removeHere !== null}
+        onClose={() => setRemoveHere(null)}
+        label={removeHere?.reason ?? ''}
+        width={480}
+      >
+        <h2 className="h3">{removeHere?.reason}</h2>
+        <p className="mut" style={{ margin: 0 }}>
+          {t('pages.tunnels.removeHereHint')}
+        </p>
+        <div className="mfoot">
+          <Btn kind="ghost" onClick={() => setRemoveHere(null)}>
+            {t('cancel')}
+          </Btn>
+          <Btn
+            kind="dng"
+            icon="trash"
+            onClick={async () => {
+              const row = removeHere?.row;
+              setRemoveHere(null);
+              if (row) report(await remove({ id: row.id, here: true }));
+            }}
+          >
+            {t('pages.tunnels.removeHere')}
+          </Btn>
+        </div>
+      </DlModal>
+      <FormModal
         open={portalOpen}
-        confirmLoading={saving}
-        onOk={submitPortal}
-        onCancel={() => setPortalOpen(false)}
-        destroyOnHidden
+        title={t('pages.tunnels.newPortal')}
+        art={
+          <span className="ico acc">
+            <Icon name="tunnel" />
+          </span>
+        }
+        onClose={() => setPortalOpen(false)}
+        width={640}
+        footer={
+          <>
+            <Btn kind="ghost" onClick={() => setPortalOpen(false)}>
+              {t('cancel')}
+            </Btn>
+            <Btn kind="pri" icon="check" disabled={saving} onClick={submitPortal}>
+              {t('tunnels.create')}
+            </Btn>
+          </>
+        }
       >
         <Form
           form={portalForm}
@@ -691,7 +742,7 @@ export default function TunnelsPage() {
             </Form.Item>
           )}
         </Form>
-      </Modal>
+      </FormModal>
 
       {editing && (
         <TunnelEditModal
@@ -705,13 +756,25 @@ export default function TunnelsPage() {
         />
       )}
 
-      <Modal
-        title={t('pages.tunnels.importLink')}
+      <FormModal
         open={importOpen}
-        confirmLoading={saving}
-        onOk={submitImport}
-        onCancel={() => setImportOpen(false)}
-        destroyOnHidden
+        title={t('pages.tunnels.importLink')}
+        art={
+          <span className="ico acc">
+            <Icon name="link" />
+          </span>
+        }
+        onClose={() => setImportOpen(false)}
+        footer={
+          <>
+            <Btn kind="ghost" onClick={() => setImportOpen(false)}>
+              {t('cancel')}
+            </Btn>
+            <Btn kind="pri" icon="check" disabled={saving} onClick={submitImport}>
+              {t('tunnels.import')}
+            </Btn>
+          </>
+        }
       >
         <Form form={importForm} layout="vertical">
           <Form.Item
@@ -733,7 +796,7 @@ export default function TunnelsPage() {
             <Input placeholder="direct" autoComplete="off" />
           </Form.Item>
         </Form>
-      </Modal>
-    </ConfigProvider>
+      </FormModal>
+    </div>
   );
 }

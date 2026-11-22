@@ -14084,7 +14084,7 @@
         "tags": [
           "Tunnels"
         ],
-        "summary": "Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. A Rakhsh tunnel is judged by its lanes instead: connected while at least one lane is up, with lanesUp, targetLanes, latencyMs and lossPct from the engine. Only the entry end can be tested.",
+        "summary": "Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. A Rakhsh tunnel is judged by its lanes instead: connected while at least one lane is up, with lanesUp, targetLanes, latencyMs and lossPct from the engine. Only the entry end can be tested. history lists the latency of every probe in the last hour, oldest first, with 0 for a failed probe; it lives in memory and starts empty after a restart.",
         "operationId": "get_panel_api_tunnels_status_id",
         "parameters": [
           {
@@ -14121,7 +14121,12 @@
                     "latencyMs": 182,
                     "exitIp": "203.0.113.77",
                     "exitLoc": "DE",
-                    "error": ""
+                    "error": "",
+                    "history": [
+                      180,
+                      0,
+                      182
+                    ]
                   }
                 }
               }

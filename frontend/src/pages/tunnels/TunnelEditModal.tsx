@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Form, Input, InputNumber, Modal, Select, Switch, Tag } from 'antd';
+import { Alert, Form, Input, InputNumber, Select, Switch } from 'antd';
+
+import Icon from '@/components/dl/Icon';
+import { FormModal } from '@/components/dl/overlays';
+import { Badge, Btn } from '@/components/dl/primitives';
 
 import { selectTagRender } from '@/components/form/SelectTag';
 import type {
@@ -78,17 +82,32 @@ export default function TunnelEditModal({
   };
 
   return (
-    <Modal
-      title={`${t('pages.tunnels.editTunnel')} · ${tunnel.name}`}
+    <FormModal
       open
-      confirmLoading={saving}
-      onOk={submit}
-      onCancel={onClose}
-      destroyOnHidden
+      title={`${t('pages.tunnels.editTunnel')} · ${tunnel.name}`}
+      subtitle={
+        <Badge acc={mode !== 'direct'}>
+          {mode === 'direct' ? t('pages.tunnels.modeDirect') : t('pages.tunnels.modeReverse')}
+        </Badge>
+      }
+      art={
+        <span className="ico acc">
+          <Icon name="tunnel" />
+        </span>
+      }
+      width={640}
+      onClose={onClose}
+      footer={
+        <>
+          <Btn kind="ghost" onClick={onClose}>
+            {t('cancel')}
+          </Btn>
+          <Btn kind="pri" icon="check" disabled={saving} onClick={submit}>
+            {t('save')}
+          </Btn>
+        </>
+      }
     >
-      <Tag color={mode === 'direct' ? 'purple' : 'blue'} style={{ marginBottom: 12 }}>
-        {mode === 'direct' ? t('pages.tunnels.modeDirect') : t('pages.tunnels.modeReverse')}
-      </Tag>
       {portal && tunnel.nodeId > 0 && (
         <Alert
           type="info"
@@ -223,6 +242,6 @@ export default function TunnelEditModal({
           />
         )}
       </Form>
-    </Modal>
+    </FormModal>
   );
 }

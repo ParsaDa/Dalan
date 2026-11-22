@@ -714,7 +714,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 6px 12px;
+  flex-wrap: wrap;
   margin-bottom: 16px;
   min-height: 28px;
 }
@@ -725,6 +726,7 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-shrink: 0;
   letter-spacing: 0.01em;
 }
 .dl .tt svg {

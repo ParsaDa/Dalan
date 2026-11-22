@@ -25,6 +25,8 @@ type Status struct {
 	LanesUp     int     `json:"lanesUp" example:"3"`
 	TargetLanes int     `json:"targetLanes" example:"4"`
 	LossPct     float64 `json:"lossPct" example:"0.4"`
+	// History is the latency of each probe in the last hour, oldest first; 0 is a failed probe.
+	History []int64 `json:"history,omitempty" example:"[40,0,38]"`
 }
 
 // ProbeVia sends one GET through the SOCKS port that is routed into a tunnel; a failure is a status, not an error.

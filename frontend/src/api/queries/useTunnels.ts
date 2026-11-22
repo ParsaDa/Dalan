@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { HttpUtil } from '@/utils';
@@ -192,6 +192,7 @@ const TunnelStatusSchema = z.object({
   lanesUp: z.number().optional(),
   targetLanes: z.number().optional(),
   lossPct: z.number().optional(),
+  history: z.array(z.number()).optional(),
 });
 export type TunnelStatus = z.infer<typeof TunnelStatusSchema>;
 
@@ -211,6 +212,21 @@ export function useTunnelStatus(id: number, enabled: boolean) {
     enabled,
     retry: false,
     refetchInterval: 60_000,
+  });
+}
+
+// Same cache entries as useTunnelStatus, so a row and the page counts share one probe per tunnel.
+export function useTunnelStatuses(
+  tunnels: readonly { id: number; enable: boolean; managePort?: number }[],
+) {
+  return useQueries({
+    queries: tunnels.map((tu) => ({
+      queryKey: [...TUNNELS_KEY, 'status', tu.id],
+      queryFn: () => fetchTunnelStatus(tu.id),
+      enabled: tu.enable && !tu.managePort,
+      retry: false,
+      refetchInterval: 60_000,
+    })),
   });
 }
 
