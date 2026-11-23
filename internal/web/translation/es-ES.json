@@ -3584,5 +3584,13 @@
     "sixDigits": "6 digits",
     "more": "More languages",
     "subtitle": "Sign in to your panel"
+  },
+  "errorPage": {
+    "lost": "Lost in the corridor",
+    "lostHint": "This page does not exist, or the node that owns it is not answering. Your settings are safe.",
+    "broken": "This page stopped working",
+    "brokenHint": "Something failed while showing it. Your settings are safe; try again or go back to the dashboard.",
+    "home": "Go to dashboard",
+    "retry": "Try again"
   }
 }
