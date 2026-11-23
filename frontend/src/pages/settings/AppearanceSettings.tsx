@@ -1,10 +1,14 @@
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { keys } from '@/api/queryKeys';
 
 import AccentSwatches from '@/components/ui/AccentSwatches';
 import { Seg, TileHead, Toggle } from '@/components/dl/primitives';
 import { shellPrefs, useShellPrefs } from '@/components/dl/shell/shellPrefs';
 import { useTheme } from '@/hooks/useTheme';
 import type { EffectsPref } from '@/lib/theme/effects';
+import { HttpUtil } from '@/utils';
 
 const LEVELS: EffectsPref[] = ['auto', 'full', 'light', 'off'];
 
@@ -13,6 +17,14 @@ export default function AppearanceSettings() {
   const { t } = useTranslation();
   const { effectsPref, setEffectsPref, accent, setAccent, isDark, toggleTheme } = useTheme();
   const { simple } = useShellPrefs();
+  const queryClient = useQueryClient();
+
+  // Kept on this device at once, then saved so every browser of this panel shows the same colour.
+  async function pickAccent(id: typeof accent) {
+    setAccent(id);
+    const saved = await HttpUtil.post('/panel/api/setting/profile', { accent: id });
+    if (saved?.success) await queryClient.invalidateQueries({ queryKey: keys.settings.all() });
+  }
   return (
     <>
       <section className="tile">
@@ -98,7 +110,7 @@ export default function AppearanceSettings() {
       <section className="tile">
         <TileHead icon="fx" title={t('pages.settings.accentColour')} />
         <div className="accent-row" role="radiogroup" aria-label={t('pages.settings.accentColour')}>
-          <AccentSwatches value={accent} onChange={(id) => setAccent(id as typeof accent)} />
+          <AccentSwatches value={accent} onChange={(id) => pickAccent(id as typeof accent)} />
         </div>
       </section>
     </>

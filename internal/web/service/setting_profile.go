@@ -18,7 +18,11 @@ type ServerProfile struct {
 	SetupDone     *bool   `json:"setupDone" form:"setupDone"`
 }
 
-const maxServerNameLength = 80
+const (
+	maxServerNameLength = 80
+	// accentSettingKey is written only by UpdateServerProfile, never by the whole-settings save.
+	accentSettingKey = "accent"
+)
 
 var (
 	countryCodePattern = regexp.MustCompile(`^[A-Z]{2}$`)
@@ -69,10 +73,10 @@ func (s *SettingService) UpdateServerProfile(p ServerProfile) error {
 	}
 
 	for key, value := range map[string]*string{
-		"serverName":    p.ServerName,
-		"serverCountry": p.ServerCountry,
-		"serverAddress": p.ServerAddress,
-		"accent":        p.Accent,
+		"serverName":     p.ServerName,
+		"serverCountry":  p.ServerCountry,
+		"serverAddress":  p.ServerAddress,
+		accentSettingKey: p.Accent,
 	} {
 		if value == nil {
 			continue

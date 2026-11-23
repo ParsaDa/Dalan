@@ -90,3 +90,33 @@ func TestValidServerAddress(t *testing.T) {
 		}
 	}
 }
+
+// The accent is saved by its own request; a Settings form loaded before the pick must not revert it.
+func TestUpdateAllSettingDoesNotRevertTheAccent(t *testing.T) {
+	setupSettingTestDB(t)
+	s := &SettingService{}
+	if err := s.UpdateServerProfile(ServerProfile{Accent: strPtr("cobalt")}); err != nil {
+		t.Fatal(err)
+	}
+	stale, err := s.GetAllSetting()
+	if err != nil {
+		t.Fatal(err)
+	}
+	stale.Accent = "saffron"
+	stale.ServerName = "renamed"
+
+	if err := s.UpdateAllSetting(stale, SecretClears{}); err != nil {
+		t.Fatal(err)
+	}
+
+	view, err := s.GetAllSettingView()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if view.Accent != "cobalt" {
+		t.Fatalf("accent = %q, want cobalt", view.Accent)
+	}
+	if view.ServerName != "renamed" {
+		t.Fatalf("server name = %q, want renamed", view.ServerName)
+	}
+}

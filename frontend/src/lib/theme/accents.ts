@@ -34,6 +34,10 @@ export const ACCENTS: readonly Accent[] = [
   { id: 'steel', fill: '#9AA8BC' },
 ];
 
+export function parseAccentId(value: string | null | undefined): AccentId | null {
+  return ACCENTS.find((item) => item.id === value)?.id ?? null;
+}
+
 const COUNTRY_ACCENT: Record<string, AccentId> = {
   TR: 'rose',
   CA: 'rose',
