@@ -9,6 +9,7 @@ import 'swagger-ui-react/swagger-ui.css';
 import Icon from '@/components/dl/Icon';
 import { Btn, Pill, Seg, Sk, TileHead } from '@/components/dl/primitives';
 import { HttpUtil } from '@/utils';
+import { useTheme } from '@/hooks/useTheme';
 import { EXAMPLES } from '@/generated/examples';
 import { buildWebSocketEvents } from './websocket-events';
 import './ApiDocsPage.css';
@@ -143,6 +144,7 @@ function TokensTile() {
 export default function ApiDocsPage() {
   const { t } = useTranslation();
   const [view, setView] = useState<'api' | 'ws'>('api');
+  const { isDark, isUltra } = useTheme();
   const [loaded, setLoaded] = useState(false);
   return (
     <div className="col stag" style={{ gap: 18 }}>
@@ -161,7 +163,10 @@ export default function ApiDocsPage() {
       </div>
       <div className="grid">
         <TokensTile />
-        <section className="tile s7 api-docs-page">
+        <section
+          className={`tile s7 api-docs-page${isDark ? ' is-dark' : ''}${isUltra ? ' is-ultra' : ''}`}
+          style={{ alignSelf: 'start' }}
+        >
           <TileHead
             icon="code"
             title={t('developer.reference')}
