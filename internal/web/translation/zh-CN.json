@@ -2376,11 +2376,6 @@
       "editHost": "编辑主机",
       "selectInbound": "选择一个入站",
       "selectedCount": "已选 {count} 项",
-      "summary": {
-        "total": "总计",
-        "enabled": "已启用",
-        "disabled": "已禁用"
-      },
       "moveUp": "上移",
       "moveDown": "下移",
       "bulkEnable": "启用",
@@ -3438,5 +3433,23 @@
     "empty": "No rules yet. Without rules, traffic leaves through the first outbound.",
     "drag": "Drag to reorder",
     "enabled": "Turn on"
+  },
+  "hosts": {
+    "subtitle": "The addresses and names that go into subscription links.",
+    "tipTitle": "Hosts are what users see in their link",
+    "tipBody": "When an address is blocked, change the host here and every subscription updates on its next refresh. No one needs a new link.",
+    "empty": "No hosts yet",
+    "filters": "Filter hosts",
+    "filter": {
+      "all": "All",
+      "on": "On",
+      "off": "Off"
+    },
+    "on": "On",
+    "off": "Off",
+    "usedBy": "Used by",
+    "copyAddress": "Copy address",
+    "select": "Select {name}",
+    "selectAll": "Select all"
   }
 }

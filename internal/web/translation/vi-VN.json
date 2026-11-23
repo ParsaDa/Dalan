@@ -2376,11 +2376,6 @@
       "editHost": "Sửa Host",
       "selectInbound": "Chọn một inbound",
       "selectedCount": "Đã chọn {count}",
-      "summary": {
-        "total": "Tổng",
-        "enabled": "Đã kích hoạt",
-        "disabled": "Đã tắt"
-      },
       "moveUp": "Lên",
       "moveDown": "Xuống",
       "bulkEnable": "Kích hoạt",
@@ -3438,5 +3433,23 @@
     "empty": "No rules yet. Without rules, traffic leaves through the first outbound.",
     "drag": "Drag to reorder",
     "enabled": "Turn on"
+  },
+  "hosts": {
+    "subtitle": "The addresses and names that go into subscription links.",
+    "tipTitle": "Hosts are what users see in their link",
+    "tipBody": "When an address is blocked, change the host here and every subscription updates on its next refresh. No one needs a new link.",
+    "empty": "No hosts yet",
+    "filters": "Filter hosts",
+    "filter": {
+      "all": "All",
+      "on": "On",
+      "off": "Off"
+    },
+    "on": "On",
+    "off": "Off",
+    "usedBy": "Used by",
+    "copyAddress": "Copy address",
+    "select": "Select {name}",
+    "selectAll": "Select all"
   }
 }
