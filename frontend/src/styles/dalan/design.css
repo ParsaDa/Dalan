@@ -646,6 +646,9 @@
 .dl .s8 {
   grid-column: span 8;
 }
+.dl .s9 {
+  grid-column: span 9;
+}
 .dl .s12 {
   grid-column: span 12;
 }
@@ -657,7 +660,8 @@
   }
   .dl .s6,
   .dl .s7,
-  .dl .s8 {
+  .dl .s8,
+  .dl .s9 {
     grid-column: span 12;
   }
 }

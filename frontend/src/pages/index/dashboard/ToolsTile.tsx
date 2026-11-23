@@ -4,17 +4,14 @@ import { Badge, Btn, TileHead } from '@/components/dl/primitives';
 import { formatPanelVersion } from '@/lib/panel-version';
 
 export interface ToolsActions {
-  onLogs: () => void;
   onAmneziaWGLogs?: () => void;
   onConfig: () => void;
-  onBackup: () => void;
   onHistory: () => void;
   onMetrics: () => void;
   onUpdate: () => void;
-  onVersion: () => void;
 }
 
-// Advanced-mode tools that still live on the dashboard until Logs, Settings and Xray config take them.
+// Advanced-mode tools with no page of their own; updates and backups live in Settings.
 export function ToolsTile({
   panelVersion,
   latestVersion,
@@ -45,14 +42,8 @@ export function ToolsTile({
       />
       <div className="row wrap" style={{ gap: 8 }}>
         <Btn size="sm" icon="refresh" onClick={actions.onUpdate}>
-          {t('pages.index.updatePanel')}
+          {t('settingsPage.nav.updates')}
           {updateAvailable && <Badge acc>{formatPanelVersion(latestVersion)}</Badge>}
-        </Btn>
-        <Btn size="sm" icon="xray" onClick={actions.onVersion}>
-          {t('pages.index.xraySwitch')}
-        </Btn>
-        <Btn size="sm" icon="logs" onClick={actions.onLogs}>
-          {t('menu.logs')}
         </Btn>
         {actions.onAmneziaWGLogs && (
           <Btn size="sm" icon="logs" onClick={actions.onAmneziaWGLogs}>
@@ -61,9 +52,6 @@ export function ToolsTile({
         )}
         <Btn size="sm" icon="code" onClick={actions.onConfig}>
           {t('pages.index.config')}
-        </Btn>
-        <Btn size="sm" icon="down" onClick={actions.onBackup}>
-          {t('dashboard.tools.backup')}
         </Btn>
         <Btn size="sm" icon="sparkline" onClick={actions.onHistory}>
           {t('pages.index.systemHistoryTitle')}

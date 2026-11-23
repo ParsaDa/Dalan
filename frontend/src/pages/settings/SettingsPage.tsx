@@ -16,6 +16,8 @@ import SubscriptionGeneralTab from './SubscriptionGeneralTab';
 import SubscriptionFormatsTab from './SubscriptionFormatsTab';
 import SubscriptionBalancersTab from './SubscriptionBalancersTab';
 import AppearanceSettings from './AppearanceSettings';
+import BackupsSection from './maintenance/BackupsSection';
+import UpdatesSection from './maintenance/UpdatesSection';
 import Icon from '@/components/dl/Icon';
 import { Modal as DlModal } from '@/components/dl/overlays';
 import { Btn, IconBtn, Seg, Sk, TileHead } from '@/components/dl/primitives';
@@ -30,9 +32,11 @@ const SECTIONS = [
   { slug: 'appearance', icon: 'fx', key: 'settingsPage.nav.appearance' },
   { slug: 'subscription', icon: 'link', key: 'settingsPage.nav.subscription' },
   { slug: 'security', icon: 'lock', key: 'settingsPage.nav.security' },
+  { slug: 'backups', icon: 'server', key: 'settingsPage.nav.backups' },
   { slug: 'notifications', icon: 'bell', key: 'settingsPage.nav.notifications' },
   { slug: 'users', icon: 'users', key: 'settingsPage.nav.users' },
   { slug: 'developer', icon: 'code', key: 'settingsPage.nav.developer' },
+  { slug: 'updates', icon: 'refresh', key: 'settingsPage.nav.updates' },
 ] as const;
 const OLD_SLUGS: Record<string, string> = {
   telegram: 'notifications',
@@ -251,6 +255,10 @@ export default function SettingsPage() {
             </div>
           </>,
         );
+      case 'backups':
+        return <BackupsSection />;
+      case 'updates':
+        return <UpdatesSection />;
       case 'users':
         return (
           <section className="tile" style={{ borderStyle: 'dashed' }}>
@@ -376,7 +384,7 @@ export default function SettingsPage() {
             </a>
           ))}
         </nav>
-        <div className="s9 col" style={{ gap: 18, gridColumn: 'span 9' }}>
+        <div className="s9 col" style={{ gap: 18 }}>
           {!fetched ? (
             <section className="tile">
               <Sk h={260} />

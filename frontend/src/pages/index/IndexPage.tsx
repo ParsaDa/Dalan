@@ -1,4 +1,4 @@
-import { lazy, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate } from 'react-router';
 import { useNeedsSetup } from '@/pages/setup/useNeedsSetup';
@@ -19,12 +19,9 @@ import { Modal as DlModal } from '@/components/dl/overlays';
 import { IlloOffline } from '@/components/dl/Illustrations';
 import Mark from '@/components/dl/Mark';
 const JsonEditor = lazy(() => import('@/components/form/JsonEditor'));
-const PanelUpdateModal = lazy(() => import('./PanelUpdateModal'));
-const BackupModal = lazy(() => import('./BackupModal'));
 const SystemHistoryModal = lazy(() => import('./SystemHistoryModal'));
 const XrayMetricsModal = lazy(() => import('./XrayMetricsModal'));
 const AmneziaWGLogModal = lazy(() => import('./AmneziaWGLogModal'));
-const VersionModal = lazy(() => import('./VersionModal'));
 
 export default function IndexPage() {
   const { t } = useTranslation();
@@ -36,36 +33,23 @@ export default function IndexPage() {
     setMessageInstance(messageApi);
   }, [messageApi]);
 
-  const [devChannelEnable, setDevChannelEnable] = useState(false);
   const [panelUpdateInfo, setPanelUpdateInfo] = useState<PanelUpdateInfo>({
     currentVersion: '',
     latestVersion: '',
     updateAvailable: false,
   });
 
-  const basePath = window.X_UI_BASE_PATH || '';
-
-  const [backupOpen, setBackupOpen] = useState(false);
-  const [panelUpdateOpen, setPanelUpdateOpen] = useState(false);
   const [sysHistoryOpen, setSysHistoryOpen] = useState(false);
   const [xrayMetricsOpen, setXrayMetricsOpen] = useState(false);
   const [amneziawgLogsOpen, setAmneziawgLogsOpen] = useState(false);
-  const [versionOpen, setVersionOpen] = useState(false);
   const [configTextOpen, setConfigTextOpen] = useState(false);
   const [configText, setConfigText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loadingTip, setLoadingTip] = useState(t('loading'));
+  const loadingTip = t('loading');
   const navigate = useNavigate();
   const needsSetup = useNeedsSetup();
 
   useEffect(() => {
-    HttpUtil.post<{ devChannelEnable?: boolean }>('/panel/api/setting/defaultSettings').then(
-      (msg) => {
-        if (msg?.success && msg.obj) {
-          setDevChannelEnable(!!msg.obj.devChannelEnable);
-        }
-      },
-    );
     HttpUtil.get<PanelUpdateInfo>('/panel/api/server/getPanelUpdateInfo').then((msg) => {
       if (msg?.success && msg.obj) setPanelUpdateInfo(msg.obj);
     });
@@ -75,19 +59,6 @@ export default function IndexPage() {
     () => window.X_UI_CUR_VER || panelUpdateInfo.currentVersion || '?',
     [panelUpdateInfo.currentVersion],
   );
-
-  const setBusy = useCallback(({ busy, tip }: { busy: boolean; tip?: string }) => {
-    setLoading(busy);
-    if (tip) setLoadingTip(tip);
-  }, []);
-
-  async function handleChannelChange(dev: boolean) {
-    const res = await HttpUtil.post('/panel/api/server/setUpdateChannel', { dev });
-    if (!res?.success) return;
-    setDevChannelEnable(dev);
-    const msg = await HttpUtil.get<PanelUpdateInfo>('/panel/api/server/getPanelUpdateInfo');
-    if (msg?.success && msg.obj) setPanelUpdateInfo(msg.obj);
-  }
 
   async function openConfig() {
     setLoading(true);
@@ -158,40 +129,19 @@ export default function IndexPage() {
               updateAvailable={panelUpdateInfo.updateAvailable}
               xrayVersion={status.xray.version}
               actions={{
-                onLogs: () => navigate('/logs'),
                 onAmneziaWGLogs: status.amneziawg.configured
                   ? () => setAmneziawgLogsOpen(true)
                   : undefined,
                 onConfig: openConfig,
-                onBackup: () => setBackupOpen(true),
                 onHistory: () => setSysHistoryOpen(true),
                 onMetrics: () => setXrayMetricsOpen(true),
-                onUpdate: () => setPanelUpdateOpen(true),
-                onVersion: () => setVersionOpen(true),
+                onUpdate: () => navigate('/settings#updates'),
               }}
             />
           }
         />
       )}
 
-      <LazyMount when={panelUpdateOpen}>
-        <PanelUpdateModal
-          open={panelUpdateOpen}
-          info={panelUpdateInfo}
-          devChannelEnable={devChannelEnable}
-          onChannelChange={handleChannelChange}
-          onClose={() => setPanelUpdateOpen(false)}
-          onBusy={setBusy}
-        />
-      </LazyMount>
-      <LazyMount when={backupOpen}>
-        <BackupModal
-          open={backupOpen}
-          basePath={basePath}
-          onClose={() => setBackupOpen(false)}
-          onBusy={setBusy}
-        />
-      </LazyMount>
       <LazyMount when={sysHistoryOpen}>
         <SystemHistoryModal
           open={sysHistoryOpen}
@@ -204,14 +154,6 @@ export default function IndexPage() {
       </LazyMount>
       <LazyMount when={amneziawgLogsOpen}>
         <AmneziaWGLogModal open={amneziawgLogsOpen} onClose={() => setAmneziawgLogsOpen(false)} />
-      </LazyMount>
-      <LazyMount when={versionOpen}>
-        <VersionModal
-          open={versionOpen}
-          status={status}
-          onClose={() => setVersionOpen(false)}
-          onBusy={setBusy}
-        />
       </LazyMount>
 
       <LazyMount when={configTextOpen}>

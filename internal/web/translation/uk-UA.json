@@ -3249,7 +3249,6 @@
       "title": "Server tools",
       "versions": "Panel {panel} · Xray {xray}",
       "awgLogs": "AmneziaWG logs",
-      "backup": "Backup and restore",
       "metrics": "Xray metrics"
     }
   },
@@ -3511,7 +3510,9 @@
       "security": "Security",
       "notifications": "Notifications",
       "users": "Users and access",
-      "developer": "Developer"
+      "developer": "Developer",
+      "backups": "Backups",
+      "updates": "Updates"
     },
     "soon": "Soon",
     "comingLater": "Coming later",
@@ -3532,7 +3533,13 @@
     "light": "Light",
     "panelMode": "Panel mode",
     "simpleMode": "Simple mode",
-    "simpleModeHint": "Plain names (Users, Servers, Connections), hides raw Xray options, keeps common tasks one or two taps away."
+    "simpleModeHint": "Plain names (Users, Servers, Connections), hides raw Xray options, keeps common tasks one or two taps away.",
+    "updates": {
+      "panel": "Dalan panel",
+      "xray": "Xray core",
+      "upToDate": "up to date",
+      "available": "Update available"
+    }
   },
   "xrayPage": {
     "subtitle": "Advanced. The full Xray JSON for this server, and the basics, balancers and DNS it is built from.",
