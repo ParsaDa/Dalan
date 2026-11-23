@@ -3567,5 +3567,17 @@
     "jsonValid": "JSON is valid",
     "jsonInvalid": "JSON has an error",
     "managed": "Managed by the panel (tunnels, Tor or a subscription). Edits here are replaced on the next sync."
+  },
+  "developer": {
+    "tokens": "API tokens",
+    "newToken": "New token",
+    "noTokens": "No API tokens yet.",
+    "manage": "Manage tokens in Security",
+    "reference": "API reference",
+    "panelApi": "Panel API",
+    "wsEvents": "WebSocket events",
+    "onDemand": "Loads on demand",
+    "load": "Load the API reference",
+    "wsIntro": "After the cookie-authenticated GET /ws upgrade, every message is { type, payload, time }; time is Unix milliseconds."
   }
 }

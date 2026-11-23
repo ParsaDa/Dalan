@@ -3567,5 +3567,17 @@
     "jsonValid": "JSON درست است",
     "jsonInvalid": "JSON خطا دارد",
     "managed": "پنل آن را مدیریت می‌کند (تونل، Tor یا اشتراک). ویرایش این‌جا در همگام‌سازی بعدی جایگزین می‌شود."
+  },
+  "developer": {
+    "tokens": "توکن‌های API",
+    "newToken": "توکن جدید",
+    "noTokens": "هنوز توکن API نیست.",
+    "manage": "مدیریت توکن‌ها در امنیت",
+    "reference": "راهنمای API",
+    "panelApi": "API پنل",
+    "wsEvents": "رویدادهای WebSocket",
+    "onDemand": "با درخواست بار می‌شود",
+    "load": "بارگذاری راهنمای API",
+    "wsIntro": "پس از ارتقای GET /ws با کوکی، هر پیام به شکل { type, payload, time } است؛ time بر حسب میلی‌ثانیه‌ی یونیکس است."
   }
 }
