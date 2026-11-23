@@ -34,8 +34,8 @@ describe('logs page', () => {
       .spyOn(HttpUtil, 'post')
       .mockResolvedValue(
         new Msg(true, '', [
-          '2026/11/23 12:00:00 INFO - first',
           '2026/11/23 12:00:05 INFO - second',
+          '2026/11/23 12:00:00 INFO - first',
         ]),
       );
     renderWithProviders(
