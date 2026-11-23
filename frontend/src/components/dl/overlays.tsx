@@ -10,8 +10,10 @@ import {
 } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 
 import Icon from './Icon';
+import { Btn } from './primitives';
 import type { Status } from './primitives';
 
 function useEscape(onClose: () => void, active: boolean) {
@@ -210,6 +212,89 @@ export function FormModal({
         {children}
       </div>
       <div className="mfoot">{footer}</div>
+    </Modal>
+  );
+}
+
+// A delete that cannot be undone: the button unlocks only after the word is typed.
+export function ConfirmDelete({
+  open,
+  title,
+  children,
+  onCancel,
+  onConfirm,
+}: {
+  open: boolean;
+  title: string;
+  children?: ReactNode;
+  onCancel: () => void;
+  onConfirm: () => Promise<void> | void;
+}) {
+  const { t } = useTranslation();
+  const [typed, setTyped] = useState('');
+  const [busy, setBusy] = useState(false);
+  const word = t('confirmDelete.word');
+  const close = () => {
+    setTyped('');
+    onCancel();
+  };
+  async function confirm() {
+    setBusy(true);
+    try {
+      await onConfirm();
+      setTyped('');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Modal open={open} onClose={close} label={title} width={440}>
+      <form
+        className="col"
+        style={{ gap: 14 }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (typed.trim() === word && !busy) confirm();
+        }}
+      >
+        <div className="row" style={{ gap: 12, alignItems: 'flex-start' }}>
+          <span className="ico bad">
+            <Icon name="trash" />
+          </span>
+          <div>
+            <h2 className="h3">{title}</h2>
+            {children && (
+              <div className="mut" style={{ fontSize: 13 }}>
+                {children}
+              </div>
+            )}
+          </div>
+        </div>
+        <label className="field">
+          <span>{t('confirmDelete.type', { word })}</span>
+          <input
+            className="inp"
+            placeholder={word}
+            value={typed}
+            autoComplete="off"
+            onChange={(e) => setTyped(e.target.value)}
+          />
+        </label>
+        <div className="mfoot">
+          <Btn kind="ghost" onClick={close}>
+            {t('cancel')}
+          </Btn>
+          <Btn
+            kind="dng"
+            type="submit"
+            icon="trash"
+            disabled={typed.trim() !== word || busy}
+            aria-busy={busy}
+          >
+            {t('delete')}
+          </Btn>
+        </div>
+      </form>
     </Modal>
   );
 }

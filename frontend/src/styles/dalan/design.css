@@ -2392,3 +2392,84 @@ body.dl {
 .dl.fx-off .wz-step {
   animation: dl-fadeIn 120ms backwards;
 }
+
+/* Every panel message (AntD's message API) renders as the design toast: bottom corner, icon plus words. */
+body.dl .ant-message {
+  top: auto !important;
+  bottom: 24px;
+  left: auto !important;
+  right: 24px;
+  transform: none !important;
+  width: min(420px, calc(100vw - 32px));
+  height: auto !important;
+  overflow: visible !important;
+  pointer-events: none;
+}
+/* AntD stacks notices absolutely and centres them with translateX(-50%); undo only the centring. */
+body.dl .ant-message .ant-message-notice {
+  left: auto !important;
+  right: 0 !important;
+  translate: 50% 0;
+  pointer-events: auto;
+}
+body.dl[dir='rtl'] .ant-message .ant-message-notice {
+  left: 0 !important;
+  right: auto !important;
+}
+body.dl[dir='rtl'] .ant-message {
+  left: 24px !important;
+  right: auto;
+}
+body.dl .ant-message .ant-message-notice-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--glass-dense);
+  border: 1px solid var(--glass-b);
+  backdrop-filter: blur(20px);
+  box-shadow: var(--shadow);
+  color: var(--tx);
+  font-weight: 700;
+  text-align: start;
+}
+body.dl .ant-message .ant-message-custom-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+body.dl .ant-message .anticon {
+  font-size: 18px;
+  margin: 0;
+}
+body.dl .ant-message-success .anticon {
+  color: var(--ok);
+}
+body.dl .ant-message-warning .anticon {
+  color: var(--warn);
+}
+body.dl .ant-message-error .anticon {
+  color: var(--bad);
+}
+body.dl .ant-message-info .anticon,
+body.dl .ant-message-loading .anticon {
+  color: var(--acc);
+}
+body.dl .ant-message .ant-message-move-up-appear,
+body.dl .ant-message .ant-message-move-up-enter {
+  animation: dl-toastIn var(--d-slow) var(--e-spring) both;
+}
+@media (max-width: 700px) {
+  body.dl .ant-message,
+  body.dl[dir='rtl'] .ant-message {
+    bottom: 92px;
+    left: 16px !important;
+    right: 16px;
+    width: auto;
+    max-width: none;
+  }
+  body.dl .ant-message .ant-message-notice-content {
+    display: flex;
+  }
+}

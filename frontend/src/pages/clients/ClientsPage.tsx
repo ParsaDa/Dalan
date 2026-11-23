@@ -34,6 +34,7 @@ const PromptModal = lazy(() => import('@/components/feedback/PromptModal'));
 import { emptyFilters, activeFilterCount } from './filters';
 import type { ClientFilters } from './filters';
 import Icon from '@/components/dl/Icon';
+import { ConfirmDelete } from '@/components/dl/overlays';
 import { DropChip } from '@/components/dl/DropChip';
 import { IlloEmpty, IlloOffline } from '@/components/dl/Illustrations';
 import { MoreMenu } from '@/components/dl/MoreMenu';
@@ -163,6 +164,7 @@ export default function ClientsPage() {
   const { datepicker } = useDatepicker();
   const { isMobile } = useMediaQuery();
   const [modal, modalContextHolder] = Modal.useModal();
+  const [bulkDel, setBulkDel] = useState<string[] | null>(null);
   const [messageApi, messageContextHolder] = message.useMessage();
   useEffect(() => {
     setMessageInstance(messageApi);
@@ -756,32 +758,26 @@ export default function ClientsPage() {
   }
 
   function onBulkDelete() {
-    const emails = [...selectedRowKeys];
-    if (emails.length === 0) return;
-    modal.confirm({
-      title: t('pages.clients.bulkDeleteConfirmTitle', { count: emails.length }),
-      content: t('pages.clients.bulkDeleteConfirmContent'),
-      okText: t('delete'),
-      okType: 'danger',
-      cancelText: t('cancel'),
-      onOk: async () => {
-        const msg = await bulkDelete(emails);
-        setSelectedRowKeys([]);
-        const ok = msg?.obj?.deleted ?? 0;
-        const skipped = msg?.obj?.skipped ?? [];
-        const failed = skipped.length;
-        const firstError = skipped[0]?.reason ?? msg?.msg ?? '';
-        if (failed === 0 && msg?.success) {
-          messageApi.success(t('pages.clients.toasts.bulkDeleted', { count: ok }));
-        } else {
-          messageApi.warning(
-            firstError
-              ? `${t('pages.clients.toasts.bulkDeletedMixed', { ok, failed })} — ${firstError}`
-              : t('pages.clients.toasts.bulkDeletedMixed', { ok, failed }),
-          );
-        }
-      },
-    });
+    if (selectedRowKeys.length > 0) setBulkDel([...selectedRowKeys]);
+  }
+
+  async function runBulkDelete(emails: string[]) {
+    const msg = await bulkDelete(emails);
+    setBulkDel(null);
+    setSelectedRowKeys([]);
+    const ok = msg?.obj?.deleted ?? 0;
+    const skipped = msg?.obj?.skipped ?? [];
+    const failed = skipped.length;
+    const firstError = skipped[0]?.reason ?? msg?.msg ?? '';
+    if (failed === 0 && msg?.success) {
+      messageApi.success(t('pages.clients.toasts.bulkDeleted', { count: ok }));
+    } else {
+      messageApi.warning(
+        firstError
+          ? `${t('pages.clients.toasts.bulkDeletedMixed', { ok, failed })} — ${firstError}`
+          : t('pages.clients.toasts.bulkDeletedMixed', { ok, failed }),
+      );
+    }
   }
 
   const onSave = useCallback(
@@ -965,6 +961,27 @@ export default function ClientsPage() {
     <div className="col stag" style={{ gap: 18 }}>
       {messageContextHolder}
       {modalContextHolder}
+      <ConfirmDelete
+        open={bulkDel !== null}
+        title={t('pages.clients.bulkDeleteConfirmTitle', { count: bulkDel?.length ?? 0 })}
+        onCancel={() => setBulkDel(null)}
+        onConfirm={() => runBulkDelete(bulkDel ?? [])}
+      >
+        {bulkDel && (
+          <>
+            {t('clientsPage.loseAccess', {
+              names:
+                bulkDel.length > 3
+                  ? t('clientsPage.andMore', {
+                      names: bulkDel.slice(0, 3).join(', '),
+                      count: bulkDel.length - 3,
+                    })
+                  : bulkDel.join(', '),
+            })}{' '}
+            {t('pages.clients.bulkDeleteConfirmContent')}
+          </>
+        )}
+      </ConfirmDelete>
       <div className="pagehead">
         <div>
           <h2 className="h2" style={{ fontSize: 28 }}>

@@ -3466,7 +3466,9 @@
     "resume": "Resume",
     "colStatus": "Status",
     "colUsage": "Usage",
-    "colExpires": "Expires"
+    "colExpires": "Expires",
+    "loseAccess": "{names} lose access right away.",
+    "andMore": "{names} and {count} more"
   },
   "logs": {
     "subtitle": "Live log of this server. New lines appear at the top; pausing stops the stream.",
@@ -3664,5 +3666,9 @@
     "next": "Continue",
     "finish": "Create and finish",
     "later": "Set up later"
+  },
+  "confirmDelete": {
+    "word": "DELETE",
+    "type": "Type {word} to confirm"
   }
 }
