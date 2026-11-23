@@ -93,12 +93,6 @@ export default function MorePage() {
         },
         { icon: 'server', label: t('settingsPage.nav.backups'), to: '/settings#backups' },
         { icon: 'code', label: t('menu.apiDocs'), to: '/api-docs' },
-        {
-          icon: 'users',
-          label: t('settingsPage.nav.users'),
-          value: t('settingsPage.comingLater'),
-          to: '/settings#users',
-        },
       ],
     },
   ];

@@ -24,6 +24,7 @@ describe('phone More page', () => {
     expect(link(/Inbounds/)).toBe('/inbounds');
     expect(screen.getByRole('link', { name: /Inbounds/ }).textContent).toContain('3');
     expect(screen.queryByRole('link', { name: /Tor and PIA/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /Users and access/ })).toBeNull();
     expect(link(/^Logs/)).toBe('/logs');
     expect(link(/Backups/)).toBe('/settings#backups');
     expect(link(/Security/)).toBe('/settings#security');
