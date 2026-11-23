@@ -101,6 +101,14 @@ export default function XrayPage() {
   const [advSettings, setAdvSettings] = useState<AdvKey>('xraySetting');
   const location = useLocation();
   const navigate = useNavigate();
+  // The Tor and PIA page links here with ?open=pia to open that dialog over the outbounds.
+  const openParam = new URLSearchParams(location.search).get('open');
+  const [openedFor, setOpenedFor] = useState('');
+  if (openParam && openedFor !== location.key) {
+    setOpenedFor(location.key);
+    if (openParam === 'pia') setPiaOpen(true);
+    if (openParam === 'tor') setTorOpen(true);
+  }
   const pathSection =
     location.pathname === '/outbound'
       ? 'outbound'

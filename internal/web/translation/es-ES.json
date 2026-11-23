@@ -2642,8 +2642,6 @@
       "search": "Search country",
       "empty": "No country matches",
       "test": "Test",
-      "add": "Add",
-      "remove": "Remove",
       "result": {
         "works": "Works · {ms} ms",
         "exit": "exit {loc}"
@@ -3515,5 +3513,14 @@
     "unavailable": "Logs could not be read",
     "xrayHint": "Turn on the Xray access log in Xray config to see connections here.",
     "empty": "No lines yet"
+  },
+  "torPage": {
+    "subtitle": "Extra exits that run inside Dalan. Route users or inbounds to them like any outbound.",
+    "exitsOn": "exit countries on",
+    "exitsWorking": "connected now",
+    "notAdded": "Not in use",
+    "use": "Use {name}",
+    "piaHint": "PIA servers are added as outbounds. Sign in and pick servers in the PIA dialog, then save the Xray config.",
+    "flagsHint": "Flags are drawn as images, so they show on Windows too."
   }
 }
