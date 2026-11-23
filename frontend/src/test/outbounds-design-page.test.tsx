@@ -6,6 +6,7 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import OutboundsTab from '@/pages/xray/outbounds/OutboundsTab';
 import RoutingTab from '@/pages/xray/routing/RoutingTab';
 import type { XraySettingsValue } from '@/hooks/useXraySetting';
+import { HttpUtil, Msg } from '@/utils';
 import { renderWithProviders } from './test-utils';
 
 function wrap(node: React.ReactNode) {
@@ -43,6 +44,14 @@ function renderOutbounds(onResetTraffic = vi.fn(), onTestAll = vi.fn()) {
 }
 
 describe('Outbounds and routing page', () => {
+  it('shows Tor and PIA together with the other outbounds', () => {
+    vi.spyOn(HttpUtil, 'get').mockResolvedValue(new Msg(true, '', []));
+    renderOutbounds();
+
+    expect(screen.getByRole('region', { name: 'Tor' })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'PIA' })).toBeTruthy();
+  });
+
   it('resets every outbound traffic counter only after the dialog is confirmed', () => {
     const onResetTraffic = vi.fn();
     renderOutbounds(onResetTraffic);
@@ -65,7 +74,6 @@ describe('Outbounds and routing page', () => {
   it('lists each rule with its number, what it matches and where it sends traffic', () => {
     wrap(
       <RoutingTab
-        variant="tile"
         templateSettings={
           {
             routing: {

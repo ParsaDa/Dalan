@@ -116,7 +116,6 @@
     "subFormats": "Формати підписки",
     "tunnels": "Tunnels",
     "activity": "Activity",
-    "torPia": "Tor and PIA",
     "logs": "Logs"
   },
   "pages": {
@@ -3496,7 +3495,6 @@
     "empty": "No lines yet"
   },
   "torPage": {
-    "subtitle": "Extra exits that run inside Dalan. Route users or inbounds to them like any outbound.",
     "exitsOn": "exit countries on",
     "exitsWorking": "connected now",
     "notAdded": "Not in use",

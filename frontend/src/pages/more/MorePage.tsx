@@ -75,7 +75,6 @@ export default function MorePage() {
         { icon: 'hosts', label: t('menu.hosts'), to: '/hosts' },
         { icon: 'nodes', label: t('menu.nodes'), to: '/nodes' },
         { icon: 'outbound', label: t('morePage.outboundsRouting'), to: '/outbound' },
-        { icon: 'tor', label: t('menu.torPia'), to: '/tor' },
         { icon: 'xray', label: t('menu.xray'), to: '/xray' },
         { icon: 'logs', label: t('menu.logs'), to: '/logs' },
       ],

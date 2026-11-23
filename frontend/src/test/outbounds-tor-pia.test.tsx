@@ -1,8 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 
-import TorPage from '@/pages/tor/TorPage';
+import TorPiaTiles from '@/pages/xray/outbounds/TorPiaTiles';
 import { HttpUtil, Msg } from '@/utils';
 import { renderWithProviders } from './test-utils';
 
@@ -19,13 +18,8 @@ const exits = [
   { id: 2, country: 'nl', port: 62702, enable: true, tag: 'tor-nl', status: status('failed') },
 ];
 
-function Where() {
-  const loc = useLocation();
-  return <output data-testid="where">{loc.pathname + loc.search}</output>;
-}
-
-describe('Tor and PIA page', () => {
-  it('counts the exits that are on and the ones connected now, and opens PIA on the outbounds', async () => {
+describe('Tor and PIA tiles on the Outbounds page', () => {
+  it('counts the exits that are on and the ones connected now, and opens PIA setup', async () => {
     vi.spyOn(HttpUtil, 'get').mockImplementation(
       async (url) =>
         new Msg(
@@ -38,14 +32,8 @@ describe('Tor and PIA page', () => {
               : '',
         ),
     );
-    renderWithProviders(
-      <MemoryRouter initialEntries={['/tor']}>
-        <Routes>
-          <Route path="/tor" element={<TorPage />} />
-          <Route path="/outbound" element={<Where />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    const onOpenPia = vi.fn();
+    renderWithProviders(<TorPiaTiles onOpenPia={onOpenPia} />);
     const tor = await screen.findByRole('region', { name: 'Tor' });
     await within(tor).findByText('exit countries on');
     await waitFor(() =>
@@ -58,6 +46,6 @@ describe('Tor and PIA page', () => {
     fireEvent.click(
       within(screen.getByRole('region', { name: 'PIA' })).getByRole('button', { name: 'PIA' }),
     );
-    expect(screen.getByTestId('where').textContent).toBe('/outbound?open=pia');
+    expect(onOpenPia).toHaveBeenCalledTimes(1);
   });
 });

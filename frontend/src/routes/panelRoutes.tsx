@@ -11,7 +11,6 @@ import {
   HistoryOutlined,
   MenuOutlined,
   ImportOutlined,
-  SafetyOutlined,
   SettingOutlined,
   SwapOutlined,
   TagsOutlined,
@@ -32,7 +31,6 @@ const ApiDocsPage = lazy(() => import('@/pages/api-docs/ApiDocsPage'));
 const MorePage = lazy(() => import('@/pages/more/MorePage'));
 const ActivityPage = lazy(() => import('@/pages/activity/ActivityPage'));
 const LogsPage = lazy(() => import('@/pages/logs/LogsPage'));
-const TorPage = lazy(() => import('@/pages/tor/TorPage'));
 
 export interface PanelRoute {
   path: string;
@@ -54,13 +52,15 @@ export const PANEL_ROUTES: PanelRoute[] = [
   { path: '/hosts', titleKey: 'menu.hosts', icon: GlobalOutlined, component: HostsPage },
   { path: '/outbound', titleKey: 'menu.outbounds', icon: ExportOutlined, component: XrayPage },
   { path: '/routing', titleKey: 'menu.routing', icon: SwapOutlined, component: XrayPage },
-  { path: '/tor', titleKey: 'menu.torPia', icon: SafetyOutlined, component: TorPage },
   { path: '/settings', titleKey: 'menu.settings', icon: SettingOutlined, component: SettingsPage },
   { path: '/xray', titleKey: 'menu.xray', icon: ToolOutlined, component: XrayPage },
   { path: '/logs', titleKey: 'menu.logs', icon: FileTextOutlined, component: LogsPage },
   { path: '/api-docs', titleKey: 'menu.apiDocs', icon: ApiOutlined, component: ApiDocsPage },
   { path: '/more', titleKey: 'shell.nav.more', icon: MenuOutlined, component: MorePage },
 ];
+
+// Pages that moved: the old address still opens, on the page that took over.
+export const MOVED_PANEL_PATHS: Record<string, string> = { '/tor': '/outbound' };
 
 export const PANEL_ROUTE_PATHS = PANEL_ROUTES.map((route) => route.path);
 
