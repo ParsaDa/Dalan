@@ -8,7 +8,7 @@ import { activateOnKey } from '@/utils/a11y';
 import { useDatepicker } from '@/hooks/useDatepicker';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import type { AmneziaWGLogs } from '@/generated/types';
-import './XrayLogModal.css';
+import './AccessLogTable.css';
 import './AmneziaWGLogModal.css';
 
 interface AmneziaWGLogModalProps {
