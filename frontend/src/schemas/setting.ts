@@ -59,6 +59,12 @@ export const AllSettingSchema = z
     subClashAutoDetect: z.boolean().optional(),
     subClashUserAgentRegex: z.string().max(2048).optional(),
     subTitle: z.string().optional(),
+    serverName: z.string().max(64).optional(),
+    serverCountry: z
+      .string()
+      .regex(/^([A-Z]{2})?$/)
+      .optional(),
+    setupDone: z.boolean().optional(),
     subSupportUrl: z.string().optional(),
     subProfileMode: SubProfileModeSchema.optional(),
     subProfileUrl: z.string().optional(),

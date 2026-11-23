@@ -81,7 +81,10 @@ export interface AllSetting {
   realityScanCandidates: string;
   remarkTemplate: string;
   restartXrayOnClientDisable: boolean;
+  serverCountry: string;
+  serverName: string;
   sessionMaxAge: number;
+  setupDone: boolean;
   smtpCpu: number;
   smtpEnable: boolean;
   smtpEnabledEvents: string;
@@ -274,7 +277,10 @@ export interface AllSettingView {
   realityScanCandidates: string;
   remarkTemplate: string;
   restartXrayOnClientDisable: boolean;
+  serverCountry: string;
+  serverName: string;
   sessionMaxAge: number;
+  setupDone: boolean;
   smtpCpu: number;
   smtpEnable: boolean;
   smtpEnabledEvents: string;

@@ -1,6 +1,7 @@
 import { lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router';
+import { Navigate, useNavigate } from 'react-router';
+import { useNeedsSetup } from '@/pages/setup/useNeedsSetup';
 import { Button, ConfigProvider, Modal, message } from 'antd';
 import { CopyOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 
@@ -55,6 +56,7 @@ export default function IndexPage() {
   const [loading, setLoading] = useState(false);
   const [loadingTip, setLoadingTip] = useState(t('loading'));
   const navigate = useNavigate();
+  const needsSetup = useNeedsSetup();
 
   useEffect(() => {
     HttpUtil.post<{ devChannelEnable?: boolean }>('/panel/api/setting/defaultSettings').then(
@@ -107,6 +109,8 @@ export default function IndexPage() {
   function downloadConfig() {
     FileManager.downloadTextFile(configText, 'config.json');
   }
+
+  if (needsSetup) return <Navigate to="/setup" replace />;
 
   return (
     <ConfigProvider theme={antdThemeConfig}>

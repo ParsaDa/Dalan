@@ -263,10 +263,19 @@ export const SCHEMAS: Record<string, unknown> = {
       "restartXrayOnClientDisable": {
         "type": "boolean"
       },
+      "serverCountry": {
+        "type": "string"
+      },
+      "serverName": {
+        "type": "string"
+      },
       "sessionMaxAge": {
         "maximum": 525600,
         "minimum": 1,
         "type": "integer"
+      },
+      "setupDone": {
+        "type": "boolean"
       },
       "smtpCpu": {
         "maximum": 100,
@@ -748,7 +757,10 @@ export const SCHEMAS: Record<string, unknown> = {
       "realityScanCandidates",
       "remarkTemplate",
       "restartXrayOnClientDisable",
+      "serverCountry",
+      "serverName",
       "sessionMaxAge",
+      "setupDone",
       "smtpCpu",
       "smtpEnable",
       "smtpEnabledEvents",
@@ -1065,10 +1077,19 @@ export const SCHEMAS: Record<string, unknown> = {
       "restartXrayOnClientDisable": {
         "type": "boolean"
       },
+      "serverCountry": {
+        "type": "string"
+      },
+      "serverName": {
+        "type": "string"
+      },
       "sessionMaxAge": {
         "maximum": 525600,
         "minimum": 1,
         "type": "integer"
+      },
+      "setupDone": {
+        "type": "boolean"
       },
       "smtpCpu": {
         "maximum": 100,
@@ -1558,7 +1579,10 @@ export const SCHEMAS: Record<string, unknown> = {
       "realityScanCandidates",
       "remarkTemplate",
       "restartXrayOnClientDisable",
+      "serverCountry",
+      "serverName",
       "sessionMaxAge",
+      "setupDone",
       "smtpCpu",
       "smtpEnable",
       "smtpEnabledEvents",

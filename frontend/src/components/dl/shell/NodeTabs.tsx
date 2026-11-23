@@ -9,6 +9,7 @@ import { Sheet } from '../overlays';
 import { Pill } from '../primitives';
 import { useActiveNode } from './data';
 import { nodeStatus } from './useFrameStatus';
+import { useThisServer } from './useThisServer';
 
 const STATUS_KEY = {
   ok: 'shell.status.online',
@@ -23,6 +24,7 @@ export default function NodeTabs({ phone }: { phone?: boolean }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { direct, active, select } = useActiveNode();
+  const here = useThisServer();
   const [more, setMore] = useState(false);
   const [q, setQ] = useState('');
 
@@ -43,9 +45,13 @@ export default function NodeTabs({ phone }: { phone?: boolean }) {
       onClick={() => pick(null)}
     >
       <span className="fl">
-        <Icon name="server" size={16} />
+        {here.country ? (
+          <Flag country={here.country} size={24} />
+        ) : (
+          <Icon name="server" size={16} />
+        )}
       </span>
-      <span>{t('pages.index.thisServer')}</span>
+      <span>{here.name}</span>
       <span className="sd ok" aria-hidden="true" />
     </button>
   );

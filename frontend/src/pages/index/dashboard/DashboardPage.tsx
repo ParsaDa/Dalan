@@ -33,6 +33,7 @@ import {
 import type { Status } from '@/components/dl/primitives';
 import { Modal, useToast } from '@/components/dl/overlays';
 import { useActiveNode } from '@/components/dl/shell/data';
+import { useThisServer } from '@/components/dl/shell/useThisServer';
 import { useShellPrefs } from '@/components/dl/shell/shellPrefs';
 import { nodeStatus } from '@/components/dl/shell/useFrameStatus';
 import { fetchSlimInbounds } from '@/pages/inbounds/useInbounds';
@@ -563,6 +564,7 @@ function NodeView({ node, nodes }: { node: NodeRecord; nodes: NodeRecord[] }) {
   const { select } = useActiveNode();
   const traffic = useNodeTraffic();
   const { tunnels } = useTunnelsQuery();
+  const here = useThisServer();
   const st = nodeStatus(node);
   const behind = nodes.filter((n) => n.transitive && n.parentGuid && n.parentGuid === node.guid);
   const link = tunnels.find((x) => x.nodeId === node.id);
@@ -571,7 +573,7 @@ function NodeView({ node, nodes }: { node: NodeRecord; nodes: NodeRecord[] }) {
     <div className="col" style={{ gap: 18 }}>
       <div className="crumb">
         <Btn kind="ghost" size="sm" style={{ padding: '0 6px' }} onClick={() => select(null)}>
-          {t('pages.index.thisServer')}
+          {here.name}
         </Btn>
         <Icon name="chev" className="flipx" />
         <span style={{ color: 'var(--tx)' }}>{node.name}</span>

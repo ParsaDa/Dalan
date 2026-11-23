@@ -1,9 +1,11 @@
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, type RouteObject } from 'react-router';
 
 import Mark from '@/components/dl/Mark';
 import PanelLayout from '@/layouts/PanelLayout';
 import ErrorPage from '@/pages/errors/ErrorPage';
+
+const SetupPage = lazy(() => import('@/pages/setup/SetupPage'));
 import { PANEL_ROUTES } from '@/routes/panelRoutes';
 
 function withSuspense(node: React.ReactNode) {
@@ -42,6 +44,7 @@ export const routes: RouteObject[] = [
       { path: '*', element: <ErrorPage notFound /> },
     ],
   },
+  { path: '/setup', element: withSuspense(<SetupPage />), errorElement: <ErrorPage /> },
 ];
 
 function computeBasename() {

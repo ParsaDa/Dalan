@@ -289,10 +289,19 @@
           "restartXrayOnClientDisable": {
             "type": "boolean"
           },
+          "serverCountry": {
+            "type": "string"
+          },
+          "serverName": {
+            "type": "string"
+          },
           "sessionMaxAge": {
             "maximum": 525600,
             "minimum": 1,
             "type": "integer"
+          },
+          "setupDone": {
+            "type": "boolean"
           },
           "smtpCpu": {
             "maximum": 100,
@@ -774,7 +783,10 @@
           "realityScanCandidates",
           "remarkTemplate",
           "restartXrayOnClientDisable",
+          "serverCountry",
+          "serverName",
           "sessionMaxAge",
+          "setupDone",
           "smtpCpu",
           "smtpEnable",
           "smtpEnabledEvents",
@@ -1091,10 +1103,19 @@
           "restartXrayOnClientDisable": {
             "type": "boolean"
           },
+          "serverCountry": {
+            "type": "string"
+          },
+          "serverName": {
+            "type": "string"
+          },
           "sessionMaxAge": {
             "maximum": 525600,
             "minimum": 1,
             "type": "integer"
+          },
+          "setupDone": {
+            "type": "boolean"
           },
           "smtpCpu": {
             "maximum": 100,
@@ -1584,7 +1605,10 @@
           "realityScanCandidates",
           "remarkTemplate",
           "restartXrayOnClientDisable",
+          "serverCountry",
+          "serverName",
           "sessionMaxAge",
+          "setupDone",
           "smtpCpu",
           "smtpEnable",
           "smtpEnabledEvents",

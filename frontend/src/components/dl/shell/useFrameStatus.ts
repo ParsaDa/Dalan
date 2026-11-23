@@ -7,6 +7,7 @@ import type { NodeRecord } from '@/api/queries/useNodesQuery';
 import { HIGH_USAGE } from '../primitives';
 import type { Status } from '../primitives';
 import { useActiveNode } from './data';
+import { useThisServer } from './useThisServer';
 
 export function nodeStatus(node: NodeRecord): Status {
   if (node.status === 'offline') return 'bad';
@@ -26,6 +27,7 @@ export function useNow(intervalMs = 1000): number {
 
 export function useFrameStatus() {
   const { t } = useTranslation();
+  const here = useThisServer();
   const navigate = useNavigate();
   const { status, updatedAt } = useStatusQuery();
   const { active, direct } = useActiveNode();
@@ -50,7 +52,7 @@ export function useFrameStatus() {
     : t(tone === 'ok' ? 'shell.status.healthy' : 'shell.status.attention');
   const ago = updatedAt ? Math.max(0, Math.round((now - updatedAt) / 1000)) : 0;
   return {
-    name: active?.name ?? t('pages.index.thisServer'),
+    name: active?.name ?? here.name,
     tone,
     word,
     ago,
