@@ -92,31 +92,11 @@
   "somethingWentWrong": "發生錯誤",
   "subscription": {
     "title": "訂閱資訊",
-    "status": "狀態",
-    "downloaded": "已下載",
-    "uploaded": "已上傳",
-    "expiry": "到期",
-    "totalQuota": "總配額",
     "active": "啟用",
-    "inactive": "停用",
     "unlimited": "無限制",
     "noExpiry": "無到期",
-    "copyAllConfigs": "複製全部配置",
-    "copyAllConfigsCopied": "已複製全部配置",
     "daysLeft": "剩餘天數",
-    "expired": "已過期",
-    "depleted": "流量已用完",
-    "ofTotal": "共 {total}",
-    "tabLinks": "訂閱",
-    "tabApps": "應用程式",
-    "tabConfigs": "設定檔",
-    "scanTitle": "用手機掃描",
-    "scanHint": "在 VPN 應用程式中掃描此 QR 碼，無需複製連結即可新增訂閱。",
-    "updateInterval": "每 {hours} 小時自動更新",
-    "support": "支援",
-    "qrTitle": "掃描。匯入。連線。",
-    "qrHint": "使用用戶端應用程式掃描。請勿外洩此 QR 碼。",
-    "saveQr": "儲存 QR 碼"
+    "updateInterval": "每 {hours} 小時自動更新"
   },
   "menu": {
     "theme": "主題",
@@ -3592,5 +3572,33 @@
     "brokenHint": "Something failed while showing it. Your settings are safe; try again or go back to the dashboard.",
     "home": "Go to dashboard",
     "retry": "Try again"
+  },
+  "subPage": {
+    "hi": "Hi {name}",
+    "ready": "Your connection is ready",
+    "notReady": "Ask your provider to renew it",
+    "status": {
+      "active": "Active",
+      "unlimited": "Active",
+      "expired": "Expired",
+      "depleted": "Out of data",
+      "disabled": "Paused"
+    },
+    "usedOf": "used of {total}",
+    "until": "Valid until {date}",
+    "connect": "Open in {app}",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copiedHint": "Paste it in your app if it did not open by itself",
+    "showQr": "Show QR code",
+    "hideQr": "Hide QR code",
+    "help": "Set up in 3 steps",
+    "pick": "Pick your phone",
+    "step1": "Install an app",
+    "step2": "Tap “Open in” above",
+    "step3": "Press connect",
+    "recommended": "Recommended",
+    "more": "Other formats and single configs",
+    "need": "Need help? Message your provider"
   }
 }

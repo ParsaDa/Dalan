@@ -92,31 +92,11 @@
   "somethingWentWrong": "Niečo sa nepodarilo",
   "subscription": {
     "title": "Informácie o pripojení",
-    "status": "Stav",
-    "downloaded": "Stiahnuté",
-    "uploaded": "Odoslané",
-    "expiry": "Platnosť do",
-    "totalQuota": "Celkový dátový limit",
     "active": "Aktívne",
-    "inactive": "Neaktívne",
     "unlimited": "Bez obmedzenia",
     "noExpiry": "Bez obmedzenia platnosti",
-    "copyAllConfigs": "Skopírovať všetky konfigurácie",
-    "copyAllConfigsCopied": "Všetky konfigurácie sú skopírované",
     "daysLeft": "Zostávajúce dni",
-    "expired": "Platnosť skončila",
-    "depleted": "Dátový limit je vyčerpaný",
-    "ofTotal": "z {total}",
-    "tabLinks": "Odber konfigurácií",
-    "tabApps": "Aplikácie",
-    "tabConfigs": "Konfigurácie",
-    "scanTitle": "Naskenujte telefónom",
-    "scanHint": "Naskenujte tento kód vo svojej VPN aplikácii. Odber konfigurácií sa pridá bez kopírovania odkazu.",
-    "updateInterval": "Interval automatického obnovenia (hodiny): {hours}",
-    "support": "Podpora",
-    "qrTitle": "Naskenovať. Importovať. Pripojiť sa.",
-    "qrHint": "Naskenujte kód v klientskej aplikácii. Nikomu ho nesprístupňujte.",
-    "saveQr": "Uložiť QR kód"
+    "updateInterval": "Interval automatického obnovenia (hodiny): {hours}"
   },
   "menu": {
     "theme": "Vzhľad",
@@ -3592,5 +3572,33 @@
     "brokenHint": "Something failed while showing it. Your settings are safe; try again or go back to the dashboard.",
     "home": "Go to dashboard",
     "retry": "Try again"
+  },
+  "subPage": {
+    "hi": "Hi {name}",
+    "ready": "Your connection is ready",
+    "notReady": "Ask your provider to renew it",
+    "status": {
+      "active": "Active",
+      "unlimited": "Active",
+      "expired": "Expired",
+      "depleted": "Out of data",
+      "disabled": "Paused"
+    },
+    "usedOf": "used of {total}",
+    "until": "Valid until {date}",
+    "connect": "Open in {app}",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copiedHint": "Paste it in your app if it did not open by itself",
+    "showQr": "Show QR code",
+    "hideQr": "Hide QR code",
+    "help": "Set up in 3 steps",
+    "pick": "Pick your phone",
+    "step1": "Install an app",
+    "step2": "Tap “Open in” above",
+    "step3": "Press connect",
+    "recommended": "Recommended",
+    "more": "Other formats and single configs",
+    "need": "Need help? Message your provider"
   }
 }

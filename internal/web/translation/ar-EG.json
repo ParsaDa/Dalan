@@ -92,31 +92,11 @@
   "somethingWentWrong": "حدث خطأ ما",
   "subscription": {
     "title": "معلومات الاشتراك",
-    "status": "الحالة",
-    "downloaded": "التنزيل",
-    "uploaded": "الرفع",
-    "expiry": "تاريخ الانتهاء",
-    "totalQuota": "الحصة الإجمالية",
     "active": "نشط",
-    "inactive": "غير نشط",
     "unlimited": "غير محدود",
     "noExpiry": "بدون انتهاء",
-    "copyAllConfigs": "نسخ جميع الإعدادات",
-    "copyAllConfigsCopied": "تم نسخ جميع الإعدادات",
     "daysLeft": "الأيام المتبقية",
-    "expired": "منتهي الصلاحية",
-    "depleted": "نفدت البيانات",
-    "ofTotal": "من {total}",
-    "tabLinks": "الاشتراك",
-    "tabApps": "التطبيقات",
-    "tabConfigs": "الكونفيجات",
-    "scanTitle": "امسح بهاتفك",
-    "scanHint": "امسح هذا الرمز في تطبيق VPN لإضافة الاشتراك دون نسخ الرابط.",
-    "updateInterval": "تحديث تلقائي كل {hours} ساعة",
-    "support": "الدعم",
-    "qrTitle": "امسح. استورد. اتصل.",
-    "qrHint": "امسح الرمز بتطبيق العميل. لا تشارك هذا الرمز مع أحد.",
-    "saveQr": "حفظ QR"
+    "updateInterval": "تحديث تلقائي كل {hours} ساعة"
   },
   "menu": {
     "theme": "الثيم",
@@ -3592,5 +3572,33 @@
     "brokenHint": "Something failed while showing it. Your settings are safe; try again or go back to the dashboard.",
     "home": "Go to dashboard",
     "retry": "Try again"
+  },
+  "subPage": {
+    "hi": "Hi {name}",
+    "ready": "Your connection is ready",
+    "notReady": "Ask your provider to renew it",
+    "status": {
+      "active": "Active",
+      "unlimited": "Active",
+      "expired": "Expired",
+      "depleted": "Out of data",
+      "disabled": "Paused"
+    },
+    "usedOf": "used of {total}",
+    "until": "Valid until {date}",
+    "connect": "Open in {app}",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copiedHint": "Paste it in your app if it did not open by itself",
+    "showQr": "Show QR code",
+    "hideQr": "Hide QR code",
+    "help": "Set up in 3 steps",
+    "pick": "Pick your phone",
+    "step1": "Install an app",
+    "step2": "Tap “Open in” above",
+    "step3": "Press connect",
+    "recommended": "Recommended",
+    "more": "Other formats and single configs",
+    "need": "Need help? Message your provider"
   }
 }

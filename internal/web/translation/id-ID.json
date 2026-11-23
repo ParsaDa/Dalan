@@ -92,31 +92,11 @@
   "somethingWentWrong": "Terjadi kesalahan",
   "subscription": {
     "title": "Info langganan",
-    "status": "Status",
-    "downloaded": "Diunduh",
-    "uploaded": "Diunggah",
-    "expiry": "Kedaluwarsa",
-    "totalQuota": "Kuota total",
     "active": "Aktif",
-    "inactive": "Nonaktif",
     "unlimited": "Tanpa batas",
     "noExpiry": "Tanpa kedaluwarsa",
-    "copyAllConfigs": "Salin Semua Konfigurasi",
-    "copyAllConfigsCopied": "Semua konfigurasi tersalin",
     "daysLeft": "Sisa hari",
-    "expired": "Kedaluwarsa",
-    "depleted": "Kuota habis",
-    "ofTotal": "dari {total}",
-    "tabLinks": "Langganan",
-    "tabApps": "Aplikasi",
-    "tabConfigs": "Konfigurasi",
-    "scanTitle": "Pindai dengan ponsel",
-    "scanHint": "Pindai kode ini di aplikasi VPN untuk menambahkan langganan tanpa menyalin tautan.",
-    "updateInterval": "Diperbarui otomatis setiap {hours} jam",
-    "support": "Dukungan",
-    "qrTitle": "Pindai. Impor. Terhubung.",
-    "qrHint": "Pindai dengan aplikasi klien Anda. Jaga kerahasiaan kode ini.",
-    "saveQr": "Simpan QR"
+    "updateInterval": "Diperbarui otomatis setiap {hours} jam"
   },
   "menu": {
     "theme": "Tema",
@@ -3592,5 +3572,33 @@
     "brokenHint": "Something failed while showing it. Your settings are safe; try again or go back to the dashboard.",
     "home": "Go to dashboard",
     "retry": "Try again"
+  },
+  "subPage": {
+    "hi": "Hi {name}",
+    "ready": "Your connection is ready",
+    "notReady": "Ask your provider to renew it",
+    "status": {
+      "active": "Active",
+      "unlimited": "Active",
+      "expired": "Expired",
+      "depleted": "Out of data",
+      "disabled": "Paused"
+    },
+    "usedOf": "used of {total}",
+    "until": "Valid until {date}",
+    "connect": "Open in {app}",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copiedHint": "Paste it in your app if it did not open by itself",
+    "showQr": "Show QR code",
+    "hideQr": "Hide QR code",
+    "help": "Set up in 3 steps",
+    "pick": "Pick your phone",
+    "step1": "Install an app",
+    "step2": "Tap “Open in” above",
+    "step3": "Press connect",
+    "recommended": "Recommended",
+    "more": "Other formats and single configs",
+    "need": "Need help? Message your provider"
   }
 }

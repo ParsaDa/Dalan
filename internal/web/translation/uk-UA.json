@@ -92,31 +92,11 @@
   "somethingWentWrong": "Щось пішло не так",
   "subscription": {
     "title": "Інформація про підписку",
-    "status": "Статус",
-    "downloaded": "Завантажено",
-    "uploaded": "Відвантажено",
-    "expiry": "Термін дії",
-    "totalQuota": "Загальна квота",
     "active": "Активна",
-    "inactive": "Неактивна",
     "unlimited": "Безліміт",
     "noExpiry": "Без строку",
-    "copyAllConfigs": "Копіювати всі конфігурації",
-    "copyAllConfigsCopied": "Всі конфігурації скопійовано",
     "daysLeft": "Залишилось днів",
-    "expired": "Термін дії минув",
-    "depleted": "Трафік вичерпано",
-    "ofTotal": "з {total}",
-    "tabLinks": "Підписка",
-    "tabApps": "Застосунки",
-    "tabConfigs": "Конфіги",
-    "scanTitle": "Скануйте телефоном",
-    "scanHint": "Відскануйте цей код у VPN-застосунку, щоб додати підписку без копіювання посилання.",
-    "updateInterval": "Автооновлення кожні {hours} год",
-    "support": "Підтримка",
-    "qrTitle": "Скануйте. Імпортуйте. Підключайтеся.",
-    "qrHint": "Відскануйте в клієнтському застосунку. Нікому не показуйте цей код.",
-    "saveQr": "Зберегти QR"
+    "updateInterval": "Автооновлення кожні {hours} год"
   },
   "menu": {
     "theme": "Тема",
@@ -3592,5 +3572,33 @@
     "brokenHint": "Something failed while showing it. Your settings are safe; try again or go back to the dashboard.",
     "home": "Go to dashboard",
     "retry": "Try again"
+  },
+  "subPage": {
+    "hi": "Hi {name}",
+    "ready": "Your connection is ready",
+    "notReady": "Ask your provider to renew it",
+    "status": {
+      "active": "Active",
+      "unlimited": "Active",
+      "expired": "Expired",
+      "depleted": "Out of data",
+      "disabled": "Paused"
+    },
+    "usedOf": "used of {total}",
+    "until": "Valid until {date}",
+    "connect": "Open in {app}",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copiedHint": "Paste it in your app if it did not open by itself",
+    "showQr": "Show QR code",
+    "hideQr": "Hide QR code",
+    "help": "Set up in 3 steps",
+    "pick": "Pick your phone",
+    "step1": "Install an app",
+    "step2": "Tap “Open in” above",
+    "step3": "Press connect",
+    "recommended": "Recommended",
+    "more": "Other formats and single configs",
+    "need": "Need help? Message your provider"
   }
 }

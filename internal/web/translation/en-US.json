@@ -92,31 +92,11 @@
   "somethingWentWrong": "Something went wrong",
   "subscription": {
     "title": "Subscription info",
-    "status": "Status",
-    "downloaded": "Downloaded",
-    "uploaded": "Uploaded",
-    "expiry": "Expiry",
-    "totalQuota": "Total quota",
     "active": "Active",
-    "inactive": "Inactive",
     "unlimited": "Unlimited",
     "noExpiry": "No expiry",
-    "copyAllConfigs": "Copy All Configs",
-    "copyAllConfigsCopied": "All configs copied",
     "daysLeft": "Days left",
-    "expired": "Expired",
-    "depleted": "Data used up",
-    "ofTotal": "of {total}",
-    "tabLinks": "Subscription",
-    "tabApps": "Apps",
-    "tabConfigs": "Configs",
-    "scanTitle": "Scan with your phone",
-    "scanHint": "Scan this code in your VPN app to add the subscription without copying the link.",
-    "updateInterval": "Auto-updates every {hours} hours",
-    "support": "Support",
-    "qrTitle": "Scan. Import. Connect.",
-    "qrHint": "Scan with your client app. Keep this code private.",
-    "saveQr": "Save QR"
+    "updateInterval": "Auto-updates every {hours} hours"
   },
   "menu": {
     "theme": "Theme",
@@ -3592,5 +3572,33 @@
     "brokenHint": "Something failed while showing it. Your settings are safe; try again or go back to the dashboard.",
     "home": "Go to dashboard",
     "retry": "Try again"
+  },
+  "subPage": {
+    "hi": "Hi {name}",
+    "ready": "Your connection is ready",
+    "notReady": "Ask your provider to renew it",
+    "status": {
+      "active": "Active",
+      "unlimited": "Active",
+      "expired": "Expired",
+      "depleted": "Out of data",
+      "disabled": "Paused"
+    },
+    "usedOf": "used of {total}",
+    "until": "Valid until {date}",
+    "connect": "Open in {app}",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copiedHint": "Paste it in your app if it did not open by itself",
+    "showQr": "Show QR code",
+    "hideQr": "Hide QR code",
+    "help": "Set up in 3 steps",
+    "pick": "Pick your phone",
+    "step1": "Install an app",
+    "step2": "Tap “Open in” above",
+    "step3": "Press connect",
+    "recommended": "Recommended",
+    "more": "Other formats and single configs",
+    "need": "Need help? Message your provider"
   }
 }

@@ -92,31 +92,11 @@
   "somethingWentWrong": "Đã xảy ra lỗi",
   "subscription": {
     "title": "Thông tin đăng ký",
-    "status": "Trạng thái",
-    "downloaded": "Đã tải xuống",
-    "uploaded": "Đã tải lên",
-    "expiry": "Hết hạn",
-    "totalQuota": "Tổng hạn mức",
     "active": "Hoạt động",
-    "inactive": "Không hoạt động",
     "unlimited": "Không giới hạn",
     "noExpiry": "Không hết hạn",
-    "copyAllConfigs": "Sao chép tất cả cấu hình",
-    "copyAllConfigsCopied": "Đã sao chép tất cả cấu hình",
     "daysLeft": "Số ngày còn lại",
-    "expired": "Đã hết hạn",
-    "depleted": "Hết dung lượng",
-    "ofTotal": "trên {total}",
-    "tabLinks": "Gói đăng ký",
-    "tabApps": "Ứng dụng",
-    "tabConfigs": "Cấu hình",
-    "scanTitle": "Quét bằng điện thoại",
-    "scanHint": "Quét mã này trong ứng dụng VPN để thêm gói đăng ký mà không cần sao chép liên kết.",
-    "updateInterval": "Tự động cập nhật mỗi {hours} giờ",
-    "support": "Hỗ trợ",
-    "qrTitle": "Quét. Nhập. Kết nối.",
-    "qrHint": "Quét bằng ứng dụng khách. Không chia sẻ mã này cho người khác.",
-    "saveQr": "Lưu QR"
+    "updateInterval": "Tự động cập nhật mỗi {hours} giờ"
   },
   "menu": {
     "theme": "Chủ đề",
@@ -3592,5 +3572,33 @@
     "brokenHint": "Something failed while showing it. Your settings are safe; try again or go back to the dashboard.",
     "home": "Go to dashboard",
     "retry": "Try again"
+  },
+  "subPage": {
+    "hi": "Hi {name}",
+    "ready": "Your connection is ready",
+    "notReady": "Ask your provider to renew it",
+    "status": {
+      "active": "Active",
+      "unlimited": "Active",
+      "expired": "Expired",
+      "depleted": "Out of data",
+      "disabled": "Paused"
+    },
+    "usedOf": "used of {total}",
+    "until": "Valid until {date}",
+    "connect": "Open in {app}",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copiedHint": "Paste it in your app if it did not open by itself",
+    "showQr": "Show QR code",
+    "hideQr": "Hide QR code",
+    "help": "Set up in 3 steps",
+    "pick": "Pick your phone",
+    "step1": "Install an app",
+    "step2": "Tap “Open in” above",
+    "step3": "Press connect",
+    "recommended": "Recommended",
+    "more": "Other formats and single configs",
+    "need": "Need help? Message your provider"
   }
 }
