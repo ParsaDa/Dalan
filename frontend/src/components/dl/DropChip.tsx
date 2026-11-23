@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 
+import { FloatingMenu } from './FloatingMenu';
 import Icon from './Icon';
 import type { IconName } from './Icon';
 
@@ -25,14 +26,6 @@ export function DropChip({
   const box = useRef<HTMLDivElement>(null);
   const listId = useId();
   const current = options.find((o) => o.value === value) ?? options[0];
-  useEffect(() => {
-    if (!open) return;
-    const away = (e: MouseEvent) => {
-      if (box.current && !box.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', away);
-    return () => document.removeEventListener('mousedown', away);
-  }, [open]);
   return (
     <div className="dropchip" ref={box}>
       <button
@@ -48,15 +41,12 @@ export function DropChip({
         <Icon name="chevd" />
       </button>
       {open && (
-        <div
-          className="dropmenu"
+        <FloatingMenu
+          anchor={box}
+          onClose={() => setOpen(false)}
           role="listbox"
           id={listId}
           aria-label={label}
-          tabIndex={-1}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') setOpen(false);
-          }}
         >
           {options.map((o) => (
             <button
@@ -74,7 +64,7 @@ export function DropChip({
               {o.value === value && <Icon name="check" />}
             </button>
           ))}
-        </div>
+        </FloatingMenu>
       )}
     </div>
   );

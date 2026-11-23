@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
+import { FloatingMenu } from './FloatingMenu';
 import Icon from './Icon';
 import type { IconName } from './Icon';
 
@@ -23,14 +24,6 @@ export function MoreMenu({
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const away = (e: MouseEvent) => {
-      if (box.current && !box.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', away);
-    return () => document.removeEventListener('mousedown', away);
-  }, [open]);
   return (
     <div className="dropchip" ref={box}>
       <button
@@ -44,14 +37,12 @@ export function MoreMenu({
         <Icon name={icon} />
       </button>
       {open && (
-        <div
-          className="dropmenu end"
+        <FloatingMenu
+          anchor={box}
+          align="end"
+          onClose={() => setOpen(false)}
           role="menu"
           aria-label={label}
-          tabIndex={-1}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') setOpen(false);
-          }}
         >
           {actions.map((a) => (
             <button
@@ -69,7 +60,7 @@ export function MoreMenu({
               <span className="f1">{a.label}</span>
             </button>
           ))}
-        </div>
+        </FloatingMenu>
       )}
     </div>
   );

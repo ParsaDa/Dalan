@@ -2342,6 +2342,11 @@ body.dl {
   inset-inline-start: auto;
   inset-inline-end: 0;
 }
+.dl .dropmenu.float {
+  position: fixed;
+  inset-inline: auto;
+  z-index: 60;
+}
 .dl .dropmenu .nav.dng {
   color: var(--bad-t);
 }
