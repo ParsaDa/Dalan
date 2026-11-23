@@ -269,3 +269,34 @@ func TestCurrentUserReturnsSignedInUsername(t *testing.T) {
 		t.Fatalf("password hash leaked: %s", resp.Body.String())
 	}
 }
+
+// The wizard saves through /setting/profile, so a bad address must come back as a failure the page can show.
+func TestUpdateServerProfileEndpoint(t *testing.T) {
+	t.Setenv("XUI_DB_FOLDER", t.TempDir())
+	dbtest.InitDB(t, filepath.Join(t.TempDir(), "x-ui.db"))
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	NewSettingController(router.Group("/panel/api"))
+
+	post := func(body string) string {
+		req := httptest.NewRequest(http.MethodPost, "/panel/api/setting/profile", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		resp := httptest.NewRecorder()
+		router.ServeHTTP(resp, req)
+		return resp.Body.String()
+	}
+
+	if got := post(`{"serverAddress":"https://x.example/a"}`); !strings.Contains(got, `"success":false`) {
+		t.Fatalf("bad address accepted: %s", got)
+	}
+	if got := post(`{"serverName":"Frankfurt 1","serverCountry":"DE","serverAddress":"203.0.113.7","setupDone":true}`); !strings.Contains(got, `"success":true`) {
+		t.Fatalf("profile rejected: %s", got)
+	}
+	view, err := (&service.SettingService{}).GetAllSettingView()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if view.ServerName != "Frankfurt 1" || view.ServerCountry != "DE" || view.ServerAddress != "203.0.113.7" || !view.SetupDone {
+		t.Fatalf("saved profile = %q %q %q done=%v", view.ServerName, view.ServerCountry, view.ServerAddress, view.SetupDone)
+	}
+}

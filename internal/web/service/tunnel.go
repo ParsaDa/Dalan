@@ -449,18 +449,29 @@ func (s *TunnelService) EngineInfo(id string) (EngineInfo, error) {
 
 // InstallEngine downloads the pinned release of one engine through route and starts its tunnels.
 func (s *TunnelService) InstallEngine(id string, route EngineRoute) error {
+	return s.InstallEngineVersion(id, "", route)
+}
+
+// InstallEngineVersion is InstallEngine for a release the user picked; an empty version means the pinned one.
+func (s *TunnelService) InstallEngineVersion(id, version string, route EngineRoute) error {
 	kind, err := externalEngineFor(id)
 	if err != nil {
 		return err
 	}
-	src, release, err := (&EngineRouteService{}).Source(route)
+	if version == "" {
+		version = kind.pinned
+	}
+	if err := checkEngineVersion(kind, version); err != nil {
+		return err
+	}
+	src, release, err := engineSourceFor(route)
 	if err != nil {
 		return err
 	}
 	defer release()
 	ctx, cancel := context.WithTimeout(context.Background(), engineInstallTimeout)
 	defer cancel()
-	return s.updateEngineFrom(ctx, kind, src, kind.pinned)
+	return s.updateEngineFrom(ctx, kind, src, version)
 }
 
 // directInterfaceUp is replaced by tests; the engine creates the interface once the link is established.

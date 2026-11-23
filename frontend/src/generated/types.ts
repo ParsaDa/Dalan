@@ -36,6 +36,7 @@ export interface Alert {
 }
 
 export interface AllSetting {
+  accent: string;
   datepicker: string;
   discordAdminIds: string;
   discordBotBackup: boolean;
@@ -81,6 +82,7 @@ export interface AllSetting {
   realityScanCandidates: string;
   remarkTemplate: string;
   restartXrayOnClientDisable: boolean;
+  serverAddress: string;
   serverCountry: string;
   serverName: string;
   sessionMaxAge: number;
@@ -224,6 +226,7 @@ export interface AllSetting {
 }
 
 export interface AllSettingView {
+  accent: string;
   datepicker: string;
   discordAdminIds: string;
   discordBotBackup: boolean;
@@ -277,6 +280,7 @@ export interface AllSettingView {
   realityScanCandidates: string;
   remarkTemplate: string;
   restartXrayOnClientDisable: boolean;
+  serverAddress: string;
   serverCountry: string;
   serverName: string;
   sessionMaxAge: number;

@@ -246,7 +246,6 @@ export default function XrayPage() {
       case 'routing':
         return (
           <RoutingTab
-            variant="page"
             templateSettings={templateSettings}
             setTemplateSettings={setTemplateSettings}
             inboundTags={inboundTags}
@@ -281,17 +280,6 @@ export default function XrayPage() {
             onShowTor={() => setTorOpen(true)}
             onRefreshXrayData={fetchAll}
             onEditJson={() => navigate('/xray#advanced')}
-            rulesTile={
-              <RoutingTab
-                variant="tile"
-                templateSettings={templateSettings}
-                setTemplateSettings={setTemplateSettings}
-                inboundTags={inboundTags}
-                clientReverseTags={clientReverseTags}
-                subscriptionOutboundTags={injectedTags}
-                isMobile={isMobile}
-              />
-            }
           />
         );
       case 'balancer':

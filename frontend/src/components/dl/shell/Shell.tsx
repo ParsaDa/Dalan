@@ -5,6 +5,7 @@ import { Link, useLocation } from 'react-router';
 import { PANEL_TITLE_KEYS } from '@/routes/panelRoutes';
 
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useServerAccent } from '@/hooks/useServerAccent';
 import { commandPaletteStore } from '@/components/command-palette/useCommandPalette';
 import Mark from '../Mark';
 import { IconBtn } from '../primitives';
@@ -13,6 +14,7 @@ import NodeTabs from './NodeTabs';
 import Rail from './Rail';
 import TabBar from './TabBar';
 import { useCurrentUser, useGreetingPart } from './data';
+import { useFrameAccent } from './useFrameAccent';
 import { useFrameStatus } from './useFrameStatus';
 
 export const PHONE_MAX_PX = 700;
@@ -81,6 +83,8 @@ export default function Shell({ children, bare }: { children: ReactNode; bare?: 
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { isMobile: phone } = useMediaQuery(PHONE_MAX_PX);
+  useServerAccent();
+  useFrameAccent();
   if (phone) {
     const titleKey = pathname === '/' ? undefined : PANEL_TITLE_KEYS[pathname];
     return (

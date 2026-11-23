@@ -27,7 +27,6 @@ interface RoutingTabProps {
   clientReverseTags: string[];
   subscriptionOutboundTags?: string[];
   isMobile: boolean;
-  variant?: 'tile' | 'page';
 }
 
 export default function RoutingTab({
@@ -37,7 +36,6 @@ export default function RoutingTab({
   clientReverseTags,
   subscriptionOutboundTags,
   isMobile,
-  variant = 'page',
 }: RoutingTabProps) {
   const { t } = useTranslation();
   const [messageApi, messageContextHolder] = message.useMessage();
@@ -278,14 +276,12 @@ export default function RoutingTab({
   const draggedIndex = drag?.from ?? null;
   const dropTargetIndex = drag?.to ?? null;
 
-  const rulesSpan = variant === 'tile' ? 's5' : 's12';
-
   return (
     <>
       {modalContextHolder}
       {messageContextHolder}
-      {variant === 'tile' ? (
-        <section className={`tile ${rulesSpan}`}>
+      <div className="grid">
+        <section className="tile s12">
           <div className="th">
             <span className="tt">
               <Icon name="routing" />
@@ -347,83 +343,18 @@ export default function RoutingTab({
             )}
           </div>
         </section>
-      ) : (
-        <div className="grid">
-          <section className={`tile ${rulesSpan}`}>
-            <div className="th">
-              <span className="tt">
-                <Icon name="routing" />
-                {t('routing.title')}
-              </span>
-              <div className="row" style={{ gap: 6 }}>
-                <Btn size="sm" icon="plus" onClick={openAdd}>
-                  {t('routing.rule')}
-                </Btn>
-                <MoreMenu
-                  label={t('more')}
-                  actions={[
-                    {
-                      key: 'import',
-                      label: t('pages.xray.importRules'),
-                      onSelect: () => setImportOpen(true),
-                    },
-                    {
-                      key: 'export',
-                      label: t('pages.xray.exportRules'),
-                      disabled: rules.length === 0,
-                      onSelect: exportRules,
-                    },
-                  ]}
-                />
-              </div>
-            </div>
-            <p className="mut" style={{ margin: '-6px 0 8px', fontSize: 12.5 }}>
-              {t('routing.hint')}
-            </p>
-            {routingScript.trim() !== '' && (
-              <div
-                className="tile edge st-warn row"
-                style={{ padding: '10px 12px', gap: 8, marginBottom: 10 }}
-              >
-                <Icon name="alert" size={16} />
-                <span className="f1" style={{ fontSize: 12.5, fontWeight: 650 }}>
-                  {t('pages.xray.routingScriptActive', { section: t('pages.xray.basicTemplate') })}
-                </span>
-              </div>
-            )}
-            <div ref={rulesContainerRef}>
-              {rows.length === 0 ? (
-                <div className="mut" style={{ fontSize: 13, padding: '10px 0' }}>
-                  {t('routing.empty')}
-                </div>
-              ) : (
-                <RuleList
-                  rows={rows}
-                  draggedIndex={draggedIndex}
-                  dropTargetIndex={dropTargetIndex}
-                  onHandlePointerDown={onHandlePointerDown}
-                  openEdit={openEdit}
-                  moveUp={moveUp}
-                  moveDown={moveDown}
-                  confirmDelete={confirmDelete}
-                  toggleRule={toggleRule}
-                />
-              )}
-            </div>
-          </section>
-          <section className="tile s12">
-            <TileHead icon="settings" title={t('pages.xray.basicRouting')} />
-            <RoutingBasic
-              templateSettings={templateSettings}
-              setTemplateSettings={setTemplateSettings}
-            />
-          </section>
-          <section className="tile s12">
-            <TileHead icon="search" title={t('pages.xray.routeTester')} />
-            <RouteTester inboundTags={inboundTagOptions} isMobile={isMobile} />
-          </section>
-        </div>
-      )}
+        <section className="tile s12">
+          <TileHead icon="settings" title={t('pages.xray.basicRouting')} />
+          <RoutingBasic
+            templateSettings={templateSettings}
+            setTemplateSettings={setTemplateSettings}
+          />
+        </section>
+        <section className="tile s12">
+          <TileHead icon="search" title={t('pages.xray.routeTester')} />
+          <RouteTester inboundTags={inboundTagOptions} isMobile={isMobile} />
+        </section>
+      </div>
       <RuleFormModal
         open={ruleModalOpen}
         rule={editingRule}

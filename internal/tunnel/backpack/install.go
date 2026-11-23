@@ -75,6 +75,11 @@ func LatestVersion(ctx context.Context, client *http.Client, apiURL string) (str
 	return engine.LatestTag(ctx, client, apiURL, releaseRepo, "BackPack")
 }
 
+// RecentVersions lists the newest BackPack releases, newest first, read from the GitHub API at apiURL.
+func RecentVersions(ctx context.Context, client *http.Client, apiURL string, limit int) ([]string, error) {
+	return engine.RecentTags(ctx, client, apiURL, releaseRepo, "BackPack", limit)
+}
+
 // Install downloads a BackPack release, checks it against the checksums published with it,
 // and only then replaces the engine at dest.
 func Install(ctx context.Context, client *http.Client, baseURL, version, arch, dest string) error {

@@ -100,6 +100,8 @@ type AllSetting struct {
 	SubTitle                    string `json:"subTitle" form:"subTitle"`
 	ServerName                  string `json:"serverName" form:"serverName"`
 	ServerCountry               string `json:"serverCountry" form:"serverCountry"`
+	ServerAddress               string `json:"serverAddress" form:"serverAddress"`
+	Accent                      string `json:"accent" form:"accent"`
 	SetupDone                   bool   `json:"setupDone" form:"setupDone"`
 	SubSupportUrl               string `json:"subSupportUrl" form:"subSupportUrl"`
 	SubProfileMode              string `json:"subProfileMode" form:"subProfileMode"`

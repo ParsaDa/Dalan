@@ -1,4 +1,4 @@
-import { useCallback, useId, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useId, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Button,
@@ -56,6 +56,7 @@ import { Btn, Empty as DlEmpty, IconBtn } from '@/components/dl/primitives';
 import SubscriptionOutbounds from './SubscriptionOutbounds';
 import type { TorOutbound, TunnelOutbound } from '@/schemas/xray';
 import type { TorStatusInfo } from './TorStatusChip';
+import TorPiaTiles from './TorPiaTiles';
 
 const defaultOutboundSubscriptionUserAgent = '3x-ui-outbound-sub/1.0';
 
@@ -100,7 +101,6 @@ interface OutboundsTabProps {
   onShowTor: () => void;
   onRefreshXrayData?: () => void;
   onEditJson?: () => void;
-  rulesTile?: ReactNode;
 }
 
 export default function OutboundsTab({
@@ -127,7 +127,6 @@ export default function OutboundsTab({
   onShowTor,
   onRefreshXrayData,
   onEditJson,
-  rulesTile,
 }: OutboundsTabProps) {
   const [resetAllOpen, setResetAllOpen] = useState(false);
   const { t } = useTranslation();
@@ -608,7 +607,7 @@ export default function OutboundsTab({
         </div>
       </div>
       <div className="grid">
-        <div className={`${rulesTile ? 's7' : 's12'} col`} style={{ gap: 12 }}>
+        <div className="s12 col" style={{ gap: 12 }}>
           <div className="row sp wrap">
             <h3 className="h3">{t('pages.xray.Outbounds')}</h3>
             <div className="row wrap" style={{ gap: 8 }}>
@@ -715,7 +714,7 @@ export default function OutboundsTab({
             />
           )}
         </div>
-        {rulesTile}
+        <TorPiaTiles onOpenPia={onShowPia} onChanged={onRefreshXrayData} />
       </div>
       <DlModal
         open={resetAllOpen}

@@ -1,12 +1,12 @@
 import { lazy, Suspense } from 'react';
-import { createBrowserRouter, type RouteObject } from 'react-router';
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router';
 
 import Mark from '@/components/dl/Mark';
 import PanelLayout from '@/layouts/PanelLayout';
 import ErrorPage from '@/pages/errors/ErrorPage';
 
 const SetupPage = lazy(() => import('@/pages/setup/SetupPage'));
-import { PANEL_ROUTES } from '@/routes/panelRoutes';
+import { MOVED_PANEL_PATHS, PANEL_ROUTES } from '@/routes/panelRoutes';
 
 function withSuspense(node: React.ReactNode) {
   return (
@@ -41,6 +41,10 @@ export const routes: RouteObject[] = [
           ? { index: true, element }
           : { path: route.path.slice(1), element };
       }),
+      ...Object.entries(MOVED_PANEL_PATHS).map(([from, to]) => ({
+        path: from.slice(1),
+        element: <Navigate to={to} replace />,
+      })),
       { path: '*', element: <ErrorPage notFound /> },
     ],
   },

@@ -27,6 +27,11 @@ _openapi:
         before write.
       url: '#persist-every-setting-at-once-the-body-mirrors-the-shape-returned-by-all-invalid-values-bad-ports-missing-cert-pairs-etc-are-rejected-before-write'
     - depth: 2
+      title: Save only the server name, country, public address, accent colour and
+        first-run flag. Every field is optional and a missing one is left as it
+        is; one invalid value saves nothing.
+      url: '#save-only-the-server-name-country-public-address-accent-colour-and-first-run-flag-every-field-is-optional-and-a-missing-one-is-left-as-it-is-one-invalid-value-saves-nothing'
+    - depth: 2
       title: Validate any regular expression with the backend Go RE2 compiler without
         saving it.
       url: '#validate-any-regular-expression-with-the-backend-go-re2-compiler-without-saving-it'
@@ -81,6 +86,10 @@ _openapi:
           /all. Invalid values (bad ports, missing cert pairs, etc.) are
           rejected before write.
         id: persist-every-setting-at-once-the-body-mirrors-the-shape-returned-by-all-invalid-values-bad-ports-missing-cert-pairs-etc-are-rejected-before-write
+      - content: Save only the server name, country, public address, accent colour and
+          first-run flag. Every field is optional and a missing one is left as
+          it is; one invalid value saves nothing.
+        id: save-only-the-server-name-country-public-address-accent-colour-and-first-run-flag-every-field-is-optional-and-a-missing-one-is-left-as-it-is-one-invalid-value-saves-nothing
       - content: Validate any regular expression with the backend Go RE2 compiler
           without saving it.
         id: validate-any-regular-expression-with-the-backend-go-re2-compiler-without-saving-it
@@ -120,7 +129,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/setting/all","method":"post"},{"path":"/panel/api/setting/defaultSettings","method":"post"},{"path":"/panel/api/setting/factoryDefaults","method":"post"},{"path":"/panel/api/setting/update","method":"post"},{"path":"/panel/api/setting/validateRegex","method":"post"},{"path":"/panel/api/setting/updateUser","method":"post"},{"path":"/panel/api/setting/user","method":"get"},{"path":"/panel/api/setting/restartPanel","method":"post"},{"path":"/panel/api/setting/testSmtp","method":"post"},{"path":"/panel/api/setting/testTgBot","method":"post"},{"path":"/panel/api/setting/tgBotCapabilities","method":"post"},{"path":"/panel/api/setting/testDiscord","method":"post"},{"path":"/panel/api/setting/getDefaultJsonConfig","method":"get"}]} showTitle />
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/setting/all","method":"post"},{"path":"/panel/api/setting/defaultSettings","method":"post"},{"path":"/panel/api/setting/factoryDefaults","method":"post"},{"path":"/panel/api/setting/update","method":"post"},{"path":"/panel/api/setting/profile","method":"post"},{"path":"/panel/api/setting/validateRegex","method":"post"},{"path":"/panel/api/setting/updateUser","method":"post"},{"path":"/panel/api/setting/user","method":"get"},{"path":"/panel/api/setting/restartPanel","method":"post"},{"path":"/panel/api/setting/testSmtp","method":"post"},{"path":"/panel/api/setting/testTgBot","method":"post"},{"path":"/panel/api/setting/tgBotCapabilities","method":"post"},{"path":"/panel/api/setting/testDiscord","method":"post"},{"path":"/panel/api/setting/getDefaultJsonConfig","method":"get"}]} showTitle />
     </>
   );
 }

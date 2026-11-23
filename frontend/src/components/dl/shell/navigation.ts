@@ -44,7 +44,6 @@ const NODES: NavItem = {
   labelKey: 'menu.nodes',
   simpleLabelKey: 'shell.nav.servers',
 };
-const TOR: NavItem = { path: '/tor', icon: 'tor', labelKey: 'menu.torPia' };
 const XRAY: NavItem = { path: '/xray', icon: 'xray', labelKey: 'menu.xray' };
 const LOGS: NavItem = { path: '/logs', icon: 'logs', labelKey: 'menu.logs' };
 const SETTINGS: NavItem = { path: '/settings', icon: 'settings', labelKey: 'menu.settings' };
@@ -52,7 +51,7 @@ const SETTINGS: NavItem = { path: '/settings', icon: 'settings', labelKey: 'menu
 export const ADVANCED_NAV: NavGroup[] = [
   { titleKey: 'shell.nav.overview', items: [DASHBOARD, ACTIVITY] },
   { titleKey: 'shell.nav.usersAccess', items: [INBOUNDS, CLIENTS, GROUPS, HOSTS] },
-  { titleKey: 'shell.nav.network', items: [TUNNELS, OUTBOUNDS, ROUTING, NODES, TOR] },
+  { titleKey: 'shell.nav.network', items: [TUNNELS, OUTBOUNDS, ROUTING, NODES] },
   { titleKey: 'shell.nav.system', items: [XRAY, LOGS, SETTINGS] },
 ];
 

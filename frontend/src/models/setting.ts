@@ -49,6 +49,8 @@ export class AllSetting {
   subTitle = '';
   serverName = '';
   serverCountry = '';
+  serverAddress = '';
+  accent = '';
   setupDone = false;
   subSupportUrl = '';
   subProfileMode: SubProfileMode = 'none';

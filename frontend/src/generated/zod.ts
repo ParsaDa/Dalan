@@ -59,6 +59,7 @@ export const AlertSchema = z.object({
 export type Alert = z.infer<typeof AlertSchema>;
 
 export const AllSettingSchema = z.object({
+  accent: z.string(),
   datepicker: z.string(),
   discordAdminIds: z.string(),
   discordBotBackup: z.boolean(),
@@ -104,6 +105,7 @@ export const AllSettingSchema = z.object({
   realityScanCandidates: z.string(),
   remarkTemplate: z.string(),
   restartXrayOnClientDisable: z.boolean(),
+  serverAddress: z.string(),
   serverCountry: z.string(),
   serverName: z.string(),
   sessionMaxAge: z.number().int().min(1).max(525600),
@@ -248,6 +250,7 @@ export const AllSettingSchema = z.object({
 export type AllSetting = z.infer<typeof AllSettingSchema>;
 
 export const AllSettingViewSchema = z.object({
+  accent: z.string(),
   datepicker: z.string(),
   discordAdminIds: z.string(),
   discordBotBackup: z.boolean(),
@@ -301,6 +304,7 @@ export const AllSettingViewSchema = z.object({
   realityScanCandidates: z.string(),
   remarkTemplate: z.string(),
   restartXrayOnClientDisable: z.boolean(),
+  serverAddress: z.string(),
   serverCountry: z.string(),
   serverName: z.string(),
   sessionMaxAge: z.number().int().min(1).max(525600),

@@ -153,6 +153,8 @@ func newFakeTunnelNode(t *testing.T) (*fakeTunnelNode, *model.Node) {
 				return
 			}
 			reply(chunk)
+		case r.Method == http.MethodPost && r.URL.Path == "/panel/api/tunnels/engine/releases":
+			reply([]string{"v1.9.0", "v1.8.5"})
 		case r.Method == http.MethodGet && r.URL.Path == "/panel/api/tunnels/list":
 			list := []model.ServerTunnel{}
 			for id, name := range f.ends {

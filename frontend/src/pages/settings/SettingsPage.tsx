@@ -34,7 +34,6 @@ const SECTIONS = [
   { slug: 'security', icon: 'lock', key: 'settingsPage.nav.security' },
   { slug: 'backups', icon: 'server', key: 'settingsPage.nav.backups' },
   { slug: 'notifications', icon: 'bell', key: 'settingsPage.nav.notifications' },
-  { slug: 'users', icon: 'users', key: 'settingsPage.nav.users' },
   { slug: 'developer', icon: 'code', key: 'settingsPage.nav.developer' },
   { slug: 'updates', icon: 'refresh', key: 'settingsPage.nav.updates' },
 ] as const;
@@ -259,23 +258,6 @@ export default function SettingsPage() {
         return <BackupsSection />;
       case 'updates':
         return <UpdatesSection />;
-      case 'users':
-        return (
-          <section className="tile" style={{ borderStyle: 'dashed' }}>
-            <div className="row">
-              <span className="ico">
-                <Icon name="users" />
-              </span>
-              <div className="f1">
-                <b>{t('settingsPage.nav.users')}</b>
-                <div className="mut" style={{ fontSize: 13 }}>
-                  {t('settingsPage.usersLater')}
-                </div>
-              </div>
-              <span className="badge">{t('settingsPage.comingLater')}</span>
-            </div>
-          </section>
-        );
       case 'developer':
         return (
           <section className="tile">
@@ -376,11 +358,6 @@ export default function SettingsPage() {
             >
               <Icon name={x.icon} />
               <span className="nl">{t(x.key)}</span>
-              {x.slug === 'users' && (
-                <span className="badge" style={{ marginInlineStart: 'auto' }}>
-                  {t('settingsPage.soon')}
-                </span>
-              )}
             </a>
           ))}
         </nav>

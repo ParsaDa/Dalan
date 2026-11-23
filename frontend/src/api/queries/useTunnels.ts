@@ -137,8 +137,20 @@ export function useTunnelMutations() {
   });
 
   const installEngine = useMutation({
-    mutationFn: ({ engine, route }: { engine: TunnelEngine; route: EngineRoute }) =>
-      HttpUtil.post('/panel/api/tunnels/engine/install', { engine, route }, JSON_HEADERS),
+    mutationFn: ({
+      engine,
+      route,
+      version,
+    }: {
+      engine: TunnelEngine;
+      route: EngineRoute;
+      version?: string;
+    }) =>
+      HttpUtil.post(
+        '/panel/api/tunnels/engine/install',
+        { engine, route, ...(version ? { version } : {}) },
+        JSON_HEADERS,
+      ),
     onSuccess: (msg) => {
       if (msg?.success) queryClient.invalidateQueries({ queryKey: TUNNELS_KEY });
     },
@@ -149,14 +161,16 @@ export function useTunnelMutations() {
       nodeId,
       engine,
       route,
+      version,
     }: {
       nodeId: number;
       engine: TunnelEngine;
       route: EngineRoute;
+      version?: string;
     }) =>
       HttpUtil.post(
         '/panel/api/tunnels/engine/update',
-        { nodeId, engine, version: '', route },
+        { nodeId, engine, version: version ?? '', route },
         JSON_HEADERS,
       ),
     onSuccess: (msg) => {
@@ -244,6 +258,38 @@ export function useTunnelEngine(engine: TunnelEngine) {
       const msg = await HttpUtil.get('/panel/api/tunnels/engine', { engine }, { silent: true });
       if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the tunnel engine');
       return parseMsg(msg, EngineInfoSchema, 'tunnels/engine').obj ?? null;
+    },
+  });
+}
+
+export interface EngineReleaseLookup {
+  engine: TunnelEngine;
+  nodeId: number;
+  route: EngineRoute;
+}
+
+// The newest releases of an engine as seen from where the download would start; null waits for a lookup.
+export function useEngineReleases(lookup: EngineReleaseLookup | null) {
+  return useQuery({
+    queryKey: [
+      ...TUNNELS_KEY,
+      'releases',
+      lookup?.engine,
+      lookup?.nodeId,
+      lookup?.route.via,
+      lookup?.route.value,
+    ],
+    enabled: lookup !== null,
+    retry: false,
+    queryFn: async () => {
+      const msg = await HttpUtil.post('/panel/api/tunnels/engine/releases', lookup, {
+        ...JSON_HEADERS,
+        silent: true,
+      });
+      if (!msg?.success) throw new Error(msg?.msg || 'Failed to list the engine releases');
+      const releases = z.array(z.string()).safeParse(msg.obj);
+      if (!releases.success) throw new Error('Failed to list the engine releases');
+      return releases.data;
     },
   });
 }

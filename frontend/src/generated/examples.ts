@@ -32,6 +32,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "value": 91.5
   },
   "AllSetting": {
+    "accent": "",
     "datepicker": "",
     "discordAdminIds": "",
     "discordBotBackup": false,
@@ -77,6 +78,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "realityScanCandidates": "",
     "remarkTemplate": "",
     "restartXrayOnClientDisable": false,
+    "serverAddress": "",
     "serverCountry": "",
     "serverName": "",
     "sessionMaxAge": 1,
@@ -219,6 +221,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "webPort": 1
   },
   "AllSettingView": {
+    "accent": "",
     "datepicker": "",
     "discordAdminIds": "",
     "discordBotBackup": false,
@@ -272,6 +275,7 @@ export const EXAMPLES: Record<string, unknown> = {
     "realityScanCandidates": "",
     "remarkTemplate": "",
     "restartXrayOnClientDisable": false,
+    "serverAddress": "",
     "serverCountry": "",
     "serverName": "",
     "sessionMaxAge": 1,

@@ -116,7 +116,6 @@
     "subFormats": "Formáty odberu",
     "tunnels": "Tunnels",
     "activity": "Activity",
-    "torPia": "Tor and PIA",
     "logs": "Logs"
   },
   "pages": {
@@ -2472,6 +2471,13 @@
       "acceptUdp": "Carry UDP too",
       "engineMissing": "The {engine} engine is not installed on this server, so {engine} tunnels cannot run.",
       "engineMissingHint": "If this server cannot reach GitHub, copy the {engine} binary into the panel's bin folder by hand, or download it through a node.",
+      "release": "Release",
+      "releasesLookup": "Look up releases",
+      "releasesLoading": "Looking up the latest releases…",
+      "releasesIdle": "Look up the releases to pick one. Without a pick, the default release is installed.",
+      "releasesFailed": "This server cannot reach GitHub to list the {engine} releases. Download through a tunnel or another route, or give a link (a proxy address or share link), then look up again. Installing without a pick uses the default release.",
+      "releaseRecommended": "recommended",
+      "releaseInstalled": "installed",
       "installEngine": "Install {engine}",
       "toasts": {
         "list": "Load tunnels",
@@ -2483,7 +2489,8 @@
         "status": "Test tunnel",
         "installEngine": "Install the BackPack engine",
         "routeTest": "The route test could not run",
-        "updateEngine": "Update the BackPack engine"
+        "updateEngine": "Update the BackPack engine",
+        "engineReleases": "List the engine releases"
       },
       "nodeEnd": "Create the other end on a node",
       "nodeEndHint": "This panel also sets up the exit end on the chosen node, so nothing needs to be copied or pasted. Deleting the tunnel removes both ends.",
@@ -3496,7 +3503,6 @@
     "empty": "No lines yet"
   },
   "torPage": {
-    "subtitle": "Extra exits that run inside Dalan. Route users or inbounds to them like any outbound.",
     "exitsOn": "exit countries on",
     "exitsWorking": "connected now",
     "notAdded": "Not in use",
@@ -3513,14 +3519,10 @@
       "subscription": "Subscription page",
       "security": "Security",
       "notifications": "Notifications",
-      "users": "Users and access",
       "developer": "Developer",
       "backups": "Backups",
       "updates": "Updates"
     },
-    "soon": "Soon",
-    "comingLater": "Coming later",
-    "usersLater": "Roles and per-admin access arrive in a later version. This is where they will live.",
     "developerHint": "API tokens and the API reference. The reference loads only when you open it.",
     "email": "Email",
     "formats": "Formats",
@@ -3613,13 +3615,6 @@
     "need": "Need help? Message your provider"
   },
   "setup": {
-    "time": "Setup · about 2 minutes",
-    "progress": "Setup progress",
-    "step": {
-      "server": "Server",
-      "connection": "Connection",
-      "user": "First user"
-    },
     "server": {
       "title": "Let’s set up this server",
       "hint": "Give it a name you will recognise, and say where it is.",
@@ -3629,44 +3624,6 @@
       "addressHint": "The address you opened this panel at. Links use it unless you set a domain in Settings.",
       "countryNone": "Not set"
     },
-    "connect": {
-      "title": "How should people connect?",
-      "hint": "Pick one. You can add more later."
-    },
-    "preset": {
-      "reality": {
-        "title": "Best for most people",
-        "desc": "VLESS Reality on port 443. Looks like normal HTTPS, hard to block."
-      },
-      "cdn": {
-        "title": "Behind a CDN",
-        "desc": "Trojan over WebSocket on port 8080, for a CDN that adds TLS. Use when direct IPs get blocked."
-      },
-      "game": {
-        "title": "Low ping",
-        "desc": "VLESS on a layer 3 tunnel, for gaming and calls. Needs a node and a Rakhsh tunnel first; set it up on the Tunnels page."
-      }
-    },
-    "user": {
-      "title": "Add your first user",
-      "hint": "This can be you. You will get a link to open in any app.",
-      "name": "Name",
-      "placeholder": "For example sara.k",
-      "traffic": "Traffic",
-      "gb50": "50 GB",
-      "valid": "Valid for",
-      "days30": "30 days",
-      "never": "Never expires"
-    },
-    "live": {
-      "title": "You’re live",
-      "hint": "{name} can connect now. Send this link or let them scan the code.",
-      "noSub": "{name} is ready. Turn on subscriptions in Settings to get a link, or copy their config from the Clients page."
-    },
-    "keysFailed": "Could not make Reality keys",
-    "back": "Back",
-    "next": "Continue",
-    "finish": "Create and finish",
     "later": "Set up later"
   },
   "confirmDelete": {

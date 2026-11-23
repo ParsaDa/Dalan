@@ -64,6 +64,8 @@ export const AllSettingSchema = z
       .string()
       .regex(/^([A-Z]{2})?$/)
       .optional(),
+    serverAddress: z.string().max(253).optional(),
+    accent: z.string().optional(),
     setupDone: z.boolean().optional(),
     subSupportUrl: z.string().optional(),
     subProfileMode: SubProfileModeSchema.optional(),

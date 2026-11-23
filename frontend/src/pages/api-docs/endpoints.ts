@@ -2055,8 +2055,16 @@ export const sections: readonly Section[] = [
         method: 'POST',
         path: '/panel/api/tunnels/engine/install',
         summary:
-          'Download the pinned release of an engine (BackPack by default, or Rakhsh with engine "rakhsh") for this CPU, verify it against the checksums published with it, put it in the panel bin folder and start that engine\'s tunnels. Can take a few minutes. route says how the download travels: via is panel (as the panel proxy is set, the default), direct (straight from this server), outbound (value is the tag of one of the outbounds of the panel, a tunnel or a Tor exit included) or link (value is a socks5:// or http:// proxy address, or a vless/vmess/trojan/ss share link). See GET /panel/api/tunnels/engine/routes.',
-        body: '{\n  "engine": "backpack",\n  "route": {\n    "via": "outbound",\n    "value": "tunnel-de1"\n  }\n}',
+          'Download a release of an engine (BackPack by default, or Rakhsh with engine "rakhsh") for this CPU, the one named in version or, when it is empty, the pinned one, verify it against the checksums published with it, put it in the panel bin folder and start that engine\'s tunnels. Can take a few minutes. route says how the download travels: via is panel (as the panel proxy is set, the default), direct (straight from this server), outbound (value is the tag of one of the outbounds of the panel, a tunnel or a Tor exit included) or link (value is a socks5:// or http:// proxy address, or a vless/vmess/trojan/ss share link). See GET /panel/api/tunnels/engine/routes.',
+        body: '{\n  "engine": "backpack",\n  "version": "v1.8.5",\n  "route": {\n    "via": "outbound",\n    "value": "tunnel-de1"\n  }\n}',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnels/engine/releases',
+        summary:
+          'List the newest four releases of an engine (engine is backpack or rakhsh), newest first, so one can be picked for install or update. With nodeId the node reads the list, for a server that cannot reach GitHub; otherwise this server reads it through route (see GET /panel/api/tunnels/engine/routes). Fails with the reason when GitHub cannot be reached. Needs an admin or node-admin token.',
+        body: '{\n  "nodeId": 0,\n  "engine": "backpack",\n  "route": {\n    "via": "panel"\n  }\n}',
+        response: '{\n  "success": true,\n  "obj": ["v1.9.0", "v1.8.5", "v1.8.4", "v1.8.3"]\n}',
       },
       {
         method: 'POST',
@@ -2324,6 +2332,14 @@ export const sections: readonly Section[] = [
         summary:
           'Persist every setting at once. The body mirrors the shape returned by /all. Invalid values (bad ports, missing cert pairs, etc.) are rejected before write.',
         body: '{\n  "webPort": 2053,\n  "webBasePath": "/",\n  "subPort": 10882,\n  "subPath": "/sub/",\n  "subClashAutoDetect": false,\n  "subClashUserAgentRegex": "",\n  "subJsonEnable": false,\n  "subJsonAutoDetect": false,\n  "subJsonAlwaysArray": false,\n  "subJsonUserAgentRegex": "",\n  "subJsonPath": "/json/",\n  "subJsonURI": "https://sub.example.com/json/",\n  "subClashEnable": true,\n  "subClashPath": "/clash/",\n  "subClashURI": "https://sub.example.com/clash/",\n  "tgBotEnable": false,\n  ...\n}',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/setting/profile',
+        summary:
+          'Save only the server name, country, public address, accent colour and first-run flag. Every field is optional and a missing one is left as it is; one invalid value saves nothing.',
+        body: '{\n  "serverName": "Frankfurt 1",\n  "serverCountry": "DE",\n  "serverAddress": "203.0.113.7",\n  "accent": "violet",\n  "setupDone": true\n}',
+        response: '{\n  "success": true,\n  "msg": ""\n}',
       },
       {
         method: 'POST',

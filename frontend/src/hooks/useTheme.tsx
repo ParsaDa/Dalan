@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 import { theme as antdTheme } from 'antd';
 import type { ThemeConfig } from 'antd';
 
-import { DEFAULT_ACCENT } from '@/lib/theme/accents';
+import { DEFAULT_ACCENT, parseAccentId } from '@/lib/theme/accents';
 import type { AccentId } from '@/lib/theme/accents';
 import { readEffectsEnv, resolveEffects } from '@/lib/theme/effects';
 import type { Effects, EffectsPref } from '@/lib/theme/effects';
@@ -42,6 +42,7 @@ function applyDlRoot(isDark: boolean, effects: Effects, accent: ResolvedAccent) 
 const STORAGE_DARK = 'dark-mode';
 const STORAGE_ULTRA = 'isUltraDarkThemeEnabled';
 const STORAGE_EFFECTS = 'dalan-effects';
+const STORAGE_ACCENT = 'dalan-accent';
 const EFFECTS_PREFS: readonly EffectsPref[] = ['auto', 'full', 'light', 'off'];
 
 function readEffectsPref(): EffectsPref {
@@ -246,7 +247,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const [effectsPref, setEffectsPrefState] = useState<EffectsPref>(readEffectsPref);
   const [reducedMotion, setReducedMotion] = useState(() => readEffectsEnv().reducedMotion);
-  const [accent, setAccent] = useState<AccentId>(DEFAULT_ACCENT);
+  const [accent, setAccentState] = useState<AccentId>(
+    () => parseAccentId(localStorage.getItem(STORAGE_ACCENT)) ?? DEFAULT_ACCENT,
+  );
+  const setAccent = useCallback((next: AccentId) => {
+    localStorage.setItem(STORAGE_ACCENT, next);
+    setAccentState(next);
+  }, []);
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -317,6 +324,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       effects,
       setEffectsPref,
       accent,
+      setAccent,
     ],
   );
 

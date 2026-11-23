@@ -48,16 +48,25 @@ _openapi:
         values under options of add or update, keyed as listed here.'
       url: '#every-setting-of-one-engine-backpack-or-rakhsh-the-panel-can-write-for-reverse-and-direct-tunnels-key-kind-which-end-reads-it-group-allowed-values-and-a-hint-in-english-hinten-and-persian-hintfa-send-values-under-options-of-add-or-update-keyed-as-listed-here'
     - depth: 2
-      title: 'Download the pinned release of an engine (BackPack by default, or Rakhsh
-        with engine "rakhsh") for this CPU, verify it against the checksums
-        published with it, put it in the panel bin folder and start that
-        engine''s tunnels. Can take a few minutes. route says how the download
-        travels: via is panel (as the panel proxy is set, the default), direct
-        (straight from this server), outbound (value is the tag of one of the
-        outbounds of the panel, a tunnel or a Tor exit included) or link (value
-        is a socks5:// or http:// proxy address, or a vless/vmess/trojan/ss
-        share link). See GET /panel/api/tunnels/engine/routes.'
-      url: '#download-the-pinned-release-of-an-engine-backpack-by-default-or-rakhsh-with-engine-rakhsh-for-this-cpu-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes'
+      title: 'Download a release of an engine (BackPack by default, or Rakhsh with
+        engine "rakhsh") for this CPU, the one named in version or, when it is
+        empty, the pinned one, verify it against the checksums published with
+        it, put it in the panel bin folder and start that engine''s tunnels. Can
+        take a few minutes. route says how the download travels: via is panel
+        (as the panel proxy is set, the default), direct (straight from this
+        server), outbound (value is the tag of one of the outbounds of the
+        panel, a tunnel or a Tor exit included) or link (value is a socks5:// or
+        http:// proxy address, or a vless/vmess/trojan/ss share link). See GET
+        /panel/api/tunnels/engine/routes.'
+      url: '#download-a-release-of-an-engine-backpack-by-default-or-rakhsh-with-engine-rakhsh-for-this-cpu-the-one-named-in-version-or-when-it-is-empty-the-pinned-one-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes'
+    - depth: 2
+      title: List the newest four releases of an engine (engine is backpack or
+        rakhsh), newest first, so one can be picked for install or update. With
+        nodeId the node reads the list, for a server that cannot reach GitHub;
+        otherwise this server reads it through route (see GET
+        /panel/api/tunnels/engine/routes). Fails with the reason when GitHub
+        cannot be reached. Needs an admin or node-admin token.
+      url: '#list-the-newest-four-releases-of-an-engine-engine-is-backpack-or-rakhsh-newest-first-so-one-can-be-picked-for-install-or-update-with-nodeid-the-node-reads-the-list-for-a-server-that-cannot-reach-github-otherwise-this-server-reads-it-through-route-see-get-panelapitunnelsengineroutes-fails-with-the-reason-when-github-cannot-be-reached-needs-an-admin-or-node-admin-token'
     - depth: 2
       title: "Install a release of an engine (engine is backpack or rakhsh; empty
         version means the newest) and restart that engine's tunnels on it. With
@@ -188,17 +197,24 @@ _openapi:
           allowed values and a hint in English (hintEn) and Persian (hintFa).
           Send values under options of add or update, keyed as listed here.'
         id: every-setting-of-one-engine-backpack-or-rakhsh-the-panel-can-write-for-reverse-and-direct-tunnels-key-kind-which-end-reads-it-group-allowed-values-and-a-hint-in-english-hinten-and-persian-hintfa-send-values-under-options-of-add-or-update-keyed-as-listed-here
-      - content: 'Download the pinned release of an engine (BackPack by default, or
-          Rakhsh with engine "rakhsh") for this CPU, verify it against the
-          checksums published with it, put it in the panel bin folder and start
-          that engine''s tunnels. Can take a few minutes. route says how the
-          download travels: via is panel (as the panel proxy is set, the
-          default), direct (straight from this server), outbound (value is the
-          tag of one of the outbounds of the panel, a tunnel or a Tor exit
-          included) or link (value is a socks5:// or http:// proxy address, or a
-          vless/vmess/trojan/ss share link). See GET
-          /panel/api/tunnels/engine/routes.'
-        id: download-the-pinned-release-of-an-engine-backpack-by-default-or-rakhsh-with-engine-rakhsh-for-this-cpu-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes
+      - content: 'Download a release of an engine (BackPack by default, or Rakhsh with
+          engine "rakhsh") for this CPU, the one named in version or, when it is
+          empty, the pinned one, verify it against the checksums published with
+          it, put it in the panel bin folder and start that engine''s tunnels.
+          Can take a few minutes. route says how the download travels: via is
+          panel (as the panel proxy is set, the default), direct (straight from
+          this server), outbound (value is the tag of one of the outbounds of
+          the panel, a tunnel or a Tor exit included) or link (value is a
+          socks5:// or http:// proxy address, or a vless/vmess/trojan/ss share
+          link). See GET /panel/api/tunnels/engine/routes.'
+        id: download-a-release-of-an-engine-backpack-by-default-or-rakhsh-with-engine-rakhsh-for-this-cpu-the-one-named-in-version-or-when-it-is-empty-the-pinned-one-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes
+      - content: List the newest four releases of an engine (engine is backpack or
+          rakhsh), newest first, so one can be picked for install or update.
+          With nodeId the node reads the list, for a server that cannot reach
+          GitHub; otherwise this server reads it through route (see GET
+          /panel/api/tunnels/engine/routes). Fails with the reason when GitHub
+          cannot be reached. Needs an admin or node-admin token.
+        id: list-the-newest-four-releases-of-an-engine-engine-is-backpack-or-rakhsh-newest-first-so-one-can-be-picked-for-install-or-update-with-nodeid-the-node-reads-the-list-for-a-server-that-cannot-reach-github-otherwise-this-server-reads-it-through-route-see-get-panelapitunnelsengineroutes-fails-with-the-reason-when-github-cannot-be-reached-needs-an-admin-or-node-admin-token
       - content: "Install a release of an engine (engine is backpack or rakhsh; empty
           version means the newest) and restart that engine's tunnels on it.
           With nodeId the release is downloaded by that node and sent over the
@@ -293,7 +309,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/routes","method":"get"},{"path":"/panel/api/tunnels/options","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/engine/update","method":"post"},{"path":"/panel/api/tunnels/engine/release","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/update/{id}","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/routes","method":"get"},{"path":"/panel/api/tunnels/options","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/engine/releases","method":"post"},{"path":"/panel/api/tunnels/engine/update","method":"post"},{"path":"/panel/api/tunnels/engine/release","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/update/{id}","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
     </>
   );
 }

@@ -23,7 +23,8 @@ describe('phone More page', () => {
     expect(await screen.findByText('2-step on')).toBeTruthy();
     expect(link(/Inbounds/)).toBe('/inbounds');
     expect(screen.getByRole('link', { name: /Inbounds/ }).textContent).toContain('3');
-    expect(link(/Tor and PIA/)).toBe('/tor');
+    expect(screen.queryByRole('link', { name: /Tor and PIA/ })).toBeNull();
+    expect(screen.queryByRole('link', { name: /Users and access/ })).toBeNull();
     expect(link(/^Logs/)).toBe('/logs');
     expect(link(/Backups/)).toBe('/settings#backups');
     expect(link(/Security/)).toBe('/settings#security');
