@@ -3522,5 +3522,38 @@
     "use": "Use {name}",
     "piaHint": "PIA servers are added as outbounds. Sign in and pick servers in the PIA dialog, then save the Xray config.",
     "flagsHint": "Flags are drawn as images, so they show on Windows too."
+  },
+  "settingsPage": {
+    "subtitle": "Everything about this panel. Each node has its own settings when you open it.",
+    "sections": "Settings sections",
+    "nav": {
+      "general": "General",
+      "appearance": "Appearance",
+      "subscription": "Subscription page",
+      "security": "Security",
+      "notifications": "Notifications",
+      "users": "Users and access",
+      "developer": "Developer"
+    },
+    "soon": "Soon",
+    "comingLater": "Coming later",
+    "usersLater": "Roles and per-admin access arrive in a later version. This is where they will live.",
+    "developerHint": "API tokens and the API reference. The reference loads only when you open it.",
+    "email": "Email",
+    "formats": "Formats",
+    "balancers": "Balancers",
+    "thisDevice": "This device",
+    "effects": {
+      "auto": "Follows this device: light on weak devices, off when the system asks for less motion.",
+      "full": "Drifting glow, full blur, all motion.",
+      "light": "Still glow, small blur, only motion that explains a change.",
+      "off": "Solid cards, no blur, no ambient motion."
+    },
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "panelMode": "Panel mode",
+    "simpleMode": "Simple mode",
+    "simpleModeHint": "Plain names (Users, Servers, Connections), hides raw Xray options, keeps common tasks one or two taps away."
   }
 }

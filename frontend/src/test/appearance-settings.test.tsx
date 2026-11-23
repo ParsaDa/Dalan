@@ -29,7 +29,7 @@ const mount = () =>
 
 test('choosing an effects level applies it to the page and remembers it', () => {
   mount();
-  fireEvent.click(screen.getByText('Light'));
+  fireEvent.click(screen.getByRole('radio', { name: /^Light/ }));
 
   expect(document.body.dataset.effects).toBe('light');
   expect(localStorage.getItem('dalan-effects')).toBe('light');
@@ -41,4 +41,14 @@ test('choosing a swatch changes the panel accent', () => {
 
   expect(document.body.dataset.accent).toBe('cobalt');
   expect(screen.getByRole('radio', { name: 'cobalt' }).getAttribute('aria-checked')).toBe('true');
+});
+
+test('the panel mode switch turns simple mode on and keeps it', () => {
+  mount();
+  fireEvent.click(screen.getByRole('switch', { name: 'Simple mode' }));
+
+  expect(localStorage.getItem('dalan-simple-mode')).toBe('true');
+  expect(screen.getByRole('switch', { name: 'Simple mode' }).getAttribute('aria-checked')).toBe(
+    'true',
+  );
 });
