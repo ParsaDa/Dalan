@@ -95,7 +95,7 @@ const PILL: Record<LogLine['level'], string> = {
 };
 
 export default function LogsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [source, setSource] = useState<Source>('panel');
   const [level, setLevel] = useState<Level>('info');
   const [rows, setRows] = useState('100');
@@ -192,7 +192,9 @@ export default function LogsPage() {
           <span className="mut" style={{ fontSize: 12.5 }}>
             {t('logs.count', {
               n: fmtInt(lines.length),
-              at: query.dataUpdatedAt ? new Date(query.dataUpdatedAt).toLocaleTimeString() : '–',
+              at: query.dataUpdatedAt
+                ? new Date(query.dataUpdatedAt).toLocaleTimeString(i18n.language)
+                : '–',
             })}
           </span>
         </div>
@@ -221,7 +223,7 @@ export default function LogsPage() {
             }}
           >
             {lines.map((l, i) => (
-              <div key={i} className="ln" style={{ gap: 14, padding: '3px 16px' }}>
+              <div key={i} className="ln logln" style={{ gap: 14, padding: '3px 16px' }}>
                 <span className="mut">{l.time}</span>
                 <span
                   className={`pill ${PILL[l.level]}`}

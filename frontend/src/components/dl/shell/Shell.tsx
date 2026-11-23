@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
+
+import { PANEL_TITLE_KEYS } from '@/routes/panelRoutes';
 
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { commandPaletteStore } from '@/components/command-palette/useCommandPalette';
@@ -14,6 +16,27 @@ import { useCurrentUser, useGreetingPart } from './data';
 import { useFrameStatus } from './useFrameStatus';
 
 export const PHONE_MAX_PX = 700;
+
+// Off the dashboard a phone shows only the page name in the top bar, as in the design.
+function PhoneTitleTop({ title }: { title: string }) {
+  const { t } = useTranslation();
+  return (
+    <div className="ptop">
+      <Link to="/" aria-label={t('shell.brand')} style={{ display: 'flex', color: 'inherit' }}>
+        <Mark size={30} />
+      </Link>
+      <h1 className="h2" style={{ flex: 1, fontSize: 22 }}>
+        {title}
+      </h1>
+      <IconBtn
+        small
+        icon="search"
+        label={t('shell.search.label')}
+        onClick={() => commandPaletteStore.open()}
+      />
+    </div>
+  );
+}
 
 function PhoneTop() {
   const { t } = useTranslation();
@@ -55,12 +78,15 @@ function PhoneTop() {
 
 // Every panel page renders inside this frame; `bare` drops the greeting and node tabs.
 export default function Shell({ children, bare }: { children: ReactNode; bare?: boolean }) {
+  const { t } = useTranslation();
+  const { pathname } = useLocation();
   const { isMobile: phone } = useMediaQuery(PHONE_MAX_PX);
   if (phone) {
+    const titleKey = pathname === '/' ? undefined : PANEL_TITLE_KEYS[pathname];
     return (
       <>
-        <main className="main pmain">
-          {!bare && <PhoneTop />}
+        <main className={`main pmain${titleKey ? ' ptitled' : ''}`}>
+          {!bare && (titleKey ? <PhoneTitleTop title={t(titleKey)} /> : <PhoneTop />)}
           {!bare && <NodeTabs phone />}
           {children}
         </main>

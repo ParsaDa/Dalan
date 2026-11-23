@@ -2473,3 +2473,20 @@ body.dl .ant-message .ant-message-move-up-enter {
     display: flex;
   }
 }
+
+/* On a phone the page name sits in the top bar; the page head keeps only its actions. */
+.dl .pmain.ptitled .pagehead > div:has(> .h2) {
+  display: none;
+}
+
+/* A phone has no room for a message column beside time, level and source. */
+@media (max-width: 700px) {
+  .dl .logln {
+    flex-wrap: wrap;
+    row-gap: 4px !important;
+    padding-block: 8px !important;
+  }
+  .dl .logln > :last-child {
+    flex-basis: 100%;
+  }
+}
