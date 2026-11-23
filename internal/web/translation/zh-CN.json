@@ -291,13 +291,9 @@
       "timeRange": "时间范围"
     },
     "inbounds": {
-      "totalDownUp": "总上传 / 下载",
       "totalUsage": "总用量",
-      "inboundCount": "入站数量",
-      "operate": "菜单",
       "enable": "启用",
       "remark": "备注",
-      "node": "节点",
       "deployTo": "部署到",
       "localPanel": "本地面板",
       "fallbacks": {
@@ -315,7 +311,6 @@
       "port": "端口",
       "portMap": "端口映射",
       "traffic": "流量",
-      "speed": "速度",
       "expireDate": "到期时间",
       "createdAt": "创建时间",
       "updatedAt": "更新时间",
@@ -423,7 +418,6 @@
         "stream": "Stream",
         "streamHelp": "Xray stream 块包装："
       },
-      "subSortIndex": "订阅排序",
       "inboundInfo": "入站信息",
       "exportInbound": "导出入站规则",
       "import": "导入",
@@ -3451,5 +3445,32 @@
     "emptyHint": "Make a group, then add clients to it from here or from the Clients page.",
     "members": "members",
     "share": "Share of all group traffic"
+  },
+  "inbounds": {
+    "subtitle": "The doors users come in through. Each one is a protocol on a port.",
+    "import": "Import",
+    "filters": "Filter inbounds",
+    "filter": {
+      "all": "All",
+      "on": "Listening",
+      "off": "Off",
+      "attention": "Needs attention"
+    },
+    "state": {
+      "ok": "Listening",
+      "warn": "Expires soon",
+      "expired": "Expired",
+      "off": "Off"
+    },
+    "colInbound": "Inbound",
+    "online": "{n} online",
+    "expiring": "Expiring",
+    "select": "Select {name}",
+    "anyServer": "Any server",
+    "searchHint": "Name, port or protocol",
+    "empty": "No inbounds yet",
+    "emptyHint": "Add an inbound so clients have a way in.",
+    "prev": "Previous page",
+    "next": "Next page"
   }
 }

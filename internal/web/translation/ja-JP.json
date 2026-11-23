@@ -291,13 +291,9 @@
       "timeRange": "期間"
     },
     "inbounds": {
-      "totalDownUp": "総アップロード / ダウンロード",
       "totalUsage": "総使用量",
-      "inboundCount": "インバウンド数",
-      "operate": "メニュー",
       "enable": "有効化",
       "remark": "備考",
-      "node": "ノード",
       "deployTo": "デプロイ先",
       "localPanel": "ローカルパネル",
       "fallbacks": {
@@ -315,7 +311,6 @@
       "port": "ポート",
       "portMap": "ポートマッピング",
       "traffic": "トラフィック",
-      "speed": "速度",
       "expireDate": "有効期限",
       "createdAt": "作成",
       "updatedAt": "更新",
@@ -423,7 +418,6 @@
         "stream": "Stream",
         "streamHelp": "Xray stream ブロックのラッパー:"
       },
-      "subSortIndex": "サブ並び順",
       "inboundInfo": "インバウンド情報",
       "exportInbound": "インバウンドルールをエクスポート",
       "import": "インポート",
@@ -3451,5 +3445,32 @@
     "emptyHint": "Make a group, then add clients to it from here or from the Clients page.",
     "members": "members",
     "share": "Share of all group traffic"
+  },
+  "inbounds": {
+    "subtitle": "The doors users come in through. Each one is a protocol on a port.",
+    "import": "Import",
+    "filters": "Filter inbounds",
+    "filter": {
+      "all": "All",
+      "on": "Listening",
+      "off": "Off",
+      "attention": "Needs attention"
+    },
+    "state": {
+      "ok": "Listening",
+      "warn": "Expires soon",
+      "expired": "Expired",
+      "off": "Off"
+    },
+    "colInbound": "Inbound",
+    "online": "{n} online",
+    "expiring": "Expiring",
+    "select": "Select {name}",
+    "anyServer": "Any server",
+    "searchHint": "Name, port or protocol",
+    "empty": "No inbounds yet",
+    "emptyHint": "Add an inbound so clients have a way in.",
+    "prev": "Previous page",
+    "next": "Next page"
   }
 }

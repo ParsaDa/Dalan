@@ -291,13 +291,9 @@
       "timeRange": "Rentang waktu"
     },
     "inbounds": {
-      "totalDownUp": "Total Terkirim/Diterima",
       "totalUsage": "Penggunaan Total",
-      "inboundCount": "Total Masuk",
-      "operate": "Menu",
       "enable": "Aktifkan",
       "remark": "Catatan",
-      "node": "Node",
       "deployTo": "Terapkan ke",
       "localPanel": "Panel lokal",
       "fallbacks": {
@@ -315,7 +311,6 @@
       "port": "Port",
       "portMap": "Pemetaan port",
       "traffic": "Trafik",
-      "speed": "Kecepatan",
       "expireDate": "Durasi",
       "createdAt": "Dibuat",
       "updatedAt": "Diperbarui",
@@ -423,7 +418,6 @@
         "stream": "Stream",
         "streamHelp": "Pembungkus blok stream Xray:"
       },
-      "subSortIndex": "Urutan sub",
       "inboundInfo": "Informasi Inbound",
       "exportInbound": "Ekspor Masuk",
       "import": "Impor",
@@ -3451,5 +3445,32 @@
     "emptyHint": "Make a group, then add clients to it from here or from the Clients page.",
     "members": "members",
     "share": "Share of all group traffic"
+  },
+  "inbounds": {
+    "subtitle": "The doors users come in through. Each one is a protocol on a port.",
+    "import": "Import",
+    "filters": "Filter inbounds",
+    "filter": {
+      "all": "All",
+      "on": "Listening",
+      "off": "Off",
+      "attention": "Needs attention"
+    },
+    "state": {
+      "ok": "Listening",
+      "warn": "Expires soon",
+      "expired": "Expired",
+      "off": "Off"
+    },
+    "colInbound": "Inbound",
+    "online": "{n} online",
+    "expiring": "Expiring",
+    "select": "Select {name}",
+    "anyServer": "Any server",
+    "searchHint": "Name, port or protocol",
+    "empty": "No inbounds yet",
+    "emptyHint": "Add an inbound so clients have a way in.",
+    "prev": "Previous page",
+    "next": "Next page"
   }
 }

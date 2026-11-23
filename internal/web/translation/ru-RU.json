@@ -291,13 +291,9 @@
       "timeRange": "Временной диапазон"
     },
     "inbounds": {
-      "totalDownUp": "Отправлено/получено",
       "totalUsage": "Всего трафика",
-      "inboundCount": "Всего подключений",
-      "operate": "Меню",
       "enable": "Включить",
       "remark": "Примечание",
-      "node": "Узел",
       "deployTo": "Развернуть на",
       "localPanel": "Локальная панель",
       "fallbacks": {
@@ -315,7 +311,6 @@
       "port": "Порт",
       "portMap": "Сопоставление портов",
       "traffic": "Трафик",
-      "speed": "Скорость",
       "expireDate": "Дата окончания",
       "createdAt": "Создано",
       "updatedAt": "Обновлено",
@@ -424,7 +419,6 @@
         "streamHelp": "Обёртка блока stream Xray:"
       },
       "advancedTitle": "Дополнительные настройки",
-      "subSortIndex": "Порядок",
       "inboundInfo": "Информация о подключении",
       "exportInbound": "Экспорт подключений",
       "import": "Импортировать",
@@ -3451,5 +3445,32 @@
     "emptyHint": "Make a group, then add clients to it from here or from the Clients page.",
     "members": "members",
     "share": "Share of all group traffic"
+  },
+  "inbounds": {
+    "subtitle": "The doors users come in through. Each one is a protocol on a port.",
+    "import": "Import",
+    "filters": "Filter inbounds",
+    "filter": {
+      "all": "All",
+      "on": "Listening",
+      "off": "Off",
+      "attention": "Needs attention"
+    },
+    "state": {
+      "ok": "Listening",
+      "warn": "Expires soon",
+      "expired": "Expired",
+      "off": "Off"
+    },
+    "colInbound": "Inbound",
+    "online": "{n} online",
+    "expiring": "Expiring",
+    "select": "Select {name}",
+    "anyServer": "Any server",
+    "searchHint": "Name, port or protocol",
+    "empty": "No inbounds yet",
+    "emptyHint": "Add an inbound so clients have a way in.",
+    "prev": "Previous page",
+    "next": "Next page"
   }
 }

@@ -291,13 +291,9 @@
       "timeRange": "Zaman aralığı"
     },
     "inbounds": {
-      "totalDownUp": "Toplam Gönderilen/Alınan",
       "totalUsage": "Toplam Kullanım",
-      "inboundCount": "Toplam Gelen Bağlantı",
-      "operate": "Menü",
       "enable": "Etkin",
       "remark": "Açıklama",
-      "node": "Düğüm",
       "deployTo": "Şuraya Dağıt",
       "localPanel": "Yerel Panel",
       "fallbacks": {
@@ -315,7 +311,6 @@
       "port": "Port",
       "portMap": "Port Eşlemesi",
       "traffic": "Trafik",
-      "speed": "Hız",
       "expireDate": "Süre",
       "createdAt": "Oluşturuldu",
       "updatedAt": "Güncellendi",
@@ -423,7 +418,6 @@
         "stream": "Akış (Stream)",
         "streamHelp": "Xray stream bloğunun sarmalayıcısı:"
       },
-      "subSortIndex": "Sıralama",
       "inboundInfo": "Gelen Bağlantı Bilgileri",
       "exportInbound": "Gelen Bağlantını Dışa Aktar",
       "import": "İçe Aktar",
@@ -3451,5 +3445,32 @@
     "emptyHint": "Make a group, then add clients to it from here or from the Clients page.",
     "members": "members",
     "share": "Share of all group traffic"
+  },
+  "inbounds": {
+    "subtitle": "The doors users come in through. Each one is a protocol on a port.",
+    "import": "Import",
+    "filters": "Filter inbounds",
+    "filter": {
+      "all": "All",
+      "on": "Listening",
+      "off": "Off",
+      "attention": "Needs attention"
+    },
+    "state": {
+      "ok": "Listening",
+      "warn": "Expires soon",
+      "expired": "Expired",
+      "off": "Off"
+    },
+    "colInbound": "Inbound",
+    "online": "{n} online",
+    "expiring": "Expiring",
+    "select": "Select {name}",
+    "anyServer": "Any server",
+    "searchHint": "Name, port or protocol",
+    "empty": "No inbounds yet",
+    "emptyHint": "Add an inbound so clients have a way in.",
+    "prev": "Previous page",
+    "next": "Next page"
   }
 }

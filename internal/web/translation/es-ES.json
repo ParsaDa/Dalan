@@ -291,13 +291,9 @@
       "timeRange": "Rango de tiempo"
     },
     "inbounds": {
-      "totalDownUp": "Subidas/Descargas Totales",
       "totalUsage": "Uso Total",
-      "inboundCount": "Número de Entradas",
-      "operate": "Menú",
       "enable": "Habilitar",
       "remark": "Notas",
-      "node": "Nodo",
       "deployTo": "Desplegar en",
       "localPanel": "Panel local",
       "fallbacks": {
@@ -315,7 +311,6 @@
       "port": "Puerto",
       "portMap": "Asignación de puertos",
       "traffic": "Tráfico",
-      "speed": "Velocidad",
       "expireDate": "Fecha de Expiración",
       "createdAt": "Creado",
       "updatedAt": "Actualizado",
@@ -423,7 +418,6 @@
         "stream": "Stream",
         "streamHelp": "Envoltorio del bloque stream de Xray:"
       },
-      "subSortIndex": "Orden sub",
       "inboundInfo": "Información de entrada",
       "exportInbound": "Exportación entrante",
       "import": "Importar",
@@ -3451,5 +3445,32 @@
     "emptyHint": "Make a group, then add clients to it from here or from the Clients page.",
     "members": "members",
     "share": "Share of all group traffic"
+  },
+  "inbounds": {
+    "subtitle": "The doors users come in through. Each one is a protocol on a port.",
+    "import": "Import",
+    "filters": "Filter inbounds",
+    "filter": {
+      "all": "All",
+      "on": "Listening",
+      "off": "Off",
+      "attention": "Needs attention"
+    },
+    "state": {
+      "ok": "Listening",
+      "warn": "Expires soon",
+      "expired": "Expired",
+      "off": "Off"
+    },
+    "colInbound": "Inbound",
+    "online": "{n} online",
+    "expiring": "Expiring",
+    "select": "Select {name}",
+    "anyServer": "Any server",
+    "searchHint": "Name, port or protocol",
+    "empty": "No inbounds yet",
+    "emptyHint": "Add an inbound so clients have a way in.",
+    "prev": "Previous page",
+    "next": "Next page"
   }
 }
