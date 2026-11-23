@@ -1057,14 +1057,6 @@
     },
     "groups": {
       "name": "İsim",
-      "clientCount": "Kullanıcılar",
-      "totalGroups": "Toplam grup",
-      "totalGroupedClients": "Grubu olan kullanıcılar",
-      "trafficUsed": "Kullanılan trafik",
-      "upload": "Yükleme",
-      "download": "İndirme",
-      "totalTraffic": "Toplam trafik",
-      "totalUpDown": "Toplam yükleme / indirme",
       "addGroup": "Grup ekle",
       "createSuccess": "«{name}» grubu oluşturuldu.",
       "rename": "Yeniden adlandır",
@@ -3451,5 +3443,13 @@
     "copyAddress": "Copy address",
     "select": "Select {name}",
     "selectAll": "Select all"
+  },
+  "groups": {
+    "subtitle": "Put clients with the same plan together, then change limits for all of them at once.",
+    "new": "New group",
+    "empty": "No groups yet",
+    "emptyHint": "Make a group, then add clients to it from here or from the Clients page.",
+    "members": "members",
+    "share": "Share of all group traffic"
   }
 }

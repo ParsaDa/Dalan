@@ -1057,14 +1057,6 @@
     },
     "groups": {
       "name": "名稱",
-      "clientCount": "客戶端",
-      "totalGroups": "群組總數",
-      "totalGroupedClients": "有群組的客戶端",
-      "trafficUsed": "已用流量",
-      "upload": "上傳",
-      "download": "下載",
-      "totalTraffic": "總流量",
-      "totalUpDown": "總上傳 / 下載",
       "addGroup": "新增群組",
       "createSuccess": "已建立群組「{name}」。",
       "rename": "重新命名",
@@ -3451,5 +3443,13 @@
     "copyAddress": "Copy address",
     "select": "Select {name}",
     "selectAll": "Select all"
+  },
+  "groups": {
+    "subtitle": "Put clients with the same plan together, then change limits for all of them at once.",
+    "new": "New group",
+    "empty": "No groups yet",
+    "emptyHint": "Make a group, then add clients to it from here or from the Clients page.",
+    "members": "members",
+    "share": "Share of all group traffic"
   }
 }
