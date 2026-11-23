@@ -44,11 +44,9 @@ function ruleOrder() {
 
 function openRouting(mobile: boolean) {
   const view = renderWithProviders(<Harness mobile={mobile} />);
-  fireEvent.click(screen.getByRole('tab', { name: /Routing Rules/ }));
   return {
     ...view,
-    rows: () =>
-      document.querySelectorAll(mobile ? '.rule-card' : '.routing-table tr[data-row-key]'),
+    rows: () => document.querySelectorAll('.rule-row'),
   };
 }
 

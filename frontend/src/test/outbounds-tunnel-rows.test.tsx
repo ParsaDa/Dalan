@@ -42,14 +42,14 @@ describe('OutboundsTab tunnel rows', () => {
   it('lists a tunnel in the main table with its traffic, and offers no edit, delete or check', () => {
     renderTab(false);
 
-    const tableRows = document.querySelectorAll('.ant-table-tbody tr.ant-table-row');
+    const tableRows = document.querySelectorAll('tr.ob-row');
     expect(tableRows.length).toBe(2);
     const tunnelRow = tableRows[1] as HTMLElement;
     expect(tunnelRow.textContent).toContain('tunnel-de1');
     expect(tunnelRow.textContent).toContain('2.00 KB');
     expect(tunnelRow.textContent).toContain('Reverse');
     expect(tunnelRow.querySelector('button[aria-label="Edit"]')).toBeNull();
-    expect(tunnelRow.querySelector('button[aria-label="More"]')).toBeNull();
+    expect(tunnelRow.querySelector('button[aria-label^="Actions"]')).toBeNull();
     const check = tunnelRow.querySelector('button[aria-label="Check"]') as HTMLButtonElement;
     expect(check.disabled).toBe(true);
     expect(tunnelRow.querySelector('a[href$="/tunnels"]')).not.toBeNull();
@@ -57,7 +57,7 @@ describe('OutboundsTab tunnel rows', () => {
 
   it('does not render a separate tunnels table', () => {
     renderTab(false);
-    expect(document.querySelectorAll('.ant-table-tbody').length).toBe(1);
+    expect(document.querySelectorAll('table').length).toBe(1);
   });
 
   it('lists the tunnel as a card on mobile without a menu to edit it', () => {
@@ -66,6 +66,6 @@ describe('OutboundsTab tunnel rows', () => {
     expect(cards.length).toBe(2);
     expect(cards[1].textContent).toContain('tunnel-de1');
     expect(cards[1].textContent).toContain('Reverse');
-    expect(cards[1].querySelector('button[aria-label="More"]')).toBeNull();
+    expect(cards[1].querySelector('button[aria-label^="Actions"]')).toBeNull();
   });
 });

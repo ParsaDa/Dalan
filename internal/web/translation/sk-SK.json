@@ -214,7 +214,6 @@
       "xrayObservatoryDead": "Nedostupný",
       "xrayObservatoryLastSeen": "Naposledy dostupný",
       "xrayObservatoryLastTry": "Posledný pokus",
-      "toggleIpVisibility": "Zobraziť alebo skryť IP adresu",
       "upload": "Odosielanie",
       "download": "Sťahovanie",
       "sent": "Odoslané",
@@ -2051,8 +2050,6 @@
       "bufferSizePlaceholder": "automaticky",
       "seconds": "sekundy",
       "rules": {
-        "source": "Zdroj",
-        "dest": "Cieľ",
         "inbound": "Vstup",
         "balancer": "Vyvažovanie",
         "useComma": "Zoznam oddelený čiarkou"
@@ -2164,8 +2161,6 @@
       },
       "outbound": {
         "tag": "Značka",
-        "egress": "Výstupná adresa",
-        "egressHint": "Spustite test HTTP a zobrazte výstupnú IP adresu aj krajinu.",
         "outboundStatus": "Stav výstupu",
         "sendThrough": "Odosielať cez",
         "targetStrategy": "Spôsob výberu cieľa",
@@ -3420,5 +3415,28 @@
     "layer3": "Layer 3",
     "ms": "{n} ms",
     "enable": "Turn on"
+  },
+  "outbounds": {
+    "title": "Outbounds and routing",
+    "subtitle": "Where traffic leaves, and the rules that pick the way. Tunnels and Tor appear here next to the other outbounds.",
+    "editJson": "Edit as JSON",
+    "add": "Add outbound",
+    "colName": "Name",
+    "colType": "Type",
+    "ready": "Ready",
+    "failed": "Failed",
+    "testing": "Testing",
+    "notTested": "Not tested",
+    "torExit": "Tor",
+    "unsaved": "You have changes that are not saved. Saving restarts Xray."
+  },
+  "routing": {
+    "title": "Routing rules",
+    "subtitle": "The rules that pick which outbound each connection uses.",
+    "rule": "Rule",
+    "hint": "Checked from top to bottom. The first match wins.",
+    "empty": "No rules yet. Without rules, traffic leaves through the first outbound.",
+    "drag": "Drag to reorder",
+    "enabled": "Turn on"
   }
 }

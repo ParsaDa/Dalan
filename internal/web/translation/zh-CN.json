@@ -214,7 +214,6 @@
       "xrayObservatoryDead": "离线",
       "xrayObservatoryLastSeen": "最后在线",
       "xrayObservatoryLastTry": "最后尝试",
-      "toggleIpVisibility": "切换 IP 可见性",
       "upload": "上传",
       "download": "下载",
       "sent": "已发送",
@@ -1930,8 +1929,6 @@
       "bufferSizePlaceholder": "自动",
       "seconds": "秒",
       "rules": {
-        "source": "来源",
-        "dest": "目的地址",
         "inbound": "入站",
         "balancer": "负载均衡",
         "useComma": "逗号分隔的项目"
@@ -2043,8 +2040,6 @@
       },
       "outbound": {
         "tag": "标签",
-        "egress": "出口",
-        "egressHint": "执行 HTTP 测试以显示出口 IP 和所在国家/地区。",
         "outboundStatus": "出站状态",
         "sendThrough": "发送通过",
         "targetStrategy": "目标解析策略",
@@ -3420,5 +3415,28 @@
     "layer3": "Layer 3",
     "ms": "{n} ms",
     "enable": "Turn on"
+  },
+  "outbounds": {
+    "title": "Outbounds and routing",
+    "subtitle": "Where traffic leaves, and the rules that pick the way. Tunnels and Tor appear here next to the other outbounds.",
+    "editJson": "Edit as JSON",
+    "add": "Add outbound",
+    "colName": "Name",
+    "colType": "Type",
+    "ready": "Ready",
+    "failed": "Failed",
+    "testing": "Testing",
+    "notTested": "Not tested",
+    "torExit": "Tor",
+    "unsaved": "You have changes that are not saved. Saving restarts Xray."
+  },
+  "routing": {
+    "title": "Routing rules",
+    "subtitle": "The rules that pick which outbound each connection uses.",
+    "rule": "Rule",
+    "hint": "Checked from top to bottom. The first match wins.",
+    "empty": "No rules yet. Without rules, traffic leaves through the first outbound.",
+    "drag": "Drag to reorder",
+    "enabled": "Turn on"
   }
 }

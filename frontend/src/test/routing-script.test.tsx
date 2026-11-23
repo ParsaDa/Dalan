@@ -23,7 +23,6 @@ function renderRoutingRules(routing: Record<string, unknown>) {
       />
     </QueryClientProvider>,
   );
-  fireEvent.click(screen.getByRole('tab', { name: /Routing Rules/ }));
 }
 
 // xray-core 26.10.10 routes only through routing.script once it is set, skipping

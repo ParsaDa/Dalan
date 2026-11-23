@@ -214,7 +214,6 @@
       "xrayObservatoryDead": "Caído",
       "xrayObservatoryLastSeen": "Visto por última vez",
       "xrayObservatoryLastTry": "Último intento",
-      "toggleIpVisibility": "Alternar visibilidad de la IP",
       "upload": "Subida",
       "download": "Descargar",
       "sent": "Enviado",
@@ -1930,8 +1929,6 @@
       "metricsListenDesc": "Expone las métricas estilo Prometheus de Xray en esta dirección:puerto (por ejemplo, 127.0.0.1:11111). Déjalo vacío para deshabilitarlo. Vincúlalo a localhost y ponlo tras un proxy inverso — no está autenticado.",
       "metricsTag": "Etiqueta de métricas",
       "rules": {
-        "source": "Fuente",
-        "dest": "Destino",
         "inbound": "Entrante",
         "balancer": "Equilibrador",
         "useComma": "Elementos separados por comas"
@@ -2043,8 +2040,6 @@
       },
       "outbound": {
         "tag": "Etiqueta",
-        "egress": "Egress",
-        "egressHint": "Run an HTTP test to show egress IP and country.",
         "outboundStatus": "Estado de Salida",
         "sendThrough": "Enviar a través de",
         "targetStrategy": "Estrategia de destino",
@@ -3420,5 +3415,28 @@
     "layer3": "Layer 3",
     "ms": "{n} ms",
     "enable": "Turn on"
+  },
+  "outbounds": {
+    "title": "Outbounds and routing",
+    "subtitle": "Where traffic leaves, and the rules that pick the way. Tunnels and Tor appear here next to the other outbounds.",
+    "editJson": "Edit as JSON",
+    "add": "Add outbound",
+    "colName": "Name",
+    "colType": "Type",
+    "ready": "Ready",
+    "failed": "Failed",
+    "testing": "Testing",
+    "notTested": "Not tested",
+    "torExit": "Tor",
+    "unsaved": "You have changes that are not saved. Saving restarts Xray."
+  },
+  "routing": {
+    "title": "Routing rules",
+    "subtitle": "The rules that pick which outbound each connection uses.",
+    "rule": "Rule",
+    "hint": "Checked from top to bottom. The first match wins.",
+    "empty": "No rules yet. Without rules, traffic leaves through the first outbound.",
+    "drag": "Drag to reorder",
+    "enabled": "Turn on"
   }
 }

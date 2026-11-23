@@ -39,6 +39,8 @@ import {
 import { DnsTab } from './dns';
 import { WarpModal, NordModal, PiaModal, TorModal } from './overrides';
 import './XrayPage.css';
+import { IlloOffline } from '@/components/dl/Illustrations';
+import { Btn, Empty as DlEmpty, Sk } from '@/components/dl/primitives';
 
 const SECTION_SLUGS = ['basic', 'routing', 'outbound', 'balancer', 'dns', 'advanced'];
 
@@ -238,6 +240,7 @@ export default function XrayPage() {
       case 'routing':
         return (
           <RoutingTab
+            variant="page"
             templateSettings={templateSettings}
             setTemplateSettings={setTemplateSettings}
             inboundTags={inboundTags}
@@ -271,6 +274,18 @@ export default function XrayPage() {
             onShowPia={() => setPiaOpen(true)}
             onShowTor={() => setTorOpen(true)}
             onRefreshXrayData={fetchAll}
+            onEditJson={() => navigate('/xray#advanced')}
+            rulesTile={
+              <RoutingTab
+                variant="tile"
+                templateSettings={templateSettings}
+                setTemplateSettings={setTemplateSettings}
+                inboundTags={inboundTags}
+                clientReverseTags={clientReverseTags}
+                subscriptionOutboundTags={injectedTags}
+                isMobile={isMobile}
+              />
+            }
           />
         );
       case 'balancer':
@@ -327,6 +342,90 @@ export default function XrayPage() {
     }
   })();
 
+  const designSection = activeSection === 'outbound' || activeSection === 'routing';
+  const saveBar = !saveDisabled && (
+    <div
+      className="tile edge st-warn row sp wrap"
+      role="status"
+      style={{ position: 'sticky', bottom: 16, zIndex: 5, padding: '12px 16px', gap: 10 }}
+    >
+      <span style={{ fontWeight: 650 }}>{t('outbounds.unsaved')}</span>
+      <Btn kind="pri" icon="check" disabled={spinning} onClick={onSaveAll}>
+        {t('pages.xray.save')}
+      </Btn>
+    </div>
+  );
+  const overrideModals = (
+    <>
+      <WarpModal
+        open={warpOpen}
+        templateSettings={templateSettings}
+        onClose={() => setWarpOpen(false)}
+        onAddOutbound={onAddOutbound}
+        onResetOutbound={onResetOutbound}
+        onRemoveOutbound={onRemoveOutboundByTag}
+      />
+      <NordModal
+        open={nordOpen}
+        templateSettings={templateSettings}
+        onClose={() => setNordOpen(false)}
+        onAddOutbound={onAddOutbound}
+        onResetOutbound={onResetOutbound}
+      />
+      <TorModal open={torOpen} onClose={() => setTorOpen(false)} onChanged={fetchAll} />
+      <PiaModal
+        open={piaOpen}
+        templateSettings={templateSettings}
+        onClose={() => setPiaOpen(false)}
+        onAddOutbound={onAddOutbound}
+        onResetOutbound={onResetOutbound}
+      />
+    </>
+  );
+
+  if (designSection) {
+    return (
+      <div className="col stag" style={{ gap: 18 }}>
+        {messageContextHolder}
+        {!fetched ? (
+          <section className="tile">
+            <Sk h={160} />
+          </section>
+        ) : fetchError ? (
+          <section className="tile edge st-bad">
+            <DlEmpty
+              art={<IlloOffline />}
+              title={t('somethingWentWrong')}
+              actions={
+                <Btn kind="pri" icon="refresh" onClick={fetchAll}>
+                  {t('check')}
+                </Btn>
+              }
+            >
+              {fetchError}
+            </DlEmpty>
+          </section>
+        ) : activeSection === 'routing' ? (
+          <>
+            <div className="pagehead">
+              <div>
+                <h2 className="h2" style={{ fontSize: 28 }}>
+                  {t('menu.routing')}
+                </h2>
+                <p>{t('routing.subtitle')}</p>
+              </div>
+            </div>
+            {sectionBody}
+          </>
+        ) : (
+          sectionBody
+        )}
+        {saveBar}
+        {overrideModals}
+      </div>
+    );
+  }
+
   return (
     <ConfigProvider theme={antdThemeConfig}>
       {messageContextHolder}
@@ -382,29 +481,7 @@ export default function XrayPage() {
           </Layout.Content>
         </Layout>
 
-        <WarpModal
-          open={warpOpen}
-          templateSettings={templateSettings}
-          onClose={() => setWarpOpen(false)}
-          onAddOutbound={onAddOutbound}
-          onResetOutbound={onResetOutbound}
-          onRemoveOutbound={onRemoveOutboundByTag}
-        />
-        <NordModal
-          open={nordOpen}
-          templateSettings={templateSettings}
-          onClose={() => setNordOpen(false)}
-          onAddOutbound={onAddOutbound}
-          onResetOutbound={onResetOutbound}
-        />
-        <TorModal open={torOpen} onClose={() => setTorOpen(false)} onChanged={fetchAll} />
-        <PiaModal
-          open={piaOpen}
-          templateSettings={templateSettings}
-          onClose={() => setPiaOpen(false)}
-          onAddOutbound={onAddOutbound}
-          onResetOutbound={onResetOutbound}
-        />
+        {overrideModals}
       </Layout>
     </ConfigProvider>
   );

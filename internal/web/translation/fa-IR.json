@@ -214,7 +214,6 @@
       "xrayObservatoryDead": "غیرفعال",
       "xrayObservatoryLastSeen": "آخرین مشاهده",
       "xrayObservatoryLastTry": "آخرین تلاش",
-      "toggleIpVisibility": "تغییر وضعیت نمایش IP",
       "upload": "آپلود",
       "download": "دانلود",
       "sent": "ارسال شده",
@@ -1930,8 +1929,6 @@
       "bufferSizePlaceholder": "خودکار",
       "seconds": "ثانیه",
       "rules": {
-        "source": "مبدا",
-        "dest": "مقصد",
         "inbound": "ورودی",
         "balancer": "بالانسر",
         "useComma": "موارد جدا شده با کاما"
@@ -2043,8 +2040,6 @@
       },
       "outbound": {
         "tag": "تگ",
-        "egress": "Egress",
-        "egressHint": "Run an HTTP test to show egress IP and country.",
         "outboundStatus": "وضعیت خروجی",
         "sendThrough": "ارسال با",
         "targetStrategy": "استراتژی مقصد",
@@ -3420,5 +3415,28 @@
     "layer3": "لایه ۳",
     "ms": "{n} میلی‌ثانیه",
     "enable": "روشن کردن"
+  },
+  "outbounds": {
+    "title": "خروجی‌ها و مسیریابی",
+    "subtitle": "جایی که ترافیک بیرون می‌رود، و قانون‌هایی که راه را انتخاب می‌کنند. تونل‌ها و Tor هم این‌جا کنار بقیه‌ی خروجی‌ها می‌آیند.",
+    "editJson": "ویرایش به‌صورت JSON",
+    "add": "افزودن خروجی",
+    "colName": "نام",
+    "colType": "نوع",
+    "ready": "آماده",
+    "failed": "ناموفق",
+    "testing": "در حال آزمایش",
+    "notTested": "آزمایش نشده",
+    "torExit": "Tor",
+    "unsaved": "تغییرهایی دارید که ذخیره نشده‌اند. ذخیره کردن، Xray را دوباره راه‌اندازی می‌کند."
+  },
+  "routing": {
+    "title": "قانون‌های مسیریابی",
+    "subtitle": "قانون‌هایی که انتخاب می‌کنند هر اتصال از کدام خروجی برود.",
+    "rule": "قانون",
+    "hint": "از بالا به پایین بررسی می‌شوند. اولین قانونی که بخورد، برنده است.",
+    "empty": "هنوز قانونی نیست. بدون قانون، ترافیک از اولین خروجی بیرون می‌رود.",
+    "drag": "برای جابه‌جایی بکشید",
+    "enabled": "روشن کردن"
   }
 }

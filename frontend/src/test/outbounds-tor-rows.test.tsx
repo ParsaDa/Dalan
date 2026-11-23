@@ -72,13 +72,12 @@ describe('OutboundsTab Tor rows', () => {
   it('lists every exit after the stored outbounds and tunnels with its country and traffic', () => {
     renderTab(false);
 
-    const tableRows = document.querySelectorAll('.ant-table-tbody tr.ant-table-row');
+    const tableRows = document.querySelectorAll('tr.ob-row');
     expect(tableRows.length).toBe(6);
     const tags = [...tableRows].map((r) => r.querySelector('.tag-name')?.textContent);
     expect(tags).toEqual(['proxy-a', 'tunnel-de1', 'tor-de', 'tor-nl', 'tor-fr', 'tor-gb']);
-    const de = rowFor('tor-de', 'tr.ant-table-row');
+    const de = rowFor('tor-de', 'tr.ob-row');
     expect(de.textContent).toContain('tor');
-    expect(de.textContent).toContain('🇩🇪');
     expect(de.textContent).toContain('Germany');
     expect(de.textContent).toContain('2.00 KB');
   });
@@ -86,31 +85,31 @@ describe('OutboundsTab Tor rows', () => {
   it('says connected with the latency, or not connected with the reason, or starting with progress', () => {
     renderTab(false);
 
-    const de = rowFor('tor-de', 'tr.ant-table-row').textContent;
+    const de = rowFor('tor-de', 'tr.ob-row').textContent;
     expect(de).toContain('Connected');
     expect(de).toContain('1400 ms');
     expect(de).not.toContain('Not connected');
 
-    const nl = rowFor('tor-nl', 'tr.ant-table-row').textContent;
+    const nl = rowFor('tor-nl', 'tr.ob-row').textContent;
     expect(nl).toContain('Not connected');
     expect(nl).toContain('socks connect: general failure');
 
-    const fr = rowFor('tor-fr', 'tr.ant-table-row').textContent;
+    const fr = rowFor('tor-fr', 'tr.ob-row').textContent;
     expect(fr).toContain('Starting');
     expect(fr).toContain('40%');
     expect(fr).not.toContain('Not connected');
 
-    const gb = rowFor('tor-gb', 'tr.ant-table-row').textContent;
+    const gb = rowFor('tor-gb', 'tr.ob-row').textContent;
     expect(gb).toContain('Not connected');
     expect(gb).toContain('Tor is not installed on this server');
   });
 
   it('offers Manage Tor but no edit, menu or check, and Manage opens the Tor dialog', () => {
     const onShowTor = renderTab(false);
-    const de = rowFor('tor-de', 'tr.ant-table-row');
+    const de = rowFor('tor-de', 'tr.ob-row');
 
     expect(de.querySelector('button[aria-label="Edit"]')).toBeNull();
-    expect(de.querySelector('button[aria-label="More"]')).toBeNull();
+    expect(de.querySelector('button[aria-label^="Actions"]')).toBeNull();
     expect((de.querySelector('button[aria-label="Check"]') as HTMLButtonElement).disabled).toBe(
       true,
     );
@@ -125,10 +124,10 @@ describe('OutboundsTab Tor rows', () => {
     const nl = rowFor('tor-nl', '.outbound-card');
     expect(nl.textContent).toContain('Not connected');
     expect(nl.textContent).toContain('socks connect: general failure');
-    expect(nl.textContent).toContain('🇳🇱');
+    expect(nl.textContent).toContain('Netherlands');
     const de = rowFor('tor-de', '.outbound-card');
     expect(de.textContent).toContain('1400 ms');
-    expect(de.querySelector('button[aria-label="More"]')).toBeNull();
+    expect(de.querySelector('button[aria-label^="Actions"]')).toBeNull();
     fireEvent.click(de.querySelector('button[aria-label="Manage Tor"]') as HTMLElement);
     expect(onShowTor).toHaveBeenCalledTimes(1);
   });

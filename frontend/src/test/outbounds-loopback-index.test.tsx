@@ -45,8 +45,7 @@ describe('OutboundsTab hidden-loopback index mapping', () => {
       </QueryClientProvider>,
     );
 
-    const tbody = document.querySelector('.ant-table-tbody');
-    const tableRows = tbody?.querySelectorAll('tr.ant-table-row') ?? [];
+    const tableRows = document.querySelectorAll('tr.ob-row');
     expect(tableRows.length).toBe(2);
 
     const checkButton = tableRows[1].querySelector(

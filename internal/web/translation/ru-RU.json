@@ -214,7 +214,6 @@
       "xrayObservatoryDead": "Недоступен",
       "xrayObservatoryLastSeen": "Последняя активность",
       "xrayObservatoryLastTry": "Последняя попытка",
-      "toggleIpVisibility": "Скрыть или показать IP-адреса сервера",
       "upload": "Загрузка",
       "download": "Скачивание",
       "sent": "Отправлено",
@@ -1930,8 +1929,6 @@
       "bufferSizePlaceholder": "авто",
       "seconds": "секунд",
       "rules": {
-        "source": "Источник",
-        "dest": "Пункт назначения",
         "inbound": "Входящее подключение",
         "balancer": "Балансировщик",
         "useComma": "Элементы, разделённые запятыми"
@@ -2043,8 +2040,6 @@
       },
       "outbound": {
         "tag": "Тег",
-        "egress": "Выход",
-        "egressHint": "Запустите HTTP-тест, чтобы показать выходной IP и страну.",
         "outboundStatus": "Статус исходящего подключения",
         "sendThrough": "Отправить через",
         "targetStrategy": "Стратегия назначения",
@@ -3420,5 +3415,28 @@
     "layer3": "Layer 3",
     "ms": "{n} ms",
     "enable": "Turn on"
+  },
+  "outbounds": {
+    "title": "Outbounds and routing",
+    "subtitle": "Where traffic leaves, and the rules that pick the way. Tunnels and Tor appear here next to the other outbounds.",
+    "editJson": "Edit as JSON",
+    "add": "Add outbound",
+    "colName": "Name",
+    "colType": "Type",
+    "ready": "Ready",
+    "failed": "Failed",
+    "testing": "Testing",
+    "notTested": "Not tested",
+    "torExit": "Tor",
+    "unsaved": "You have changes that are not saved. Saving restarts Xray."
+  },
+  "routing": {
+    "title": "Routing rules",
+    "subtitle": "The rules that pick which outbound each connection uses.",
+    "rule": "Rule",
+    "hint": "Checked from top to bottom. The first match wins.",
+    "empty": "No rules yet. Without rules, traffic leaves through the first outbound.",
+    "drag": "Drag to reorder",
+    "enabled": "Turn on"
   }
 }
