@@ -1,28 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router';
-import {
-  Alert,
-  Button,
-  Card,
-  Col,
-  ConfigProvider,
-  FloatButton,
-  Layout,
-  Modal,
-  Row,
-  Space,
-  Spin,
-  message,
-} from 'antd';
+import { useLocation, useNavigate } from 'react-router';
+import { message } from 'antd';
 
 import { HttpUtil, PromiseUtil } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
-import { useTheme } from '@/hooks/useTheme';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useAllSettings } from '@/api/queries/useAllSettings';
 import { AllSettingSchema } from '@/schemas/setting';
-import AppSidebar from '@/layouts/AppSidebar';
 import GeneralTab from './GeneralTab';
 import SecurityTab from './SecurityTab';
 import TelegramTab from './TelegramTab';
@@ -31,22 +15,36 @@ import DiscordTab from './DiscordTab';
 import SubscriptionGeneralTab from './SubscriptionGeneralTab';
 import SubscriptionFormatsTab from './SubscriptionFormatsTab';
 import SubscriptionBalancersTab from './SubscriptionBalancersTab';
+import AppearanceSettings from './AppearanceSettings';
+import BackupsSection from './maintenance/BackupsSection';
+import UpdatesSection from './maintenance/UpdatesSection';
+import Icon from '@/components/dl/Icon';
+import { Modal as DlModal } from '@/components/dl/overlays';
+import { Btn, IconBtn, Seg, Sk, TileHead } from '@/components/dl/primitives';
 import './SettingsPage.css';
 
 interface ApiMsg {
   success?: boolean;
 }
 
-const tabSlugs = [
-  'general',
-  'security',
-  'telegram',
-  'email',
-  'discord',
-  'subscription',
-  'subscription-formats',
-  'subscription-balancers',
-];
+const SECTIONS = [
+  { slug: 'general', icon: 'settings', key: 'settingsPage.nav.general' },
+  { slug: 'appearance', icon: 'fx', key: 'settingsPage.nav.appearance' },
+  { slug: 'subscription', icon: 'link', key: 'settingsPage.nav.subscription' },
+  { slug: 'security', icon: 'lock', key: 'settingsPage.nav.security' },
+  { slug: 'backups', icon: 'server', key: 'settingsPage.nav.backups' },
+  { slug: 'notifications', icon: 'bell', key: 'settingsPage.nav.notifications' },
+  { slug: 'users', icon: 'users', key: 'settingsPage.nav.users' },
+  { slug: 'developer', icon: 'code', key: 'settingsPage.nav.developer' },
+  { slug: 'updates', icon: 'refresh', key: 'settingsPage.nav.updates' },
+] as const;
+const OLD_SLUGS: Record<string, string> = {
+  telegram: 'notifications',
+  email: 'notifications',
+  discord: 'notifications',
+  'subscription-formats': 'subscription',
+  'subscription-balancers': 'subscription',
+};
 
 function isIp(h: string): boolean {
   if (typeof h !== 'string') return false;
@@ -64,15 +62,8 @@ function isIp(h: string): boolean {
   return parts.length === 2 ? groups < 8 : groups === 8;
 }
 
-function scrollTarget() {
-  return document.getElementById('content-layout') as HTMLElement;
-}
-
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const { isDark, isUltra, antdThemeConfig } = useTheme();
-  const { isMobile } = useMediaQuery();
-  const [modal, modalContextHolder] = Modal.useModal();
   const [messageApi, messageContextHolder] = message.useMessage();
 
   useEffect(() => {
@@ -96,8 +87,20 @@ export default function SettingsPage() {
 
   const [alertVisible, setAlertVisible] = useState(true);
   const location = useLocation();
-  const slug = location.hash.replace(/^#/, '');
-  const activeSlug = tabSlugs.includes(slug) ? slug : 'general';
+  const navigate = useNavigate();
+  const hash = location.hash.replace(/^#/, '');
+  const slug = OLD_SLUGS[hash] ?? hash;
+  const activeSlug = SECTIONS.some((x) => x.slug === slug) ? slug : 'general';
+  const [subTab, setSubTab] = useState<'general' | 'formats' | 'balancers'>(
+    hash === 'subscription-formats'
+      ? 'formats'
+      : hash === 'subscription-balancers'
+        ? 'balancers'
+        : 'general',
+  );
+  const [notifyTab, setNotifyTab] = useState<'telegram' | 'email' | 'discord'>(
+    hash === 'email' || hash === 'discord' ? hash : 'telegram',
+  );
 
   function rebuildUrlAfterRestart(): string {
     const { webDomain, webPort, webBasePath, webCertFile, webKeyFile } = allSetting;
@@ -136,25 +139,18 @@ export default function SettingsPage() {
     await saveAll();
   }
 
-  function restartPanel() {
-    modal.confirm({
-      title: t('pages.settings.restartPanel'),
-      content: t('pages.settings.restartPanelDesc'),
-      okText: t('pages.settings.restartPanel'),
-      okButtonProps: { danger: true },
-      cancelText: t('cancel'),
-      onOk: async () => {
-        setSpinning(true);
-        try {
-          const msg = (await HttpUtil.post('/panel/api/setting/restartPanel')) as ApiMsg;
-          if (!msg?.success) return;
-          await PromiseUtil.sleep(5000);
-          window.location.replace(rebuildUrlAfterRestart());
-        } finally {
-          setSpinning(false);
-        }
-      },
-    });
+  const [restartOpen, setRestartOpen] = useState(false);
+  async function restartPanel() {
+    setRestartOpen(false);
+    setSpinning(true);
+    try {
+      const msg = (await HttpUtil.post('/panel/api/setting/restartPanel')) as ApiMsg;
+      if (!msg?.success) return;
+      await PromiseUtil.sleep(5000);
+      window.location.replace(rebuildUrlAfterRestart());
+    } finally {
+      setSpinning(false);
+    }
   }
 
   const confAlerts = useMemo<string[]>(() => {
@@ -198,117 +194,225 @@ export default function SettingsPage() {
     return out;
   }, [allSetting, t]);
 
-  const pageClass = useMemo(() => {
-    const classes = ['settings-page'];
-    if (isDark) classes.push('is-dark');
-    if (isUltra) classes.push('is-ultra');
-    return classes.join(' ');
-  }, [isDark, isUltra]);
-
-  const categoryBody = useMemo(() => {
+  const tile = (body: ReactNode) => <section className="tile">{body}</section>;
+  const categoryBody = (() => {
     switch (activeSlug) {
+      case 'appearance':
+        return <AppearanceSettings />;
       case 'security':
-        return (
+        return tile(
           <SecurityTab
             allSetting={allSetting}
             updateSetting={updateSetting}
             saveSetting={savePayload}
-          />
+          />,
         );
-      case 'telegram':
-        return <TelegramTab allSetting={allSetting} updateSetting={updateSetting} />;
-      case 'email':
-        return <EmailTab allSetting={allSetting} updateSetting={updateSetting} />;
-      case 'discord':
-        return <DiscordTab allSetting={allSetting} updateSetting={updateSetting} />;
+      case 'notifications':
+        return tile(
+          <>
+            <Seg
+              label={t('settingsPage.nav.notifications')}
+              value={notifyTab}
+              onChange={setNotifyTab}
+              options={[
+                { value: 'telegram', label: 'Telegram' },
+                { value: 'email', label: t('settingsPage.email') },
+                { value: 'discord', label: 'Discord' },
+              ]}
+            />
+            <div style={{ marginTop: 14 }}>
+              {notifyTab === 'telegram' ? (
+                <TelegramTab allSetting={allSetting} updateSetting={updateSetting} />
+              ) : notifyTab === 'email' ? (
+                <EmailTab allSetting={allSetting} updateSetting={updateSetting} />
+              ) : (
+                <DiscordTab allSetting={allSetting} updateSetting={updateSetting} />
+              )}
+            </div>
+          </>,
+        );
       case 'subscription':
-        return <SubscriptionGeneralTab allSetting={allSetting} updateSetting={updateSetting} />;
-      case 'subscription-formats':
-        return <SubscriptionFormatsTab allSetting={allSetting} updateSetting={updateSetting} />;
-      case 'subscription-balancers':
-        return <SubscriptionBalancersTab allSetting={allSetting} updateSetting={updateSetting} />;
+        return tile(
+          <>
+            <Seg
+              label={t('settingsPage.nav.subscription')}
+              value={subTab}
+              onChange={setSubTab}
+              options={[
+                { value: 'general', label: t('settingsPage.nav.general') },
+                { value: 'formats', label: t('settingsPage.formats') },
+                { value: 'balancers', label: t('settingsPage.balancers') },
+              ]}
+            />
+            <div style={{ marginTop: 14 }}>
+              {subTab === 'general' ? (
+                <SubscriptionGeneralTab allSetting={allSetting} updateSetting={updateSetting} />
+              ) : subTab === 'formats' ? (
+                <SubscriptionFormatsTab allSetting={allSetting} updateSetting={updateSetting} />
+              ) : (
+                <SubscriptionBalancersTab allSetting={allSetting} updateSetting={updateSetting} />
+              )}
+            </div>
+          </>,
+        );
+      case 'backups':
+        return <BackupsSection />;
+      case 'updates':
+        return <UpdatesSection />;
+      case 'users':
+        return (
+          <section className="tile" style={{ borderStyle: 'dashed' }}>
+            <div className="row">
+              <span className="ico">
+                <Icon name="users" />
+              </span>
+              <div className="f1">
+                <b>{t('settingsPage.nav.users')}</b>
+                <div className="mut" style={{ fontSize: 13 }}>
+                  {t('settingsPage.usersLater')}
+                </div>
+              </div>
+              <span className="badge">{t('settingsPage.comingLater')}</span>
+            </div>
+          </section>
+        );
+      case 'developer':
+        return (
+          <section className="tile">
+            <TileHead icon="code" title={t('settingsPage.nav.developer')} />
+            <p className="mut" style={{ margin: '0 0 12px' }}>
+              {t('settingsPage.developerHint')}
+            </p>
+            <div className="row wrap" style={{ gap: 8 }}>
+              <Btn kind="pri" icon="code" onClick={() => navigate('/api-docs')}>
+                {t('menu.apiDocs')}
+              </Btn>
+              <Btn icon="lock" onClick={() => navigate('/settings#security')}>
+                {t('pages.nodes.apiToken')}
+              </Btn>
+            </div>
+          </section>
+        );
       default:
-        return <GeneralTab allSetting={allSetting} updateSetting={updateSetting} />;
+        return tile(<GeneralTab allSetting={allSetting} updateSetting={updateSetting} />);
     }
-  }, [activeSlug, allSetting, updateSetting, savePayload]);
+  })();
 
   return (
-    <ConfigProvider theme={antdThemeConfig}>
+    <div className="col stag" style={{ gap: 18 }}>
       {messageContextHolder}
-      {modalContextHolder}
-      <Layout className={pageClass}>
-        <AppSidebar />
-
-        <Layout className="content-shell">
-          <Layout.Content id="content-layout" className="content-area">
-            <Spin
-              aria-live="off"
-              spinning={spinning || !fetched}
-              delay={200}
-              description={t('loading')}
-              size="large"
+      <div className="pagehead">
+        <div>
+          <h2 className="h2" style={{ fontSize: 28 }}>
+            {t('menu.settings')}
+          </h2>
+          <p>{t('settingsPage.subtitle')}</p>
+        </div>
+        <div className="row wrap">
+          <Btn
+            kind="dng"
+            icon="power"
+            disabled={!saveDisabled || spinning}
+            onClick={() => setRestartOpen(true)}
+          >
+            {t('pages.settings.restartPanel')}
+          </Btn>
+          <Btn kind="pri" icon="check" disabled={saveDisabled || spinning} onClick={onSave}>
+            {t('pages.settings.save')}
+          </Btn>
+        </div>
+      </div>
+      {confAlerts.length > 0 && alertVisible && (
+        <section className="tile edge st-bad" role="alert">
+          <div className="row sp" style={{ alignItems: 'flex-start' }}>
+            <div className="row" style={{ alignItems: 'flex-start' }}>
+              <span className="ico bad">
+                <Icon name="alert" />
+              </span>
+              <div>
+                <b>{t('pages.settings.securityWarnings')}</b>
+                <div className="mut" style={{ fontSize: 13 }}>
+                  {t('pages.settings.panelExposed')}
+                </div>
+                <ul style={{ margin: '6px 0 0', paddingInlineStart: 18 }}>
+                  {confAlerts.map((msg, i) => (
+                    <li key={i}>{msg}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <IconBtn small icon="x" label={t('close')} onClick={() => setAlertVisible(false)} />
+          </div>
+        </section>
+      )}
+      {!saveDisabled && (
+        <div
+          className="tile edge st-warn row"
+          role="status"
+          style={{ padding: '10px 14px', gap: 10 }}
+        >
+          <Icon name="info" size={16} />
+          <span className="f1" style={{ fontWeight: 650 }}>
+            {t('pages.settings.infoDesc')}
+          </span>
+        </div>
+      )}
+      <div className="grid">
+        <nav
+          className="tile s3"
+          style={{ padding: 10, alignSelf: 'start' }}
+          aria-label={t('settingsPage.sections')}
+        >
+          {SECTIONS.map((x) => (
+            <a
+              key={x.slug}
+              className={`nav${activeSlug === x.slug ? ' on' : ''}`}
+              href={`#${x.slug}`}
+              aria-current={activeSlug === x.slug ? 'page' : undefined}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(`/settings#${x.slug}`);
+              }}
             >
-              {!fetched ? (
-                <div className="loading-spacer" />
-              ) : (
-                <>
-                  {confAlerts.length > 0 && alertVisible && (
-                    <Alert
-                      type="error"
-                      showIcon
-                      closable={{ onClose: () => setAlertVisible(false) }}
-                      className="conf-alert"
-                      title={t('pages.settings.securityWarnings')}
-                      description={
-                        <>
-                          <b>{t('pages.settings.panelExposed')}</b>
-                          <ul>
-                            {confAlerts.map((msg, i) => (
-                              <li key={i}>{msg}</li>
-                            ))}
-                          </ul>
-                        </>
-                      }
-                    />
-                  )}
-
-                  <Row gutter={[isMobile ? 8 : 16, isMobile ? 0 : 12]}>
-                    <Col span={24}>
-                      <Card hoverable>
-                        <Row className="header-row">
-                          <Col xs={24} sm={10} className="header-actions">
-                            <Space>
-                              <Button type="primary" disabled={saveDisabled} onClick={onSave}>
-                                {t('pages.settings.save')}
-                              </Button>
-                              <Button
-                                type="primary"
-                                danger
-                                disabled={!saveDisabled}
-                                onClick={restartPanel}
-                              >
-                                {t('pages.settings.restartPanel')}
-                              </Button>
-                            </Space>
-                          </Col>
-                          <Col xs={24} sm={14} className="header-info">
-                            <FloatButton.BackTop target={scrollTarget} visibilityHeight={200} />
-                            <Alert type="warning" showIcon title={t('pages.settings.infoDesc')} />
-                          </Col>
-                        </Row>
-                      </Card>
-                    </Col>
-
-                    <Col span={24}>
-                      <Card hoverable>{categoryBody}</Card>
-                    </Col>
-                  </Row>
-                </>
+              <Icon name={x.icon} />
+              <span className="nl">{t(x.key)}</span>
+              {x.slug === 'users' && (
+                <span className="badge" style={{ marginInlineStart: 'auto' }}>
+                  {t('settingsPage.soon')}
+                </span>
               )}
-            </Spin>
-          </Layout.Content>
-        </Layout>
-      </Layout>
-    </ConfigProvider>
+            </a>
+          ))}
+        </nav>
+        <div className="s9 col" style={{ gap: 18 }}>
+          {!fetched ? (
+            <section className="tile">
+              <Sk h={260} />
+            </section>
+          ) : (
+            categoryBody
+          )}
+        </div>
+      </div>
+      <DlModal
+        open={restartOpen}
+        onClose={() => setRestartOpen(false)}
+        label={t('pages.settings.restartPanel')}
+        width={460}
+      >
+        <h2 className="h3">{t('pages.settings.restartPanel')}</h2>
+        <p className="mut" style={{ margin: 0 }}>
+          {t('pages.settings.restartPanelDesc')}
+        </p>
+        <div className="mfoot">
+          <Btn kind="ghost" onClick={() => setRestartOpen(false)}>
+            {t('cancel')}
+          </Btn>
+          <Btn kind="dng" icon="power" onClick={restartPanel}>
+            {t('pages.settings.restartPanel')}
+          </Btn>
+        </div>
+      </DlModal>
+    </div>
   );
 }

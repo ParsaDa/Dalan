@@ -116,10 +116,11 @@ type Server struct {
 	httpServer *http.Server
 	listener   net.Listener
 
-	index *controller.IndexController
-	panel *controller.XUIController
-	api   *controller.APIController
-	ws    *controller.WebSocketController
+	index     *controller.IndexController
+	panel     *controller.XUIController
+	api       *controller.APIController
+	alertsJob *job.AlertsJob
+	ws        *controller.WebSocketController
 
 	xrayService    service.XrayService
 	settingService service.SettingService
@@ -308,6 +309,7 @@ const (
 	cadenceTuic          = "@every 10s"
 	cadenceClientIPScan  = "@every 10s"
 	cadenceNodeHeartbeat = "@every 5s"
+	cadenceAlerts        = "@every 30s"
 	cadenceNodeTraffic   = "@every 5s"
 	cadenceOutboundSub   = "@every 5m"
 	cadenceReapOrphans   = "@every 5m"
@@ -368,6 +370,7 @@ func (s *Server) startTask(restartXray bool, loc *time.Location) {
 
 	_, _ = s.cron.AddJob(cadenceTunnelPool, job.NewTunnelPoolJob())
 	_, _ = s.cron.AddJob(cadenceNodeHeartbeat, job.NewNodeHeartbeatJob())
+	_, _ = s.cron.AddJob(cadenceAlerts, s.alertsJob)
 
 	_, _ = s.cron.AddJob(cadenceNodeTraffic, job.NewNodeTrafficSyncJob())
 
@@ -672,6 +675,9 @@ func (s *Server) start(restartXray bool, startTgBot bool) (err error) {
 			})
 		}
 	}
+
+	s.alertsJob = job.NewAlertsJob()
+	s.bus.Subscribe("dashboard-alerts", s.alertsJob.HandleEvent)
 
 	// Register email subscriber (always — it checks smtpEnable at runtime)
 	emailService := email.NewEmailService(s.settingService)

@@ -18,6 +18,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/web/locale"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service/discord"
+	"github.com/mhsanaei/3x-ui/v3/internal/web/session"
 )
 
 func TestValidateRegex(t *testing.T) {
@@ -235,5 +236,36 @@ func TestTestDiscordEndpoint(t *testing.T) {
 
 	if !strings.Contains(resp.Body.String(), `"success":true`) || !strings.Contains(resp.Body.String(), "pages.settings.discordTestSuccess") {
 		t.Fatalf("expected success, got %s", resp.Body.String())
+	}
+}
+
+// The header greets the admin by name; it must be the signed-in user, never another row.
+func TestCurrentUserReturnsSignedInUsername(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		session.SetAPIAuthUser(c, &model.User{Id: 7, Username: "parsa", Password: "hash"})
+	})
+	NewSettingController(router.Group("/panel/api"))
+
+	req := httptest.NewRequest(http.MethodGet, "/panel/api/setting/user", nil)
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	var body struct {
+		Success bool `json:"success"`
+		Obj     struct {
+			Username string `json:"username"`
+			Password string `json:"password"`
+		} `json:"obj"`
+	}
+	if err := json.Unmarshal(resp.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode %s: %v", resp.Body.String(), err)
+	}
+	if !body.Success || body.Obj.Username != "parsa" {
+		t.Fatalf("got %s, want success with username parsa", resp.Body.String())
+	}
+	if body.Obj.Password != "" {
+		t.Fatalf("password hash leaked: %s", resp.Body.String())
 	}
 }

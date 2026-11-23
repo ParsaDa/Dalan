@@ -1,7 +1,5 @@
-import { useTranslation } from 'react-i18next';
-import { Button, Dropdown, type MenuProps } from 'antd';
+import type { MenuProps } from 'antd';
 import {
-  MoreOutlined,
   EditOutlined,
   CopyOutlined,
   ExportOutlined,
@@ -15,15 +13,7 @@ import {
 } from '@ant-design/icons';
 
 import { isInboundMultiUser } from './helpers';
-import type { DBInboundRecord, RowAction } from './types';
-
-interface RowActionsMenuProps {
-  record: DBInboundRecord;
-  subEnable: boolean;
-  hasClients: boolean;
-  onClick: (key: RowAction) => void;
-  isMobile?: boolean;
-}
+import type { DBInboundRecord } from './types';
 
 export function buildRowActionsMenu({
   record,
@@ -117,35 +107,4 @@ export function buildRowActionsMenu({
     label: t('delete'),
   });
   return items;
-}
-
-export function RowActionsCell({ record, subEnable, hasClients, onClick }: RowActionsMenuProps) {
-  const { t } = useTranslation();
-  return (
-    <div className="action-buttons">
-      <Button
-        type="text"
-        size="small"
-        style={{ fontSize: 16 }}
-        icon={<EditOutlined aria-hidden />}
-        aria-label={t('edit')}
-        onClick={() => onClick('edit')}
-      />
-      <Dropdown
-        trigger={['click']}
-        menu={{
-          items: buildRowActionsMenu({ record, subEnable, t, hasClients }),
-          onClick: ({ key }) => onClick(key as RowAction),
-        }}
-      >
-        <Button
-          type="text"
-          size="small"
-          style={{ fontSize: 16 }}
-          icon={<MoreOutlined aria-hidden />}
-          aria-label={t('more')}
-        />
-      </Dropdown>
-    </div>
-  );
 }

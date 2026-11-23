@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import { ConfigProvider, Tag, Tooltip, message } from 'antd';
+import { Tag, message } from 'antd';
 import {
   ApartmentOutlined,
   CheckCircleFilled,
@@ -18,14 +18,12 @@ import {
   ExportOutlined,
   FileTextOutlined,
   ImportOutlined,
-  LoadingOutlined,
   MailOutlined,
   MoonOutlined,
   PlusOutlined,
   ReloadOutlined,
   ThunderboltOutlined,
   SafetyOutlined,
-  SearchOutlined,
   SettingOutlined,
   SunOutlined,
   SwapOutlined,
@@ -42,11 +40,32 @@ import type { EffectsPref } from '@/lib/theme/effects';
 import { PANEL_ROUTES } from '@/routes/panelRoutes';
 import type { ClientRecord, InboundOption } from '@/schemas/client';
 import { commandPaletteStore, useCommandPalette } from './useCommandPalette';
-import './CommandPalette.css';
+import Icon from '@/components/dl/Icon';
+import type { IconName } from '@/components/dl/Icon';
+import { useNodesQuery } from '@/api/queries/useNodesQuery';
+
+type Category = 'clients' | 'nodes' | 'inbounds' | 'navigation' | 'settings' | 'actions';
+const CATEGORY_LABEL: Record<Category, string> = {
+  clients: 'shell.nav.users',
+  nodes: 'menu.nodes',
+  inbounds: 'menu.inbounds',
+  navigation: 'commandPalette.navigation',
+  settings: 'commandPalette.settings',
+  actions: 'commandPalette.actions',
+};
+const CATEGORY_ICON: Record<Category, IconName> = {
+  clients: 'users',
+  nodes: 'nodes',
+  inbounds: 'inbound',
+  navigation: 'chev',
+  settings: 'settings',
+  actions: 'bolt',
+};
 
 interface PaletteItem {
   id: string;
-  category: 'clients' | 'inbounds' | 'navigation' | 'settings' | 'actions';
+  category: Category;
+  glyph?: IconName;
   title: string;
   subtitle?: string;
   keywords?: string[];
@@ -80,30 +99,27 @@ export const PALETTE_KEYWORDS: Record<string, string[]> = {
   '/groups': ['groups', 'tags', 'batch'],
   '/nodes': ['nodes', 'servers', 'cluster', 'remote nodes'],
   '/tunnels': ['tunnels', 'reverse tunnel', 'bridge', 'portal', 'setup link'],
+  '/activity': ['activity', 'audit log', 'history', 'who changed', 'events'],
+  '/tor': ['tor', 'pia', 'exit', 'country', 'onion', 'vpn'],
+  '/logs': ['logs', 'log', 'errors', 'access log', 'journal'],
   '/hosts': ['hosts', 'sni', 'domains'],
   '/outbound': ['outbounds', 'freedom', 'blackhole', 'socks', 'http', 'warp', 'nord', 'pia'],
   '/routing': ['routing', 'rules', 'geoip', 'geosite', 'direct', 'block'],
   '/settings': ['settings', 'config', 'port', 'password', 'ssl', 'telegram'],
   '/xray': ['xray', 'templates', 'balancer', 'dns'],
   '/api-docs': ['api', 'api docs', 'swagger', 'rest api', 'endpoints'],
+  '/more': ['more', 'menu', 'effects', 'theme', 'language'],
 };
 
 export default function CommandPalette() {
   const { t } = useTranslation();
   const [messageApi, messageContextHolder] = message.useMessage();
   const navigate = useNavigate();
-  const {
-    isDark,
-    isUltra,
-    toggleTheme,
-    toggleUltra,
-    antdThemeConfig,
-    effectsPref,
-    setEffectsPref,
-  } = useTheme();
+  const { isDark, isUltra, toggleTheme, toggleUltra, effectsPref, setEffectsPref } = useTheme();
   const { isOpen, close } = useCommandPalette();
   const { allSetting } = useAllSettings();
   const { data: inbounds = [] } = useInboundOptions();
+  const { nodes } = useNodesQuery();
 
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -324,6 +340,25 @@ export default function CommandPalette() {
         });
       });
     }
+
+    nodes
+      .filter((n) => n.enable !== false && !n.transitive && matches(n.name ?? '', n.country))
+      .forEach((n) => {
+        list.push({
+          id: `node-${n.id}`,
+          category: 'nodes',
+          title: n.name ?? `#${n.id}`,
+          subtitle:
+            n.status === 'online' && n.latencyMs
+              ? t('shell.ms', { n: n.latencyMs })
+              : t(n.status === 'online' ? 'shell.status.online' : 'shell.status.offline'),
+          icon: null,
+          action: () => {
+            close();
+            navigate(`/?node=${n.id}`);
+          },
+        });
+      });
 
     const matchedInbounds = inbounds.filter((ib: InboundOption) => {
       if (!q) return false;
@@ -625,6 +660,7 @@ export default function CommandPalette() {
     cycleTheme,
     cycleEffects,
     effectsPref,
+    nodes,
   ]);
 
   const clampedActiveIndex = Math.min(activeIndex, Math.max(0, items.length - 1));
@@ -632,7 +668,7 @@ export default function CommandPalette() {
   useEffect(() => {
     if (!listRef.current) return;
     const activeEl = listRef.current.querySelector(
-      `.command-palette-item[data-index="${clampedActiveIndex}"]`,
+      `[data-index="${clampedActiveIndex}"]`,
     ) as HTMLElement | null;
     if (activeEl) {
       activeEl.scrollIntoView({ block: 'nearest' });
@@ -657,137 +693,140 @@ export default function CommandPalette() {
   if (!isOpen) return messageContextHolder;
 
   let lastCategory = '';
-  const themeModeClass = isUltra ? 'ultra' : isDark ? 'dark' : 'light';
+  const servers = nodes.filter((n) => n.enable !== false && !n.transitive).length + 1;
 
   return (
-    <ConfigProvider theme={antdThemeConfig}>
+    <>
       {messageContextHolder}
       <div
-        className={`command-palette-backdrop ${themeModeClass}`}
+        className="scrim"
+        style={{ position: 'fixed', alignItems: 'start', paddingTop: 90 }}
         role="presentation"
         onClick={(e) => {
           if (e.target === e.currentTarget) close();
         }}
       >
         <div
-          className={`command-palette-modal ${themeModeClass}`}
+          className="modal"
           role="dialog"
           aria-modal="true"
-          aria-label={t('commandPalette.title')}
+          aria-label={t('shell.search.label')}
+          style={{ width: 'min(640px, calc(100% - 32px))', padding: 0, gap: 0 }}
         >
-          <div className="command-palette-header">
-            {isClientSearching ? (
-              <LoadingOutlined aria-hidden className="command-palette-search-icon spinning" />
-            ) : (
-              <SearchOutlined aria-hidden className="command-palette-search-icon" />
-            )}
+          <label
+            className="row"
+            style={{ padding: '16px 20px', borderBottom: '1px solid var(--glass-b)' }}
+          >
+            <span data-searching={isClientSearching} style={{ display: 'inline-flex' }}>
+              <Icon name={isClientSearching ? 'refresh' : 'search'} size={20} />
+            </span>
             <input
               ref={inputRef}
-              className="command-palette-input"
-              type="text"
-              placeholder={t('commandPalette.placeholder')}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
+              aria-label={t('shell.search.everything')}
+              placeholder={t('shell.search.placeholder')}
+              style={{
+                flex: 1,
+                border: 0,
+                outline: 'none',
+                background: 'none',
+                color: 'var(--tx)',
+                font: '650 16px/1 inherit',
+                minWidth: 0,
               }}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
             />
-          </div>
-
-          <div className="command-palette-body" ref={listRef}>
+            <kbd>Esc</kbd>
+          </label>
+          <div ref={listRef} style={{ padding: 10, maxHeight: 440, overflow: 'auto' }}>
             {!isClientSearching && items.length === 0 && (
-              <div className="command-palette-empty">{t('noData')}</div>
+              <div className="empty">
+                <p>{t('shell.search.nothing', { q: query.trim() })}</p>
+              </div>
             )}
-
             {items.map((item, index) => {
-              const isFirstOfCategory = item.category !== lastCategory;
+              const first = item.category !== lastCategory;
               lastCategory = item.category;
-
-              const categoryLabel =
-                item.category === 'clients'
-                  ? t('menu.clients')
-                  : item.category === 'inbounds'
-                    ? t('menu.inbounds')
-                    : item.category === 'navigation'
-                      ? t('commandPalette.navigation')
-                      : item.category === 'settings'
-                        ? t('commandPalette.settings') || t('menu.settings')
-                        : t('commandPalette.actions');
-
               return (
-                <div key={item.id} className="command-palette-group">
-                  {isFirstOfCategory && (
-                    <div className="command-palette-group-title">{categoryLabel}</div>
+                <div key={item.id}>
+                  {first && (
+                    <div className="navg" style={{ paddingTop: 10 }}>
+                      {t(CATEGORY_LABEL[item.category])}
+                    </div>
                   )}
                   <div
                     role="button"
                     tabIndex={0}
-                    className={`command-palette-item ${index === clampedActiveIndex ? 'active' : ''}`}
+                    className={`nav${index === clampedActiveIndex ? ' on' : ''}`}
+                    style={{ height: 48 }}
                     data-index={index}
                     onClick={() => item.action()}
                     onKeyDown={(e) => {
-                      // Enter on the nested copy button must activate that
-                      // button, not the row it sits in.
+                      // Enter on the nested copy button must activate that button, not the row.
                       if (e.target === e.currentTarget) activateOnKey(() => item.action())(e);
                     }}
                     onMouseEnter={() => setActiveIndex(index)}
                   >
-                    <div className="command-palette-item-main">
-                      <span className="command-palette-item-icon">{item.icon}</span>
-                      <div className="command-palette-item-content">
-                        <span className="command-palette-item-title">{item.title}</span>
-                        {item.subtitle && (
-                          <span className="command-palette-item-subtitle">{item.subtitle}</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="command-palette-item-actions">
-                      {item.tag}
-                      {item.secondaryAction && (
-                        <Tooltip
-                          title={item.secondaryAction.label}
-                          placement="top"
-                          zIndex={2500}
-                          rootClassName="command-palette-tooltip"
-                        >
-                          <button
-                            type="button"
-                            className="command-palette-action-btn"
-                            onClick={item.secondaryAction.execute}
-                            aria-label={item.secondaryAction.label}
-                          >
-                            {item.secondaryAction.icon}
-                          </button>
-                        </Tooltip>
-                      )}
-                    </div>
+                    <span className="ico acc" style={{ width: 30, height: 30 }}>
+                      <Icon name={item.glyph ?? CATEGORY_ICON[item.category]} />
+                    </span>
+                    <span
+                      className="f1"
+                      style={{
+                        color: 'var(--tx)',
+                        minWidth: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {item.title}
+                    </span>
+                    {item.subtitle && (
+                      <span className="mut" style={{ fontSize: 12 }}>
+                        {item.subtitle}
+                      </span>
+                    )}
+                    {item.tag}
+                    {item.secondaryAction && (
+                      <button
+                        type="button"
+                        className="ib sm"
+                        data-row-action
+                        onClick={item.secondaryAction.execute}
+                        aria-label={item.secondaryAction.label}
+                        title={item.secondaryAction.label}
+                      >
+                        <Icon name="link" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
-
-          <div className="command-palette-footer">
-            <div className="command-palette-kbd-group">
-              <span>
-                <kbd className="command-palette-kbd">↑</kbd>
-                <kbd className="command-palette-kbd">↓</kbd>
-                {t('commandPalette.navigate')}
-              </span>
-              <span>
-                <kbd className="command-palette-kbd">↵</kbd>
-                {t('commandPalette.select')}
-              </span>
-              <span>
-                <kbd className="command-palette-kbd">Esc</kbd>
-                {t('close')}
-              </span>
-            </div>
-            <span>3x-ui Command Palette</span>
+          <div
+            className="row"
+            style={{
+              padding: '10px 16px',
+              borderTop: '1px solid var(--glass-b)',
+              fontSize: 12,
+              color: 'var(--mut)',
+              gap: 14,
+            }}
+          >
+            <span>
+              <kbd>↑</kbd> <kbd>↓</kbd> {t('commandPalette.navigate')}
+            </span>
+            <span>
+              <kbd>Enter</kbd> {t('commandPalette.select')}
+            </span>
+            <span className="f1" />
+            <span>{t('shell.search.across', { n: servers })}</span>
           </div>
         </div>
       </div>
-    </ConfigProvider>
+    </>
   );
 }

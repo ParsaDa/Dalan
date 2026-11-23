@@ -96,6 +96,8 @@ var defaultValueMap = map[string]string{
 	"tgRunTime":                   "@daily",
 	"tgBotBackup":                 "false",
 	"tgCpu":                       "80",
+	"trafficCapGB":                "0",
+	"trafficResetDay":             "1",
 	"tgMemory":                    "80",
 	"tgLang":                      "en-US",
 	"twoFactorEnable":             "false",
@@ -109,6 +111,9 @@ var defaultValueMap = map[string]string{
 	"subClashAutoDetect":          "false",
 	"subClashUserAgentRegex":      "",
 	"subTitle":                    "",
+	"serverName":                  "",
+	"serverCountry":               "",
+	"setupDone":                   "false",
 	"subSupportUrl":               "",
 	"subProfileMode":              SubProfileModeNone,
 	"subProfileUrl":               "",
@@ -666,6 +671,15 @@ func (s *SettingService) SetTgbotRuntime(time string) error {
 
 func (s *SettingService) GetTgBotBackup() (bool, error) {
 	return s.getBool("tgBotBackup")
+}
+
+// GetTrafficCap returns this server's monthly traffic plan in GB (0 = no plan) and its reset day.
+func (s *SettingService) GetTrafficCap() (capGB int, resetDay int, err error) {
+	if capGB, err = s.getInt("trafficCapGB"); err != nil {
+		return 0, 0, err
+	}
+	resetDay, err = s.getInt("trafficResetDay")
+	return capGB, resetDay, err
 }
 
 func (s *SettingService) GetTgCpu() (int, error) {

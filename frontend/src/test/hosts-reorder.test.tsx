@@ -7,7 +7,6 @@ import { HttpUtil, Msg } from '@/utils';
 import { renderWithProviders } from './test-utils';
 import { installPointerEvents, pointAt } from './pointer-events';
 
-vi.mock('@/layouts/AppSidebar', () => ({ default: () => null }));
 vi.mock('@/pages/hosts/HostFormModal', () => ({ default: () => null }));
 
 const initial = [
@@ -17,7 +16,7 @@ const initial = [
 ];
 
 function rowOrder() {
-  return [...document.querySelectorAll('tr[data-row-key]')].map((row) =>
+  return [...document.querySelectorAll('[data-row-key]')].map((row) =>
     row.getAttribute('data-row-key'),
   );
 }
@@ -33,7 +32,7 @@ async function openHosts() {
 }
 
 function drag(from: string, to: string, after = false, cancel = false) {
-  const target = document.querySelector(`tr[data-row-key="${to}"]`);
+  const target = document.querySelector(`[data-row-key="${to}"]`);
   if (!target) throw new Error('missing drop row');
   pointAt(target);
   fireEvent.pointerDown(
@@ -107,7 +106,7 @@ describe('Hosts page reordering', () => {
     );
   });
 
-  it('persists a touch drag in the mobile RTL table', async () => {
+  it('persists a touch drag in the mobile RTL list', async () => {
     const nativeMatchMedia = window.matchMedia;
     vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
       ...nativeMatchMedia(query),
@@ -115,7 +114,7 @@ describe('Hosts page reordering', () => {
     }));
     const { container } = await openHosts();
     container.dir = 'rtl';
-    pointAt(document.querySelector('tr[data-row-key="a"]'));
+    pointAt(document.querySelector('[data-row-key="a"]'));
     const event = { pointerId: 4, button: 0, pointerType: 'touch', clientX: 10, clientY: 32 };
     fireEvent.pointerDown(screen.getByRole('button', { name: 'Drag to reorder Host B' }), {
       ...event,
@@ -173,11 +172,12 @@ describe('Hosts page reordering', () => {
 
   it('keeps Up/Down controls and row actions separate from dragging', async () => {
     await openHosts();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Move down' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Actions Host A' }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Move down' }));
     await waitFor(() => expect(rowOrder()).toEqual(['b', 'a', 'c']));
     expect(HttpUtil.post).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
-    fireEvent.click(screen.getAllByRole('checkbox')[1]);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select Host B' }));
     expect(HttpUtil.post).toHaveBeenCalledTimes(1);
   });
 });

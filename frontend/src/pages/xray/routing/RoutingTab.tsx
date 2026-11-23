@@ -1,17 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Button, Dropdown, Modal, Space, Table, Tabs, message } from 'antd';
-import {
-  AimOutlined,
-  ControlOutlined,
-  ExportOutlined,
-  ImportOutlined,
-  MoreOutlined,
-  PlusOutlined,
-  UnorderedListOutlined,
-} from '@ant-design/icons';
+import { message, Modal } from 'antd';
 
-import { catTabLabel } from '@/pages/settings/catTabLabel';
 import PromptModal from '@/components/feedback/PromptModal';
 import TextModal from '@/components/feedback/TextModal';
 import { isBalancerLoopbackTag } from '../balancers/balancer-loopback';
@@ -19,8 +9,10 @@ import RoutingBasic from './RoutingBasic';
 import RouteTester from './RouteTester';
 import RuleFormModal from './RuleFormModal';
 import type { RoutingRule } from './RuleFormModal';
-import RuleCardList from './RuleCardList';
-import { useRoutingColumns } from './useRoutingColumns';
+import RuleList from './RuleList';
+import Icon from '@/components/dl/Icon';
+import { MoreMenu } from '@/components/dl/MoreMenu';
+import { Btn, TileHead } from '@/components/dl/primitives';
 import { arrJoin, originalRuleIndex } from './helpers';
 import type { RuleRow } from './types';
 import type { XraySettingsValue, SetTemplate } from '@/hooks/useXraySetting';
@@ -35,6 +27,7 @@ interface RoutingTabProps {
   clientReverseTags: string[];
   subscriptionOutboundTags?: string[];
   isMobile: boolean;
+  variant?: 'tile' | 'page';
 }
 
 export default function RoutingTab({
@@ -44,6 +37,7 @@ export default function RoutingTab({
   clientReverseTags,
   subscriptionOutboundTags,
   isMobile,
+  variant = 'page',
 }: RoutingTabProps) {
   const { t } = useTranslation();
   const [messageApi, messageContextHolder] = message.useMessage();
@@ -266,8 +260,8 @@ export default function RoutingTab({
     containerRef: rulesContainerRef,
     getRowKey: (row) => {
       const key = Number(row.dataset.rowKey);
-      // Desktop table keys are original rule indices; mobile cards use visible positions.
-      const index = isMobile ? key : rows.findIndex((rule) => rule.key === key);
+      // Rows carry their visible position; onDrop maps it through hidden loopback rules.
+      const index = key;
       return Number.isInteger(index) && index >= 0 && index < rows.length ? index : null;
     },
     onDrop: ({ from, to }) => {
@@ -284,139 +278,152 @@ export default function RoutingTab({
   const draggedIndex = drag?.from ?? null;
   const dropTargetIndex = drag?.to ?? null;
 
-  const hasSource = rows.some((r) => r.sourceIP || r.sourcePort || r.vlessRoute);
-  const hasBalancer = rows.some((r) => r.balancerTag);
-
-  const desktopColumns = useRoutingColumns({
-    isMobile,
-    rowsLength: rows.length,
-    showSource: hasSource,
-    showBalancer: hasBalancer,
-    onHandlePointerDown,
-    openEdit,
-    moveUp,
-    moveDown,
-    confirmDelete,
-    toggleRule,
-  });
-
-  const tableScrollX = desktopColumns.reduce((sum, c) => {
-    const col = c as { width?: number; hidden?: boolean };
-    return col.hidden ? sum : sum + (typeof col.width === 'number' ? col.width : 0);
-  }, 0);
+  const rulesSpan = variant === 'tile' ? 's5' : 's12';
 
   return (
     <>
       {modalContextHolder}
       {messageContextHolder}
-      {routingScript.trim() !== '' && (
-        <Alert
-          type="warning"
-          showIcon
-          style={{ marginBottom: 12 }}
-          title={t('pages.xray.routingScriptActive', { section: t('pages.xray.basicTemplate') })}
-        />
-      )}
-      <Tabs
-        defaultActiveKey="basic"
-        items={[
-          {
-            key: 'basic',
-            label: catTabLabel(
-              <ControlOutlined aria-hidden />,
-              t('pages.xray.basicRouting'),
-              isMobile,
-            ),
-            children: (
-              <RoutingBasic
-                templateSettings={templateSettings}
-                setTemplateSettings={setTemplateSettings}
+      {variant === 'tile' ? (
+        <section className={`tile ${rulesSpan}`}>
+          <div className="th">
+            <span className="tt">
+              <Icon name="routing" />
+              {t('routing.title')}
+            </span>
+            <div className="row" style={{ gap: 6 }}>
+              <Btn size="sm" icon="plus" onClick={openAdd}>
+                {t('routing.rule')}
+              </Btn>
+              <MoreMenu
+                label={t('more')}
+                actions={[
+                  {
+                    key: 'import',
+                    label: t('pages.xray.importRules'),
+                    onSelect: () => setImportOpen(true),
+                  },
+                  {
+                    key: 'export',
+                    label: t('pages.xray.exportRules'),
+                    disabled: rules.length === 0,
+                    onSelect: exportRules,
+                  },
+                ]}
               />
-            ),
-          },
-          {
-            key: 'rules',
-            label: catTabLabel(
-              <UnorderedListOutlined aria-hidden />,
-              t('pages.xray.Routings'),
-              isMobile,
-            ),
-            children: (
-              <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
-                <Space wrap>
-                  <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={openAdd}>
-                    {t('pages.xray.Routings')}
-                  </Button>
-                  <Dropdown
-                    trigger={['click']}
-                    menu={{
-                      items: [
-                        {
-                          key: 'import',
-                          icon: <ImportOutlined aria-hidden />,
-                          label: t('pages.xray.importRules'),
-                          onClick: () => setImportOpen(true),
-                        },
-                        {
-                          key: 'export',
-                          icon: <ExportOutlined aria-hidden />,
-                          label: t('pages.xray.exportRules'),
-                          disabled: rules.length === 0,
-                          onClick: exportRules,
-                        },
-                      ],
-                    }}
-                  >
-                    <Button icon={<MoreOutlined aria-hidden />}>{t('more')}</Button>
-                  </Dropdown>
-                </Space>
-
-                <div ref={rulesContainerRef}>
-                  {isMobile ? (
-                    <RuleCardList
-                      rows={rows}
-                      draggedIndex={draggedIndex}
-                      dropTargetIndex={dropTargetIndex}
-                      onHandlePointerDown={onHandlePointerDown}
-                      openEdit={openEdit}
-                      moveUp={moveUp}
-                      moveDown={moveDown}
-                      confirmDelete={confirmDelete}
-                      toggleRule={toggleRule}
-                    />
-                  ) : (
-                    <Table
-                      columns={desktopColumns}
-                      dataSource={rows}
-                      rowKey={(r) => r.key}
-                      pagination={false}
-                      scroll={{ x: tableScrollX }}
-                      size="small"
-                      className="routing-table"
-                      onRow={(_record, index) => {
-                        const classes: string[] = [];
-                        const i = index ?? -1;
-                        if (draggedIndex === i) classes.push('row-dragging');
-                        if (dropTargetIndex === i && draggedIndex !== i && draggedIndex != null) {
-                          classes.push(i > draggedIndex ? 'drop-after' : 'drop-before');
-                        }
-                        return {
-                          className: classes.join(' '),
-                        };
-                      }}
-                    />
-                  )}
+            </div>
+          </div>
+          <p className="mut" style={{ margin: '-6px 0 8px', fontSize: 12.5 }}>
+            {t('routing.hint')}
+          </p>
+          {routingScript.trim() !== '' && (
+            <div
+              className="tile edge st-warn row"
+              style={{ padding: '10px 12px', gap: 8, marginBottom: 10 }}
+            >
+              <Icon name="alert" size={16} />
+              <span className="f1" style={{ fontSize: 12.5, fontWeight: 650 }}>
+                {t('pages.xray.routingScriptActive', { section: t('pages.xray.basicTemplate') })}
+              </span>
+            </div>
+          )}
+          <div ref={rulesContainerRef}>
+            {rows.length === 0 ? (
+              <div className="mut" style={{ fontSize: 13, padding: '10px 0' }}>
+                {t('routing.empty')}
+              </div>
+            ) : (
+              <RuleList
+                rows={rows}
+                draggedIndex={draggedIndex}
+                dropTargetIndex={dropTargetIndex}
+                onHandlePointerDown={onHandlePointerDown}
+                openEdit={openEdit}
+                moveUp={moveUp}
+                moveDown={moveDown}
+                confirmDelete={confirmDelete}
+                toggleRule={toggleRule}
+              />
+            )}
+          </div>
+        </section>
+      ) : (
+        <div className="grid">
+          <section className={`tile ${rulesSpan}`}>
+            <div className="th">
+              <span className="tt">
+                <Icon name="routing" />
+                {t('routing.title')}
+              </span>
+              <div className="row" style={{ gap: 6 }}>
+                <Btn size="sm" icon="plus" onClick={openAdd}>
+                  {t('routing.rule')}
+                </Btn>
+                <MoreMenu
+                  label={t('more')}
+                  actions={[
+                    {
+                      key: 'import',
+                      label: t('pages.xray.importRules'),
+                      onSelect: () => setImportOpen(true),
+                    },
+                    {
+                      key: 'export',
+                      label: t('pages.xray.exportRules'),
+                      disabled: rules.length === 0,
+                      onSelect: exportRules,
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+            <p className="mut" style={{ margin: '-6px 0 8px', fontSize: 12.5 }}>
+              {t('routing.hint')}
+            </p>
+            {routingScript.trim() !== '' && (
+              <div
+                className="tile edge st-warn row"
+                style={{ padding: '10px 12px', gap: 8, marginBottom: 10 }}
+              >
+                <Icon name="alert" size={16} />
+                <span className="f1" style={{ fontSize: 12.5, fontWeight: 650 }}>
+                  {t('pages.xray.routingScriptActive', { section: t('pages.xray.basicTemplate') })}
+                </span>
+              </div>
+            )}
+            <div ref={rulesContainerRef}>
+              {rows.length === 0 ? (
+                <div className="mut" style={{ fontSize: 13, padding: '10px 0' }}>
+                  {t('routing.empty')}
                 </div>
-              </Space>
-            ),
-          },
-          {
-            key: 'tester',
-            label: catTabLabel(<AimOutlined aria-hidden />, t('pages.xray.routeTester'), isMobile),
-            children: <RouteTester inboundTags={inboundTagOptions} isMobile={isMobile} />,
-          },
-        ]}
-      />
+              ) : (
+                <RuleList
+                  rows={rows}
+                  draggedIndex={draggedIndex}
+                  dropTargetIndex={dropTargetIndex}
+                  onHandlePointerDown={onHandlePointerDown}
+                  openEdit={openEdit}
+                  moveUp={moveUp}
+                  moveDown={moveDown}
+                  confirmDelete={confirmDelete}
+                  toggleRule={toggleRule}
+                />
+              )}
+            </div>
+          </section>
+          <section className="tile s12">
+            <TileHead icon="settings" title={t('pages.xray.basicRouting')} />
+            <RoutingBasic
+              templateSettings={templateSettings}
+              setTemplateSettings={setTemplateSettings}
+            />
+          </section>
+          <section className="tile s12">
+            <TileHead icon="search" title={t('pages.xray.routeTester')} />
+            <RouteTester inboundTags={inboundTagOptions} isMobile={isMobile} />
+          </section>
+        </div>
+      )}
       <RuleFormModal
         open={ruleModalOpen}
         rule={editingRule}

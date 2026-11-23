@@ -2002,10 +2002,10 @@ export const sections: readonly Section[] = [
         method: 'GET',
         path: '/panel/api/tunnels/status/:id',
         summary:
-          'Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. A Rakhsh tunnel is judged by its lanes instead: connected while at least one lane is up, with lanesUp, targetLanes, latencyMs and lossPct from the engine. Only the entry end can be tested.',
+          'Send one request through an entry tunnel and report whether it came back, the round-trip time and the address and country it left from. A tunnel that is down is a normal answer with connected=false and the reason in error. A Rakhsh tunnel is judged by its lanes instead: connected while at least one lane is up, with lanesUp, targetLanes, latencyMs and lossPct from the engine. Only the entry end can be tested. history lists the latency of every probe in the last hour, oldest first, with 0 for a failed probe; it lives in memory and starts empty after a restart.',
         params: [{ name: 'id', in: 'path', type: 'number', desc: 'Tunnel ID.' }],
         response:
-          '{\n  "success": true,\n  "obj": {\n    "connected": true,\n    "latencyMs": 182,\n    "exitIp": "203.0.113.77",\n    "exitLoc": "DE",\n    "error": ""\n  }\n}',
+          '{\n  "success": true,\n  "obj": {\n    "connected": true,\n    "latencyMs": 182,\n    "exitIp": "203.0.113.77",\n    "exitLoc": "DE",\n    "error": "",\n    "history": [180, 0, 182]\n  }\n}',
       },
       {
         method: 'GET',
@@ -2347,6 +2347,13 @@ export const sections: readonly Section[] = [
         body: '{\n  "oldUsername": "admin",\n  "oldPassword": "admin",\n  "newUsername": "newadmin",\n  "newPassword": "newpass"\n}',
       },
       {
+        method: 'GET',
+        path: '/panel/api/setting/user',
+        summary:
+          'Return the signed-in admin as the panel header greets them. Only the username; the password hash never leaves the server.',
+        responseSchema: 'CurrentUser',
+      },
+      {
         method: 'POST',
         path: '/panel/api/setting/restartPanel',
         summary:
@@ -2384,6 +2391,64 @@ export const sections: readonly Section[] = [
         path: '/panel/api/setting/getDefaultJsonConfig',
         summary:
           'Return the built-in default Xray JSON config template that ships with this panel version.',
+      },
+    ],
+  },
+
+  {
+    id: 'dashboard',
+    title: 'Dashboard',
+    description:
+      'What the dashboard shows beyond live status: alerts that need attention, the activity log of changes, and this server’s traffic against its monthly plan.',
+    endpoints: [
+      {
+        method: 'GET',
+        path: '/panel/api/alerts/list',
+        summary:
+          'Open alerts, the most serious first: node.offline and xray.down, then node.load, cpu.high and memory.high (85% opens, below 80% resolves), then clients.expiring (value = clients expiring within 7 days). An alert disappears from this list once its condition clears.',
+        responseSchema: 'Alert',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/activity/list',
+        summary:
+          'The activity log, newest first: every successful change made through the panel or the API, sign-ins, and system events such as a node going offline. Entries older than 90 days are pruned.',
+        params: [
+          { name: 'page', in: 'query', type: 'number', desc: 'Page, from 1.' },
+          {
+            name: 'pageSize',
+            in: 'query',
+            type: 'number',
+            desc: 'Entries per page, 1–200 (default 50).',
+          },
+          {
+            name: 'category',
+            in: 'query',
+            type: 'string',
+            desc: 'Action prefix such as client, tunnel, node, xray, settings or session.',
+          },
+          {
+            name: 'actor',
+            in: 'query',
+            type: 'string',
+            desc: 'Who made the change: you, api or system.',
+          },
+          {
+            name: 'nodeId',
+            in: 'query',
+            type: 'number',
+            desc: 'Only entries about this node; 0 is this server.',
+          },
+          { name: 'days', in: 'query', type: 'number', desc: 'Only the last N days.' },
+        ],
+        responseSchema: 'ActivityPage',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/server/monthlyTraffic',
+        summary:
+          'Bytes this server sent and received on its real interfaces since the last monthly reset, with the plan from settings (capGB 0 = no plan) and the next reset time.',
+        responseSchema: 'TrafficUsage',
       },
     ],
   },

@@ -51,11 +51,9 @@ describe('OutboundsTab row for a case-variant protocol id', () => {
   it('renders the stream tags and the address of a "VMess" row', () => {
     renderTab(settingsWithCapitalisedProtocol());
 
-    const row = document.querySelector('.ant-table-tbody tr.ant-table-row');
-    const tags = Array.from(row?.querySelectorAll('.protocol-line .ant-tag') ?? []).map(
-      (el) => el.textContent,
-    );
-    expect(tags).toEqual(['VMess', 'ws', 'tls']);
+    const row = document.querySelector('tr.ob-row');
+    const tags = Array.from(row?.querySelectorAll('.badge') ?? []).map((el) => el.textContent);
+    expect(tags).toEqual(['ws', 'tls', 'VMess']);
     expect(row?.textContent).toContain('a.example.com:443');
   });
 });

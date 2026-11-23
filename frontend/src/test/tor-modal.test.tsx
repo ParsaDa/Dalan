@@ -135,7 +135,7 @@ describe('TorModal', () => {
     await openModal();
 
     const de = row('de');
-    expect(de.textContent).toContain('🇩🇪');
+    expect(de.querySelector('.fl')).not.toBeNull();
     expect(de.textContent).toContain('Germany');
     expect(row('gb').textContent).toContain('United Kingdom');
     expect(document.querySelector('.tor-country-list')?.textContent).not.toMatch(/[؀-ۿ]/);
@@ -162,14 +162,14 @@ describe('TorModal', () => {
     fireEvent.click(within(row('de')).getByRole('button', { name: 'Test' }));
     await waitFor(() => expect(server.tests.length).toBe(1));
     expect(server.tests[0].country).toBe('de');
-    expect(within(row('de')).getByRole('button', { name: /Test/ }).className).toContain(
-      'ant-btn-loading',
+    expect(within(row('de')).getByRole('button', { name: /Test/ }).getAttribute('aria-busy')).toBe(
+      'true',
     );
     expect(
       (within(row('fr')).getByRole('button', { name: 'Test' }) as HTMLButtonElement).disabled,
     ).toBe(true);
-    expect(within(row('fr')).getByRole('button', { name: 'Test' }).className).not.toContain(
-      'ant-btn-loading',
+    expect(within(row('fr')).getByRole('button', { name: 'Test' }).getAttribute('aria-busy')).toBe(
+      'false',
     );
 
     await act(async () => {
@@ -229,21 +229,29 @@ describe('TorModal', () => {
     await openModal();
 
     await act(async () => {
-      fireEvent.click(within(row('nl')).getByRole('button', { name: 'Add' }));
+      fireEvent.click(within(row('nl')).getByRole('switch', { name: 'Use Netherlands' }));
     });
     expect(server.posts.find((p) => p.url === '/panel/api/tor/add')?.body).toEqual({
       country: 'nl',
     });
     await waitFor(() =>
-      expect(within(row('nl')).getByRole('button', { name: 'Remove' })).toBeTruthy(),
+      expect(
+        within(row('nl'))
+          .getByRole('switch', { name: 'Use Netherlands' })
+          .getAttribute('aria-checked'),
+      ).toBe('true'),
     );
 
     await act(async () => {
-      fireEvent.click(within(row('nl')).getByRole('button', { name: 'Remove' }));
+      fireEvent.click(within(row('nl')).getByRole('switch', { name: 'Use Netherlands' }));
     });
     expect(server.posts.some((p) => p.url === '/panel/api/tor/del/1')).toBe(true);
     await waitFor(() =>
-      expect(within(row('nl')).getByRole('button', { name: 'Add' })).toBeTruthy(),
+      expect(
+        within(row('nl'))
+          .getByRole('switch', { name: 'Use Netherlands' })
+          .getAttribute('aria-checked'),
+      ).toBe('false'),
     );
   });
 
@@ -271,10 +279,12 @@ describe('TorModal', () => {
     await openModal();
 
     await act(async () => {
-      fireEvent.click(within(row('fr')).getByRole('button', { name: 'Add' }));
+      fireEvent.click(within(row('fr')).getByRole('switch', { name: 'Use France' }));
     });
     await waitFor(() => expect(screen.getByText(/at most 10 exits can be enabled/)).toBeTruthy());
-    expect(within(row('fr')).queryByRole('button', { name: 'Remove' })).toBeNull();
+    expect(
+      within(row('fr')).getByRole('switch', { name: 'Use France' }).getAttribute('aria-checked'),
+    ).toBe('false');
   });
 
   it('offers to install the engine when it is missing, and installs it', async () => {
@@ -319,7 +329,7 @@ describe('TorModal', () => {
     const server = fakeServer({ bridges: 'obfs4 192.0.2.4:443 AAAA cert=x iat-mode=0' });
     await openModal();
 
-    expect(document.querySelector('textarea')).toBeNull();
+    expect((document.querySelector('details.more-opts') as HTMLDetailsElement).open).toBe(false);
     fireEvent.click(screen.getByText('Advanced'));
     const box = (await waitFor(() => {
       const el = document.querySelector('textarea');

@@ -1,38 +1,17 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Button,
-  ConfigProvider,
-  Form,
-  Input,
-  Layout,
-  Menu,
-  Popover,
-  Space,
-  Spin,
-  message,
-} from 'antd';
-import {
-  KeyOutlined,
-  LockOutlined,
-  MoonFilled,
-  MoonOutlined,
-  SunOutlined,
-  TranslationOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import { message } from 'antd';
 
-import { FormProvider, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { HttpUtil, LanguageManager } from '@/utils';
-import { FormField, rhfZodValidate } from '@/components/form/rhf';
+import { rhfZodValidate } from '@/components/form/rhf';
 import { setMessageInstance } from '@/utils/messageBus';
 import { pauseAnimationsUntilLeave, useTheme } from '@/hooks/useTheme';
-import DalanLogo from '@/components/ui/DalanLogo';
-import PanelBackground from '@/components/ui/PanelBackground';
+import Icon from '@/components/dl/Icon';
+import Mark from '@/components/dl/Mark';
+import { DropChip } from '@/components/dl/DropChip';
+import { Sk } from '@/components/dl/primitives';
 import { LoginFormSchema, TwoFactorCodeSchema, type LoginFormValues } from '@/schemas/login';
-import './LoginPage.css';
-
-const HEADLINE_INTERVAL_MS = 2000;
 
 type LoginForm = LoginFormValues;
 
@@ -40,7 +19,7 @@ const basePath = window.X_UI_BASE_PATH || '';
 
 export default function LoginPage() {
   const { t } = useTranslation();
-  const { isDark, isUltra, toggleTheme, toggleUltra, antdThemeConfig } = useTheme();
+  const { isDark, isUltra, toggleTheme, toggleUltra } = useTheme();
   const [messageApi, messageContextHolder] = message.useMessage();
 
   useEffect(() => {
@@ -50,20 +29,7 @@ export default function LoginPage() {
   const [fetched, setFetched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [twoFactorEnable, setTwoFactorEnable] = useState(false);
-  const [headlineIndex, setHeadlineIndex] = useState(0);
-  const methods = useForm<LoginForm>({
-    defaultValues: { username: '', password: '', twoFactorCode: '' },
-  });
   const [lang, setLang] = useState<string>(() => LanguageManager.getLanguage());
-
-  const headlineWords = useMemo(() => [t('pages.login.hello'), t('pages.login.title')], [t]);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setHeadlineIndex((i) => (i + 1) % headlineWords.length);
-    }, HEADLINE_INTERVAL_MS);
-    return () => window.clearInterval(timer);
-  }, [headlineWords.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -106,161 +72,176 @@ export default function LoginPage() {
     }
   }, [isDark, isUltra, toggleTheme, toggleUltra]);
 
-  const pageClass = useMemo(() => {
-    const classes = ['login-app'];
-    if (isDark) classes.push('is-dark');
-    if (isUltra) classes.push('is-ultra');
-    return classes.join(' ');
-  }, [isDark, isUltra]);
-
-  const langMenuItems = useMemo(
-    () =>
-      (LanguageManager.supportedLanguages as { value: string; name: string; icon: string }[]).map(
-        (l) => ({
-          key: l.value,
-          label: (
-            <Space size={8}>
-              <span aria-hidden="true">{l.icon}</span>
-              <span>{l.name}</span>
-            </Space>
-          ),
-        }),
-      ),
-    [],
-  );
-
-  const themeIcon = !isDark ? (
-    <SunOutlined aria-hidden />
-  ) : !isUltra ? (
-    <MoonOutlined aria-hidden />
-  ) : (
-    <MoonFilled aria-hidden />
-  );
+  const [showPassword, setShowPassword] = useState(false);
+  const { register, handleSubmit, formState } = useForm<LoginForm>({
+    defaultValues: { username: '', password: '', twoFactorCode: '' },
+  });
+  const fieldError = (name: keyof LoginForm) => {
+    const message = formState.errors[name]?.message;
+    return message ? <small style={{ color: 'var(--bad)' }}>{t(String(message))}</small> : null;
+  };
+  const languages: readonly { value: string; name: string }[] = LanguageManager.supportedLanguages;
 
   return (
-    <ConfigProvider theme={antdThemeConfig}>
+    <>
       {messageContextHolder}
-      <PanelBackground />
-      <Layout className={pageClass}>
-        <Layout.Content className="login-content">
-          <div className="login-toolbar">
-            <Button
+      <div className="bgfx" aria-hidden="true">
+        <div className="glow g1" />
+        <div className="glow g2" />
+        <div className="glow g3" />
+      </div>
+      <main
+        style={{
+          minHeight: '100vh',
+          display: 'grid',
+          placeItems: 'center',
+          padding: '40px 20px',
+          position: 'relative',
+        }}
+      >
+        <div
+          className="col stag"
+          style={{ alignItems: 'center', gap: 26, width: 'min(400px, 100%)' }}
+        >
+          <div className="col" style={{ alignItems: 'center', gap: 12 }}>
+            <Mark size={76} motion="anim" title="Dalan" />
+            <div className="wm" style={{ fontSize: 32 }}>
+              Dalan
+            </div>
+            <h1 className="mut" style={{ fontWeight: 650, fontSize: 15, margin: 0 }}>
+              {t('loginPage.subtitle')}
+            </h1>
+          </div>
+          {!fetched ? (
+            <div className="tile" style={{ width: '100%', padding: 24, borderRadius: 24 }}>
+              <Sk h={180} />
+            </div>
+          ) : (
+            <form
+              className="tile"
+              style={{
+                width: '100%',
+                padding: 24,
+                borderRadius: 24,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 14,
+              }}
+              onSubmit={handleSubmit(onSubmit)}
+              noValidate
+            >
+              <label className="field">
+                <span>{t('username')}</span>
+                <input
+                  className="inp"
+                  autoComplete="username"
+                  autoFocus
+                  aria-invalid={!!formState.errors.username}
+                  {...register('username', {
+                    validate: rhfZodValidate(LoginFormSchema.shape.username),
+                  })}
+                />
+                {fieldError('username')}
+              </label>
+              <label className="field">
+                <span>{t('password')}</span>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    className="inp"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    aria-invalid={!!formState.errors.password}
+                    style={{ width: '100%', paddingInlineEnd: 44 }}
+                    {...register('password', {
+                      validate: rhfZodValidate(LoginFormSchema.shape.password),
+                    })}
+                  />
+                  <button
+                    type="button"
+                    className="ib sm"
+                    aria-label={
+                      showPassword ? t('loginPage.hidePassword') : t('loginPage.showPassword')
+                    }
+                    aria-pressed={showPassword}
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      insetInlineEnd: 5,
+                      top: 5,
+                      background: 'transparent',
+                      border: 0,
+                    }}
+                  >
+                    <Icon name="eye" />
+                  </button>
+                </div>
+                {fieldError('password')}
+              </label>
+              {twoFactorEnable && (
+                <label className="field">
+                  <span>{t('twoFactorCode')}</span>
+                  <input
+                    className="inp num"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder={t('loginPage.sixDigits')}
+                    style={{ letterSpacing: '.3em' }}
+                    aria-invalid={!!formState.errors.twoFactorCode}
+                    {...register('twoFactorCode', {
+                      validate: rhfZodValidate(TwoFactorCodeSchema),
+                    })}
+                  />
+                  {fieldError('twoFactorCode')}
+                </label>
+              )}
+              <button
+                type="submit"
+                className="btn pri lg full"
+                disabled={submitting}
+                aria-busy={submitting}
+              >
+                {t('login')}
+              </button>
+            </form>
+          )}
+          <div className="row wrap" style={{ gap: 10, justifyContent: 'center' }}>
+            <div className="seg" role="group" aria-label={t('pages.settings.language')}>
+              {['en-US', 'fa-IR'].map((code) => (
+                <button
+                  key={code}
+                  type="button"
+                  className={lang === code ? 'on' : ''}
+                  aria-pressed={lang === code}
+                  onClick={() => onLangChange(code)}
+                >
+                  {code === 'fa-IR' ? 'فارسی' : 'English'}
+                </button>
+              ))}
+            </div>
+            <DropChip
+              label={t('loginPage.more')}
+              value={['en-US', 'fa-IR'].includes(lang) ? '' : lang}
+              onChange={(v) => v && onLangChange(v)}
+              options={[
+                { value: '', label: '…' },
+                ...languages
+                  .filter((l) => !['en-US', 'fa-IR'].includes(l.value))
+                  .map((l) => ({ value: l.value, label: l.name })),
+              ]}
+            />
+            <button
+              type="button"
               id="login-theme-cycle"
-              shape="circle"
-              size="large"
-              className="toolbar-btn"
+              className="ib sm"
               aria-label={t('menu.theme')}
               title={t('menu.theme')}
-              icon={themeIcon}
               onClick={cycleTheme}
-            />
-            <Popover
-              rootClassName={isDark ? 'dark' : 'light'}
-              placement="bottomRight"
-              trigger="click"
-              styles={{ content: { padding: 4 } }}
-              content={
-                <Menu
-                  mode="vertical"
-                  selectable
-                  selectedKeys={[lang]}
-                  items={langMenuItems}
-                  onClick={({ key }) => onLangChange(key)}
-                  style={{ border: 'none', minWidth: 160 }}
-                />
-              }
             >
-              <Button
-                shape="circle"
-                size="large"
-                className="toolbar-btn"
-                aria-label={t('pages.settings.language')}
-                icon={<TranslationOutlined aria-hidden />}
-              />
-            </Popover>
+              <Icon name={isDark ? 'moon' : 'sun'} />
+            </button>
           </div>
-
-          <div className="login-wrapper">
-            {!fetched ? (
-              <div className="login-loading">
-                <Spin size="large" />
-              </div>
-            ) : (
-              <div className="login-card">
-                <div className="brand">
-                  <DalanLogo size={48} />
-                  <span className="brand-name">Dalan</span>
-                </div>
-                <h2 className="welcome">
-                  <b key={headlineIndex}>{headlineWords[headlineIndex]}</b>
-                </h2>
-
-                <FormProvider {...methods}>
-                  <Form
-                    layout="vertical"
-                    className="login-form"
-                    onFinish={methods.handleSubmit(onSubmit)}
-                  >
-                    <FormField
-                      name="username"
-                      label={t('username')}
-                      rules={{ validate: rhfZodValidate(LoginFormSchema.shape.username) }}
-                    >
-                      <Input
-                        prefix={<UserOutlined aria-hidden />}
-                        autoComplete="username"
-                        size="large"
-                        placeholder={t('username')}
-                        autoFocus
-                      />
-                    </FormField>
-
-                    <FormField
-                      name="password"
-                      label={t('password')}
-                      rules={{ validate: rhfZodValidate(LoginFormSchema.shape.password) }}
-                    >
-                      <Input.Password
-                        prefix={<LockOutlined aria-hidden />}
-                        autoComplete="current-password"
-                        size="large"
-                        placeholder={t('password')}
-                      />
-                    </FormField>
-
-                    {twoFactorEnable && (
-                      <FormField
-                        name="twoFactorCode"
-                        label={t('twoFactorCode')}
-                        rules={{ validate: rhfZodValidate(TwoFactorCodeSchema) }}
-                      >
-                        <Input
-                          prefix={<KeyOutlined aria-hidden />}
-                          autoComplete="one-time-code"
-                          size="large"
-                          placeholder={t('twoFactorCode')}
-                        />
-                      </FormField>
-                    )}
-
-                    <Form.Item className="submit-row">
-                      <Button
-                        type="primary"
-                        htmlType="submit"
-                        loading={submitting}
-                        size="large"
-                        block
-                      >
-                        {t('login')}
-                      </Button>
-                    </Form.Item>
-                  </Form>
-                </FormProvider>
-              </div>
-            )}
-          </div>
-        </Layout.Content>
-      </Layout>
-    </ConfigProvider>
+        </div>
+      </main>
+    </>
   );
 }

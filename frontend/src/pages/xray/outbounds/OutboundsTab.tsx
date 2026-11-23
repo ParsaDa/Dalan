@@ -1,16 +1,12 @@
-import { useCallback, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Button,
-  Col,
-  Dropdown,
   Form,
   Input,
   InputNumber,
   Modal,
   Popconfirm,
-  Radio,
-  Row,
   Space,
   Switch,
   Table,
@@ -20,12 +16,6 @@ import {
 } from 'antd';
 import {
   PlusOutlined,
-  CloudOutlined,
-  ApiOutlined,
-  SafetyCertificateOutlined,
-  MoreOutlined,
-  RetweetOutlined,
-  PlayCircleOutlined,
   ReloadOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -34,8 +24,6 @@ import {
   ArrowDownOutlined,
   CheckCircleOutlined,
   WarningOutlined,
-  ExportOutlined,
-  ImportOutlined,
 } from '@ant-design/icons';
 
 import { isOutboundProtocol } from '@/schemas/primitives';
@@ -60,8 +48,11 @@ import './OutboundsTab.css';
 
 import type { OutboundRow } from './outbounds-tab-types';
 import { originalOutboundIndex } from './outbounds-tab-helpers';
-import { useOutboundColumns } from './useOutboundColumns';
-import OutboundCardList from './OutboundCardList';
+import OutboundTable from './OutboundTable';
+import { IlloEmpty } from '@/components/dl/Illustrations';
+import { MoreMenu } from '@/components/dl/MoreMenu';
+import { Modal as DlModal } from '@/components/dl/overlays';
+import { Btn, Empty as DlEmpty, IconBtn } from '@/components/dl/primitives';
 import SubscriptionOutbounds from './SubscriptionOutbounds';
 import type { TorOutbound, TunnelOutbound } from '@/schemas/xray';
 import type { TorStatusInfo } from './TorStatusChip';
@@ -108,6 +99,8 @@ interface OutboundsTabProps {
   onShowPia: () => void;
   onShowTor: () => void;
   onRefreshXrayData?: () => void;
+  onEditJson?: () => void;
+  rulesTile?: ReactNode;
 }
 
 export default function OutboundsTab({
@@ -133,7 +126,10 @@ export default function OutboundsTab({
   onShowPia,
   onShowTor,
   onRefreshXrayData,
+  onEditJson,
+  rulesTile,
 }: OutboundsTabProps) {
+  const [resetAllOpen, setResetAllOpen] = useState(false);
   const { t } = useTranslation();
   const uid = useId();
   const [modal, modalContextHolder] = Modal.useModal();
@@ -563,193 +559,187 @@ export default function OutboundsTab({
     }
   }
 
-  const columns = useOutboundColumns({
-    testMode,
-    rows,
-    outboundsTraffic,
-    outboundTestStates,
-    openEdit,
-    setFirst,
-    moveUp,
-    moveDown,
-    confirmDelete,
-    onResetTraffic,
-    onTest,
-    torStatus,
-    onShowTor,
-  });
-
   return (
     <>
       {modalContextHolder}
       {messageContextHolder}
-      <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
-        <Row gutter={[12, 12]} align="middle" justify="space-between">
-          <Col xs={24} sm={12}>
-            <Space size="small" wrap>
-              <Button type="primary" icon={<PlusOutlined aria-hidden />} onClick={openAdd}>
-                {!isMobile && t('pages.xray.Outbounds')}
-              </Button>
-              <Button icon={<CloudOutlined aria-hidden />} onClick={openSubManager}>
-                {t('pages.xray.outboundSub.manage')}
-              </Button>
-              <Dropdown
-                trigger={['click']}
-                menu={{
-                  items: [
-                    {
-                      key: 'warp',
-                      icon: <CloudOutlined aria-hidden />,
-                      label: 'WARP',
-                      onClick: onShowWarp,
-                    },
-                    {
-                      key: 'nord',
-                      icon: <ApiOutlined aria-hidden />,
-                      label: 'NordVPN',
-                      onClick: onShowNord,
-                    },
-                    {
-                      key: 'pia',
-                      icon: <ApiOutlined aria-hidden />,
-                      label: t('pages.xray.pia.menu'),
-                      onClick: onShowPia,
-                    },
-                    {
-                      key: 'tor',
-                      icon: <SafetyCertificateOutlined aria-hidden />,
-                      label: t('pages.tor.menu'),
-                      onClick: onShowTor,
-                    },
-                    { type: 'divider' },
-                    {
-                      key: 'import',
-                      icon: <ImportOutlined aria-hidden />,
-                      label: t('pages.xray.importOutbounds'),
-                      onClick: () => setImportOpen(true),
-                    },
-                    {
-                      key: 'export',
-                      icon: <ExportOutlined aria-hidden />,
-                      label: t('pages.xray.exportOutbounds'),
-                      disabled: outbounds.length === 0,
-                      onClick: exportOutbounds,
-                    },
-                  ],
-                }}
+      <div className="pagehead">
+        <div>
+          <h2 className="h2" style={{ fontSize: 28 }}>
+            {t('outbounds.title')}
+          </h2>
+          <p>{t('outbounds.subtitle')}</p>
+        </div>
+        <div className="row wrap">
+          <MoreMenu
+            label={t('more')}
+            actions={[
+              {
+                key: 'subs',
+                label: t('pages.xray.outboundSub.manage'),
+                icon: 'down',
+                onSelect: openSubManager,
+              },
+              { key: 'warp', label: 'WARP', onSelect: onShowWarp },
+              { key: 'nord', label: 'NordVPN', onSelect: onShowNord },
+              { key: 'pia', label: t('pages.xray.pia.menu'), onSelect: onShowPia },
+              { key: 'tor', label: t('pages.tor.menu'), icon: 'tor', onSelect: onShowTor },
+              {
+                key: 'import',
+                label: t('pages.xray.importOutbounds'),
+                onSelect: () => setImportOpen(true),
+              },
+              {
+                key: 'export',
+                label: t('pages.xray.exportOutbounds'),
+                disabled: outbounds.length === 0,
+                onSelect: exportOutbounds,
+              },
+            ]}
+          />
+          {onEditJson && (
+            <Btn icon="code" onClick={onEditJson}>
+              {t('outbounds.editJson')}
+            </Btn>
+          )}
+          <Btn kind="pri" icon="plus" onClick={openAdd}>
+            {t('outbounds.add')}
+          </Btn>
+        </div>
+      </div>
+      <div className="grid">
+        <div className={`${rulesTile ? 's7' : 's12'} col`} style={{ gap: 12 }}>
+          <div className="row sp wrap">
+            <h3 className="h3">{t('pages.xray.Outbounds')}</h3>
+            <div className="row wrap" style={{ gap: 8 }}>
+              <div
+                className="seg"
+                role="group"
+                aria-label={t('pages.xray.outbound.testModeTooltip')}
               >
-                <Button icon={<MoreOutlined aria-hidden />}>{t('more')}</Button>
-              </Dropdown>
-            </Space>
-          </Col>
-          <Col xs={24} sm={12} className="toolbar-right">
-            <Space size="small" wrap>
-              <Tooltip title={t('pages.xray.outbound.testModeTooltip')}>
-                <Radio.Group
-                  value={testMode}
-                  onChange={(e) => setTestMode(e.target.value)}
-                  buttonStyle="solid"
-                  size="small"
-                >
-                  <Radio.Button value="tcp">TCP</Radio.Button>
-                  <Radio.Button value="http">HTTP</Radio.Button>
-                  <Radio.Button value="real">{t('pages.xray.outbound.modeRealDelay')}</Radio.Button>
-                </Radio.Group>
-              </Tooltip>
-              <Button
-                type="primary"
-                loading={testingAll}
-                icon={<PlayCircleOutlined aria-hidden />}
+                {(['tcp', 'http', 'real'] as const).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    className={testMode === m ? 'on' : ''}
+                    aria-pressed={testMode === m}
+                    onClick={() => setTestMode(m)}
+                  >
+                    {m === 'real' ? t('pages.xray.outbound.modeRealDelay') : m.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <Btn
+                size="sm"
+                icon="refresh"
+                disabled={testingAll}
                 onClick={() => onTestAll(testMode)}
               >
-                {!isMobile && t('pages.xray.outbound.testAll')}
-              </Button>
-              <Popconfirm
-                placement="topRight"
-                okText={t('reset')}
-                cancelText={t('cancel')}
-                title={t('pages.inbounds.resetAllTrafficContent')}
-                onConfirm={() => onResetTraffic('-alltags-')}
-              >
-                <Button
-                  aria-label={t('pages.inbounds.resetTraffic')}
-                  icon={<RetweetOutlined aria-hidden />}
-                />
-              </Popconfirm>
-            </Space>
-          </Col>
-        </Row>
-
-        {isMobile ? (
-          <OutboundCardList
-            rows={displayRows}
-            testMode={testMode}
-            outboundsTraffic={outboundsTraffic}
-            outboundTestStates={outboundTestStates}
-            setFirst={setFirst}
-            openEdit={openEdit}
-            onResetTraffic={onResetTraffic}
-            confirmDelete={confirmDelete}
-            onTest={onTest}
-            torStatus={torStatus}
-            onShowTor={onShowTor}
+                {t('pages.xray.outbound.testAll')}
+              </Btn>
+              <IconBtn
+                small
+                icon="trash"
+                label={t('pages.inbounds.resetTraffic')}
+                onClick={() => setResetAllOpen(true)}
+              />
+            </div>
+          </div>
+          {displayRows.length === 0 ? (
+            <section className="tile">
+              <DlEmpty
+                art={<IlloEmpty size={120} />}
+                title={t('noData')}
+                actions={
+                  <Btn kind="pri" icon="plus" onClick={openAdd}>
+                    {t('outbounds.add')}
+                  </Btn>
+                }
+              />
+            </section>
+          ) : (
+            <section className="tile dense" style={{ padding: 14 }}>
+              <OutboundTable
+                rows={displayRows}
+                storedCount={rows.length}
+                narrow={isMobile}
+                outboundsTraffic={outboundsTraffic}
+                outboundTestStates={outboundTestStates}
+                torStatus={torStatus}
+                openEdit={openEdit}
+                setFirst={setFirst}
+                moveUp={moveUp}
+                moveDown={moveDown}
+                confirmDelete={confirmDelete}
+                onResetTraffic={onResetTraffic}
+                onTest={(key) => onTest(key, testMode)}
+                onShowTor={onShowTor}
+              />
+            </section>
+          )}
+          <OutboundFormModal
+            open={modalOpen}
+            outbound={editingOutbound}
+            existingTags={existingTags}
+            dialerProxyTags={dialerProxyTags}
+            onClose={() => setModalOpen(false)}
+            onConfirm={onConfirm}
           />
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={displayRows}
-            rowKey={(r) => r.key}
-            pagination={false}
-            size="small"
-            locale={{
-              emptyText: (
-                <div className="card-empty">
-                  <ExportOutlined aria-hidden style={{ fontSize: 32, marginBottom: 8 }} />
-                  <div>{t('noData')}</div>
-                </div>
-              ),
+          <PromptModal
+            open={importOpen}
+            onClose={() => setImportOpen(false)}
+            title={t('pages.xray.importOutbounds')}
+            okText={t('pages.xray.importOutbounds')}
+            type="textarea"
+            json
+            onConfirm={importOutbounds}
+          />
+          <TextModal
+            open={exportOpen}
+            onClose={() => setExportOpen(false)}
+            title={t('pages.xray.exportOutbounds')}
+            content={exportContent}
+            fileName="outbounds.json"
+            json
+          />
+
+          {/* Subscription outbounds (read-only, merged at runtime) */}
+          {Array.isArray(subscriptionOutbounds) && subscriptionOutbounds.length > 0 && (
+            <SubscriptionOutbounds
+              subscriptionOutbounds={subscriptionOutbounds}
+              outboundsTraffic={outboundsTraffic}
+              subscriptionTestStates={subscriptionTestStates}
+              testMode={testMode}
+              isMobile={isMobile}
+              onTestSubscription={onTestSubscription}
+            />
+          )}
+        </div>
+        {rulesTile}
+      </div>
+      <DlModal
+        open={resetAllOpen}
+        onClose={() => setResetAllOpen(false)}
+        label={t('pages.inbounds.resetAllTrafficContent')}
+        width={440}
+      >
+        <h2 className="h3">{t('pages.inbounds.resetAllTrafficContent')}</h2>
+        <div className="mfoot">
+          <Btn kind="ghost" onClick={() => setResetAllOpen(false)}>
+            {t('cancel')}
+          </Btn>
+          <Btn
+            kind="dng"
+            icon="refresh"
+            onClick={() => {
+              setResetAllOpen(false);
+              onResetTraffic('-alltags-');
             }}
-          />
-        )}
-
-        <OutboundFormModal
-          open={modalOpen}
-          outbound={editingOutbound}
-          existingTags={existingTags}
-          dialerProxyTags={dialerProxyTags}
-          onClose={() => setModalOpen(false)}
-          onConfirm={onConfirm}
-        />
-        <PromptModal
-          open={importOpen}
-          onClose={() => setImportOpen(false)}
-          title={t('pages.xray.importOutbounds')}
-          okText={t('pages.xray.importOutbounds')}
-          type="textarea"
-          json
-          onConfirm={importOutbounds}
-        />
-        <TextModal
-          open={exportOpen}
-          onClose={() => setExportOpen(false)}
-          title={t('pages.xray.exportOutbounds')}
-          content={exportContent}
-          fileName="outbounds.json"
-          json
-        />
-
-        {/* Subscription outbounds (read-only, merged at runtime) */}
-        {Array.isArray(subscriptionOutbounds) && subscriptionOutbounds.length > 0 && (
-          <SubscriptionOutbounds
-            subscriptionOutbounds={subscriptionOutbounds}
-            outboundsTraffic={outboundsTraffic}
-            subscriptionTestStates={subscriptionTestStates}
-            testMode={testMode}
-            isMobile={isMobile}
-            onTestSubscription={onTestSubscription}
-          />
-        )}
-      </Space>
+          >
+            {t('reset')}
+          </Btn>
+        </div>
+      </DlModal>
 
       <Modal
         title={t('pages.xray.outboundSub.title')}

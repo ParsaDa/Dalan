@@ -42,6 +42,8 @@ export const AllSettingSchema = z
     tgRunTime: z.string().optional(),
     tgBotBackup: z.boolean().optional(),
     tgCpu: z.number().int().min(0).max(100).optional(),
+    trafficCapGB: z.number().int().min(0).optional(),
+    trafficResetDay: z.number().int().min(1).max(28).optional(),
     outboundDownThreshold: z.number().int().min(1).max(100).optional(),
     nodeDownThreshold: z.number().int().min(1).max(100).optional(),
     tgLang: z.string().optional(),
@@ -57,6 +59,12 @@ export const AllSettingSchema = z
     subClashAutoDetect: z.boolean().optional(),
     subClashUserAgentRegex: z.string().max(2048).optional(),
     subTitle: z.string().optional(),
+    serverName: z.string().max(64).optional(),
+    serverCountry: z
+      .string()
+      .regex(/^([A-Z]{2})?$/)
+      .optional(),
+    setupDone: z.boolean().optional(),
     subSupportUrl: z.string().optional(),
     subProfileMode: SubProfileModeSchema.optional(),
     subProfileUrl: z.string().optional(),

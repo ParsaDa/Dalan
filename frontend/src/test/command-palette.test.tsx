@@ -37,7 +37,7 @@ describe('CommandPalette component', () => {
     });
 
     expect(screen.getByRole('dialog')).toBeTruthy();
-    const input = screen.getByPlaceholderText(/Type a command or search/i);
+    const input = screen.getByPlaceholderText(/Search users, inbounds, nodes, settings/i);
     expect(input).toBeTruthy();
     await waitFor(() => {
       expect(document.activeElement).toBe(input);
@@ -86,19 +86,19 @@ describe('CommandPalette component', () => {
       commandPaletteStore.open();
     });
 
-    const input = screen.getByPlaceholderText(/Type a command or search/i);
-    const items = document.querySelectorAll('.command-palette-item');
+    const input = screen.getByPlaceholderText(/Search users, inbounds, nodes, settings/i);
+    const items = document.querySelectorAll('[data-index]');
     expect(items.length).toBeGreaterThan(0);
 
-    expect(items[0]?.classList.contains('active')).toBe(true);
+    expect(items[0]?.classList.contains('on')).toBe(true);
 
     fireEvent.keyDown(input, { key: 'ArrowDown' });
-    const updatedItems = document.querySelectorAll('.command-palette-item');
-    expect(updatedItems[1]?.classList.contains('active')).toBe(true);
+    const updatedItems = document.querySelectorAll('[data-index]');
+    expect(updatedItems[1]?.classList.contains('on')).toBe(true);
 
     fireEvent.keyDown(input, { key: 'ArrowUp' });
-    const reupdatedItems = document.querySelectorAll('.command-palette-item');
-    expect(reupdatedItems[0]?.classList.contains('active')).toBe(true);
+    const reupdatedItems = document.querySelectorAll('[data-index]');
+    expect(reupdatedItems[0]?.classList.contains('on')).toBe(true);
   });
 
   it('filters items when typing a search query', async () => {
@@ -107,10 +107,10 @@ describe('CommandPalette component', () => {
       commandPaletteStore.open();
     });
 
-    const input = screen.getByPlaceholderText(/Type a command or search/i);
+    const input = screen.getByPlaceholderText(/Search users, inbounds, nodes, settings/i);
     fireEvent.change(input, { target: { value: 'settings' } });
 
-    expect(screen.getAllByText(/Panel Settings/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^Settings$/).length).toBeGreaterThan(0);
   });
 
   it('resets query on close and does not persist query on reopen', async () => {
@@ -119,7 +119,9 @@ describe('CommandPalette component', () => {
       commandPaletteStore.open();
     });
 
-    const input = screen.getByPlaceholderText(/Type a command or search/i) as HTMLInputElement;
+    const input = screen.getByPlaceholderText(
+      /Search users, inbounds, nodes, settings/i,
+    ) as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'settings' } });
     expect(input.value).toBe('settings');
 
@@ -132,7 +134,7 @@ describe('CommandPalette component', () => {
     });
 
     const reopenedInput = screen.getByPlaceholderText(
-      /Type a command or search/i,
+      /Search users, inbounds, nodes, settings/i,
     ) as HTMLInputElement;
     expect(reopenedInput.value).toBe('');
   });
@@ -143,10 +145,10 @@ describe('CommandPalette component', () => {
       commandPaletteStore.open();
     });
 
-    const input = screen.getByPlaceholderText(/Type a command or search/i);
+    const input = screen.getByPlaceholderText(/Search users, inbounds, nodes, settings/i);
     fireEvent.change(input, { target: { value: '   ' } });
 
-    expect(document.querySelector('.command-palette-search-icon.spinning')).toBeNull();
+    expect(document.querySelector('[data-searching="true"]')).toBeNull();
   });
 
   it('does not display stale client rows when a new search query is being fetched', async () => {
@@ -183,7 +185,7 @@ describe('CommandPalette component', () => {
       commandPaletteStore.open();
     });
 
-    const input = screen.getByPlaceholderText(/Type a command or search/i);
+    const input = screen.getByPlaceholderText(/Search users, inbounds, nodes, settings/i);
 
     // Type 'ali' and wait for Alice to appear after debounce
     fireEvent.change(input, { target: { value: 'ali' } });
@@ -245,7 +247,7 @@ describe('CommandPalette component', () => {
       commandPaletteStore.open();
     });
 
-    const input = screen.getByPlaceholderText(/Type a command or search/i);
+    const input = screen.getByPlaceholderText(/Search users, inbounds, nodes, settings/i);
     fireEvent.change(input, { target: { value: 'abc' } });
 
     await waitFor(
@@ -265,7 +267,7 @@ describe('CommandPalette component', () => {
       String(c[0]).includes('search=abc'),
     ).length;
     expect(callsAfterAbcSpace).toBe(1);
-    expect(document.querySelector('.command-palette-search-icon.spinning')).toBeNull();
+    expect(document.querySelector('[data-searching="true"]')).toBeNull();
   });
 
   it('keeps the row secondary action independent of the row control', async () => {
@@ -297,7 +299,7 @@ describe('CommandPalette component', () => {
       commandPaletteStore.open();
     });
 
-    const input = screen.getByPlaceholderText(/Type a command or search/i);
+    const input = screen.getByPlaceholderText(/Search users, inbounds, nodes, settings/i);
     fireEvent.change(input, { target: { value: 'ali' } });
     await waitFor(
       () => {
@@ -306,7 +308,7 @@ describe('CommandPalette component', () => {
       { timeout: 2000 },
     );
 
-    const copyBtn = document.querySelector('.command-palette-action-btn');
+    const copyBtn = document.querySelector('[data-row-action]');
     expect(copyBtn).toBeTruthy();
     expect(copyBtn?.parentElement?.closest('button')).toBeNull();
 
@@ -321,7 +323,7 @@ describe('CommandPalette component', () => {
       commandPaletteStore.open();
     });
 
-    const input = screen.getByPlaceholderText(/Type a command or search/i);
+    const input = screen.getByPlaceholderText(/Search users, inbounds, nodes, settings/i);
     fireEvent.change(input, { target: { value: 'theme' } });
 
     const themeItems = screen.getAllByText(/Theme/i);
@@ -335,7 +337,7 @@ describe('CommandPalette component', () => {
       commandPaletteStore.open();
     });
 
-    fireEvent.change(screen.getByPlaceholderText(/Type a command or search/i), {
+    fireEvent.change(screen.getByPlaceholderText(/Search users, inbounds, nodes, settings/i), {
       target: { value: 'effects' },
     });
     fireEvent.click(screen.getByText('Effects'));

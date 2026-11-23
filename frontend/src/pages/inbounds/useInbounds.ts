@@ -70,7 +70,7 @@ const TRACKED_PROTOCOLS: readonly string[] = [
   Protocols.MASQUE,
 ];
 
-async function fetchSlimInbounds(): Promise<unknown[]> {
+export async function fetchSlimInbounds(): Promise<unknown[]> {
   const msg = await HttpUtil.get('/panel/api/inbounds/list/slim', undefined, { silent: true });
   if (!msg?.success) throw new Error(msg?.msg || 'Failed to fetch inbounds');
   const validated = parseMsg(msg, SlimInboundListSchema, 'inbounds/list/slim');

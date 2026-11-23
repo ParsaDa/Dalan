@@ -15,6 +15,17 @@
   "copy": "Sao chép",
   "copied": "Đã sao chép",
   "more": "thêm",
+  "morePage": {
+    "panel": "Panel",
+    "server": "Server",
+    "account": "Account",
+    "dark": "Dark",
+    "light": "Light",
+    "language": "Language",
+    "outboundsRouting": "Outbounds and routing",
+    "twoStepOn": "2-step on",
+    "twoStepOff": "2-step off"
+  },
   "download": "Tải xuống",
   "regenerate": "Tạo lại",
   "jsonEditor": "Trình chỉnh sửa JSON",
@@ -83,31 +94,11 @@
   "somethingWentWrong": "Đã xảy ra lỗi",
   "subscription": {
     "title": "Thông tin đăng ký",
-    "status": "Trạng thái",
-    "downloaded": "Đã tải xuống",
-    "uploaded": "Đã tải lên",
-    "expiry": "Hết hạn",
-    "totalQuota": "Tổng hạn mức",
     "active": "Hoạt động",
-    "inactive": "Không hoạt động",
     "unlimited": "Không giới hạn",
     "noExpiry": "Không hết hạn",
-    "copyAllConfigs": "Sao chép tất cả cấu hình",
-    "copyAllConfigsCopied": "Đã sao chép tất cả cấu hình",
     "daysLeft": "Số ngày còn lại",
-    "expired": "Đã hết hạn",
-    "depleted": "Hết dung lượng",
-    "ofTotal": "trên {total}",
-    "tabLinks": "Gói đăng ký",
-    "tabApps": "Ứng dụng",
-    "tabConfigs": "Cấu hình",
-    "scanTitle": "Quét bằng điện thoại",
-    "scanHint": "Quét mã này trong ứng dụng VPN để thêm gói đăng ký mà không cần sao chép liên kết.",
-    "updateInterval": "Tự động cập nhật mỗi {hours} giờ",
-    "support": "Hỗ trợ",
-    "qrTitle": "Quét. Nhập. Kết nối.",
-    "qrHint": "Quét bằng ứng dụng khách. Không chia sẻ mã này cho người khác.",
-    "saveQr": "Lưu QR"
+    "updateInterval": "Tự động cập nhật mỗi {hours} giờ"
   },
   "menu": {
     "theme": "Chủ đề",
@@ -121,19 +112,15 @@
     "routing": "Định tuyến",
     "outbounds": "Outbound",
     "apiDocs": "Tài liệu API",
-    "donate": "Quyên góp",
     "hosts": "Hosts",
-    "docs": "Tài liệu",
-    "openMenu": "Mở menu",
-    "pinSidebar": "Ghim thanh bên",
-    "unpinSidebar": "Bỏ ghim thanh bên",
     "subFormats": "Sub Formats",
-    "tunnels": "Tunnels"
+    "tunnels": "Tunnels",
+    "activity": "Activity",
+    "torPia": "Tor and PIA",
+    "logs": "Logs"
   },
   "pages": {
     "login": {
-      "hello": "Xin chào",
-      "title": "Chào mừng",
       "loginAgain": "Thời hạn đăng nhập đã hết. Vui lòng đăng nhập lại.",
       "toasts": {
         "invalidFormData": "Dạng dữ liệu nhập không hợp lệ.",
@@ -145,19 +132,10 @@
     },
     "index": {
       "thisServer": "This server",
-      "greetMorning": "Good morning",
-      "greetAfternoon": "Good afternoon",
-      "greetEvening": "Good evening",
-      "nodesStatusLine": "{online} of {total} nodes online",
       "cpu": "CPU",
       "swap": "Swap",
-      "storage": "Lưu trữ",
       "memory": "Bộ nhớ",
-      "xrayStatus": "Xray",
-      "stopXray": "Dừng",
       "restartXray": "Khởi động lại",
-      "startXray": "Khởi động",
-      "stopXrayDisabledHint": "Xray không chạy",
       "stopXrayConfirmTitle": "Dừng Xray?",
       "stopXrayConfirmContent": "Dừng Xray sẽ ngắt ngay lập tức mọi kết nối proxy. Bạn có chắc muốn tiếp tục?",
       "stopXrayConfirmOk": "Dừng Xray",
@@ -174,7 +152,6 @@
       "currentCommit": "Commit hiện tại",
       "latestCommit": "Commit mới nhất",
       "updateChannelChanged": "Đã đổi kênh cập nhật",
-      "xrayStatusUnknown": "Không xác định",
       "xrayStatusRunning": "Đang chạy",
       "xrayStatusStop": "Dừng",
       "xrayStatusError": "Lỗi",
@@ -217,10 +194,6 @@
       "xrayObservatoryDead": "Ngừng",
       "xrayObservatoryLastSeen": "Lần cuối thấy",
       "xrayObservatoryLastTry": "Lần thử cuối",
-      "connectionCount": "Số lượng kết nối",
-      "ipAddresses": "Địa chỉ IP",
-      "toggleIpVisibility": "Chuyển đổi hiển thị IP",
-      "overallSpeed": "Tốc độ tổng thể",
       "upload": "Tải lên",
       "download": "Tải xuống",
       "sent": "Đã gửi",
@@ -256,7 +229,6 @@
       "geodataEmpty": "Chưa cấu hình tệp nào. Trong quy tắc định tuyến, tham chiếu tệp dạng ext:geosite_custom.dat:category.",
       "dontRefresh": "Đang tiến hành cài đặt, vui lòng không làm mới trang này.",
       "logs": "Nhật ký",
-      "accessLogs": "Nhật ký truy cập",
       "autoUpdate": "Tự động cập nhật",
       "amneziawgLogs": "Nhật ký AmneziaWG",
       "amneziawgHandshake": "Bắt tay gần nhất",
@@ -283,38 +255,16 @@
       "importDatabasePgDesc": "Nhấn để chọn và tải lên bản sao lưu PostgreSQL (.dump), cơ sở dữ liệu SQLite (.db) hoặc tệp kết xuất di trú SQLite nhằm khôi phục cơ sở dữ liệu của bạn. Thao tác này sẽ thay thế toàn bộ dữ liệu hiện tại.",
       "migrationDownload": "Tải tệp di trú",
       "migrationDownloadPgDesc": "Nhấp để tải xuống cơ sở dữ liệu SQLite .db được tạo từ dữ liệu PostgreSQL của bạn, sẵn sàng chạy bảng điều khiển này trên SQLite.",
-      "avg": "TB",
-      "peak": "đỉnh",
-      "free": "trống",
-      "openSockets": "socket đang mở",
-      "throughputSub": "Tổng theo giao diện mạng",
-      "avgWindow": "Trung bình trong khoảng",
-      "healthWarm": "{list} — đang cao",
-      "healthCritical": "{list} — nguy cấp",
-      "panel": "Panel",
-      "threads": "Luồng",
       "uptime": "Thời gian chạy",
-      "logLevelDebug": "Debug",
-      "logLevelInfo": "Info",
-      "logLevelNotice": "Notice",
-      "logLevelWarning": "Warning",
-      "logLevelError": "Error",
-      "accessDirect": "DIRECT",
-      "accessBlocked": "BLOCKED",
-      "accessProxy": "PROXY",
       "importKeepHostSettings": "Giữ cài đặt của máy này",
       "importKeepHostSettingsDesc": "Giữ nguyên địa chỉ lắng nghe, cổng, đường dẫn cơ sở, chứng chỉ và danh tính node của bảng điều khiển này thay vì lấy chúng từ tệp đã tải lên.",
       "logLines": "Số dòng",
       "timeRange": "Khoảng thời gian"
     },
     "inbounds": {
-      "totalDownUp": "Tổng tải lên/tải xuống",
       "totalUsage": "Tổng sử dụng",
-      "inboundCount": "Số lượng điểm vào",
-      "operate": "Menu",
       "enable": "Kích hoạt",
       "remark": "Chú thích",
-      "node": "Node",
       "deployTo": "Triển khai tới",
       "localPanel": "Panel cục bộ",
       "fallbacks": {
@@ -332,7 +282,6 @@
       "port": "Cổng",
       "portMap": "Ánh xạ cổng",
       "traffic": "Lưu lượng",
-      "speed": "Tốc độ",
       "expireDate": "Ngày hết hạn",
       "createdAt": "Tạo lúc",
       "updatedAt": "Cập nhật",
@@ -440,7 +389,6 @@
         "stream": "Stream",
         "streamHelp": "Bao đóng khối stream của Xray:"
       },
-      "subSortIndex": "Thứ tự sub",
       "inboundInfo": "Thông tin Inbound",
       "exportInbound": "Xuất nhập khẩu",
       "import": "Nhập",
@@ -841,7 +789,6 @@
       "renew": "Tự động gia hạn",
       "renewDesc": "Tự động gia hạn sau khi hết hạn. (đơn vị: ngày)",
       "renewDays": "Tự động gia hạn (ngày)",
-      "searchPlaceholder": "Tìm email, ghi chú, sub ID, UUID, mật khẩu, auth, Telegram ID…",
       "filterTitle": "Lọc client",
       "clearAllFilters": "Xóa tất cả",
       "filters": {
@@ -864,7 +811,6 @@
       "totalGB": "Giới hạn lưu lượng (GB)",
       "totalGBDesc": "Hạn mức dữ liệu cho khách hàng này. 0 = không giới hạn.",
       "expiryTime": "Hết hạn",
-      "addClients": "Thêm khách hàng",
       "limitIp": "Giới hạn IP",
       "limitIpDesc": "Số IP đồng thời tối đa. 0 = không giới hạn.",
       "limitHwid": "Giới hạn HWID",
@@ -896,16 +842,12 @@
       "groupPlaceholder": "ví dụ customer-a",
       "comment": "Ghi chú",
       "traffic": "Lưu lượng",
-      "speed": "Tốc độ",
       "offline": "Ngoại tuyến",
       "addClient": "Thêm khách hàng",
       "qrCode": "Mã QR",
       "clientInfo": "Thông tin khách hàng",
       "editClient": "Chỉnh sửa khách hàng",
       "client": "Khách hàng",
-      "enabled": "Đã bật",
-      "remaining": "Còn lại",
-      "duration": "Thời hạn",
       "attachedInbounds": "Inbound đã gắn",
       "selectInbound": "Chọn một hoặc nhiều inbound",
       "selectAllInbounds": "Chọn tất cả",
@@ -1074,14 +1016,6 @@
     },
     "groups": {
       "name": "Tên",
-      "clientCount": "Client",
-      "totalGroups": "Tổng số nhóm",
-      "totalGroupedClients": "Client có nhóm",
-      "trafficUsed": "Lưu lượng đã dùng",
-      "upload": "Tải lên",
-      "download": "Tải xuống",
-      "totalTraffic": "Tổng lưu lượng",
-      "totalUpDown": "Tổng tải lên / tải xuống",
       "addGroup": "Thêm nhóm",
       "createSuccess": "Đã tạo nhóm «{name}».",
       "rename": "Đổi tên",
@@ -1116,10 +1050,6 @@
     "nodes": {
       "addNode": "Thêm nút",
       "editNode": "Sửa node",
-      "totalNodes": "Tổng số nút",
-      "onlineNodes": "Trực tuyến",
-      "offlineNodes": "Ngoại tuyến",
-      "avgLatency": "Độ trễ trung bình",
       "name": "Tên",
       "namePlaceholder": "vd: de-frankfurt-1",
       "addressPlaceholder": "panel.example.com hoặc 1.2.3.4",
@@ -1128,7 +1058,6 @@
       "remark": "Chú thích",
       "scheme": "Giao thức",
       "address": "Địa chỉ",
-      "port": "Cổng",
       "basePath": "Đường dẫn cơ sở",
       "apiToken": "Token API",
       "apiTokenPlaceholder": "Token từ trang Cài đặt của panel từ xa",
@@ -1140,7 +1069,6 @@
       "outboundTagHint": "Định tuyến lưu lượng API panel của node này qua outbound Xray đã chọn. Một inbound cầu nối loopback được tự động thêm vào cấu hình đang chạy và áp dụng trực tiếp. Để trống để kết nối trực tiếp.",
       "outboundTagPlaceholder": "Kết nối trực tiếp",
       "country": "Country",
-      "accent": "Node colour",
       "accentAuto": "Auto (from country)",
       "accentCustom": "Custom #rrggbb",
       "accentCustomRefused": "This colour is too close to the warning or success colour. Pick another.",
@@ -1155,20 +1083,15 @@
       "inboundsLoaded": "Đã tải {{count}} inbound",
       "inboundsLoadFailed": "Không thể tải inbound",
       "enable": "Kích hoạt",
-      "status": "Trạng thái",
       "cpu": "CPU",
       "mem": "Bộ nhớ",
       "netUp": "Mạng lên (KB/s)",
       "netDown": "Mạng xuống (KB/s)",
       "uptime": "Thời gian hoạt động",
       "latency": "Độ trễ",
-      "lastHeartbeat": "Heartbeat gần nhất",
-      "xrayVersion": "Phiên bản Xray",
-      "panelVersion": "Phiên bản panel",
       "actions": "Hành động",
       "probe": "Kiểm tra ngay",
       "updatePanel": "Cập nhật bảng điều khiển",
-      "updateSelected": "Cập nhật đã chọn ({count})",
       "updateAvailable": "Có bản cập nhật",
       "updateConfirmTitle": "Cập nhật {count} node lên phiên bản mới nhất?",
       "updateConfirmContent": "Mỗi node đã chọn sẽ tải bản phát hành mới nhất và khởi động lại. Chỉ các node đang bật và trực tuyến được cập nhật.",
@@ -1178,17 +1101,8 @@
       "connectionFailed": "Kết nối thất bại",
       "never": "chưa bao giờ",
       "justNow": "vừa xong",
-      "subNode": "Nút con",
-      "subNodeTip": "Chỉ đọc: một nút phía dưới được kết nối qua {parent}. Quản lý nó từ bảng điều khiển của chính {parent}.",
       "deleteConfirmTitle": "Xóa nút \"{name}\"?",
       "deleteConfirmContent": "Việc này dừng giám sát nút. Panel từ xa không bị ảnh hưởng.",
-      "statusValues": {
-        "online": "Trực tuyến",
-        "offline": "Ngoại tuyến",
-        "unknown": "Không xác định",
-        "xrayError": "Lỗi Xray",
-        "xrayStopped": "Đã dừng"
-      },
       "toasts": {
         "list": "Không tải được danh sách nút",
         "obtain": "Không tải được nút",
@@ -1201,7 +1115,6 @@
         "probeFailed": "Kiểm tra thất bại",
         "updateStarted": "Đã bắt đầu cập nhật bảng điều khiển",
         "updateResult": "Đã kích hoạt cập nhật trên {ok} node, {failed} thất bại",
-        "updateNoneEligible": "Chọn ít nhất một node trực tuyến và đang bật",
         "saveMtls": "Lưu mTLS nút",
         "reloadMtls": "Reload master mTLS credential"
       },
@@ -1967,8 +1880,6 @@
       "bufferSizePlaceholder": "tự động",
       "seconds": "giây",
       "rules": {
-        "source": "Nguồn",
-        "dest": "Đích",
         "inbound": "Vào",
         "balancer": "Cân bằng",
         "useComma": "Các mục được phân tách bằng dấu phẩy"
@@ -2080,8 +1991,6 @@
       },
       "outbound": {
         "tag": "Tag",
-        "egress": "Egress",
-        "egressHint": "Run an HTTP test to show egress IP and country.",
         "outboundStatus": "Trạng thái đầu ra",
         "sendThrough": "Gửi qua",
         "targetStrategy": "Chiến lược đích",
@@ -2418,11 +2327,6 @@
       "editHost": "Sửa Host",
       "selectInbound": "Chọn một inbound",
       "selectedCount": "Đã chọn {count}",
-      "summary": {
-        "total": "Tổng",
-        "enabled": "Đã kích hoạt",
-        "disabled": "Đã tắt"
-      },
       "moveUp": "Lên",
       "moveDown": "Xuống",
       "bulkEnable": "Kích hoạt",
@@ -2536,12 +2440,10 @@
     },
     "tunnels": {
       "title": "Tunnels",
-      "subtitle": "Tunnels between this server and your other servers. Reverse: the exit server opens the connection toward the entry server. Direct: the entry server dials the exit server over a layer-3 link, for games.",
       "newPortal": "New tunnel",
       "importLink": "Import link",
       "empty": "No tunnels yet",
       "name": "Name",
-      "role": "Role",
       "rolePortal": "Entry (listens)",
       "roleBridge": "Exit (dials)",
       "address": "Address",
@@ -2556,9 +2458,7 @@
       "copyLink": "Copy setup link",
       "linkCopied": "Setup link copied",
       "pasteLink": "Paste the setup link from the entry server",
-      "enabled": "Enabled",
       "deleteConfirm": "Delete this tunnel?",
-      "status": "Status",
       "statusConnected": "Connected",
       "statusDown": "Down",
       "statusExit": "Exits from",
@@ -2593,7 +2493,6 @@
       "newPool": "New pool",
       "poolsHint": "Tunnels in a pool stand in for each other. Traffic leaves through the one in use and moves to a spare only after the spare has been clearly better several checks in a row. The balancer is also available to routing rules as pool-<name>.",
       "poolsEmpty": "No pools yet",
-      "poolMembers": "Tunnels",
       "poolInUse": "in use",
       "poolDeleteConfirm": "Delete this pool? Its tunnels stay.",
       "poolTunnels": "Tunnels",
@@ -2604,7 +2503,6 @@
       "engineVersion": "{engine} engine {version}",
       "engineVersionUnknown": "(installed by hand)",
       "updateEngine": "Update engine",
-      "engineViaNode": "Download through node",
       "mode": "Mode",
       "modeReverse": "Reverse",
       "modeDirect": "Direct",
@@ -2724,8 +2622,6 @@
       "search": "Search country",
       "empty": "No country matches",
       "test": "Test",
-      "add": "Add",
-      "remove": "Remove",
       "result": {
         "works": "Works · {ms} ms",
         "exit": "exit {loc}"
@@ -3089,9 +2985,6 @@
     "statusUp": "HOẠT ĐỘNG"
   },
   "commandPalette": {
-    "title": "Bảng lệnh",
-    "placeholder": "Nhập lệnh hoặc tìm kiếm khách hàng, cổng vào, trang...",
-    "search": "Tìm kiếm...",
     "navigation": "Điều hướng",
     "actions": "Hành động",
     "navigate": "Điều hướng",
@@ -3100,5 +2993,684 @@
     "restartXray": "Khởi động lại dịch vụ Xray",
     "restartXraySuccess": "Dịch vụ Xray đã được khởi động lại thành công",
     "settings": "Cài đặt"
+  },
+  "shell": {
+    "brand": "Dalan",
+    "nav": {
+      "main": "Main navigation",
+      "overview": "Overview",
+      "usersAccess": "Users and access",
+      "network": "Network",
+      "system": "System",
+      "home": "Home",
+      "users": "Users",
+      "connections": "Connections",
+      "servers": "Servers",
+      "more": "More",
+      "help": "Help",
+      "collapse": "Collapse menu",
+      "expand": "Expand menu",
+      "collapseShort": "Collapse"
+    },
+    "greeting": {
+      "morning": "Good morning, {name}",
+      "afternoon": "Good afternoon, {name}",
+      "evening": "Good evening, {name}",
+      "morningBare": "Good morning",
+      "afternoonBare": "Good afternoon",
+      "eveningBare": "Good evening"
+    },
+    "status": {
+      "healthy": "all systems healthy",
+      "attention": "needs attention",
+      "highLoad": "running under high load",
+      "notAnswering": "not answering",
+      "paused": "Paused",
+      "online": "Online",
+      "offline": "Offline",
+      "offlineShort": "offline",
+      "highLoadShort": "High load",
+      "updated": "updated {n}s ago"
+    },
+    "ms": "{n} ms",
+    "search": {
+      "label": "Search",
+      "field": "Search users, inbounds, nodes…",
+      "everything": "Search everything",
+      "placeholder": "Search users, inbounds, nodes, settings…",
+      "nothing": "Nothing found for “{q}”. Search looks across every node.",
+      "across": "Searching {n} servers"
+    },
+    "mode": {
+      "label": "Mode",
+      "simple": "Simple",
+      "advanced": "Advanced"
+    },
+    "effects": {
+      "label": "Effects",
+      "full": "Full",
+      "light": "Light",
+      "off": "Off"
+    },
+    "theme": {
+      "toLight": "Switch to light theme",
+      "toDark": "Switch to dark theme"
+    },
+    "notifications": "Notifications",
+    "account": "Account",
+    "servers": "Servers",
+    "addNode": "Add node",
+    "allServers": "All {n} servers",
+    "findServer": "Find a server",
+    "quick": {
+      "label": "Add",
+      "title": "Quick add on {name}",
+      "user": "New user",
+      "connection": "New connection",
+      "server": "New server"
+    }
+  },
+  "dashboard": {
+    "open": "Open",
+    "ago": {
+      "now": "now",
+      "min": "{n} min",
+      "hour": "{n} h",
+      "day": "{n} d"
+    },
+    "activity": {
+      "title": "Activity",
+      "viewAll": "View all",
+      "empty": "Nothing has happened yet. Changes you make show up here.",
+      "who": {
+        "you": "You",
+        "system": "System",
+        "api": "API"
+      },
+      "act": {
+        "client": {
+          "add": "<b>{who}</b> added client <b>{target}</b>",
+          "update": "<b>{who}</b> edited client <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted client <b>{target}</b>",
+          "bulkAdd": "<b>{who}</b> added <b>{target}</b> clients",
+          "bulkDelete": "<b>{who}</b> deleted <b>{target}</b> clients",
+          "bulkAdjust": "<b>{who}</b> changed limits for <b>{target}</b> clients",
+          "bulkEnable": "<b>{who}</b> turned on <b>{target}</b> clients",
+          "bulkDisable": "<b>{who}</b> paused <b>{target}</b> clients",
+          "resetTraffic": "<b>{who}</b> reset traffic for <b>{target}</b>"
+        },
+        "group": {
+          "add": "<b>{who}</b> created group <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted group <b>{target}</b>"
+        },
+        "inbound": {
+          "add": "<b>{who}</b> added inbound <b>{target}</b>",
+          "update": "<b>{who}</b> edited inbound <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted inbound <b>{target}</b>",
+          "enable": "<b>{who}</b> turned on inbound <b>{target}</b>",
+          "disable": "<b>{who}</b> turned off inbound <b>{target}</b>"
+        },
+        "tunnel": {
+          "add": "<b>{who}</b> added tunnel <b>{target}</b>",
+          "update": "<b>{who}</b> edited tunnel <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted tunnel <b>{target}</b>",
+          "enable": "<b>{who}</b> started tunnel <b>{target}</b>",
+          "disable": "<b>{who}</b> paused tunnel <b>{target}</b>"
+        },
+        "node": {
+          "add": "<b>{who}</b> added node <b>{target}</b>",
+          "update": "<b>{who}</b> edited node <b>{target}</b>",
+          "delete": "<b>{who}</b> removed node <b>{target}</b>",
+          "enable": "<b>{who}</b> turned on node <b>{target}</b>",
+          "disable": "<b>{who}</b> turned off node <b>{target}</b>",
+          "offline": "<b>{who}</b>: <b>{target}</b> went offline",
+          "online": "<b>{who}</b>: <b>{target}</b> is back online"
+        },
+        "host": {
+          "add": "<b>{who}</b> added host <b>{target}</b>",
+          "update": "<b>{who}</b> edited host <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted host <b>{target}</b>"
+        },
+        "tor": {
+          "add": "<b>{who}</b> added Tor exit <b>{target}</b>",
+          "delete": "<b>{who}</b> removed Tor exit <b>{target}</b>"
+        },
+        "xray": {
+          "restart": "<b>{who}</b> restarted Xray",
+          "stop": "<b>{who}</b> stopped Xray",
+          "install": "<b>{who}</b> installed Xray <b>{target}</b>",
+          "crash": "<b>{who}</b>: Xray stopped unexpectedly",
+          "config": "<b>{who}</b> changed the Xray config"
+        },
+        "panel": {
+          "update": "<b>{who}</b> updated the panel"
+        },
+        "settings": {
+          "update": "<b>{who}</b> changed settings"
+        },
+        "account": {
+          "update": "<b>{who}</b> changed the sign-in details"
+        },
+        "session": {
+          "signin": "<b>{who}</b> signed in from <b>{target}</b>"
+        }
+      },
+      "generic": "<b>{who}</b> {action} <b>{target}</b>"
+    },
+    "alerts": {
+      "title": "Alerts",
+      "count": "{n} need attention",
+      "none": "Nothing needs attention",
+      "noneHint": "Offline nodes, high load, a stopped Xray and expiring users show up here.",
+      "offline": "{node} is offline",
+      "offlineSub": "No heartbeat for {since}",
+      "nodeLoad": "{node} at {pct}%",
+      "sustained": "Sustained for {since}",
+      "cpu": "This server's CPU at {pct}%",
+      "memory": "This server's memory at {pct}%",
+      "xray": "Xray is not running",
+      "xraySub": "Users cannot connect until it starts",
+      "expiring": "{n} users expire this week",
+      "expiringSub": "Renew or notify them from Clients",
+      "review": "Review"
+    },
+    "high": "High",
+    "live": "Live",
+    "health": {
+      "title": "Server health",
+      "memory": "Memory",
+      "disk": "Disk"
+    },
+    "xray": {
+      "core": "Xray core",
+      "runningFor": "Running · uptime {n} d",
+      "uptime": "uptime {n} d",
+      "stoppedSub": "Stopped · users cannot connect",
+      "starting": "Starting…",
+      "stopping": "Stopping…",
+      "started": "Xray started",
+      "stopped": "Xray stopped",
+      "restarting": "Restarting Xray",
+      "restartingSub": "on {where} · users reconnect on their own",
+      "stepSend": "Asking Xray to restart",
+      "stepWait": "Waiting for Xray to run again",
+      "stepDone": "Users can connect",
+      "restarted": "Xray restarted · users reconnect on their own",
+      "restartFailed": "Xray did not come back: {error}"
+    },
+    "tunnels": {
+      "title": "Tunnels",
+      "count": "{on} of {n} on",
+      "none": "No tunnels yet",
+      "add": "Add a tunnel",
+      "route": "This server → {to}",
+      "up": "Up",
+      "down": "Down",
+      "testing": "Testing",
+      "reverse": "reverse",
+      "direct": "direct",
+      "layer3": "layer 3",
+      "toggle": "{name} tunnel",
+      "started": "{name} started",
+      "paused": "{name} paused"
+    },
+    "usage": {
+      "title": "Usage and online users",
+      "onlineNow": "online now",
+      "throughput": "throughput",
+      "mbits": "Mbit/s",
+      "clients": "Clients",
+      "monthly": "Monthly traffic",
+      "plan": "of {cap} GB plan · resets in {n} days"
+    },
+    "nodes": {
+      "connected": "Connected nodes",
+      "counts": "{direct} direct · {chained} chained",
+      "latency": "{n} ms latency",
+      "lastSeen": "last seen {ago} ago",
+      "traffic": "Traffic",
+      "unreachable": "Unreachable",
+      "behind": "{n} behind it · {names}",
+      "managed": "Managed through this panel",
+      "offlineTitle": "{name} is not answering",
+      "offlineBody": "Last heartbeat {ago} ago. Settings stay as they were.",
+      "reconnect": "Check the node",
+      "lastLogs": "Open logs",
+      "thisNode": "This node",
+      "country": "Country",
+      "link": "Link to this server",
+      "panelLink": "Panel connection",
+      "inbounds": "Inbounds",
+      "version": "Panel version",
+      "manage": "Manage",
+      "behindTitle": "Nodes behind {name}",
+      "behindSub": "Reached through {name}, shown only here",
+      "via": "via {name} · {n} ms"
+    },
+    "tools": {
+      "title": "Server tools",
+      "versions": "Panel {panel} · Xray {xray}",
+      "awgLogs": "AmneziaWG logs",
+      "metrics": "Xray metrics"
+    }
+  },
+  "activity": {
+    "sub": "Who did what, on which server, and when. Changes you make inside a node are recorded here too.",
+    "export": "Export CSV",
+    "filters": "Filter activity",
+    "area": {
+      "all": "Everything",
+      "client": "Clients",
+      "tunnel": "Tunnels",
+      "node": "Nodes",
+      "session": "Sign-ins",
+      "system": "System"
+    },
+    "server": "Server",
+    "any": "all",
+    "who": "Who",
+    "anyone": "anyone",
+    "when": "When",
+    "days": "Last {n} days",
+    "allTime": "All time",
+    "emptyTitle": "Nothing here yet",
+    "emptyBody": "Changes you make and things the system notices show up here.",
+    "col": {
+      "when": "When",
+      "who": "Who",
+      "what": "What",
+      "where": "Where",
+      "details": "Details"
+    },
+    "role": {
+      "you": "Owner",
+      "api": "API token",
+      "system": "Automatic"
+    },
+    "throughPanel": "through this panel",
+    "showing": "Showing {from}–{to} of {total}",
+    "prev": "Previous page",
+    "next": "Next page",
+    "code": "Action code"
+  },
+  "nodes": {
+    "sub": "Servers connected to this one. Open a node to manage it as if its own panel were open.",
+    "updateAll": "Update all online",
+    "open": "Open node",
+    "behind": "Behind it",
+    "history": "History",
+    "turnOn": "Turn on",
+    "turnOff": "Turn off",
+    "addTitle": "Add a node",
+    "addBody": "Run one command on the new server. It registers itself and opens a tunnel back here.",
+    "countryHint": "Sets the flag and the default colour.",
+    "colour": "Colour for this node",
+    "colourHint": "Taken from the flag. Used for the tab, buttons, bars and charts when you open this node. Status colours never change.",
+    "panelPort": "Panel port",
+    "manageThrough": "Manage through a tunnel",
+    "moreOptions": "More options",
+    "remove": "Remove node",
+    "saving": "Testing and saving…"
+  },
+  "tunnels": {
+    "subtitle": "Links between this server and your nodes. Engines are listed first; each tunnel runs on one engine.",
+    "testAll": "Test all",
+    "test": "Test",
+    "create": "Create tunnel",
+    "import": "Import",
+    "backpackBlurb": "Proved itself through long internet cuts. Reverse and direct, TCP and layer 3.",
+    "rakhshBlurb": "Fast multiplexed transport. Good for gaming at low ping.",
+    "moreEngines": "Install another engine",
+    "moreEnginesHint": "More engines can be added later; the list changes with the backend.",
+    "installed": "Installed",
+    "notInstalled": "Not installed",
+    "count": "{n} tunnels",
+    "options": "Options",
+    "engineOptions": "{engine} options",
+    "downloadOn": "Download on",
+    "flowTitle": "How traffic flows",
+    "flowHint": "Users always enter in Iran. Reverse tunnels are opened from outside, so they survive cuts.",
+    "flowUsers": "Users",
+    "flowUsersSub": "in Iran",
+    "flowEntry": "entry and subscriptions",
+    "flowExitNode": "Exit node",
+    "flowOpens": "opens the reverse tunnel",
+    "flowDials": "is dialled directly",
+    "flowInternet": "→ internet",
+    "filters": "Filter tunnels",
+    "filter": {
+      "all": "All",
+      "ok": "Up",
+      "bad": "Down",
+      "off": "Paused",
+      "backpack": "BackPack",
+      "rakhsh": "Rakhsh"
+    },
+    "colTunnel": "Tunnel",
+    "colEngine": "Engine",
+    "colMode": "Mode",
+    "colLatency": "Latency",
+    "colLastHour": "Last hour",
+    "colState": "State",
+    "colRoutes": "Routes",
+    "layer3": "Layer 3",
+    "ms": "{n} ms",
+    "enable": "Turn on"
+  },
+  "outbounds": {
+    "title": "Outbounds and routing",
+    "subtitle": "Where traffic leaves, and the rules that pick the way. Tunnels and Tor appear here next to the other outbounds.",
+    "editJson": "Edit as JSON",
+    "add": "Add outbound",
+    "colName": "Name",
+    "colType": "Type",
+    "ready": "Ready",
+    "failed": "Failed",
+    "testing": "Testing",
+    "notTested": "Not tested",
+    "torExit": "Tor",
+    "unsaved": "You have changes that are not saved. Saving restarts Xray."
+  },
+  "routing": {
+    "title": "Routing rules",
+    "subtitle": "The rules that pick which outbound each connection uses.",
+    "rule": "Rule",
+    "hint": "Checked from top to bottom. The first match wins.",
+    "empty": "No rules yet. Without rules, traffic leaves through the first outbound.",
+    "drag": "Drag to reorder",
+    "enabled": "Turn on"
+  },
+  "hosts": {
+    "subtitle": "The addresses and names that go into subscription links.",
+    "tipTitle": "Hosts are what users see in their link",
+    "tipBody": "When an address is blocked, change the host here and every subscription updates on its next refresh. No one needs a new link.",
+    "empty": "No hosts yet",
+    "filters": "Filter hosts",
+    "filter": {
+      "all": "All",
+      "on": "On",
+      "off": "Off"
+    },
+    "on": "On",
+    "off": "Off",
+    "usedBy": "Used by",
+    "copyAddress": "Copy address",
+    "select": "Select {name}",
+    "selectAll": "Select all"
+  },
+  "groups": {
+    "subtitle": "Put clients with the same plan together, then change limits for all of them at once.",
+    "new": "New group",
+    "empty": "No groups yet",
+    "emptyHint": "Make a group, then add clients to it from here or from the Clients page.",
+    "members": "members",
+    "share": "Share of all group traffic"
+  },
+  "inbounds": {
+    "subtitle": "The doors users come in through. Each one is a protocol on a port.",
+    "import": "Import",
+    "filters": "Filter inbounds",
+    "filter": {
+      "all": "All",
+      "on": "Listening",
+      "off": "Off",
+      "attention": "Needs attention"
+    },
+    "state": {
+      "ok": "Listening",
+      "warn": "Expires soon",
+      "expired": "Expired",
+      "off": "Off"
+    },
+    "colInbound": "Inbound",
+    "online": "{n} online",
+    "expiring": "Expiring",
+    "select": "Select {name}",
+    "anyServer": "Any server",
+    "searchHint": "Name, port or protocol",
+    "empty": "No inbounds yet",
+    "emptyHint": "Add an inbound so clients have a way in.",
+    "prev": "Previous page",
+    "next": "Next page"
+  },
+  "clientsPage": {
+    "subtitle": "Everyone who can connect through this server. Select rows for bulk actions.",
+    "export": "Export",
+    "add": "Add client",
+    "filters": "Filter clients by status",
+    "chip": {
+      "all": "All",
+      "active": "Active",
+      "expiring": "Expiring",
+      "depleted": "Expired",
+      "deactive": "Paused",
+      "online": "Online now"
+    },
+    "any": "Any",
+    "searchHint": "Name, email or UUID",
+    "removeFilter": "Remove filter",
+    "empty": "No clients yet",
+    "emptyHint": "Add a client, then share their link or QR code.",
+    "showing": "Showing {from}–{to} of {total}",
+    "perPage": "Per page",
+    "status": {
+      "active": "Active",
+      "expiring": "Expiring",
+      "depleted": "Expired",
+      "paused": "Paused"
+    },
+    "select": "Select {name}",
+    "noGroup": "No group",
+    "unlimited": "Unlimited",
+    "never": "Never",
+    "afterFirstUse": "{n} days after first use",
+    "pause": "Pause",
+    "resume": "Resume",
+    "colStatus": "Status",
+    "colUsage": "Usage",
+    "colExpires": "Expires",
+    "loseAccess": "{names} lose access right away.",
+    "andMore": "{names} and {count} more"
+  },
+  "logs": {
+    "subtitle": "Live log of this server. New lines appear at the top; pausing stops the stream.",
+    "pause": "Pause",
+    "resume": "Resume",
+    "levels": "Log level",
+    "level": {
+      "info": "All",
+      "warning": "Warnings",
+      "err": "Errors"
+    },
+    "sources": "Log source",
+    "source": {
+      "panel": "Panel",
+      "xray": "Xray access"
+    },
+    "search": "Search logs",
+    "streaming": "Streaming",
+    "paused": "Paused",
+    "count": "{n} lines · updated {at}",
+    "unavailable": "Logs could not be read",
+    "xrayHint": "Turn on the Xray access log in Xray config to see connections here.",
+    "empty": "No lines yet"
+  },
+  "torPage": {
+    "subtitle": "Extra exits that run inside Dalan. Route users or inbounds to them like any outbound.",
+    "exitsOn": "exit countries on",
+    "exitsWorking": "connected now",
+    "notAdded": "Not in use",
+    "use": "Use {name}",
+    "piaHint": "PIA servers are added as outbounds. Sign in and pick servers in the PIA dialog, then save the Xray config.",
+    "flagsHint": "Flags are drawn as images, so they show on Windows too."
+  },
+  "settingsPage": {
+    "subtitle": "Everything about this panel. Each node has its own settings when you open it.",
+    "sections": "Settings sections",
+    "nav": {
+      "general": "General",
+      "appearance": "Appearance",
+      "subscription": "Subscription page",
+      "security": "Security",
+      "notifications": "Notifications",
+      "users": "Users and access",
+      "developer": "Developer",
+      "backups": "Backups",
+      "updates": "Updates"
+    },
+    "soon": "Soon",
+    "comingLater": "Coming later",
+    "usersLater": "Roles and per-admin access arrive in a later version. This is where they will live.",
+    "developerHint": "API tokens and the API reference. The reference loads only when you open it.",
+    "email": "Email",
+    "formats": "Formats",
+    "balancers": "Balancers",
+    "thisDevice": "This device",
+    "effects": {
+      "auto": "Follows this device: light on weak devices, off when the system asks for less motion.",
+      "full": "Drifting glow, full blur, all motion.",
+      "light": "Still glow, small blur, only motion that explains a change.",
+      "off": "Solid cards, no blur, no ambient motion."
+    },
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "panelMode": "Panel mode",
+    "simpleMode": "Simple mode",
+    "simpleModeHint": "Plain names (Users, Servers, Connections), hides raw Xray options, keeps common tasks one or two taps away.",
+    "updates": {
+      "panel": "Dalan panel",
+      "xray": "Xray core",
+      "upToDate": "up to date",
+      "available": "Update available"
+    }
+  },
+  "xrayPage": {
+    "subtitle": "Advanced. The full Xray JSON for this server, and the basics, balancers and DNS it is built from.",
+    "reset": "Reset to generated",
+    "sections": "Xray config sections",
+    "json": "Full config",
+    "balancers": "Balancers",
+    "lines": "{n} lines · JSON",
+    "check": "Check before saving",
+    "jsonValid": "JSON is valid",
+    "jsonInvalid": "JSON has an error",
+    "managed": "Managed by the panel (tunnels, Tor or a subscription). Edits here are replaced on the next sync."
+  },
+  "developer": {
+    "tokens": "API tokens",
+    "newToken": "New token",
+    "noTokens": "No API tokens yet.",
+    "manage": "Manage tokens in Security",
+    "reference": "API reference",
+    "panelApi": "Panel API",
+    "wsEvents": "WebSocket events",
+    "onDemand": "Loads on demand",
+    "load": "Load the API reference",
+    "wsIntro": "After the cookie-authenticated GET /ws upgrade, every message is { type, payload, time }; time is Unix milliseconds."
+  },
+  "loginPage": {
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "sixDigits": "6 digits",
+    "more": "More languages",
+    "subtitle": "Sign in to your panel"
+  },
+  "errorPage": {
+    "lost": "Lost in the corridor",
+    "lostHint": "This page does not exist, or the node that owns it is not answering. Your settings are safe.",
+    "broken": "This page stopped working",
+    "brokenHint": "Something failed while showing it. Your settings are safe; try again or go back to the dashboard.",
+    "home": "Go to dashboard",
+    "retry": "Try again"
+  },
+  "subPage": {
+    "hi": "Hi {name}",
+    "ready": "Your connection is ready",
+    "notReady": "Ask your provider to renew it",
+    "status": {
+      "active": "Active",
+      "unlimited": "Active",
+      "expired": "Expired",
+      "depleted": "Out of data",
+      "disabled": "Paused"
+    },
+    "usedOf": "used of {total}",
+    "until": "Valid until {date}",
+    "connect": "Open in {app}",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copiedHint": "Paste it in your app if it did not open by itself",
+    "showQr": "Show QR code",
+    "hideQr": "Hide QR code",
+    "help": "Set up in 3 steps",
+    "pick": "Pick your phone",
+    "step1": "Install an app",
+    "step2": "Tap “Open in” above",
+    "step3": "Press connect",
+    "recommended": "Recommended",
+    "more": "Other formats and single configs",
+    "need": "Need help? Message your provider"
+  },
+  "setup": {
+    "time": "Setup · about 2 minutes",
+    "progress": "Setup progress",
+    "step": {
+      "server": "Server",
+      "connection": "Connection",
+      "user": "First user"
+    },
+    "server": {
+      "title": "Let’s set up this server",
+      "hint": "Give it a name you will recognise, and say where it is.",
+      "name": "Server name",
+      "country": "Country",
+      "address": "Public address",
+      "addressHint": "The address you opened this panel at. Links use it unless you set a domain in Settings.",
+      "countryNone": "Not set"
+    },
+    "connect": {
+      "title": "How should people connect?",
+      "hint": "Pick one. You can add more later."
+    },
+    "preset": {
+      "reality": {
+        "title": "Best for most people",
+        "desc": "VLESS Reality on port 443. Looks like normal HTTPS, hard to block."
+      },
+      "cdn": {
+        "title": "Behind a CDN",
+        "desc": "Trojan over WebSocket on port 8080, for a CDN that adds TLS. Use when direct IPs get blocked."
+      },
+      "game": {
+        "title": "Low ping",
+        "desc": "VLESS on a layer 3 tunnel, for gaming and calls. Needs a node and a Rakhsh tunnel first; set it up on the Tunnels page."
+      }
+    },
+    "user": {
+      "title": "Add your first user",
+      "hint": "This can be you. You will get a link to open in any app.",
+      "name": "Name",
+      "placeholder": "For example sara.k",
+      "traffic": "Traffic",
+      "gb50": "50 GB",
+      "valid": "Valid for",
+      "days30": "30 days",
+      "never": "Never expires"
+    },
+    "live": {
+      "title": "You’re live",
+      "hint": "{name} can connect now. Send this link or let them scan the code.",
+      "noSub": "{name} is ready. Turn on subscriptions in Settings to get a link, or copy their config from the Clients page."
+    },
+    "keysFailed": "Could not make Reality keys",
+    "back": "Back",
+    "next": "Continue",
+    "finish": "Create and finish",
+    "later": "Set up later"
+  },
+  "confirmDelete": {
+    "word": "DELETE",
+    "type": "Type {word} to confirm"
   }
 }

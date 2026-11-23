@@ -1,27 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
-import {
-  Alert,
-  Button,
-  Card,
-  Col,
-  ConfigProvider,
-  FloatButton,
-  Layout,
-  message,
-  Radio,
-  Result,
-  Row,
-  Space,
-  Spin,
-} from 'antd';
+import { message } from 'antd';
 
-import { useTheme } from '@/hooks/useTheme';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useXraySetting } from '@/hooks/useXraySetting';
 import type { XraySettingsValue } from '@/hooks/useXraySetting';
-import AppSidebar from '@/layouts/AppSidebar';
 import { JsonEditor } from '@/components/form';
 import { setMessageInstance } from '@/utils/messageBus';
 import { injectedOutboundTags } from '@/lib/xray/injected-outbound-tags';
@@ -40,6 +24,11 @@ import {
 import { DnsTab } from './dns';
 import { WarpModal, NordModal, PiaModal, TorModal } from './overrides';
 import './XrayPage.css';
+import { FileManager } from '@/utils';
+import { IlloOffline } from '@/components/dl/Illustrations';
+import Icon from '@/components/dl/Icon';
+import { Modal as DlModal } from '@/components/dl/overlays';
+import { Btn, Empty as DlEmpty, Seg, Sk, TileHead } from '@/components/dl/primitives';
 
 const SECTION_SLUGS = ['basic', 'routing', 'outbound', 'balancer', 'dns', 'advanced'];
 
@@ -47,7 +36,6 @@ type AdvKey = 'xraySetting' | 'inboundSettings' | 'outboundSettings' | 'routingR
 
 export default function XrayPage() {
   const { t } = useTranslation();
-  const { isDark, isUltra, antdThemeConfig } = useTheme();
   const { isMobile } = useMediaQuery();
   const [messageApi, messageContextHolder] = message.useMessage();
   useEffect(() => {
@@ -98,8 +86,17 @@ export default function XrayPage() {
   const [piaOpen, setPiaOpen] = useState(false);
   const [torOpen, setTorOpen] = useState(false);
   const [advSettings, setAdvSettings] = useState<AdvKey>('xraySetting');
+  const [resetOpen, setResetOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  // The Tor and PIA page links here with ?open=pia to open that dialog over the outbounds.
+  const openParam = new URLSearchParams(location.search).get('open');
+  const [openedFor, setOpenedFor] = useState('');
+  if (openParam && openedFor !== location.key) {
+    setOpenedFor(location.key);
+    if (openParam === 'pia') setPiaOpen(true);
+    if (openParam === 'tor') setTorOpen(true);
+  }
   const pathSection =
     location.pathname === '/outbound'
       ? 'outbound'
@@ -107,7 +104,7 @@ export default function XrayPage() {
         ? 'routing'
         : '';
   const sectionSlug = pathSection || location.hash.replace(/^#/, '');
-  const activeSection = SECTION_SLUGS.includes(sectionSlug) ? sectionSlug : 'basic';
+  const activeSection = SECTION_SLUGS.includes(sectionSlug) ? sectionSlug : 'advanced';
 
   const mutate = useCallback(
     (mutator: (next: XraySettingsValue) => void) => {
@@ -178,6 +175,20 @@ export default function XrayPage() {
     }
   }, [advSettings, xraySetting, templateSettings]);
 
+  const jsonError = useMemo(() => {
+    try {
+      JSON.parse(xraySetting);
+      return '';
+    } catch (e) {
+      return (e as Error).message;
+    }
+  }, [xraySetting]);
+  // Tunnel, Tor and subscription outbounds are written by the panel; edits to them here are replaced.
+  const managedInJson = useMemo(
+    () => injectedTags.filter((tag) => xraySetting.includes(`"${tag}"`)),
+    [injectedTags, xraySetting],
+  );
+
   function onAdvancedTextChange(next: string) {
     if (advSettings === 'xraySetting') {
       setXraySetting(next);
@@ -230,15 +241,12 @@ export default function XrayPage() {
     saveAll();
   }
 
-  const scrollTarget = () => document.getElementById('content-layout') || window;
-
-  const pageClass = `xray-page ${isDark ? 'is-dark' : ''} ${isUltra ? 'is-ultra' : ''}`.trim();
-
   const sectionBody = (() => {
     switch (activeSection) {
       case 'routing':
         return (
           <RoutingTab
+            variant="page"
             templateSettings={templateSettings}
             setTemplateSettings={setTemplateSettings}
             inboundTags={inboundTags}
@@ -272,6 +280,18 @@ export default function XrayPage() {
             onShowPia={() => setPiaOpen(true)}
             onShowTor={() => setTorOpen(true)}
             onRefreshXrayData={fetchAll}
+            onEditJson={() => navigate('/xray#advanced')}
+            rulesTile={
+              <RoutingTab
+                variant="tile"
+                templateSettings={templateSettings}
+                setTemplateSettings={setTemplateSettings}
+                inboundTags={inboundTags}
+                clientReverseTags={clientReverseTags}
+                subscriptionOutboundTags={injectedTags}
+                isMobile={isMobile}
+              />
+            }
           />
         );
       case 'balancer':
@@ -290,30 +310,85 @@ export default function XrayPage() {
         );
       case 'advanced':
         return (
-          <>
-            <div className="advanced-meta">
-              <h4>{t('pages.xray.Template')}</h4>
-              <p>{t('pages.xray.TemplateDesc')}</p>
-            </div>
-            <Radio.Group
-              value={advSettings}
-              buttonStyle="solid"
-              size={isMobile ? 'small' : 'middle'}
-              style={{ margin: '12px 0' }}
-              onChange={(e) => setAdvSettings(e.target.value)}
-            >
-              <Radio.Button value="xraySetting">{t('pages.xray.completeTemplate')}</Radio.Button>
-              <Radio.Button value="inboundSettings">{t('pages.xray.Inbounds')}</Radio.Button>
-              <Radio.Button value="outboundSettings">{t('pages.xray.Outbounds')}</Radio.Button>
-              <Radio.Button value="routingRuleSettings">{t('pages.xray.Routings')}</Radio.Button>
-            </Radio.Group>
-            <JsonEditor
-              value={advancedText}
-              onChange={onAdvancedTextChange}
-              minHeight="420px"
-              maxHeight="720px"
-            />
-          </>
+          <div className="grid">
+            <section className="tile s8 dense" style={{ padding: 0 }}>
+              <div
+                className="row sp wrap"
+                style={{ padding: '12px 16px', borderBottom: '1px solid var(--glass-b)', gap: 8 }}
+              >
+                <Seg
+                  label={t('pages.xray.Template')}
+                  value={advSettings}
+                  onChange={setAdvSettings}
+                  options={[
+                    { value: 'xraySetting', label: t('pages.xray.completeTemplate') },
+                    { value: 'inboundSettings', label: t('pages.xray.Inbounds') },
+                    { value: 'outboundSettings', label: t('pages.xray.Outbounds') },
+                    { value: 'routingRuleSettings', label: t('pages.xray.Routings') },
+                  ]}
+                />
+                <span className="mut num" style={{ fontSize: 12, fontWeight: 650 }}>
+                  {t('xrayPage.lines', { n: advancedText.split('\n').length })}
+                </span>
+              </div>
+              <div style={{ padding: 12 }}>
+                <JsonEditor
+                  value={advancedText}
+                  onChange={onAdvancedTextChange}
+                  minHeight="420px"
+                  maxHeight="720px"
+                />
+              </div>
+            </section>
+            <section className="tile s4 dense" style={{ alignSelf: 'start' }}>
+              <TileHead icon="info" title={t('xrayPage.check')} />
+              <div className="list">
+                {jsonError ? (
+                  <div className="li">
+                    <span className="ico bad">
+                      <Icon name="alert" />
+                    </span>
+                    <div className="f1">
+                      <b>{t('xrayPage.jsonInvalid')}</b>
+                      <div className="mut mono" style={{ fontSize: 12 }}>
+                        {jsonError}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="li">
+                    <span className="ico ok">
+                      <Icon name="okc" />
+                    </span>
+                    <div className="f1">
+                      <b>{t('xrayPage.jsonValid')}</b>
+                    </div>
+                  </div>
+                )}
+                {managedInJson.map((tag) => (
+                  <div className="li" key={tag}>
+                    <span className="ico warn">
+                      <Icon name="alert" />
+                    </span>
+                    <div className="f1">
+                      <b className="mono">{tag}</b>
+                      <div className="mut" style={{ fontSize: 12.5 }}>
+                        {t('xrayPage.managed')}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div className="li">
+                  <span className="ico">
+                    <Icon name="info" />
+                  </span>
+                  <div className="f1 mut" style={{ fontSize: 12.5 }}>
+                    {t('pages.xray.TemplateDesc')}
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
         );
       default:
         return (
@@ -328,87 +403,161 @@ export default function XrayPage() {
     }
   })();
 
-  return (
-    <ConfigProvider theme={antdThemeConfig}>
-      {messageContextHolder}
-      <Layout className={pageClass}>
-        <AppSidebar />
-
-        <Layout className="content-shell">
-          <Layout.Content id="content-layout" className="content-area">
-            <Spin
-              aria-live="off"
-              spinning={spinning || !fetched}
-              delay={200}
-              description={t('loading')}
-              size="large"
-            >
-              {!fetched ? (
-                <div className="loading-spacer" />
-              ) : fetchError ? (
-                <Result
-                  status="error"
-                  title={t('somethingWentWrong')}
-                  subTitle={fetchError}
-                  extra={
-                    <Button type="primary" onClick={fetchAll}>
-                      {t('check')}
-                    </Button>
-                  }
-                />
-              ) : (
-                <Row gutter={[isMobile ? 8 : 16, isMobile ? 0 : 12]}>
-                  <Col span={24}>
-                    <Card hoverable>
-                      <Row className="header-row">
-                        <Col xs={24} sm={14} className="header-actions">
-                          <Space>
-                            <Button type="primary" disabled={saveDisabled} onClick={onSaveAll}>
-                              {t('pages.xray.save')}
-                            </Button>
-                          </Space>
-                        </Col>
-                        <Col xs={24} sm={10} className="header-info">
-                          <FloatButton.BackTop target={scrollTarget} visibilityHeight={200} />
-                          <Alert type="warning" showIcon title={t('pages.settings.infoDesc')} />
-                        </Col>
-                      </Row>
-                    </Card>
-                  </Col>
-
-                  <Col span={24}>
-                    <Card hoverable>{sectionBody}</Card>
-                  </Col>
-                </Row>
-              )}
-            </Spin>
-          </Layout.Content>
-        </Layout>
-
-        <WarpModal
-          open={warpOpen}
-          templateSettings={templateSettings}
-          onClose={() => setWarpOpen(false)}
-          onAddOutbound={onAddOutbound}
-          onResetOutbound={onResetOutbound}
-          onRemoveOutbound={onRemoveOutboundByTag}
-        />
-        <NordModal
-          open={nordOpen}
-          templateSettings={templateSettings}
-          onClose={() => setNordOpen(false)}
-          onAddOutbound={onAddOutbound}
-          onResetOutbound={onResetOutbound}
-        />
-        <TorModal open={torOpen} onClose={() => setTorOpen(false)} onChanged={fetchAll} />
-        <PiaModal
-          open={piaOpen}
-          templateSettings={templateSettings}
-          onClose={() => setPiaOpen(false)}
-          onAddOutbound={onAddOutbound}
-          onResetOutbound={onResetOutbound}
-        />
-      </Layout>
-    </ConfigProvider>
+  const saveBar = !saveDisabled && (
+    <div
+      className="tile edge st-warn row sp wrap"
+      role="status"
+      style={{ position: 'sticky', bottom: 16, zIndex: 5, padding: '12px 16px', gap: 10 }}
+    >
+      <span style={{ fontWeight: 650 }}>{t('outbounds.unsaved')}</span>
+      <Btn kind="pri" icon="check" disabled={spinning} onClick={onSaveAll}>
+        {t('pages.xray.save')}
+      </Btn>
+    </div>
   );
+  const overrideModals = (
+    <>
+      <WarpModal
+        open={warpOpen}
+        templateSettings={templateSettings}
+        onClose={() => setWarpOpen(false)}
+        onAddOutbound={onAddOutbound}
+        onResetOutbound={onResetOutbound}
+        onRemoveOutbound={onRemoveOutboundByTag}
+      />
+      <NordModal
+        open={nordOpen}
+        templateSettings={templateSettings}
+        onClose={() => setNordOpen(false)}
+        onAddOutbound={onAddOutbound}
+        onResetOutbound={onResetOutbound}
+      />
+      <TorModal open={torOpen} onClose={() => setTorOpen(false)} onChanged={fetchAll} />
+      <PiaModal
+        open={piaOpen}
+        templateSettings={templateSettings}
+        onClose={() => setPiaOpen(false)}
+        onAddOutbound={onAddOutbound}
+        onResetOutbound={onResetOutbound}
+      />
+    </>
+  );
+
+  {
+    return (
+      <div className="col stag" style={{ gap: 18 }}>
+        {messageContextHolder}
+        {!fetched ? (
+          <section className="tile">
+            <Sk h={160} />
+          </section>
+        ) : fetchError ? (
+          <section className="tile edge st-bad">
+            <DlEmpty
+              art={<IlloOffline />}
+              title={t('somethingWentWrong')}
+              actions={
+                <Btn kind="pri" icon="refresh" onClick={fetchAll}>
+                  {t('check')}
+                </Btn>
+              }
+            >
+              {fetchError}
+            </DlEmpty>
+          </section>
+        ) : activeSection === 'routing' ? (
+          <>
+            <div className="pagehead">
+              <div>
+                <h2 className="h2" style={{ fontSize: 28 }}>
+                  {t('menu.routing')}
+                </h2>
+                <p>{t('routing.subtitle')}</p>
+              </div>
+            </div>
+            {sectionBody}
+          </>
+        ) : activeSection === 'outbound' ? (
+          sectionBody
+        ) : (
+          <>
+            <div className="pagehead">
+              <div>
+                <h2 className="h2" style={{ fontSize: 28 }}>
+                  {t('menu.xray')}
+                </h2>
+                <p>{t('xrayPage.subtitle')}</p>
+              </div>
+              <div className="row wrap">
+                <Btn
+                  icon="down"
+                  onClick={() =>
+                    FileManager.downloadTextFile(xraySetting, 'config.json', {
+                      type: 'application/json',
+                    })
+                  }
+                >
+                  {t('download')}
+                </Btn>
+                <Btn icon="refresh" onClick={() => setResetOpen(true)}>
+                  {t('xrayPage.reset')}
+                </Btn>
+                <Btn
+                  kind="pri"
+                  icon="check"
+                  disabled={saveDisabled || spinning}
+                  onClick={onSaveAll}
+                >
+                  {t('pages.xray.save')}
+                </Btn>
+              </div>
+            </div>
+            <div>
+              <Seg
+                label={t('xrayPage.sections')}
+                value={activeSection}
+                onChange={(v) => navigate(`/xray#${v}`)}
+                options={[
+                  { value: 'advanced', label: t('xrayPage.json') },
+                  { value: 'basic', label: t('pages.xray.basicTemplate') },
+                  { value: 'balancer', label: t('xrayPage.balancers') },
+                  { value: 'dns', label: 'DNS' },
+                ]}
+              />
+            </div>
+            {activeSection === 'advanced' ? (
+              sectionBody
+            ) : (
+              <section className="tile">{sectionBody}</section>
+            )}
+          </>
+        )}
+        {saveBar}
+        {overrideModals}
+        <DlModal
+          open={resetOpen}
+          onClose={() => setResetOpen(false)}
+          label={t('pages.settings.resetDefaultConfig')}
+          width={460}
+        >
+          <h2 className="h3">{t('pages.settings.resetDefaultConfig')}</h2>
+          <div className="mfoot">
+            <Btn kind="ghost" onClick={() => setResetOpen(false)}>
+              {t('cancel')}
+            </Btn>
+            <Btn
+              kind="dng"
+              icon="refresh"
+              onClick={() => {
+                setResetOpen(false);
+                resetToDefault();
+              }}
+            >
+              {t('reset')}
+            </Btn>
+          </div>
+        </DlModal>
+      </div>
+    );
+  }
 }

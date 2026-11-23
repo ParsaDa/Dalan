@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import RoutingTab from '@/pages/xray/routing/RoutingTab';
@@ -37,9 +37,7 @@ describe('RoutingTab hidden-loopback index mapping', () => {
       </QueryClientProvider>,
     );
 
-    fireEvent.click(screen.getByRole('tab', { name: /Routing Rules/ }));
-
-    const switches = document.querySelectorAll('.routing-table .ant-switch');
+    const switches = document.querySelectorAll('.rule-row [role="switch"]');
     expect(switches.length).toBe(2);
 
     fireEvent.click(switches[1]);

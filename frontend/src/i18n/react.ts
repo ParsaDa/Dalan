@@ -58,6 +58,11 @@ export async function readyI18n(scope: LanguageScope = 'panel') {
   // The html files ship lang="en"; screen readers pick their voice from it (s-ui#1293).
   document.documentElement.lang = i18next.language;
   document.documentElement.dir = isRtlLanguage(i18next.language) ? 'rtl' : 'ltr';
+  // The design's .dl root is <body>; its RTL mirroring and Persian font key off these.
+  if (document.body) {
+    document.body.dir = document.documentElement.dir;
+    document.body.lang = i18next.language.startsWith('fa') ? 'fa' : document.documentElement.lang;
+  }
   await loadAntdLocale(i18next.language);
   return i18next;
 }

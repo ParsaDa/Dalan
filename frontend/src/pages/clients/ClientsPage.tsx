@@ -1,60 +1,8 @@
 import { lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
 import { useLocation, useSearchParams } from 'react-router';
 import { useTranslation } from 'react-i18next';
-import {
-  Badge,
-  Button,
-  Card,
-  Checkbox,
-  Col,
-  ConfigProvider,
-  Dropdown,
-  Input,
-  Layout,
-  Modal,
-  Pagination,
-  Popover,
-  Result,
-  Row,
-  Select,
-  Spin,
-  Statistic,
-  Switch,
-  Table,
-  Tag,
-  Tooltip,
-  Typography,
-  message,
-} from 'antd';
-import type { ColumnsType, TableProps } from 'antd/es/table';
-import {
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  DeleteOutlined,
-  DisconnectOutlined,
-  DownloadOutlined,
-  EditOutlined,
-  FilterOutlined,
-  InfoCircleOutlined,
-  LinkOutlined,
-  MoreOutlined,
-  PlusOutlined,
-  QrcodeOutlined,
-  RestOutlined,
-  RetweetOutlined,
-  SearchOutlined,
-  SortAscendingOutlined,
-  StopOutlined,
-  TagsOutlined,
-  TeamOutlined,
-  UploadOutlined,
-  UsergroupAddOutlined,
-  UsergroupDeleteOutlined,
-} from '@ant-design/icons';
-import { activateOnKey } from '@/utils/a11y';
+import { Modal, message } from 'antd';
 
-import { useTheme } from '@/hooks/useTheme';
 import { formatInboundLabel } from '@/lib/inbounds/label';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useWebSocket } from '@/hooks/useWebSocket';
@@ -68,18 +16,9 @@ import type {
   ExternalLink,
   ExternalLinkInput,
 } from '@/hooks/useClients';
-import ClientTrafficCell from '@/components/clients/ClientTrafficCell';
-import ClientSpeedTag, { isActiveSpeed } from '@/components/clients/ClientSpeedTag';
-import ClientCardComment from '@/components/clients/ClientCardComment';
-import AppSidebar from '@/layouts/AppSidebar';
-import { IntlUtil, SizeFormatter } from '@/utils';
+import { IntlUtil } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
 import { LazyMount } from '@/components/utility';
-import {
-  SPEED_COLUMN_WIDTH,
-  SPEED_TAG_CLASS_NAME,
-  SPEED_TAG_STYLE,
-} from '@/components/utility/speedTagStyle';
 const ClientFormModal = lazy(() => import('./ClientFormModal'));
 const ClientInfoModal = lazy(() => import('./ClientInfoModal'));
 const ClientQrModal = lazy(() => import('./ClientQrModal'));
@@ -92,102 +31,24 @@ const BulkAttachInboundsModal = lazy(() => import('./BulkAttachInboundsModal'));
 const BulkDetachInboundsModal = lazy(() => import('./BulkDetachInboundsModal'));
 const TextModal = lazy(() => import('@/components/feedback/TextModal'));
 const PromptModal = lazy(() => import('@/components/feedback/PromptModal'));
-import { ClientInboundChips, ClientRowActions } from './RowCells';
 import { emptyFilters, activeFilterCount } from './filters';
 import type { ClientFilters } from './filters';
-import './ClientsPage.css';
+import Icon from '@/components/dl/Icon';
+import { ConfirmDelete } from '@/components/dl/overlays';
+import { DropChip } from '@/components/dl/DropChip';
+import { IlloEmpty, IlloOffline } from '@/components/dl/Illustrations';
+import { MoreMenu } from '@/components/dl/MoreMenu';
+import { Btn, Chip, Empty as DlEmpty, IconBtn, Sk } from '@/components/dl/primitives';
+import { fmtInt } from '@/components/dl/numbers';
+import ClientTable from './ClientTable';
 
 const FILTER_STATE_KEY = 'clientsFilterState';
 const DISABLED_PAGE_SIZE = 200;
 const DEFAULT_TABLE_PAGE_SIZE = 25;
 
-function UngroupIcon() {
-  return (
-    <span
-      style={{
-        position: 'relative',
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '1em',
-        height: '1em',
-      }}
-    >
-      <TagsOutlined aria-hidden />
-      <span
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          pointerEvents: 'none',
-        }}
-      >
-        <span
-          style={{
-            display: 'block',
-            width: '125%',
-            height: '1.5px',
-            background: 'currentColor',
-            transform: 'rotate(-45deg)',
-            borderRadius: '1px',
-          }}
-        />
-      </span>
-    </span>
-  );
-}
-
 // The server sends exact counters but caps the email arrays behind them, so a
 // panel with thousands of depleted clients neither ships nor renders them all.
 // The trailing chip reports what the popover left out.
-function ClientEmailList({ emails, total }: { emails: string[]; total: number }) {
-  const hidden = total - emails.length;
-  return (
-    <div className="client-email-list">
-      {emails.map((e) => (
-        <div key={e}>{e}</div>
-      ))}
-      {hidden > 0 && <div className="client-email-more">+{hidden}</div>}
-    </div>
-  );
-}
-
-interface SummaryStatProps {
-  title: string;
-  value: number;
-  prefix: ReactNode;
-  emails?: string[];
-  selected?: boolean;
-  onSelect: () => void;
-}
-
-function SummaryStat({ title, value, prefix, emails, selected, onSelect }: SummaryStatProps) {
-  const stat = (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-pressed={selected}
-      className={selected ? 'summary-stat selected' : 'summary-stat'}
-      onClick={onSelect}
-      onKeyDown={activateOnKey(onSelect)}
-    >
-      <Statistic title={title} value={String(value)} prefix={prefix} />
-    </div>
-  );
-  if (!emails) return stat;
-  return (
-    <Popover
-      title={title}
-      open={value ? undefined : false}
-      content={<ClientEmailList emails={emails} total={value} />}
-    >
-      {stat}
-    </Popover>
-  );
-}
 
 type Bucket = 'active' | 'deactive' | 'depleted' | 'expiring';
 
@@ -200,25 +61,6 @@ interface PersistedFilterState {
   // to ask for, which serialises two round trips on every load.
   pageSize: number | null;
 }
-
-const INBOUND_PROTOCOL_COLORS: Record<string, string> = {
-  vless: 'blue',
-  vmess: 'geekblue',
-  trojan: 'volcano',
-  shadowsocks: 'magenta',
-  hysteria: 'cyan',
-  hysteria2: 'green',
-  wireguard: 'gold',
-  amneziawg: 'yellow',
-  http: 'purple',
-  mixed: 'lime',
-  tunnel: 'orange',
-  tuic: 'orange',
-};
-const INBOUND_CHIP_LIMIT = 1;
-// A shared empty array keeps the memoised chip cell from seeing a fresh prop for
-// every unattached client on every render.
-const EMPTY_INBOUND_IDS: number[] = [];
 
 function readFilterState(): PersistedFilterState {
   try {
@@ -319,10 +161,10 @@ function sortValueFor(column: string | null, order: 'ascend' | 'descend' | null)
 
 export default function ClientsPage() {
   const { t } = useTranslation();
-  const { isDark, isUltra, antdThemeConfig } = useTheme();
   const { datepicker } = useDatepicker();
   const { isMobile } = useMediaQuery();
   const [modal, modalContextHolder] = Modal.useModal();
+  const [bulkDel, setBulkDel] = useState<string[] | null>(null);
   const [messageApi, messageContextHolder] = message.useMessage();
   useEffect(() => {
     setMessageInstance(messageApi);
@@ -442,7 +284,6 @@ export default function ClientsPage() {
   const initialSort = SORT_OPTIONS.find((o) => o.value === initial.sort) ?? DEFAULT_SORT;
   const [sortColumn, setSortColumn] = useState<string | null>(initialSort.column);
   const [sortOrder, setSortOrder] = useState<'ascend' | 'descend' | null>(initialSort.order);
-  const [currentPage, setCurrentPage] = useState(1);
   // Derived, not mirrored into state by an effect: an effect lags one render
   // behind the settings arriving, and that lag is what made the page fetch the
   // list once with the placeholder size and again with the real one.
@@ -486,11 +327,11 @@ export default function ClientsPage() {
     return () => window.clearTimeout(handle);
   }, [searchKey]);
 
-  useEffect(() => {
-    // Reset to page 1 whenever a filter or sort changes — otherwise an empty
-    // result set on a high page number leaves the user staring at "no clients".
-    setCurrentPage(1);
-  }, [debouncedSearch, filters, sortColumn, sortOrder]);
+  // The page belongs to one query: a new search, filter or sort starts again at page 1.
+  const querySig = JSON.stringify([debouncedSearch, filters, sortColumn, sortOrder]);
+  const [paging, setPaging] = useState({ sig: querySig, page: 1 });
+  const currentPage = paging.sig === querySig ? paging.page : 1;
+  const setCurrentPage = (page: number) => setPaging({ sig: querySig, page });
 
   // The node filter maps onto inbound ids client-side (#4997): the paging API
   // already accepts an inbound CSV, so nodes never have to reach the backend.
@@ -550,11 +391,14 @@ export default function ClientsPage() {
   // so the memo would miss on exactly the rows that are busy. Reading through
   // the ref also means a modal opened mid-poll shows current usage.
   const rowsByEmail = useRef(new Map<string, ClientRecord>());
-  rowsByEmail.current = useMemo(() => {
+  const rowMap = useMemo(() => {
     const map = new Map<string, ClientRecord>();
     for (const c of clients) map.set(c.email, c);
     return map;
   }, [clients]);
+  useEffect(() => {
+    rowsByEmail.current = rowMap;
+  }, [rowMap]);
 
   const onlineSet = useMemo(() => new Set(onlines || []), [onlines]);
   const inboundsById = useMemo(() => {
@@ -603,19 +447,6 @@ export default function ClientsPage() {
     [expireDiff, trafficDiff],
   );
 
-  function bucketBadgeStatus(bucket: Bucket | null): 'success' | 'warning' | 'error' | 'default' {
-    switch (bucket) {
-      case 'depleted':
-        return 'error';
-      case 'expiring':
-        return 'warning';
-      case 'active':
-        return 'success';
-      default:
-        return 'default';
-    }
-  }
-
   // The list page renders rows the server already sorted, filtered, and
   // paginated. Local filtering is gone — keep the variable name so the rest
   // of the file (table dataSource, mobile cards, select-all) doesn't need
@@ -625,51 +456,6 @@ export default function ClientsPage() {
   // Sort is server-side now; the page already arrives in the requested
   // order, so we just hand it through.
   const sortedClients = filteredClients;
-
-  function remainingLabel(row: ClientRecord) {
-    const total = row.totalGB || 0;
-    if (total <= 0) return '∞';
-    const used = (row.traffic?.up || 0) + (row.traffic?.down || 0);
-    const r = total - used;
-    return r > 0 ? SizeFormatter.sizeFormat(r) : '0';
-  }
-
-  function remainingColor(row: ClientRecord): string {
-    const total = row.totalGB || 0;
-    if (total <= 0) return 'purple';
-    const used = (row.traffic?.up || 0) + (row.traffic?.down || 0);
-    const ratio = used / total;
-    if (ratio >= 1) return 'red';
-    if (ratio >= 0.85) return 'orange';
-    return 'green';
-  }
-
-  function expiryLabel(row: ClientRecord) {
-    if (!row.expiryTime) return '∞';
-    if (row.expiryTime < 0) {
-      const days = Math.round(row.expiryTime / -86400000);
-      return `${t('pages.clients.delayedStart')}: ${days}d`;
-    }
-    return IntlUtil.formatDate(row.expiryTime, datepicker);
-  }
-
-  function expiryRelative(row: ClientRecord) {
-    if (!row.expiryTime) return '';
-    if (row.expiryTime < 0) {
-      const days = Math.round(row.expiryTime / -86400000);
-      return `${days}d`;
-    }
-    return IntlUtil.formatRelativeTime(row.expiryTime);
-  }
-
-  function expiryColor(row: ClientRecord): string {
-    if (!row.expiryTime) return 'purple';
-    if (row.expiryTime < 0) return 'blue';
-    const now = Date.now();
-    if (row.expiryTime <= now) return 'red';
-    if (row.expiryTime - now < 86400 * 1000 * 3) return 'orange';
-    return 'green';
-  }
 
   async function onToggleEnable(row: ClientRecord, next: boolean) {
     setTogglingEmail(row.email);
@@ -972,32 +758,26 @@ export default function ClientsPage() {
   }
 
   function onBulkDelete() {
-    const emails = [...selectedRowKeys];
-    if (emails.length === 0) return;
-    modal.confirm({
-      title: t('pages.clients.bulkDeleteConfirmTitle', { count: emails.length }),
-      content: t('pages.clients.bulkDeleteConfirmContent'),
-      okText: t('delete'),
-      okType: 'danger',
-      cancelText: t('cancel'),
-      onOk: async () => {
-        const msg = await bulkDelete(emails);
-        setSelectedRowKeys([]);
-        const ok = msg?.obj?.deleted ?? 0;
-        const skipped = msg?.obj?.skipped ?? [];
-        const failed = skipped.length;
-        const firstError = skipped[0]?.reason ?? msg?.msg ?? '';
-        if (failed === 0 && msg?.success) {
-          messageApi.success(t('pages.clients.toasts.bulkDeleted', { count: ok }));
-        } else {
-          messageApi.warning(
-            firstError
-              ? `${t('pages.clients.toasts.bulkDeletedMixed', { ok, failed })} — ${firstError}`
-              : t('pages.clients.toasts.bulkDeletedMixed', { ok, failed }),
-          );
-        }
-      },
-    });
+    if (selectedRowKeys.length > 0) setBulkDel([...selectedRowKeys]);
+  }
+
+  async function runBulkDelete(emails: string[]) {
+    const msg = await bulkDelete(emails);
+    setBulkDel(null);
+    setSelectedRowKeys([]);
+    const ok = msg?.obj?.deleted ?? 0;
+    const skipped = msg?.obj?.skipped ?? [];
+    const failed = skipped.length;
+    const firstError = skipped[0]?.reason ?? msg?.msg ?? '';
+    if (failed === 0 && msg?.success) {
+      messageApi.success(t('pages.clients.toasts.bulkDeleted', { count: ok }));
+    } else {
+      messageApi.warning(
+        firstError
+          ? `${t('pages.clients.toasts.bulkDeletedMixed', { ok, failed })} — ${firstError}`
+          : t('pages.clients.toasts.bulkDeletedMixed', { ok, failed }),
+      );
+    }
   }
 
   const onSave = useCallback(
@@ -1043,219 +823,6 @@ export default function ClientsPage() {
     [create, update, attach, detach, setExternalLinks],
   );
 
-  const pageClass = useMemo(() => {
-    const classes = ['clients-page'];
-    if (isDark) classes.push('is-dark');
-    if (isUltra) classes.push('is-ultra');
-    return classes.join(' ');
-  }, [isDark, isUltra]);
-
-  const onTableChange: NonNullable<TableProps<ClientRecord>['onChange']> = (pag) => {
-    if (pag?.current) setCurrentPage(pag.current);
-    if (pag?.pageSize) setPageSizeChoice(pag.pageSize);
-  };
-
-  const columns = useMemo<ColumnsType<ClientRecord>>(
-    () => [
-      {
-        title: t('pages.clients.actions'),
-        key: 'actions',
-        width: 200,
-        render: (_v, record) => (
-          <ClientRowActions
-            email={record.email}
-            onShowQr={onShowQr}
-            onShowInfo={onShowInfo}
-            onResetTraffic={onResetTraffic}
-            onEdit={onEdit}
-            onDelete={onDelete}
-          />
-        ),
-      },
-      {
-        title: t('pages.clients.enabled'),
-        key: 'enable',
-        width: 80,
-        render: (_v, record) => (
-          <Switch
-            checked={!!record.enable}
-            size="small"
-            loading={togglingEmail === record.email}
-            aria-label={t('pages.clients.enabled')}
-            onChange={(next) => onToggleEnable(record, next)}
-          />
-        ),
-      },
-      {
-        title: t('pages.clients.online'),
-        key: 'online',
-        width: 90,
-        render: (_v, record) => {
-          const bucket = clientBucket(record);
-          const lastOnline = record.traffic?.lastOnline ?? 0;
-          const lastSubFetch = record.traffic?.lastSubFetch ?? 0;
-          const lastOnlineTitle = `${t('lastOnline')}: ${lastOnline > 0 ? IntlUtil.formatDate(lastOnline, datepicker) : '-'}\n${t('lastSubFetch')}: ${lastSubFetch > 0 ? IntlUtil.formatDate(lastSubFetch, datepicker) : '-'}`;
-          if (bucket === 'depleted')
-            return (
-              <Tooltip title={lastOnlineTitle}>
-                <Tag color="red">{t('depleted')}</Tag>
-              </Tooltip>
-            );
-          if (record.enable && isOnline(record.email))
-            return (
-              <Tag color="green" className="dot-tag">
-                <span className="online-dot" />
-                {t('pages.clients.online')}
-              </Tag>
-            );
-          if (!record.enable) return <Tag>{t('disabled')}</Tag>;
-          if (bucket === 'expiring') return <Tag color="orange">{t('depletingSoon')}</Tag>;
-          return (
-            <Tooltip title={lastOnlineTitle}>
-              <Tag>{t('pages.clients.offline')}</Tag>
-            </Tooltip>
-          );
-        },
-      },
-      {
-        title: t('pages.clients.client'),
-        key: 'email',
-        width: 220,
-        render: (_v, record) => (
-          <div className="email-cell">
-            <span className="email">{record.email}</span>
-            {record.subId && (
-              <span className="sub" title={record.subId}>
-                {record.subId}
-              </span>
-            )}
-            <ClientCardComment comment={record.comment} className="sub" />
-          </div>
-        ),
-      },
-      {
-        title: t('pages.clients.group'),
-        key: 'group',
-        width: 130,
-        hidden: allGroups.length === 0,
-        render: (_v, record) => {
-          if (!record.group) return <Typography.Text type="secondary">—</Typography.Text>;
-          const isActive = filters.groups.includes(record.group);
-          const filterByGroup = () => {
-            if (!isActive) setFilters({ ...filters, groups: [...filters.groups, record.group!] });
-          };
-          return (
-            <Tag
-              color="geekblue"
-              style={{ margin: 0, cursor: 'pointer', opacity: isActive ? 0.6 : 1 }}
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                filterByGroup();
-              }}
-              onKeyDown={activateOnKey(filterByGroup)}
-            >
-              {record.group}
-            </Tag>
-          );
-        },
-      },
-      {
-        title: t('pages.clients.attachedInbounds'),
-        key: 'inboundIds',
-        width: 170,
-        render: (_v, record) => {
-          return (
-            <ClientInboundChips
-              ids={record.inboundIds || EMPTY_INBOUND_IDS}
-              inboundsById={inboundsById}
-              protocolColors={INBOUND_PROTOCOL_COLORS}
-              chipLimit={INBOUND_CHIP_LIMIT}
-            />
-          );
-        },
-      },
-      {
-        title: t('pages.clients.traffic'),
-        key: 'traffic',
-        width: 300,
-        render: (_v, record) => (
-          <ClientTrafficCell
-            up={record.traffic?.up}
-            down={record.traffic?.down}
-            total={record.totalGB}
-            enabled={record.enable}
-            trafficDiff={trafficDiff}
-          />
-        ),
-      },
-      {
-        title: t('pages.clients.speed'),
-        key: 'speed',
-        width: SPEED_COLUMN_WIDTH,
-        align: 'center',
-        render: (_v, record) => {
-          const speed = clientSpeed[record.email];
-          if (!isActiveSpeed(speed)) {
-            return (
-              <Tag color="default" className={SPEED_TAG_CLASS_NAME} style={SPEED_TAG_STYLE}>
-                —
-              </Tag>
-            );
-          }
-          return <ClientSpeedTag speed={speed} tableCell />;
-        },
-      },
-      {
-        title: t('pages.clients.remaining'),
-        key: 'remaining',
-        width: 130,
-        render: (_v, record) => <Tag color={remainingColor(record)}>{remainingLabel(record)}</Tag>,
-      },
-      {
-        title: t('pages.clients.duration'),
-        key: 'expiryTime',
-        width: 130,
-        render: (_v, record) => (
-          <Tooltip title={expiryLabel(record)}>
-            <Tag color={expiryColor(record)}>
-              {record.expiryTime ? expiryRelative(record) : '∞'}
-            </Tag>
-          </Tooltip>
-        ),
-      },
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      t,
-      togglingEmail,
-      clientBucket,
-      isOnline,
-      inboundsById,
-      filters,
-      allGroups,
-      datepicker,
-      trafficDiff,
-      clientSpeed,
-    ],
-  );
-
-  const tablePagination = {
-    current: currentPage,
-    pageSize: tablePageSize,
-    total: filtered,
-    showSizeChanger: filtered > 10,
-    pageSizeOptions: ['10', '25', '50', '100', '200'],
-    hideOnSinglePage: filtered <= tablePageSize,
-    showTotal: (n: number) => `${n}`,
-  };
-
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (keys: React.Key[]) => setSelectedRowKeys(keys as string[]),
-  };
-
   function toggleSelect(email: string, checked: boolean) {
     setSelectedRowKeys((prev) => {
       const next = new Set(prev);
@@ -1268,11 +835,6 @@ export default function ClientsPage() {
   function selectAll(checked: boolean) {
     setSelectedRowKeys(checked ? filteredClients.map((c) => c.email) : []);
   }
-
-  const allSelected =
-    filteredClients.length > 0 && selectedRowKeys.length === filteredClients.length;
-  const someSelected =
-    selectedRowKeys.length > 0 && selectedRowKeys.length < filteredClients.length;
 
   const isOnlyBucket = (bucket: string) =>
     filters.buckets.length === 1 && filters.buckets[0] === bucket;
@@ -1294,775 +856,648 @@ export default function ClientsPage() {
     }
     setFilters({ ...filters, [key]: emptyFilters()[key] });
   }
+  // Every active filter as a removable chip, in the order the drawer lists them.
+  function activeFilterChips(): { key: string; label: string; clear: () => void }[] {
+    const without =
+      <K extends keyof ClientFilters>(key: K, value: ClientFilters[K]) =>
+      () =>
+        setFilters({ ...filters, [key]: value });
+    const fmt = (v?: number) => (v ? IntlUtil.formatDate(v, datepicker) : '…');
+    return [
+      ...filters.buckets.map((b) => ({
+        key: `b-${b}`,
+        label: bucketChipLabel(b, t),
+        clear: without(
+          'buckets',
+          filters.buckets.filter((x) => x !== b),
+        ),
+      })),
+      ...filters.protocols.map((p) => ({
+        key: `p-${p}`,
+        label: p,
+        clear: without(
+          'protocols',
+          filters.protocols.filter((x) => x !== p),
+        ),
+      })),
+      ...filters.inboundIds.map((id) => ({
+        key: `i-${id}`,
+        label: inboundLabel(id),
+        clear: without(
+          'inboundIds',
+          filters.inboundIds.filter((x) => x !== id),
+        ),
+      })),
+      ...filters.nodeIds.map((id) => ({
+        key: `n-${id}`,
+        label:
+          id === 0
+            ? t('pages.clients.filters.localPanel')
+            : nodes.find((n) => n.id === id)?.name || `#${id}`,
+        clear: without(
+          'nodeIds',
+          filters.nodeIds.filter((x) => x !== id),
+        ),
+      })),
+      ...filters.groups.map((g) => ({
+        key: `g-${g}`,
+        label: `${t('pages.clients.group')}: ${g}`,
+        clear: without(
+          'groups',
+          filters.groups.filter((x) => x !== g),
+        ),
+      })),
+      ...(filters.expiryFrom || filters.expiryTo
+        ? [
+            {
+              key: 'exp',
+              label: `${t('pages.clients.expiryTime')}: ${fmt(filters.expiryFrom)} → ${fmt(filters.expiryTo)}`,
+              clear: () => clearOneFilter('expiryFrom'),
+            },
+          ]
+        : []),
+      ...(filters.usageFromGB || filters.usageToGB
+        ? [
+            {
+              key: 'use',
+              label: `${t('pages.clients.traffic')}: ${filters.usageFromGB ?? 0}${filters.usageToGB ? `–${filters.usageToGB}` : '+'} GB`,
+              clear: () => clearOneFilter('usageFromGB'),
+            },
+          ]
+        : []),
+      ...(filters.autoRenew
+        ? [
+            {
+              key: 'renew',
+              label: `${t('pages.clients.renew')}: ${filters.autoRenew === 'on' ? t('enabled') : t('disabled')}`,
+              clear: () => clearOneFilter('autoRenew'),
+            },
+          ]
+        : []),
+      ...(filters.hasTgId
+        ? [
+            {
+              key: 'tg',
+              label: `${t('pages.clients.telegramId')}: ${filters.hasTgId === 'yes' ? t('pages.clients.has') : t('pages.clients.hasNot')}`,
+              clear: () => clearOneFilter('hasTgId'),
+            },
+          ]
+        : []),
+      ...(filters.hasComment
+        ? [
+            {
+              key: 'cm',
+              label: `${t('pages.clients.comment')}: ${filters.hasComment === 'yes' ? t('pages.clients.has') : t('pages.clients.hasNot')}`,
+              clear: () => clearOneFilter('hasComment'),
+            },
+          ]
+        : []),
+    ];
+  }
+
+  const pages = Math.max(1, Math.ceil(filtered / tablePageSize));
 
   return (
-    <ConfigProvider theme={antdThemeConfig}>
+    <div className="col stag" style={{ gap: 18 }}>
       {messageContextHolder}
       {modalContextHolder}
-      <Layout className={pageClass}>
-        <AppSidebar />
-
-        <Layout className="content-shell">
-          <Layout.Content id="content-layout" className="content-area">
-            <Spin
-              aria-live="off"
-              spinning={!fetched || !hostsFetched}
-              delay={200}
-              description={t('loading')}
-              size="large"
-            >
-              {!fetched || !hostsFetched ? (
-                <div className="loading-spacer" />
-              ) : fetchError || hostsError ? (
-                <Result
-                  status="error"
-                  title={t('somethingWentWrong')}
-                  subTitle={fetchError || hostsError}
-                  extra={
-                    <Button type="primary" loading={refreshing} onClick={onRefreshClick}>
-                      {t('refresh')}
-                    </Button>
-                  }
+      <ConfirmDelete
+        open={bulkDel !== null}
+        title={t('pages.clients.bulkDeleteConfirmTitle', { count: bulkDel?.length ?? 0 })}
+        onCancel={() => setBulkDel(null)}
+        onConfirm={() => runBulkDelete(bulkDel ?? [])}
+      >
+        {bulkDel && (
+          <>
+            {t('clientsPage.loseAccess', {
+              names:
+                bulkDel.length > 3
+                  ? t('clientsPage.andMore', {
+                      names: bulkDel.slice(0, 3).join(', '),
+                      count: bulkDel.length - 3,
+                    })
+                  : bulkDel.join(', '),
+            })}{' '}
+            {t('pages.clients.bulkDeleteConfirmContent')}
+          </>
+        )}
+      </ConfirmDelete>
+      <div className="pagehead">
+        <div>
+          <h2 className="h2" style={{ fontSize: 28 }}>
+            {t('menu.clients')}
+          </h2>
+          <p>{t('clientsPage.subtitle')}</p>
+        </div>
+        <div className="row wrap">
+          <MoreMenu
+            label={t('more')}
+            actions={[
+              {
+                key: 'bulk',
+                label: t('pages.clients.bulk'),
+                icon: 'plus',
+                onSelect: () => setBulkAddOpen(true),
+              },
+              { key: 'import', label: t('pages.clients.importClients'), onSelect: onImportClients },
+              {
+                key: 'resetAll',
+                label: t('pages.clients.resetAllTraffics'),
+                icon: 'refresh',
+                onSelect: onResetAllTraffics,
+              },
+              {
+                key: 'delDepleted',
+                label: t('pages.clients.delDepleted'),
+                icon: 'trash',
+                danger: true,
+                onSelect: onDelDepleted,
+              },
+              {
+                key: 'delOrphans',
+                label: t('pages.clients.delOrphans'),
+                icon: 'trash',
+                danger: true,
+                onSelect: onDeleteOrphans,
+              },
+            ]}
+          />
+          <Btn icon="down" onClick={onExportClients}>
+            {t('clientsPage.export')}
+          </Btn>
+          <Btn kind="pri" icon="plus" onClick={onAdd}>
+            {t('clientsPage.add')}
+          </Btn>
+        </div>
+      </div>
+      {!fetched || !hostsFetched ? (
+        <section className="tile">
+          <Sk h={220} />
+        </section>
+      ) : fetchError || hostsError ? (
+        <section className="tile edge st-bad">
+          <DlEmpty
+            art={<IlloOffline />}
+            title={t('somethingWentWrong')}
+            actions={
+              <Btn kind="pri" icon="refresh" disabled={refreshing} onClick={onRefreshClick}>
+                {t('refresh')}
+              </Btn>
+            }
+          >
+            {fetchError || hostsError}
+          </DlEmpty>
+        </section>
+      ) : (
+        <>
+          <div className="row wrap sp">
+            <div className="chips" role="group" aria-label={t('clientsPage.filters')}>
+              <Chip
+                on={filters.buckets.length === 0}
+                count={fmtInt(summary.total)}
+                onClick={() => selectBucket(null)}
+              >
+                {t('clientsPage.chip.all')}
+              </Chip>
+              <Chip
+                on={isOnlyBucket('active')}
+                count={fmtInt(summary.active)}
+                onClick={() => selectBucket('active')}
+              >
+                {t('clientsPage.chip.active')}
+              </Chip>
+              <Chip
+                on={isOnlyBucket('expiring')}
+                count={fmtInt(summary.expiringCount)}
+                onClick={() => selectBucket('expiring')}
+              >
+                {t('clientsPage.chip.expiring')}
+              </Chip>
+              <Chip
+                on={isOnlyBucket('depleted')}
+                count={fmtInt(summary.depletedCount)}
+                onClick={() => selectBucket('depleted')}
+              >
+                {t('clientsPage.chip.depleted')}
+              </Chip>
+              <Chip
+                on={isOnlyBucket('deactive')}
+                count={fmtInt(summary.deactiveCount)}
+                onClick={() => selectBucket('deactive')}
+              >
+                {t('clientsPage.chip.deactive')}
+              </Chip>
+              <Chip
+                on={isOnlyBucket('online')}
+                count={fmtInt(summary.onlineCount)}
+                onClick={() => selectBucket('online')}
+              >
+                {t('clientsPage.chip.online')}
+              </Chip>
+            </div>
+            <div className="row wrap">
+              <DropChip
+                icon="groups"
+                label={t('pages.clients.group')}
+                value={filters.groups.length === 1 ? filters.groups[0] : ''}
+                onChange={(v) => setFilters({ ...filters, groups: v ? [v] : [] })}
+                options={[
+                  { value: '', label: t('clientsPage.any') },
+                  ...groupOptions.map((g) => ({ value: g, label: g })),
+                ]}
+              />
+              <DropChip
+                icon="inbound"
+                label={t('menu.inbounds')}
+                value={filters.inboundIds.length === 1 ? String(filters.inboundIds[0]) : ''}
+                onChange={(v) => setFilters({ ...filters, inboundIds: v ? [Number(v)] : [] })}
+                options={[
+                  { value: '', label: t('clientsPage.any') },
+                  ...inbounds.map((ib) => ({ value: String(ib.id), label: inboundLabel(ib.id) })),
+                ]}
+              />
+              <DropChip
+                label={t('sort')}
+                value={sortValueFor(sortColumn, sortOrder)}
+                onChange={(value) => {
+                  const opt = SORT_OPTIONS.find((o) => o.value === value);
+                  setSortColumn(opt?.column ?? null);
+                  setSortOrder(opt?.order ?? null);
+                }}
+                options={SORT_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }))}
+              />
+              <button
+                type="button"
+                className={`chip${activeCount > 0 ? ' on' : ''}`}
+                onClick={() => setFilterDrawerOpen(true)}
+              >
+                <Icon name="filter" />
+                {t('filter')}
+                {activeCount > 0 && <span className="n">{fmtInt(activeCount)}</span>}
+              </button>
+              <label className="search" style={{ minWidth: 240, cursor: 'text' }}>
+                <Icon name="search" />
+                <input
+                  aria-label={t('search')}
+                  placeholder={t('clientsPage.searchHint')}
+                  value={searchKey}
+                  onChange={(e) => setSearchKey(e.target.value)}
+                  style={{
+                    border: 0,
+                    background: 'none',
+                    outline: 'none',
+                    color: 'var(--tx)',
+                    font: 'inherit',
+                    flex: 1,
+                    minWidth: 0,
+                  }}
                 />
-              ) : (
-                <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 12]}>
-                  <Col span={24}>
-                    <Card size="small" hoverable className="summary-card">
-                      <Row gutter={[16, 12]}>
-                        <Col xs={12} sm={8} md={4}>
-                          <SummaryStat
-                            title={t('clients')}
-                            value={summary.total}
-                            prefix={<TeamOutlined aria-hidden />}
-                            onSelect={() => selectBucket(null)}
-                          />
-                        </Col>
-                        <Col xs={12} sm={8} md={4}>
-                          <SummaryStat
-                            title={t('online')}
-                            value={summary.onlineCount}
-                            emails={summary.online}
-                            prefix={<span className="dot dot-blue" />}
-                            selected={isOnlyBucket('online')}
-                            onSelect={() => selectBucket('online')}
-                          />
-                        </Col>
-                        <Col xs={12} sm={8} md={4}>
-                          <SummaryStat
-                            title={t('depleted')}
-                            value={summary.depletedCount}
-                            emails={summary.depleted}
-                            prefix={<span className="dot dot-red" />}
-                            selected={isOnlyBucket('depleted')}
-                            onSelect={() => selectBucket('depleted')}
-                          />
-                        </Col>
-                        <Col xs={12} sm={8} md={4}>
-                          <SummaryStat
-                            title={t('depletingSoon')}
-                            value={summary.expiringCount}
-                            emails={summary.expiring}
-                            prefix={<span className="dot dot-orange" />}
-                            selected={isOnlyBucket('expiring')}
-                            onSelect={() => selectBucket('expiring')}
-                          />
-                        </Col>
-                        <Col xs={12} sm={8} md={4}>
-                          <SummaryStat
-                            title={t('disabled')}
-                            value={summary.deactiveCount}
-                            emails={summary.deactive}
-                            prefix={<span className="dot dot-gray" />}
-                            selected={isOnlyBucket('deactive')}
-                            onSelect={() => selectBucket('deactive')}
-                          />
-                        </Col>
-                        <Col xs={12} sm={8} md={4}>
-                          <SummaryStat
-                            title={t('subscription.active')}
-                            value={summary.active}
-                            prefix={<span className="dot dot-green" />}
-                            selected={isOnlyBucket('active')}
-                            onSelect={() => selectBucket('active')}
-                          />
-                        </Col>
-                      </Row>
-                    </Card>
-                  </Col>
-
-                  <Col span={24}>
-                    <Card
-                      size="small"
-                      hoverable
-                      title={
-                        <div className="card-toolbar">
-                          {selectedRowKeys.length === 0 ? (
-                            <Button
-                              type="primary"
-                              icon={<PlusOutlined aria-hidden />}
-                              onClick={onAdd}
-                              aria-label={t('pages.clients.addClients')}
-                            >
-                              {!isMobile && t('pages.clients.addClients')}
-                            </Button>
-                          ) : (
-                            <Tag
-                              color="blue"
-                              closable
-                              onClose={() => setSelectedRowKeys([])}
-                              style={{ marginInlineEnd: 0, padding: '4px 8px', fontSize: 13 }}
-                            >
-                              {t('pages.clients.selectedCount', { count: selectedRowKeys.length })}
-                            </Tag>
-                          )}
-                          <Dropdown
-                            trigger={['click']}
-                            placement="bottomRight"
-                            menu={{
-                              items:
-                                selectedRowKeys.length > 0
-                                  ? [
-                                      {
-                                        key: 'attach',
-                                        icon: <UsergroupAddOutlined aria-hidden />,
-                                        label: t('pages.clients.attach'),
-                                        onClick: () => setBulkAttachOpen(true),
-                                      },
-                                      {
-                                        key: 'detach',
-                                        icon: <UsergroupDeleteOutlined aria-hidden />,
-                                        label: t('pages.clients.detach'),
-                                        danger: true,
-                                        onClick: () => setBulkDetachOpen(true),
-                                      },
-                                      {
-                                        key: 'addToGroup',
-                                        icon: <TagsOutlined aria-hidden />,
-                                        label: t('pages.clients.addToGroup'),
-                                        onClick: () => setBulkGroupOpen(true),
-                                      },
-                                      {
-                                        key: 'ungroup',
-                                        icon: <UngroupIcon />,
-                                        label: t('pages.clients.ungroup'),
-                                        danger: true,
-                                        onClick: onBulkUngroup,
-                                      },
-                                      { type: 'divider' as const },
-                                      {
-                                        key: 'enable',
-                                        icon: <CheckCircleOutlined aria-hidden />,
-                                        label: t('pages.clients.enable'),
-                                        onClick: () => onBulkSetEnable(true),
-                                      },
-                                      {
-                                        key: 'disable',
-                                        icon: <StopOutlined aria-hidden />,
-                                        label: t('pages.clients.disable'),
-                                        danger: true,
-                                        onClick: () => onBulkSetEnable(false),
-                                      },
-                                      {
-                                        key: 'adjust',
-                                        icon: <ClockCircleOutlined aria-hidden />,
-                                        label: t('pages.clients.adjust'),
-                                        onClick: () => setBulkAdjustOpen(true),
-                                      },
-                                      {
-                                        key: 'subLinks',
-                                        icon: <LinkOutlined aria-hidden />,
-                                        label: t('pages.clients.subLinks'),
-                                        onClick: () => setSubLinksOpen(true),
-                                      },
-                                    ]
-                                  : [
-                                      {
-                                        key: 'bulk',
-                                        icon: <UsergroupAddOutlined aria-hidden />,
-                                        label: t('pages.clients.bulk'),
-                                        onClick: () => setBulkAddOpen(true),
-                                      },
-                                      {
-                                        key: 'export',
-                                        icon: <DownloadOutlined aria-hidden />,
-                                        label: t('pages.clients.exportClients'),
-                                        onClick: onExportClients,
-                                      },
-                                      {
-                                        key: 'import',
-                                        icon: <UploadOutlined aria-hidden />,
-                                        label: t('pages.clients.importClients'),
-                                        onClick: onImportClients,
-                                      },
-                                      {
-                                        key: 'resetAll',
-                                        icon: <RetweetOutlined aria-hidden />,
-                                        label: t('pages.clients.resetAllTraffics'),
-                                        onClick: onResetAllTraffics,
-                                      },
-                                      { type: 'divider' as const },
-                                      {
-                                        key: 'delDepleted',
-                                        icon: <RestOutlined aria-hidden />,
-                                        label: t('pages.clients.delDepleted'),
-                                        danger: true,
-                                        onClick: onDelDepleted,
-                                      },
-                                      {
-                                        key: 'delOrphans',
-                                        icon: <DisconnectOutlined aria-hidden />,
-                                        label: t('pages.clients.delOrphans'),
-                                        danger: true,
-                                        onClick: onDeleteOrphans,
-                                      },
-                                    ],
-                            }}
-                          >
-                            <Button icon={<MoreOutlined aria-hidden />} aria-label={t('more')}>
-                              {!isMobile && t('more')}
-                            </Button>
-                          </Dropdown>
-                          {selectedRowKeys.length > 0 && (
-                            <Button
-                              danger
-                              icon={<DeleteOutlined aria-hidden />}
-                              onClick={onBulkDelete}
-                              style={{ marginInlineStart: 'auto' }}
-                              aria-label={t('delete')}
-                            >
-                              {!isMobile && t('delete')}
-                            </Button>
-                          )}
-                        </div>
-                      }
-                    >
-                      <div className={isMobile ? 'filter-bar mobile' : 'filter-bar'}>
-                        <Input
-                          value={searchKey}
-                          onChange={(e) => setSearchKey(e.target.value)}
-                          placeholder={t('pages.clients.searchPlaceholder')}
-                          allowClear
-                          prefix={<SearchOutlined aria-hidden />}
-                          size={isMobile ? 'small' : 'middle'}
-                          style={{ maxWidth: 320 }}
-                          aria-label={t('search')}
-                        />
-                        <Badge count={activeCount} size="small" offset={[-4, 4]}>
-                          <Button
-                            icon={<FilterOutlined aria-hidden />}
-                            size={isMobile ? 'small' : 'middle'}
-                            onClick={() => setFilterDrawerOpen(true)}
-                            type={activeCount > 0 ? 'primary' : 'default'}
-                            aria-label={t('filter')}
-                          >
-                            {!isMobile && t('filter')}
-                          </Button>
-                        </Badge>
-                        <Select
-                          value={sortValueFor(sortColumn, sortOrder)}
-                          aria-label={t('sort')}
-                          size={isMobile ? 'small' : 'middle'}
-                          suffix={<SortAscendingOutlined aria-hidden />}
-                          style={{ minWidth: isMobile ? 130 : 200 }}
-                          onChange={(value) => {
-                            const opt = SORT_OPTIONS.find((o) => o.value === value);
-                            setSortColumn(opt?.column ?? null);
-                            setSortOrder(opt?.order ?? null);
-                          }}
-                          options={SORT_OPTIONS.map((o) => ({
-                            value: o.value,
-                            label: t(o.labelKey),
-                          }))}
-                        />
-                        {activeCount > 0 && (
-                          <Button
-                            size={isMobile ? 'small' : 'middle'}
-                            onClick={() => setFilters(emptyFilters())}
-                          >
-                            {t('pages.clients.clearAllFilters')}
-                          </Button>
-                        )}
-                        {(activeCount > 0 || debouncedSearch.trim().length > 0) && (
-                          <span className="filter-count">
-                            {t('pages.clients.showingCount', { shown: filtered, total })}
-                          </span>
-                        )}
-                      </div>
-
-                      {activeCount > 0 && (
-                        <div className="filter-chips">
-                          {filters.buckets.map((b) => (
-                            <Tag
-                              key={`b-${b}`}
-                              closable
-                              onClose={() =>
-                                setFilters({
-                                  ...filters,
-                                  buckets: filters.buckets.filter((x) => x !== b),
-                                })
-                              }
-                            >
-                              {bucketChipLabel(b, t)}
-                            </Tag>
-                          ))}
-                          {filters.protocols.map((p) => (
-                            <Tag
-                              key={`p-${p}`}
-                              closable
-                              color="blue"
-                              onClose={() =>
-                                setFilters({
-                                  ...filters,
-                                  protocols: filters.protocols.filter((x) => x !== p),
-                                })
-                              }
-                            >
-                              {p}
-                            </Tag>
-                          ))}
-                          {filters.inboundIds.map((id) => (
-                            <Tag
-                              key={`i-${id}`}
-                              closable
-                              color="cyan"
-                              onClose={() =>
-                                setFilters({
-                                  ...filters,
-                                  inboundIds: filters.inboundIds.filter((x) => x !== id),
-                                })
-                              }
-                            >
-                              {inboundLabel(id)}
-                            </Tag>
-                          ))}
-                          {filters.groups.map((g) => (
-                            <Tag
-                              key={`g-${g}`}
-                              closable
-                              color="geekblue"
-                              onClose={() =>
-                                setFilters({
-                                  ...filters,
-                                  groups: filters.groups.filter((x) => x !== g),
-                                })
-                              }
-                            >
-                              {t('pages.clients.group')}: {g}
-                            </Tag>
-                          ))}
-                          {(filters.expiryFrom || filters.expiryTo) && (
-                            <Tag
-                              closable
-                              color="purple"
-                              onClose={() => clearOneFilter('expiryFrom')}
-                            >
-                              {t('pages.clients.expiryTime')}:{' '}
-                              {filters.expiryFrom
-                                ? IntlUtil.formatDate(filters.expiryFrom, datepicker)
-                                : '…'}
-                              {' → '}
-                              {filters.expiryTo
-                                ? IntlUtil.formatDate(filters.expiryTo, datepicker)
-                                : '…'}
-                            </Tag>
-                          )}
-                          {(filters.usageFromGB || filters.usageToGB) && (
-                            <Tag
-                              closable
-                              color="orange"
-                              onClose={() => clearOneFilter('usageFromGB')}
-                            >
-                              {t('pages.clients.traffic')}: {filters.usageFromGB ?? 0}
-                              {filters.usageToGB ? `–${filters.usageToGB}` : '+'} GB
-                            </Tag>
-                          )}
-                          {filters.autoRenew && (
-                            <Tag closable color="gold" onClose={() => clearOneFilter('autoRenew')}>
-                              {t('pages.clients.renew')}:{' '}
-                              {filters.autoRenew === 'on' ? t('enabled') : t('disabled')}
-                            </Tag>
-                          )}
-                          {filters.hasTgId && (
-                            <Tag closable onClose={() => clearOneFilter('hasTgId')}>
-                              {t('pages.clients.telegramId')}:{' '}
-                              {filters.hasTgId === 'yes'
-                                ? t('pages.clients.has')
-                                : t('pages.clients.hasNot')}
-                            </Tag>
-                          )}
-                          {filters.hasComment && (
-                            <Tag closable onClose={() => clearOneFilter('hasComment')}>
-                              {t('pages.clients.comment')}:{' '}
-                              {filters.hasComment === 'yes'
-                                ? t('pages.clients.has')
-                                : t('pages.clients.hasNot')}
-                            </Tag>
-                          )}
-                        </div>
-                      )}
-
-                      {!isMobile ? (
-                        <Table<ClientRecord>
-                          columns={columns}
-                          dataSource={sortedClients}
-                          loading={transitioning}
-                          rowKey="email"
-                          rowSelection={rowSelection}
-                          pagination={tablePagination}
-                          size="small"
-                          scroll={{ x: 1200 }}
-                          onChange={onTableChange}
-                          locale={{
-                            emptyText: (
-                              <div className="clients-empty">
-                                <TeamOutlined
-                                  aria-hidden
-                                  style={{ fontSize: 32, marginBottom: 8 }}
-                                />
-                                <div>{t('noData')}</div>
-                              </div>
-                            ),
-                          }}
-                        />
-                      ) : (
-                        <Spin aria-live="off" spinning={transitioning}>
-                          <div className="client-cards">
-                            {filteredClients.length > 0 && (
-                              <div className="card-bulk-bar">
-                                <Checkbox
-                                  checked={allSelected}
-                                  indeterminate={someSelected}
-                                  onChange={(e) => selectAll(e.target.checked)}
-                                >
-                                  {t('pages.clients.selectAll')}
-                                </Checkbox>
-                                {selectedRowKeys.length > 0 && (
-                                  <span className="bulk-count">{selectedRowKeys.length}</span>
-                                )}
-                              </div>
-                            )}
-                            {filteredClients.length === 0 && (
-                              <div className="card-empty">
-                                <TeamOutlined aria-hidden style={{ fontSize: 28, opacity: 0.5 }} />
-                                <div>{t('noData')}</div>
-                              </div>
-                            )}
-                            {filteredClients.length > 0 && (
-                              <div className="card-pagination">
-                                <Pagination
-                                  current={currentPage}
-                                  pageSize={tablePageSize}
-                                  total={filtered}
-                                  showSizeChanger={filtered > 10}
-                                  pageSizeOptions={['10', '25', '50', '100', '200']}
-                                  hideOnSinglePage={filtered <= tablePageSize}
-                                  size="small"
-                                  showTotal={(n) => `${n}`}
-                                  onChange={(p, s) => {
-                                    setCurrentPage(p);
-                                    if (s && s !== tablePageSize) setPageSizeChoice(s);
-                                  }}
-                                />
-                              </div>
-                            )}
-                            {filteredClients.map((row) => {
-                              const bucket = clientBucket(row);
-                              return (
-                                <div
-                                  key={row.email}
-                                  className={`client-card${selectedRowKeys.includes(row.email) ? ' is-selected' : ''}`}
-                                >
-                                  <div className="card-head">
-                                    <Checkbox
-                                      checked={selectedRowKeys.includes(row.email)}
-                                      onChange={(e) => toggleSelect(row.email, e.target.checked)}
-                                    />
-                                    {row.enable && bucket !== 'depleted' && isOnline(row.email) ? (
-                                      <span className="online-dot" style={{ marginInlineEnd: 0 }} />
-                                    ) : (
-                                      <Badge status={bucketBadgeStatus(bucket)} />
-                                    )}
-                                    <span className="tag-name">{row.email}</span>
-                                    {bucket === 'depleted' && (
-                                      <Tag color="red" className="status-tag">
-                                        {t('depleted')}
-                                      </Tag>
-                                    )}
-                                    {bucket === 'expiring' && (
-                                      <Tag color="orange" className="status-tag">
-                                        {t('depletingSoon')}
-                                      </Tag>
-                                    )}
-                                    <div className="card-actions">
-                                      <Tooltip title={t('pages.clients.clientInfo')}>
-                                        <InfoCircleOutlined
-                                          className="row-action-trigger"
-                                          role="button"
-                                          tabIndex={0}
-                                          aria-label={t('pages.clients.clientInfo')}
-                                          onClick={() => onShowInfo(row.email)}
-                                          onKeyDown={activateOnKey(() => onShowInfo(row.email))}
-                                        />
-                                      </Tooltip>
-                                      <Switch
-                                        checked={!!row.enable}
-                                        size="small"
-                                        loading={togglingEmail === row.email}
-                                        aria-label={t('pages.clients.enabled')}
-                                        onChange={(next) => onToggleEnable(row, next)}
-                                      />
-                                      <Dropdown
-                                        trigger={['click']}
-                                        placement="bottomRight"
-                                        menu={{
-                                          items: [
-                                            {
-                                              key: 'qr',
-                                              label: (
-                                                <>
-                                                  <QrcodeOutlined aria-hidden />{' '}
-                                                  {t('pages.clients.qrCode')}
-                                                </>
-                                              ),
-                                              onClick: () => onShowQr(row.email),
-                                            },
-                                            {
-                                              key: 'reset',
-                                              label: (
-                                                <>
-                                                  <RetweetOutlined aria-hidden />{' '}
-                                                  {t('pages.inbounds.resetTraffic')}
-                                                </>
-                                              ),
-                                              onClick: () => onResetTraffic(row.email),
-                                            },
-                                            {
-                                              key: 'edit',
-                                              label: (
-                                                <>
-                                                  <EditOutlined aria-hidden /> {t('edit')}
-                                                </>
-                                              ),
-                                              onClick: () => onEdit(row.email),
-                                            },
-                                            {
-                                              key: 'delete',
-                                              danger: true,
-                                              label: (
-                                                <>
-                                                  <DeleteOutlined aria-hidden /> {t('delete')}
-                                                </>
-                                              ),
-                                              onClick: () => onDelete(row.email),
-                                            },
-                                          ],
-                                        }}
-                                      >
-                                        <Button
-                                          type="text"
-                                          size="small"
-                                          className="row-action-trigger"
-                                          icon={<MoreOutlined aria-hidden />}
-                                          aria-label={t('more')}
-                                        />
-                                      </Dropdown>
-                                    </div>
-                                  </div>
-                                  <ClientCardComment comment={row.comment} />
-                                  <ClientTrafficCell
-                                    compact
-                                    up={row.traffic?.up}
-                                    down={row.traffic?.down}
-                                    total={row.totalGB}
-                                    enabled={row.enable}
-                                    trafficDiff={trafficDiff}
-                                  />
-                                  {(() => {
-                                    const speed = clientSpeed[row.email];
-                                    if (!isActiveSpeed(speed)) return null;
-                                    return (
-                                      <div className="client-card-speed">
-                                        <ClientSpeedTag speed={speed} />
-                                      </div>
-                                    );
-                                  })()}
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </Spin>
-                      )}
-                    </Card>
-                  </Col>
-                </Row>
+              </label>
+            </div>
+          </div>
+          {activeCount > 0 && (
+            <div className="row wrap" style={{ gap: 6 }}>
+              {activeFilterChips().map((c) => (
+                <span
+                  key={c.key}
+                  className="badge acc"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                >
+                  {c.label}
+                  <button
+                    type="button"
+                    className="ib sm"
+                    style={{ width: 18, height: 18 }}
+                    aria-label={`${t('clientsPage.removeFilter')} ${c.label}`}
+                    onClick={c.clear}
+                  >
+                    <Icon name="x" size={12} />
+                  </button>
+                </span>
+              ))}
+              <Btn size="sm" kind="ghost" onClick={() => setFilters(emptyFilters())}>
+                {t('pages.clients.clearAllFilters')}
+              </Btn>
+              <span className="mut" style={{ fontSize: 12.5, fontWeight: 650 }}>
+                {t('pages.clients.showingCount', { shown: filtered, total })}
+              </span>
+            </div>
+          )}
+          {selectedRowKeys.length > 0 && (
+            <div className="tile row wrap" style={{ padding: '10px 14px', gap: 12 }}>
+              <span className="badge acc">
+                {t('pages.clients.selectedCount', { count: selectedRowKeys.length })}
+              </span>
+              <span
+                className="f1 mut"
+                style={{
+                  fontWeight: 650,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {selectedRowKeys.slice(0, 4).join(', ')}
+                {selectedRowKeys.length > 4 ? '…' : ''}
+              </span>
+              <Btn size="sm" icon="refresh" onClick={() => setBulkAdjustOpen(true)}>
+                {t('pages.clients.adjust')}
+              </Btn>
+              <Btn size="sm" icon="groups" onClick={() => setBulkGroupOpen(true)}>
+                {t('pages.clients.addToGroup')}
+              </Btn>
+              <Btn size="sm" icon="power" onClick={() => onBulkSetEnable(false)}>
+                {t('pages.clients.disable')}
+              </Btn>
+              <MoreMenu
+                label={t('more')}
+                actions={[
+                  {
+                    key: 'enable',
+                    label: t('pages.clients.enable'),
+                    onSelect: () => onBulkSetEnable(true),
+                  },
+                  {
+                    key: 'subLinks',
+                    label: t('pages.clients.subLinks'),
+                    icon: 'link',
+                    onSelect: () => setSubLinksOpen(true),
+                  },
+                  {
+                    key: 'attach',
+                    label: t('pages.clients.attach'),
+                    onSelect: () => setBulkAttachOpen(true),
+                  },
+                  {
+                    key: 'detach',
+                    label: t('pages.clients.detach'),
+                    danger: true,
+                    onSelect: () => setBulkDetachOpen(true),
+                  },
+                  {
+                    key: 'ungroup',
+                    label: t('pages.clients.ungroup'),
+                    danger: true,
+                    onSelect: onBulkUngroup,
+                  },
+                ]}
+              />
+              <Btn size="sm" kind="dng" icon="trash" onClick={onBulkDelete}>
+                {t('delete')}
+              </Btn>
+              <IconBtn small icon="x" label={t('cancel')} onClick={() => setSelectedRowKeys([])} />
+            </div>
+          )}
+          {total === 0 ? (
+            <section className="tile">
+              <DlEmpty
+                art={<IlloEmpty size={130} />}
+                title={t('clientsPage.empty')}
+                actions={
+                  <Btn kind="pri" icon="plus" onClick={onAdd}>
+                    {t('clientsPage.add')}
+                  </Btn>
+                }
+              >
+                {t('clientsPage.emptyHint')}
+              </DlEmpty>
+            </section>
+          ) : (
+            <section
+              className="tile dense"
+              style={{ padding: 14, opacity: transitioning ? 0.6 : 1 }}
+              aria-busy={transitioning}
+            >
+              <ClientTable
+                rows={sortedClients}
+                narrow={isMobile}
+                selected={selectedRowKeys}
+                inboundsById={inboundsById}
+                clientSpeed={clientSpeed}
+                togglingEmail={togglingEmail}
+                bucketOf={clientBucket}
+                isOnline={isOnline}
+                onSelect={toggleSelect}
+                onSelectAll={selectAll}
+                onEdit={onEdit}
+                onShowQr={onShowQr}
+                onShowInfo={onShowInfo}
+                onResetTraffic={onResetTraffic}
+                onDelete={onDelete}
+                onToggle={(row, on) => void onToggleEnable(row, on)}
+                onGroup={(g) => setFilters({ ...filters, groups: [g] })}
+              />
+              {filtered === 0 && (
+                <div className="mut" style={{ padding: 14, textAlign: 'center' }}>
+                  {t('noData')}
+                </div>
               )}
-            </Spin>
-          </Layout.Content>
-        </Layout>
+            </section>
+          )}
+          {filtered > 0 && (
+            <div className="row sp wrap mut" style={{ fontWeight: 650, fontSize: 13, gap: 10 }}>
+              <span>
+                {t('clientsPage.showing', {
+                  from: fmtInt((currentPage - 1) * tablePageSize + 1),
+                  to: fmtInt(Math.min(currentPage * tablePageSize, filtered)),
+                  total: fmtInt(filtered),
+                })}
+              </span>
+              <div className="row" style={{ gap: 6 }}>
+                <DropChip
+                  label={t('clientsPage.perPage')}
+                  value={String(tablePageSize)}
+                  onChange={(v) => {
+                    setPageSizeChoice(Number(v));
+                    setCurrentPage(1);
+                  }}
+                  options={['10', '25', '50', '100', '200'].map((n) => ({ value: n, label: n }))}
+                />
+                <IconBtn
+                  small
+                  icon="back"
+                  className="flipx"
+                  label={t('inbounds.prev')}
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                />
+                <span className="badge acc num">{`${fmtInt(currentPage)} / ${fmtInt(pages)}`}</span>
+                <IconBtn
+                  small
+                  icon="chev"
+                  className="flipx"
+                  label={t('inbounds.next')}
+                  disabled={currentPage >= pages}
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                />
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
-        <LazyMount when={formOpen}>
-          <ClientFormModal
-            open={formOpen}
-            mode={formMode}
-            client={editingClient}
-            attachedIds={editingAttachedIds}
-            attachedExternalLinks={editingExternalLinks}
-            tunnelAllowedIPs={editingTunnelAllowedIPs}
-            inbounds={inbounds}
-            tgBotEnable={tgBotEnable}
-            groups={allGroups}
-            save={onSave}
-            resetTraffic={resetTraffic}
-            onOpenChange={setFormOpen}
-          />
-        </LazyMount>
-        <LazyMount when={infoOpen}>
-          <ClientInfoModal
-            open={infoOpen}
-            client={infoClient}
-            inboundsById={inboundsById}
-            tunnelAllowedIPs={viewingTunnelAllowedIPs}
-            isOnline={infoClient ? isOnline(infoClient.email) : false}
-            subSettings={subSettings}
-            hosts={hosts}
-            onOpenChange={setInfoOpen}
-          />
-        </LazyMount>
-        <LazyMount when={qrOpen}>
-          <ClientQrModal
-            open={qrOpen}
-            client={qrClient}
-            inboundsById={inboundsById}
-            tunnelAllowedIPs={viewingTunnelAllowedIPs}
-            subSettings={subSettings}
-            hosts={hosts}
-            onOpenChange={setQrOpen}
-          />
-        </LazyMount>
-        <LazyMount when={bulkAddOpen}>
-          <ClientBulkAddModal
-            open={bulkAddOpen}
-            inbounds={inbounds}
-            groups={allGroups}
-            onOpenChange={setBulkAddOpen}
-            onSaved={() => setBulkAddOpen(false)}
-          />
-        </LazyMount>
-        <LazyMount when={bulkAdjustOpen}>
-          <ClientBulkAdjustModal
-            open={bulkAdjustOpen}
-            count={selectedRowKeys.length}
-            onOpenChange={setBulkAdjustOpen}
-            onSubmit={async (addDays, addBytes, flow, limitHwid, adTag) => {
-              const msg = await bulkAdjust(
-                [...selectedRowKeys],
-                addDays,
-                addBytes,
-                flow,
-                limitHwid,
-                adTag,
-              );
-              if (msg?.success) {
-                setSelectedRowKeys([]);
-                return msg.obj ?? { adjusted: 0 };
-              }
-              return null;
-            }}
-          />
-        </LazyMount>
-        <LazyMount when={subLinksOpen}>
-          <SubLinksModal
-            open={subLinksOpen}
-            emails={selectedRowKeys}
-            clients={clients}
-            subSettings={subSettings}
-            onOpenChange={setSubLinksOpen}
-          />
-        </LazyMount>
-        <LazyMount when={bulkGroupOpen}>
-          <BulkAddToGroupModal
-            open={bulkGroupOpen}
-            count={selectedRowKeys.length}
-            groups={allGroups}
-            onOpenChange={setBulkGroupOpen}
-            onSubmit={async (group) => {
-              const msg = await bulkAddToGroup([...selectedRowKeys], group);
-              if (msg?.success) {
-                setSelectedRowKeys([]);
-                return (msg.obj as { affected?: number } | undefined) ?? { affected: 0 };
-              }
-              return null;
-            }}
-          />
-        </LazyMount>
-        <LazyMount when={bulkAttachOpen}>
-          <BulkAttachInboundsModal
-            open={bulkAttachOpen}
-            count={selectedRowKeys.length}
-            inbounds={inbounds}
-            onOpenChange={setBulkAttachOpen}
-            onSubmit={async (inboundIds) => {
-              const msg = await bulkAttach([...selectedRowKeys], inboundIds);
-              if (msg?.success) {
-                setSelectedRowKeys([]);
-                return msg.obj ?? { attached: [], skipped: [], errors: [] };
-              }
-              return null;
-            }}
-          />
-        </LazyMount>
-        <LazyMount when={bulkDetachOpen}>
-          <BulkDetachInboundsModal
-            open={bulkDetachOpen}
-            count={selectedRowKeys.length}
-            inbounds={inbounds}
-            onOpenChange={setBulkDetachOpen}
-            onSubmit={async (inboundIds) => {
-              const msg = await bulkDetach([...selectedRowKeys], inboundIds);
-              if (msg?.success) {
-                setSelectedRowKeys([]);
-                return msg.obj ?? { detached: [], skipped: [], errors: [] };
-              }
-              return null;
-            }}
-          />
-        </LazyMount>
-        <LazyMount when={filterDrawerOpen}>
-          <FilterDrawer
-            open={filterDrawerOpen}
-            onOpenChange={setFilterDrawerOpen}
-            filters={filters}
-            onChange={setFilters}
-            inbounds={inbounds}
-            protocols={protocolOptions}
-            groups={groupOptions}
-            nodes={nodes}
-          />
-        </LazyMount>
-        <LazyMount when={textOpen}>
-          <TextModal
-            open={textOpen}
-            onClose={() => setTextOpen(false)}
-            title={textTitle}
-            content={textContent}
-            fileName={textFileName}
-            json
-          />
-        </LazyMount>
-        <LazyMount when={promptOpen}>
-          <PromptModal
-            open={promptOpen}
-            onClose={() => setPromptOpen(false)}
-            title={promptTitle}
-            okText={promptOkText}
-            initialValue={promptInitial}
-            loading={promptLoading}
-            json
-            onConfirm={onPromptConfirm}
-          />
-        </LazyMount>
-      </Layout>
-    </ConfigProvider>
+      <LazyMount when={formOpen}>
+        <ClientFormModal
+          open={formOpen}
+          mode={formMode}
+          client={editingClient}
+          attachedIds={editingAttachedIds}
+          attachedExternalLinks={editingExternalLinks}
+          tunnelAllowedIPs={editingTunnelAllowedIPs}
+          inbounds={inbounds}
+          tgBotEnable={tgBotEnable}
+          groups={allGroups}
+          save={onSave}
+          resetTraffic={resetTraffic}
+          onOpenChange={setFormOpen}
+        />
+      </LazyMount>
+      <LazyMount when={infoOpen}>
+        <ClientInfoModal
+          open={infoOpen}
+          client={infoClient}
+          inboundsById={inboundsById}
+          tunnelAllowedIPs={viewingTunnelAllowedIPs}
+          isOnline={infoClient ? isOnline(infoClient.email) : false}
+          subSettings={subSettings}
+          hosts={hosts}
+          onOpenChange={setInfoOpen}
+        />
+      </LazyMount>
+      <LazyMount when={qrOpen}>
+        <ClientQrModal
+          open={qrOpen}
+          client={qrClient}
+          inboundsById={inboundsById}
+          tunnelAllowedIPs={viewingTunnelAllowedIPs}
+          subSettings={subSettings}
+          hosts={hosts}
+          onOpenChange={setQrOpen}
+        />
+      </LazyMount>
+      <LazyMount when={bulkAddOpen}>
+        <ClientBulkAddModal
+          open={bulkAddOpen}
+          inbounds={inbounds}
+          groups={allGroups}
+          onOpenChange={setBulkAddOpen}
+          onSaved={() => setBulkAddOpen(false)}
+        />
+      </LazyMount>
+      <LazyMount when={bulkAdjustOpen}>
+        <ClientBulkAdjustModal
+          open={bulkAdjustOpen}
+          count={selectedRowKeys.length}
+          onOpenChange={setBulkAdjustOpen}
+          onSubmit={async (addDays, addBytes, flow, limitHwid, adTag) => {
+            const msg = await bulkAdjust(
+              [...selectedRowKeys],
+              addDays,
+              addBytes,
+              flow,
+              limitHwid,
+              adTag,
+            );
+            if (msg?.success) {
+              setSelectedRowKeys([]);
+              return msg.obj ?? { adjusted: 0 };
+            }
+            return null;
+          }}
+        />
+      </LazyMount>
+      <LazyMount when={subLinksOpen}>
+        <SubLinksModal
+          open={subLinksOpen}
+          emails={selectedRowKeys}
+          clients={clients}
+          subSettings={subSettings}
+          onOpenChange={setSubLinksOpen}
+        />
+      </LazyMount>
+      <LazyMount when={bulkGroupOpen}>
+        <BulkAddToGroupModal
+          open={bulkGroupOpen}
+          count={selectedRowKeys.length}
+          groups={allGroups}
+          onOpenChange={setBulkGroupOpen}
+          onSubmit={async (group) => {
+            const msg = await bulkAddToGroup([...selectedRowKeys], group);
+            if (msg?.success) {
+              setSelectedRowKeys([]);
+              return (msg.obj as { affected?: number } | undefined) ?? { affected: 0 };
+            }
+            return null;
+          }}
+        />
+      </LazyMount>
+      <LazyMount when={bulkAttachOpen}>
+        <BulkAttachInboundsModal
+          open={bulkAttachOpen}
+          count={selectedRowKeys.length}
+          inbounds={inbounds}
+          onOpenChange={setBulkAttachOpen}
+          onSubmit={async (inboundIds) => {
+            const msg = await bulkAttach([...selectedRowKeys], inboundIds);
+            if (msg?.success) {
+              setSelectedRowKeys([]);
+              return msg.obj ?? { attached: [], skipped: [], errors: [] };
+            }
+            return null;
+          }}
+        />
+      </LazyMount>
+      <LazyMount when={bulkDetachOpen}>
+        <BulkDetachInboundsModal
+          open={bulkDetachOpen}
+          count={selectedRowKeys.length}
+          inbounds={inbounds}
+          onOpenChange={setBulkDetachOpen}
+          onSubmit={async (inboundIds) => {
+            const msg = await bulkDetach([...selectedRowKeys], inboundIds);
+            if (msg?.success) {
+              setSelectedRowKeys([]);
+              return msg.obj ?? { detached: [], skipped: [], errors: [] };
+            }
+            return null;
+          }}
+        />
+      </LazyMount>
+      <LazyMount when={filterDrawerOpen}>
+        <FilterDrawer
+          open={filterDrawerOpen}
+          onOpenChange={setFilterDrawerOpen}
+          filters={filters}
+          onChange={setFilters}
+          inbounds={inbounds}
+          protocols={protocolOptions}
+          groups={groupOptions}
+          nodes={nodes}
+        />
+      </LazyMount>
+      <LazyMount when={textOpen}>
+        <TextModal
+          open={textOpen}
+          onClose={() => setTextOpen(false)}
+          title={textTitle}
+          content={textContent}
+          fileName={textFileName}
+          json
+        />
+      </LazyMount>
+      <LazyMount when={promptOpen}>
+        <PromptModal
+          open={promptOpen}
+          onClose={() => setPromptOpen(false)}
+          title={promptTitle}
+          okText={promptOkText}
+          initialValue={promptInitial}
+          loading={promptLoading}
+          json
+          onConfirm={onPromptConfirm}
+        />
+      </LazyMount>
+    </div>
   );
 }
 

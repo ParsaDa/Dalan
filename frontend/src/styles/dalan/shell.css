@@ -1,0 +1,41 @@
+/* Panel-only frame rules: the artboards are fixed frames, the panel is a scrolling page. */
+.dl .shell {
+  min-height: 100vh;
+}
+.dl .rail {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.dl .main.pmain {
+  padding: 18px 16px 110px;
+  gap: 14px;
+  min-height: 100vh;
+}
+.dl .pmain .h1 {
+  font-size: 28px;
+}
+.dl .pmain .tile {
+  padding: 16px;
+  border-radius: 20px;
+}
+.dl .pmain .kpi {
+  font-size: 32px;
+}
+.dl .tabbar {
+  position: fixed;
+}
+.dl .route {
+  animation: dl-routeIn var(--d-slow) var(--e-out) backwards;
+}
+.dl.fx-off .route {
+  animation-name: dl-fadeIn;
+  animation-duration: var(--d-fast);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dl .route {
+    animation: dl-fadeIn 120ms backwards;
+  }
+}

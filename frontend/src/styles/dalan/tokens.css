@@ -120,166 +120,123 @@ body[data-effects='off'] {
 }
 
 /* Accent: fill, line (3:1 for strokes) and text (4.5:1) per theme. */
-body.dark[data-accent='saffron'],
-body.dark .dl-frame[data-accent='saffron'] {
+body.dark[data-accent='saffron'] {
   --dl-acc: #ffb020;
   --dl-acc-line: #ffb020;
   --dl-acc-text: #ffb020;
 }
-body.light[data-accent='saffron'],
-body.light .dl-frame[data-accent='saffron'] {
+body.light[data-accent='saffron'] {
   --dl-acc: #ffb020;
   --dl-acc-line: #b57a04;
   --dl-acc-text: #906102;
 }
-body.dark[data-accent='rose'],
-body.dark .dl-frame[data-accent='rose'] {
+body.dark[data-accent='rose'] {
   --dl-acc: #ff3d6e;
   --dl-acc-line: #ff3d6e;
   --dl-acc-text: #fe6380;
 }
-body.light[data-accent='rose'],
-body.light .dl-frame[data-accent='rose'] {
+body.light[data-accent='rose'] {
   --dl-acc: #ff3d6e;
   --dl-acc-line: #f93669;
   --dl-acc-text: #d3034f;
 }
-body.dark[data-accent='sun'],
-body.dark .dl-frame[data-accent='sun'] {
+body.dark[data-accent='sun'] {
   --dl-acc: #ffc83d;
   --dl-acc-line: #ffc83d;
   --dl-acc-text: #ffc83d;
 }
-body.light[data-accent='sun'],
-body.light .dl-frame[data-accent='sun'] {
+body.light[data-accent='sun'] {
   --dl-acc: #ffc83d;
   --dl-acc-line: #a98006;
   --dl-acc-text: #866505;
 }
-body.dark[data-accent='tulip'],
-body.dark .dl-frame[data-accent='tulip'] {
+body.dark[data-accent='tulip'] {
   --dl-acc: #f062c8;
   --dl-acc-line: #f062c8;
   --dl-acc-text: #f466cc;
 }
-body.light[data-accent='tulip'],
-body.light .dl-frame[data-accent='tulip'] {
+body.light[data-accent='tulip'] {
   --dl-acc: #f062c8;
   --dl-acc-line: #db4eb5;
   --dl-acc-text: #bb2d98;
 }
-body.dark[data-accent='cobalt'],
-body.dark .dl-frame[data-accent='cobalt'] {
+body.dark[data-accent='cobalt'] {
   --dl-acc: #4c8dff;
   --dl-acc-line: #4c8dff;
   --dl-acc-text: #619aff;
 }
-body.light[data-accent='cobalt'],
-body.light .dl-frame[data-accent='cobalt'] {
+body.light[data-accent='cobalt'] {
   --dl-acc: #4c8dff;
   --dl-acc-line: #4283f4;
   --dl-acc-text: #2766d4;
 }
-body.dark[data-accent='iris'],
-body.dark .dl-frame[data-accent='iris'] {
+body.dark[data-accent='iris'] {
   --dl-acc: #9b8cff;
   --dl-acc-line: #9b8cff;
   --dl-acc-text: #9d90fe;
 }
-body.light[data-accent='iris'],
-body.light .dl-frame[data-accent='iris'] {
+body.light[data-accent='iris'] {
   --dl-acc: #9b8cff;
   --dl-acc-line: #8675e6;
   --dl-acc-text: #6c59c7;
 }
-body.dark[data-accent='lime'],
-body.dark .dl-frame[data-accent='lime'] {
+body.dark[data-accent='lime'] {
   --dl-acc: #b6f23c;
   --dl-acc-line: #b6f23c;
   --dl-acc-text: #b6f23c;
 }
-body.light[data-accent='lime'],
-body.light .dl-frame[data-accent='lime'] {
+body.light[data-accent='lime'] {
   --dl-acc: #b6f23c;
   --dl-acc-line: #6a9206;
   --dl-acc-text: #547500;
 }
-body.dark[data-accent='cyan'],
-body.dark .dl-frame[data-accent='cyan'] {
+body.dark[data-accent='cyan'] {
   --dl-acc: #2ccce4;
   --dl-acc-line: #2ccce4;
   --dl-acc-text: #2ccce4;
 }
-body.light[data-accent='cyan'],
-body.light .dl-frame[data-accent='cyan'] {
+body.light[data-accent='cyan'] {
   --dl-acc: #2ccce4;
   --dl-acc-line: #0494a6;
   --dl-acc-text: #037685;
 }
-body.dark[data-accent='amethyst'],
-body.dark .dl-frame[data-accent='amethyst'] {
+body.dark[data-accent='amethyst'] {
   --dl-acc: #c27cf5;
   --dl-acc-line: #c27cf5;
   --dl-acc-text: #c680f9;
 }
-body.light[data-accent='amethyst'],
-body.light .dl-frame[data-accent='amethyst'] {
+body.light[data-accent='amethyst'] {
   --dl-acc: #c27cf5;
   --dl-acc-line: #ac67de;
   --dl-acc-text: #904abf;
 }
-body.dark[data-accent='ice'],
-body.dark .dl-frame[data-accent='ice'] {
+body.dark[data-accent='ice'] {
   --dl-acc: #8ec2ff;
   --dl-acc-line: #8ec2ff;
   --dl-acc-text: #8ec2ff;
 }
-body.light[data-accent='ice'],
-body.light .dl-frame[data-accent='ice'] {
+body.light[data-accent='ice'] {
   --dl-acc: #8ec2ff;
   --dl-acc-line: #5889c3;
   --dl-acc-text: #3c6da4;
 }
-body.dark[data-accent='sand'],
-body.dark .dl-frame[data-accent='sand'] {
+body.dark[data-accent='sand'] {
   --dl-acc: #e2be8a;
   --dl-acc-line: #e2be8a;
   --dl-acc-text: #e2be8a;
 }
-body.light[data-accent='sand'],
-body.light .dl-frame[data-accent='sand'] {
+body.light[data-accent='sand'] {
   --dl-acc: #e2be8a;
   --dl-acc-line: #a3814f;
   --dl-acc-text: #856533;
 }
-body.dark[data-accent='steel'],
-body.dark .dl-frame[data-accent='steel'] {
+body.dark[data-accent='steel'] {
   --dl-acc: #9aa8bc;
   --dl-acc-line: #9aa8bc;
   --dl-acc-text: #9aa8bc;
 }
-body.light[data-accent='steel'],
-body.light .dl-frame[data-accent='steel'] {
+body.light[data-accent='steel'] {
   --dl-acc: #9aa8bc;
   --dl-acc-line: #7a879a;
   --dl-acc-text: #5f6c7e;
-}
-
-.dl-frame {
-  transition:
-    --dl-acc var(--dl-d-sweep) var(--dl-e-io),
-    --dl-acc-line var(--dl-d-sweep) var(--dl-e-io),
-    --dl-acc-text var(--dl-d-sweep) var(--dl-e-io);
-}
-
-body.dark .dl-frame[data-accent='custom'] {
-  --dl-acc: var(--dl-custom);
-  --dl-acc-line: var(--dl-custom);
-  --dl-acc-text: color-mix(in srgb, var(--dl-custom) 70%, white);
-}
-
-body.light .dl-frame[data-accent='custom'] {
-  --dl-acc: var(--dl-custom);
-  --dl-acc-line: color-mix(in srgb, var(--dl-custom) 80%, black);
-  --dl-acc-text: color-mix(in srgb, var(--dl-custom) 55%, black);
 }

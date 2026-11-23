@@ -1,26 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Button,
-  Card,
-  Col,
-  ConfigProvider,
-  Layout,
-  Modal,
-  Result,
-  Row,
-  Spin,
-  Statistic,
-  message,
-} from 'antd';
-import { CheckCircleOutlined, GlobalOutlined, StopOutlined } from '@ant-design/icons';
+import { message } from 'antd';
 
-import { useTheme } from '@/hooks/useTheme';
+import Icon from '@/components/dl/Icon';
+import { IlloEmpty, IlloOffline } from '@/components/dl/Illustrations';
+import { Modal as DlModal } from '@/components/dl/overlays';
+import { Btn, Chip, Empty as DlEmpty, Sk } from '@/components/dl/primitives';
+import { fmtInt } from '@/components/dl/numbers';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useHostsQuery, type HostRecord } from '@/api/queries/useHostsQuery';
 import { useHostMutations } from '@/api/queries/useHostMutations';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
-import AppSidebar from '@/layouts/AppSidebar';
 import { setMessageInstance } from '@/utils/messageBus';
 import type { BulkAddHostValues } from '@/schemas/api/host';
 import HostList, { sortHosts } from './HostList';
@@ -28,9 +18,7 @@ import HostFormModal from './HostFormModal';
 
 export default function HostsPage() {
   const { t } = useTranslation();
-  const { isDark, isUltra, antdThemeConfig } = useTheme();
   const { isMobile } = useMediaQuery();
-  const [modal, modalContextHolder] = Modal.useModal();
   const [messageApi, messageContextHolder] = message.useMessage();
   useEffect(() => {
     setMessageInstance(messageApi);
@@ -97,20 +85,17 @@ export default function HostsPage() {
     [formMode, formHost, update, bulkCreate],
   );
 
+  const [confirm, setConfirm] = useState<{ title: string; run: () => Promise<void> } | null>(null);
   const onDelete = useCallback(
-    (host: HostRecord) => {
-      modal.confirm({
+    (host: HostRecord) =>
+      setConfirm({
         title: t('pages.hosts.deleteConfirmTitle', { name: host.remark }),
-        okText: t('delete'),
-        okType: 'danger',
-        cancelText: t('cancel'),
-        onOk: async () => {
+        run: async () => {
           const msg = await remove(host.groupId);
           if (msg?.success) messageApi.success(t('pages.hosts.toasts.delete'));
         },
-      });
-    },
-    [modal, t, remove, messageApi],
+      }),
+    [t, remove, messageApi],
   );
 
   const onToggleEnable = useCallback(
@@ -144,12 +129,9 @@ export default function HostsPage() {
 
   const onBulkDelete = useCallback(() => {
     if (selectedGroupIds.length === 0) return;
-    modal.confirm({
+    setConfirm({
       title: t('pages.hosts.bulkDeleteConfirm', { count: selectedGroupIds.length }),
-      okText: t('delete'),
-      okType: 'danger',
-      cancelText: t('cancel'),
-      onOk: async () => {
+      run: async () => {
         const msg = await bulkDel(selectedGroupIds);
         if (msg?.success) {
           messageApi.success(t('pages.hosts.toasts.delete'));
@@ -157,118 +139,146 @@ export default function HostsPage() {
         }
       },
     });
-  }, [selectedGroupIds, modal, t, bulkDel, messageApi]);
+  }, [selectedGroupIds, t, bulkDel, messageApi]);
 
-  const summary = useMemo(() => {
-    const total = hosts.length;
-    const enabled = hosts.filter((h) => !h.isDisabled).length;
-    return { total, enabled, disabled: total - enabled };
-  }, [hosts]);
-
-  const pageClass = useMemo(() => {
-    const classes = ['hosts-page'];
-    if (isDark) classes.push('is-dark');
-    if (isUltra) classes.push('is-ultra');
-    return classes.join(' ');
-  }, [isDark, isUltra]);
+  const [filter, setFilter] = useState<'all' | 'on' | 'off'>('all');
+  const counts = {
+    all: hosts.length,
+    on: hosts.filter((h) => !h.isDisabled).length,
+    off: hosts.filter((h) => h.isDisabled).length,
+  };
+  const shownHosts = visibleHosts.filter((h) =>
+    filter === 'all' ? true : filter === 'on' ? !h.isDisabled : h.isDisabled,
+  );
 
   return (
-    <ConfigProvider theme={antdThemeConfig}>
+    <div className="col stag" style={{ gap: 18 }}>
       {messageContextHolder}
-      {modalContextHolder}
-      <Layout className={pageClass}>
-        <AppSidebar />
-        <Layout className="content-shell">
-          <Layout.Content id="content-layout" className="content-area">
-            <Spin aria-live="off" spinning={!fetched} delay={200} size="large">
-              {!fetched ? (
-                <div className="loading-spacer" />
-              ) : fetchError ? (
-                <Result
-                  status="error"
-                  title={t('somethingWentWrong')}
-                  subTitle={fetchError}
-                  extra={
-                    <Button type="primary" loading={loading} onClick={() => refetch()}>
-                      {t('refresh')}
-                    </Button>
-                  }
-                />
-              ) : (
-                <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 12]}>
-                  <Col span={24}>
-                    <Card size="small" hoverable className="summary-card">
-                      <Row gutter={[16, 12]}>
-                        <Col xs={8} sm={8} md={8}>
-                          <Statistic
-                            title={t('pages.hosts.summary.total')}
-                            value={String(summary.total)}
-                            prefix={<GlobalOutlined aria-hidden />}
-                          />
-                        </Col>
-                        <Col xs={8} sm={8} md={8}>
-                          <Statistic
-                            title={t('pages.hosts.summary.enabled')}
-                            value={String(summary.enabled)}
-                            prefix={
-                              <CheckCircleOutlined
-                                aria-hidden
-                                style={{ color: 'var(--ant-color-success)' }}
-                              />
-                            }
-                          />
-                        </Col>
-                        <Col xs={8} sm={8} md={8}>
-                          <Statistic
-                            title={t('pages.hosts.summary.disabled')}
-                            value={String(summary.disabled)}
-                            prefix={
-                              <StopOutlined
-                                aria-hidden
-                                style={{ color: 'var(--ant-color-text-quaternary)' }}
-                              />
-                            }
-                          />
-                        </Col>
-                      </Row>
-                    </Card>
-                  </Col>
-
-                  <Col span={24}>
-                    <HostList
-                      hosts={visibleHosts}
-                      inboundOptions={inboundOptions}
-                      loading={loading}
-                      isMobile={isMobile}
-                      selectedGroupIds={selectedGroupIds}
-                      onSelectionChange={setSelectedGroupIds}
-                      onAdd={onAdd}
-                      onEdit={onEdit}
-                      onDelete={onDelete}
-                      onToggleEnable={onToggleEnable}
-                      onMove={onMove}
-                      onReorder={onReorder}
-                      reordering={pendingOrder !== null}
-                      onBulkEnable={onBulkEnable}
-                      onBulkDelete={onBulkDelete}
-                    />
-                  </Col>
-                </Row>
-              )}
-            </Spin>
-          </Layout.Content>
-        </Layout>
-
-        <HostFormModal
-          open={formOpen}
-          mode={formMode}
-          host={formHost}
-          inboundOptions={inboundOptions}
-          existingHosts={hosts}
-          save={onSave}
-          onOpenChange={setFormOpen}
-        />
-      </Layout>
-    </ConfigProvider>
+      <div className="pagehead">
+        <div>
+          <h2 className="h2" style={{ fontSize: 28 }}>
+            {t('menu.hosts')}
+          </h2>
+          <p>{t('hosts.subtitle')}</p>
+        </div>
+        <div className="row wrap">
+          <Btn kind="pri" icon="plus" onClick={onAdd}>
+            {t('pages.hosts.addHost')}
+          </Btn>
+        </div>
+      </div>
+      <section className="tile" style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+        <span className="ico acc">
+          <Icon name="info" />
+        </span>
+        <div>
+          <div className="h3">{t('hosts.tipTitle')}</div>
+          <p className="mut" style={{ margin: '4px 0 0' }}>
+            {t('hosts.tipBody')}
+          </p>
+        </div>
+      </section>
+      {!fetched ? (
+        <section className="tile">
+          <Sk h={140} />
+        </section>
+      ) : fetchError ? (
+        <section className="tile edge st-bad">
+          <DlEmpty
+            art={<IlloOffline />}
+            title={t('somethingWentWrong')}
+            actions={
+              <Btn kind="pri" icon="refresh" disabled={loading} onClick={() => refetch()}>
+                {t('refresh')}
+              </Btn>
+            }
+          >
+            {fetchError}
+          </DlEmpty>
+        </section>
+      ) : hosts.length === 0 ? (
+        <section className="tile">
+          <DlEmpty
+            art={<IlloEmpty size={130} />}
+            title={t('hosts.empty')}
+            actions={
+              <Btn kind="pri" icon="plus" onClick={onAdd}>
+                {t('pages.hosts.addHost')}
+              </Btn>
+            }
+          />
+        </section>
+      ) : (
+        <>
+          <div className="chips" role="group" aria-label={t('hosts.filters')}>
+            {(['all', 'on', 'off'] as const).map((f) => (
+              <Chip
+                key={f}
+                on={filter === f}
+                count={fmtInt(counts[f])}
+                onClick={() => setFilter(f)}
+              >
+                {t(`hosts.filter.${f}`)}
+              </Chip>
+            ))}
+          </div>
+          <HostList
+            hosts={shownHosts}
+            inboundOptions={inboundOptions}
+            loading={loading}
+            isMobile={isMobile}
+            selectedGroupIds={selectedGroupIds}
+            onSelectionChange={setSelectedGroupIds}
+            onAdd={onAdd}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onToggleEnable={onToggleEnable}
+            onMove={onMove}
+            onReorder={onReorder}
+            reordering={pendingOrder !== null}
+            onBulkEnable={onBulkEnable}
+            onBulkDelete={onBulkDelete}
+          />
+        </>
+      )}
+      <DlModal
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        label={confirm?.title ?? ''}
+        width={440}
+      >
+        <div className="row" style={{ gap: 12 }}>
+          <span className="ico bad">
+            <Icon name="trash" />
+          </span>
+          <h2 className="h3 f1">{confirm?.title}</h2>
+        </div>
+        <div className="mfoot">
+          <Btn kind="ghost" onClick={() => setConfirm(null)}>
+            {t('cancel')}
+          </Btn>
+          <Btn
+            kind="dng"
+            icon="trash"
+            onClick={async () => {
+              const run = confirm?.run;
+              setConfirm(null);
+              await run?.();
+            }}
+          >
+            {t('delete')}
+          </Btn>
+        </div>
+      </DlModal>
+      <HostFormModal
+        open={formOpen}
+        mode={formMode}
+        host={formHost}
+        inboundOptions={inboundOptions}
+        existingHosts={hosts}
+        save={onSave}
+        onOpenChange={setFormOpen}
+      />
+    </div>
   );
 }

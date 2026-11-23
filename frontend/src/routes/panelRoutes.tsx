@@ -5,9 +5,13 @@ import {
   ClusterOutlined,
   NodeIndexOutlined,
   DashboardOutlined,
+  FileTextOutlined,
   ExportOutlined,
   GlobalOutlined,
+  HistoryOutlined,
+  MenuOutlined,
   ImportOutlined,
+  SafetyOutlined,
   SettingOutlined,
   SwapOutlined,
   TagsOutlined,
@@ -25,6 +29,10 @@ const HostsPage = lazy(() => import('@/pages/hosts/HostsPage'));
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
 const XrayPage = lazy(() => import('@/pages/xray/XrayPage'));
 const ApiDocsPage = lazy(() => import('@/pages/api-docs/ApiDocsPage'));
+const MorePage = lazy(() => import('@/pages/more/MorePage'));
+const ActivityPage = lazy(() => import('@/pages/activity/ActivityPage'));
+const LogsPage = lazy(() => import('@/pages/logs/LogsPage'));
+const TorPage = lazy(() => import('@/pages/tor/TorPage'));
 
 export interface PanelRoute {
   path: string;
@@ -37,6 +45,7 @@ export interface PanelRoute {
 // page cannot go missing from one of them.
 export const PANEL_ROUTES: PanelRoute[] = [
   { path: '/', titleKey: 'menu.dashboard', icon: DashboardOutlined, component: IndexPage },
+  { path: '/activity', titleKey: 'menu.activity', icon: HistoryOutlined, component: ActivityPage },
   { path: '/inbounds', titleKey: 'menu.inbounds', icon: ImportOutlined, component: InboundsPage },
   { path: '/clients', titleKey: 'menu.clients', icon: TeamOutlined, component: ClientsPage },
   { path: '/groups', titleKey: 'menu.groups', icon: TagsOutlined, component: GroupsPage },
@@ -45,9 +54,12 @@ export const PANEL_ROUTES: PanelRoute[] = [
   { path: '/hosts', titleKey: 'menu.hosts', icon: GlobalOutlined, component: HostsPage },
   { path: '/outbound', titleKey: 'menu.outbounds', icon: ExportOutlined, component: XrayPage },
   { path: '/routing', titleKey: 'menu.routing', icon: SwapOutlined, component: XrayPage },
+  { path: '/tor', titleKey: 'menu.torPia', icon: SafetyOutlined, component: TorPage },
   { path: '/settings', titleKey: 'menu.settings', icon: SettingOutlined, component: SettingsPage },
   { path: '/xray', titleKey: 'menu.xray', icon: ToolOutlined, component: XrayPage },
+  { path: '/logs', titleKey: 'menu.logs', icon: FileTextOutlined, component: LogsPage },
   { path: '/api-docs', titleKey: 'menu.apiDocs', icon: ApiOutlined, component: ApiDocsPage },
+  { path: '/more', titleKey: 'shell.nav.more', icon: MenuOutlined, component: MorePage },
 ];
 
 export const PANEL_ROUTE_PATHS = PANEL_ROUTES.map((route) => route.path);

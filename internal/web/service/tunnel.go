@@ -366,12 +366,25 @@ func (s *TunnelService) deleteLocal(t *model.ServerTunnel) error {
 	if err := database.GetDB().Delete(&model.ServerTunnel{}, t.Id).Error; err != nil {
 		return err
 	}
+	probeHistory.Forget(t.Id)
 	s.applyChange()
 	return nil
 }
 
-// Status sends one request through an entry tunnel and reports whether it came back, how fast and from where.
+var probeHistory = tunnel.NewHistory()
+
+// Status probes a tunnel and adds the result to its last hour of latency.
 func (s *TunnelService) Status(id int) (tunnel.Status, error) {
+	st, err := s.probe(id)
+	if err != nil {
+		return st, err
+	}
+	st.History = probeHistory.Add(id, st, time.Now())
+	return st, nil
+}
+
+// probe sends one request through an entry tunnel and reports whether it came back, how fast and from where.
+func (s *TunnelService) probe(id int) (tunnel.Status, error) {
 	t, err := s.get(id)
 	if err != nil {
 		return tunnel.Status{}, err

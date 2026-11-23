@@ -52,6 +52,8 @@ type AllSetting struct {
 	TgRunTime       string `json:"tgRunTime" form:"tgRunTime"`
 	TgBotBackup     bool   `json:"tgBotBackup" form:"tgBotBackup"`
 	TgCpu           int    `json:"tgCpu" form:"tgCpu" validate:"gte=0,lte=100"`
+	TrafficCapGB    int    `json:"trafficCapGB" form:"trafficCapGB" validate:"gte=0"`
+	TrafficResetDay int    `json:"trafficResetDay" form:"trafficResetDay" validate:"gte=1,lte=28"`
 	TgMemory        int    `json:"tgMemory" form:"tgMemory" validate:"gte=0,lte=100"`
 	TgLang          string `json:"tgLang" form:"tgLang"`
 	TgEnabledEvents string `json:"tgEnabledEvents" form:"tgEnabledEvents"`
@@ -96,6 +98,9 @@ type AllSetting struct {
 	SubClashAutoDetect          bool   `json:"subClashAutoDetect" form:"subClashAutoDetect"`
 	SubClashUserAgentRegex      string `json:"subClashUserAgentRegex" form:"subClashUserAgentRegex"`
 	SubTitle                    string `json:"subTitle" form:"subTitle"`
+	ServerName                  string `json:"serverName" form:"serverName"`
+	ServerCountry               string `json:"serverCountry" form:"serverCountry"`
+	SetupDone                   bool   `json:"setupDone" form:"setupDone"`
 	SubSupportUrl               string `json:"subSupportUrl" form:"subSupportUrl"`
 	SubProfileMode              string `json:"subProfileMode" form:"subProfileMode"`
 	SubProfileUrl               string `json:"subProfileUrl" form:"subProfileUrl"`
@@ -451,4 +456,9 @@ type HostGroup struct {
 	MihomoX25519           bool     `json:"mihomoX25519"`
 	ShuffleHost            bool     `json:"shuffleHost"`
 	RandomCount            int      `json:"randomCount" validate:"omitempty,min=1,max=100"`
+}
+
+// CurrentUser is the signed-in admin as the panel header shows it; it never carries the hash.
+type CurrentUser struct {
+	Username string `json:"username" example:"admin"`
 }

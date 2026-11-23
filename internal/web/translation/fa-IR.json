@@ -15,6 +15,17 @@
   "copy": "کپی",
   "copied": "کپی شد",
   "more": "بیشتر",
+  "morePage": {
+    "panel": "پنل",
+    "server": "سرور",
+    "account": "حساب",
+    "dark": "تیره",
+    "light": "روشن",
+    "language": "زبان",
+    "outboundsRouting": "خروجی‌ها و مسیریابی",
+    "twoStepOn": "تأیید دومرحله‌ای روشن",
+    "twoStepOff": "تأیید دومرحله‌ای خاموش"
+  },
   "download": "دانلود",
   "regenerate": "تولید مجدد",
   "jsonEditor": "ویرایشگر JSON",
@@ -83,57 +94,33 @@
   "somethingWentWrong": "مشکلی پیش آمد",
   "subscription": {
     "title": "اطلاعات سابسکریپشن",
-    "status": "وضعیت",
-    "downloaded": "دانلود",
-    "uploaded": "آپلود",
-    "expiry": "تاریخ پایان",
-    "totalQuota": "حجم کلی",
     "active": "فعال",
-    "inactive": "غیرفعال",
     "unlimited": "نامحدود",
     "noExpiry": "بدون انقضا",
-    "copyAllConfigs": "کپی همه کانفیگ‌ها",
-    "copyAllConfigsCopied": "همه کانفیگ‌ها کپی شدند",
     "daysLeft": "روز باقی‌مانده",
-    "expired": "منقضی شده",
-    "depleted": "حجم تمام شده",
-    "ofTotal": "از {total}",
-    "tabLinks": "اشتراک",
-    "tabApps": "اپلیکیشن‌ها",
-    "tabConfigs": "کانفیگ‌ها",
-    "scanTitle": "اسکن با گوشی",
-    "scanHint": "این کد را در اپلیکیشن VPN اسکن کنید تا اشتراک بدون کپی‌کردن لینک اضافه شود.",
-    "updateInterval": "به‌روزرسانی خودکار هر {hours} ساعت",
-    "support": "پشتیبانی",
-    "qrTitle": "اسکن. افزودن. اتصال.",
-    "qrHint": "با اپلیکیشن کلاینت اسکن کنید. این کد را به کسی ندهید.",
-    "saveQr": "ذخیره QR"
+    "updateInterval": "به‌روزرسانی خودکار هر {hours} ساعت"
   },
   "menu": {
     "theme": "تم",
-    "dashboard": "نمای کلی",
+    "dashboard": "داشبورد",
     "inbounds": "ورودی‌ها",
     "clients": "کلاینت‌ها",
     "groups": "گروه‌ها",
     "nodes": "نودها",
-    "settings": "تنظیمات پنل",
-    "xray": "پیکربندی Xray",
+    "settings": "تنظیمات",
+    "xray": "تنظیمات Xray",
     "routing": "مسیریابی",
     "outbounds": "خروجی‌ها",
     "apiDocs": "مستندات API",
-    "donate": "حمایت مالی",
     "hosts": "میزبان‌ها",
-    "docs": "مستندات",
-    "openMenu": "باز کردن منو",
-    "pinSidebar": "ثابت کردن نوار کناری",
-    "unpinSidebar": "برداشتن تثبیت نوار کناری",
     "subFormats": "Sub Formats",
-    "tunnels": "تانل‌ها"
+    "tunnels": "تانل‌ها",
+    "activity": "فعالیت‌ها",
+    "torPia": "تور و PIA",
+    "logs": "لاگ‌ها"
   },
   "pages": {
     "login": {
-      "hello": "سلام",
-      "title": "خوش‌آمدید",
       "loginAgain": "مدت زمان استفاده به‌اتمام‌رسیده، لطفا دوباره وارد شوید",
       "toasts": {
         "invalidFormData": "اطلاعات به‌درستی وارد نشده‌است",
@@ -145,19 +132,10 @@
     },
     "index": {
       "thisServer": "این سرور",
-      "greetMorning": "صبح بخیر",
-      "greetAfternoon": "عصر بخیر",
-      "greetEvening": "شب بخیر",
-      "nodesStatusLine": "{online} از {total} نود آنلاین است",
       "cpu": "پردازنده",
       "swap": "سواپ",
-      "storage": "ذخیره‌سازی",
       "memory": "حافظه",
-      "xrayStatus": "Xray",
-      "stopXray": "توقف",
       "restartXray": "راه‌اندازی مجدد",
-      "startXray": "شروع",
-      "stopXrayDisabledHint": "Xray در حال اجرا نیست",
       "stopXrayConfirmTitle": "Xray متوقف شود؟",
       "stopXrayConfirmContent": "توقف Xray بلافاصله همه اتصالات پراکسی را قطع می‌کند. آیا مطمئن هستید؟",
       "stopXrayConfirmOk": "توقف Xray",
@@ -174,7 +152,6 @@
       "currentCommit": "کامیت فعلی",
       "latestCommit": "آخرین کامیت",
       "updateChannelChanged": "کانال به‌روزرسانی تغییر کرد",
-      "xrayStatusUnknown": "ناشناخته",
       "xrayStatusRunning": "در حال اجرا",
       "xrayStatusStop": "متوقف",
       "xrayStatusError": "خطا",
@@ -217,10 +194,6 @@
       "xrayObservatoryDead": "غیرفعال",
       "xrayObservatoryLastSeen": "آخرین مشاهده",
       "xrayObservatoryLastTry": "آخرین تلاش",
-      "connectionCount": "تعداد کانکشن ها",
-      "ipAddresses": "آدرس‌های IP",
-      "toggleIpVisibility": "تغییر وضعیت نمایش IP",
-      "overallSpeed": "سرعت کلی",
       "upload": "آپلود",
       "download": "دانلود",
       "sent": "ارسال شده",
@@ -256,7 +229,6 @@
       "geodataEmpty": "فایلی پیکربندی نشده است. در قوانین مسیریابی فایل‌ها به صورت ext:geosite_custom.dat:category استفاده می‌شوند.",
       "dontRefresh": "در حال نصب، لطفا صفحه را رفرش نکنید",
       "logs": "لاگ‌ها",
-      "accessLogs": "لاگ‌های دسترسی",
       "autoUpdate": "به‌روزرسانی خودکار",
       "amneziawgLogs": "لاگ‌های AmneziaWG",
       "amneziawgHandshake": "آخرین دست‌دهی",
@@ -283,38 +255,16 @@
       "importDatabasePgDesc": "برای انتخاب و بارگذاری یک پشتیبان PostgreSQL (.dump)، پایگاه‌دادهٔ SQLite (.db) یا فایل مهاجرت SQLite جهت بازیابی پایگاه داده کلیک کنید. این کار همه داده‌های فعلی را جایگزین می‌کند.",
       "migrationDownload": "دانلود فایل مهاجرت",
       "migrationDownloadPgDesc": "برای دانلود یک پایگاه‌دادهٔ SQLite با پسوند ‎.db که از داده‌های PostgreSQL شما ساخته می‌شود کلیک کنید؛ آمادهٔ اجرای این پنل روی SQLite.",
-      "avg": "میانگین",
-      "peak": "اوج",
-      "free": "آزاد",
-      "openSockets": "اتصال باز",
-      "throughputSub": "کل اینترفیس",
-      "avgWindow": "میانگین بازه",
-      "healthWarm": "{list} — رو به گرم شدن",
-      "healthCritical": "{list} — بحرانی",
-      "panel": "پنل",
-      "threads": "نخ‌ها",
       "uptime": "مدت کارکرد",
-      "logLevelDebug": "Debug",
-      "logLevelInfo": "Info",
-      "logLevelNotice": "Notice",
-      "logLevelWarning": "Warning",
-      "logLevelError": "Error",
-      "accessDirect": "DIRECT",
-      "accessBlocked": "BLOCKED",
-      "accessProxy": "PROXY",
       "importKeepHostSettings": "حفظ تنظیمات این دستگاه",
       "importKeepHostSettingsDesc": "آدرس‌ها و پورت‌های شنود، مسیر پایه، گواهی‌ها و هویت نودِ همین پنل را نگه می‌دارد و آن‌ها را از فایل بارگذاری‌شده نمی‌گیرد.",
       "logLines": "تعداد خطوط",
       "timeRange": "بازه زمانی"
     },
     "inbounds": {
-      "totalDownUp": "دریافت/ارسال کل",
       "totalUsage": "‌‌‌مصرف کل",
-      "inboundCount": "کل ورودی‌ها",
-      "operate": "منو",
       "enable": "فعال",
       "remark": "نام",
-      "node": "نود",
       "deployTo": "استقرار روی",
       "localPanel": "پنل لوکال",
       "fallbacks": {
@@ -332,7 +282,6 @@
       "port": "پورت",
       "portMap": "نگاشت پورت",
       "traffic": "ترافیک",
-      "speed": "سرعت",
       "expireDate": "مدت زمان",
       "createdAt": "ایجاد",
       "updatedAt": "به‌روزرسانی",
@@ -440,7 +389,6 @@
         "stream": "Stream",
         "streamHelp": "ساختار بلوک stream در Xray:"
       },
-      "subSortIndex": "ترتیب اشتراک",
       "inboundInfo": "اطلاعات ورودی",
       "exportInbound": "استخراج ورودی",
       "import": "افزودن",
@@ -841,7 +789,6 @@
       "renew": "تمدید خودکار",
       "renewDesc": "تمدید خودکار پس از انقضا. (واحد: روز)",
       "renewDays": "تمدید خودکار (روز)",
-      "searchPlaceholder": "جستجوی ایمیل، توضیح، Sub ID، UUID، رمز، احراز، Telegram ID...",
       "filterTitle": "فیلتر کاربران",
       "clearAllFilters": "پاک کردن همه",
       "filters": {
@@ -864,7 +811,6 @@
       "totalGB": "سقف حجم (گیگابایت)",
       "totalGBDesc": "سهمیه‌ی حجم مصرفی کلاینت. ۰ = نامحدود",
       "expiryTime": "انقضا",
-      "addClients": "افزودن کلاینت‌ها",
       "limitIp": "محدودیت IP",
       "limitIpDesc": "حداکثر تعداد IP همزمان. ۰ = نامحدود",
       "limitHwid": "محدودیت HWID",
@@ -896,16 +842,12 @@
       "groupPlaceholder": "مثلاً customer-a",
       "comment": "توضیحات",
       "traffic": "ترافیک",
-      "speed": "سرعت",
       "offline": "آفلاین",
       "addClient": "افزودن کلاینت",
       "qrCode": "کد QR",
       "clientInfo": "اطلاعات کلاینت",
       "editClient": "ویرایش کلاینت",
       "client": "کلاینت",
-      "enabled": "فعال",
-      "remaining": "باقی‌مانده",
-      "duration": "مدت",
       "attachedInbounds": "اینباندهای متصل",
       "selectInbound": "یک یا چند اینباند انتخاب کنید",
       "selectAllInbounds": "انتخاب همه",
@@ -1074,14 +1016,6 @@
     },
     "groups": {
       "name": "نام",
-      "clientCount": "کاربران",
-      "totalGroups": "تعداد گروه‌ها",
-      "totalGroupedClients": "کاربران دارای گروه",
-      "trafficUsed": "ترافیک مصرف‌شده",
-      "upload": "آپلود",
-      "download": "دانلود",
-      "totalTraffic": "مجموع ترافیک",
-      "totalUpDown": "مجموع آپلود / دانلود",
       "addGroup": "افزودن گروه",
       "createSuccess": "گروه «{name}» ایجاد شد.",
       "rename": "تغییر نام",
@@ -1116,10 +1050,6 @@
     "nodes": {
       "addNode": "افزودن نود",
       "editNode": "ویرایش نود",
-      "totalNodes": "کل نودها",
-      "onlineNodes": "آنلاین",
-      "offlineNodes": "آفلاین",
-      "avgLatency": "میانگین تاخیر",
       "name": "نام",
       "namePlaceholder": "مثلاً de-frankfurt-1",
       "addressPlaceholder": "panel.example.com یا 1.2.3.4",
@@ -1128,7 +1058,6 @@
       "remark": "توضیحات",
       "scheme": "پروتکل",
       "address": "آدرس",
-      "port": "پورت",
       "basePath": "مسیر پایه",
       "apiToken": "توکن API",
       "apiTokenPlaceholder": "توکن از صفحه تنظیمات پنل ریموت",
@@ -1140,7 +1069,6 @@
       "outboundTagHint": "ترافیک API پنل این نود را از طریق خروجی Xray انتخاب‌شده مسیریابی کنید. یک inbound پل loopback به‌صورت خودکار به پیکربندی در حال اجرا اضافه شده و به‌صورت زنده اعمال می‌شود. برای اتصال مستقیم خالی بگذارید.",
       "outboundTagPlaceholder": "اتصال مستقیم",
       "country": "کشور",
-      "accent": "رنگ نود",
       "accentAuto": "خودکار (بر اساس کشور)",
       "accentCustom": "رنگ دلخواه #rrggbb",
       "accentCustomRefused": "این رنگ به رنگ هشدار یا موفقیت نزدیک است؛ رنگ دیگری انتخاب کنید.",
@@ -1155,20 +1083,15 @@
       "inboundsLoaded": "{{count}} اینباند بارگیری شد",
       "inboundsLoadFailed": "بارگیری اینباندها ناموفق بود",
       "enable": "فعال",
-      "status": "وضعیت",
       "cpu": "CPU",
       "mem": "حافظه",
       "netUp": "آپلود شبکه (KB/s)",
       "netDown": "دانلود شبکه (KB/s)",
       "uptime": "مدت فعالیت",
       "latency": "تاخیر",
-      "lastHeartbeat": "آخرین ضربان",
-      "xrayVersion": "نسخه Xray",
-      "panelVersion": "نسخه پنل",
       "actions": "عملیات",
       "probe": "بررسی فوری",
       "updatePanel": "به‌روزرسانی پنل",
-      "updateSelected": "به‌روزرسانی انتخاب‌شده‌ها ({count})",
       "updateAvailable": "به‌روزرسانی موجود",
       "updateConfirmTitle": "{count} نود به آخرین نسخه به‌روزرسانی شوند؟",
       "updateConfirmContent": "هر نود انتخاب‌شده آخرین نسخه را دانلود و روی آن ری‌استارت می‌شود. فقط نودهای فعال و آنلاین به‌روزرسانی می‌شوند.",
@@ -1178,17 +1101,8 @@
       "connectionFailed": "اتصال ناموفق",
       "never": "هرگز",
       "justNow": "هم‌اکنون",
-      "subNode": "نود فرعی",
-      "subNodeTip": "فقط‌خواندنی: یک نود پایین‌دستی که از طریق {parent} در دسترس است. آن را از پنل خودِ {parent} مدیریت کنید.",
       "deleteConfirmTitle": "نود «{name}» حذف شود؟",
       "deleteConfirmContent": "نظارت روی این نود متوقف می‌شود. خود پنل ریموت تغییری نمی‌کند.",
-      "statusValues": {
-        "online": "آنلاین",
-        "offline": "آفلاین",
-        "unknown": "نامشخص",
-        "xrayError": "خطای Xray",
-        "xrayStopped": "متوقف"
-      },
       "toasts": {
         "list": "بارگذاری نودها ناموفق",
         "obtain": "بارگذاری نود ناموفق",
@@ -1201,7 +1115,6 @@
         "probeFailed": "بررسی ناموفق",
         "updateStarted": "به‌روزرسانی پنل آغاز شد",
         "updateResult": "به‌روزرسانی روی {ok} نود آغاز شد، {failed} ناموفق",
-        "updateNoneEligible": "حداقل یک نود آنلاین و فعال انتخاب کنید",
         "saveMtls": "ذخیره mTLS نود",
         "reloadMtls": "Reload master mTLS credential"
       },
@@ -1967,8 +1880,6 @@
       "bufferSizePlaceholder": "خودکار",
       "seconds": "ثانیه",
       "rules": {
-        "source": "مبدا",
-        "dest": "مقصد",
         "inbound": "ورودی",
         "balancer": "بالانسر",
         "useComma": "موارد جدا شده با کاما"
@@ -2080,8 +1991,6 @@
       },
       "outbound": {
         "tag": "تگ",
-        "egress": "Egress",
-        "egressHint": "Run an HTTP test to show egress IP and country.",
         "outboundStatus": "وضعیت خروجی",
         "sendThrough": "ارسال با",
         "targetStrategy": "استراتژی مقصد",
@@ -2418,11 +2327,6 @@
       "editHost": "ویرایش میزبان",
       "selectInbound": "یک اینباند انتخاب کنید",
       "selectedCount": "{count} انتخاب‌شده",
-      "summary": {
-        "total": "کل",
-        "enabled": "فعال",
-        "disabled": "غیرفعال"
-      },
       "moveUp": "انتقال به بالا",
       "moveDown": "انتقال به پایین",
       "bulkEnable": "فعال‌سازی",
@@ -2536,12 +2440,10 @@
     },
     "tunnels": {
       "title": "تانل‌ها",
-      "subtitle": "تونل بین این سرور و سرورهای دیگر. معکوس: سرور خروجی به سرور ورودی وصل می‌شود. مستقیم: سرور ورودی روی یک لینک لایه ۳ مستقیم به سرور خروجی وصل می‌شود، مناسب بازی.",
       "newPortal": "تانل جدید",
       "importLink": "وارد کردن لینک",
       "empty": "هنوز تانلی ساخته نشده",
       "name": "نام",
-      "role": "نقش",
       "rolePortal": "ورودی (گوش می‌دهد)",
       "roleBridge": "خروجی (وصل می‌شود)",
       "address": "آدرس",
@@ -2556,9 +2458,7 @@
       "copyLink": "کپی لینک راه‌اندازی",
       "linkCopied": "لینک راه‌اندازی کپی شد",
       "pasteLink": "لینک راه‌اندازی سرور ورودی را اینجا قرار دهید",
-      "enabled": "فعال",
       "deleteConfirm": "این تانل حذف شود؟",
-      "status": "وضعیت",
       "statusConnected": "وصل",
       "statusDown": "قطع",
       "statusExit": "خروج از",
@@ -2593,7 +2493,6 @@
       "newPool": "گروه جدید",
       "poolsHint": "تانل‌های یک گروه جایگزین هم هستند. ترافیک از تانلِ در حال استفاده خارج می‌شود و فقط وقتی یدک چند بار پشت‌هم به‌وضوح بهتر بود به آن منتقل می‌شود. این گروه در قوانین مسیریابی هم با نام pool-<name> قابل انتخاب است.",
       "poolsEmpty": "هنوز گروهی ساخته نشده",
-      "poolMembers": "تانل‌ها",
       "poolInUse": "در حال استفاده",
       "poolDeleteConfirm": "این گروه حذف شود؟ تانل‌ها می‌مانند.",
       "poolTunnels": "تانل‌ها",
@@ -2604,7 +2503,6 @@
       "engineVersion": "موتور {engine} نسخهٔ {version}",
       "engineVersionUnknown": "(نصب دستی)",
       "updateEngine": "به‌روزرسانی موتور",
-      "engineViaNode": "دانلود از طریق نود",
       "mode": "حالت",
       "modeReverse": "معکوس",
       "modeDirect": "مستقیم",
@@ -2724,8 +2622,6 @@
       "search": "جستجوی کشور",
       "empty": "کشوری پیدا نشد",
       "test": "تست",
-      "add": "افزودن",
-      "remove": "حذف",
       "result": {
         "works": "کار می‌کنه · {ms} میلی‌ثانیه",
         "exit": "خروجی {loc}"
@@ -3089,9 +2985,6 @@
     "statusUp": "وصل"
   },
   "commandPalette": {
-    "title": "پالت دستورات",
-    "placeholder": "جستجوی کلاینت‌ها، اینباندها، صفحات یا تایپ دستور...",
-    "search": "جستجو...",
     "navigation": "ناوبری و صفحات",
     "actions": "دستورات سیستمی",
     "navigate": "پیمایش",
@@ -3100,5 +2993,684 @@
     "restartXray": "راه‌اندازی مجدد سرویس Xray",
     "restartXraySuccess": "سرویس Xray با موفقیت مجدداً راه‌اندازی شد",
     "settings": "تنظیمات"
+  },
+  "shell": {
+    "brand": "دالان",
+    "nav": {
+      "main": "ناوبری اصلی",
+      "overview": "نمای کلی",
+      "usersAccess": "کاربران و دسترسی",
+      "network": "شبکه",
+      "system": "سیستم",
+      "home": "خانه",
+      "users": "کاربران",
+      "connections": "اتصال‌ها",
+      "servers": "سرورها",
+      "more": "بیشتر",
+      "help": "راهنما",
+      "collapse": "جمع کردن منو",
+      "expand": "باز کردن منو",
+      "collapseShort": "جمع کردن"
+    },
+    "greeting": {
+      "morning": "صبح بخیر، {name}",
+      "afternoon": "ظهر بخیر، {name}",
+      "evening": "عصر بخیر، {name}",
+      "morningBare": "صبح بخیر",
+      "afternoonBare": "ظهر بخیر",
+      "eveningBare": "عصر بخیر"
+    },
+    "status": {
+      "healthy": "همه چیز سالم است",
+      "attention": "نیاز به توجه دارد",
+      "highLoad": "زیر بار زیاد کار می‌کند",
+      "notAnswering": "پاسخ نمی‌دهد",
+      "paused": "متوقف",
+      "online": "آنلاین",
+      "offline": "آفلاین",
+      "offlineShort": "قطع",
+      "highLoadShort": "بار زیاد",
+      "updated": "{n} ثانیه پیش به‌روز شد"
+    },
+    "ms": "{n} میلی‌ثانیه",
+    "search": {
+      "label": "جستجو",
+      "field": "جستجوی کاربر، ورودی، نود…",
+      "everything": "جستجو در همه چیز",
+      "placeholder": "جستجوی کاربر، ورودی، نود، تنظیمات…",
+      "nothing": "چیزی برای «{q}» پیدا نشد. جستجو همه‌ی نودها را می‌گردد.",
+      "across": "جستجو در {n} سرور"
+    },
+    "mode": {
+      "label": "حالت",
+      "simple": "ساده",
+      "advanced": "پیشرفته"
+    },
+    "effects": {
+      "label": "افکت‌ها",
+      "full": "کامل",
+      "light": "سبک",
+      "off": "خاموش"
+    },
+    "theme": {
+      "toLight": "رفتن به پوسته روشن",
+      "toDark": "رفتن به پوسته تیره"
+    },
+    "notifications": "اعلان‌ها",
+    "account": "حساب",
+    "servers": "سرورها",
+    "addNode": "افزودن نود",
+    "allServers": "همه {n} سرور",
+    "findServer": "پیدا کردن سرور",
+    "quick": {
+      "label": "افزودن",
+      "title": "افزودن سریع در {name}",
+      "user": "کاربر جدید",
+      "connection": "اتصال جدید",
+      "server": "سرور جدید"
+    }
+  },
+  "dashboard": {
+    "open": "باز کردن",
+    "ago": {
+      "now": "همین الان",
+      "min": "{n} دقیقه",
+      "hour": "{n} ساعت",
+      "day": "{n} روز"
+    },
+    "activity": {
+      "title": "فعالیت‌ها",
+      "viewAll": "همه",
+      "empty": "هنوز کاری انجام نشده. تغییرات شما اینجا نشان داده می‌شود.",
+      "who": {
+        "you": "شما",
+        "system": "سیستم",
+        "api": "API"
+      },
+      "act": {
+        "client": {
+          "add": "<b>{who}</b> کاربر <b>{target}</b> را اضافه کرد",
+          "update": "<b>{who}</b> کاربر <b>{target}</b> را ویرایش کرد",
+          "delete": "<b>{who}</b> کاربر <b>{target}</b> را حذف کرد",
+          "bulkAdd": "<b>{who}</b> تعداد <b>{target}</b> کاربر اضافه کرد",
+          "bulkDelete": "<b>{who}</b> تعداد <b>{target}</b> کاربر را حذف کرد",
+          "bulkAdjust": "<b>{who}</b> محدودیت <b>{target}</b> کاربر را تغییر داد",
+          "bulkEnable": "<b>{who}</b> تعداد <b>{target}</b> کاربر را فعال کرد",
+          "bulkDisable": "<b>{who}</b> تعداد <b>{target}</b> کاربر را متوقف کرد",
+          "resetTraffic": "<b>{who}</b> ترافیک <b>{target}</b> را صفر کرد"
+        },
+        "group": {
+          "add": "<b>{who}</b> گروه <b>{target}</b> را ساخت",
+          "delete": "<b>{who}</b> گروه <b>{target}</b> را حذف کرد"
+        },
+        "inbound": {
+          "add": "<b>{who}</b> ورودی <b>{target}</b> را اضافه کرد",
+          "update": "<b>{who}</b> ورودی <b>{target}</b> را ویرایش کرد",
+          "delete": "<b>{who}</b> ورودی <b>{target}</b> را حذف کرد",
+          "enable": "<b>{who}</b> ورودی <b>{target}</b> را روشن کرد",
+          "disable": "<b>{who}</b> ورودی <b>{target}</b> را خاموش کرد"
+        },
+        "tunnel": {
+          "add": "<b>{who}</b> تونل <b>{target}</b> را اضافه کرد",
+          "update": "<b>{who}</b> تونل <b>{target}</b> را ویرایش کرد",
+          "delete": "<b>{who}</b> تونل <b>{target}</b> را حذف کرد",
+          "enable": "<b>{who}</b> تونل <b>{target}</b> را روشن کرد",
+          "disable": "<b>{who}</b> تونل <b>{target}</b> را متوقف کرد"
+        },
+        "node": {
+          "add": "<b>{who}</b> نود <b>{target}</b> را اضافه کرد",
+          "update": "<b>{who}</b> نود <b>{target}</b> را ویرایش کرد",
+          "delete": "<b>{who}</b> نود <b>{target}</b> را حذف کرد",
+          "enable": "<b>{who}</b> نود <b>{target}</b> را روشن کرد",
+          "disable": "<b>{who}</b> نود <b>{target}</b> را خاموش کرد",
+          "offline": "<b>{who}</b>: <b>{target}</b> قطع شد",
+          "online": "<b>{who}</b>: <b>{target}</b> دوباره وصل شد"
+        },
+        "host": {
+          "add": "<b>{who}</b> میزبان <b>{target}</b> را اضافه کرد",
+          "update": "<b>{who}</b> میزبان <b>{target}</b> را ویرایش کرد",
+          "delete": "<b>{who}</b> میزبان <b>{target}</b> را حذف کرد"
+        },
+        "tor": {
+          "add": "<b>{who}</b> خروجی تور <b>{target}</b> را اضافه کرد",
+          "delete": "<b>{who}</b> خروجی تور <b>{target}</b> را حذف کرد"
+        },
+        "xray": {
+          "restart": "<b>{who}</b> Xray را دوباره راه‌اندازی کرد",
+          "stop": "<b>{who}</b> Xray را متوقف کرد",
+          "install": "<b>{who}</b> نسخه <b>{target}</b> از Xray را نصب کرد",
+          "crash": "<b>{who}</b>: Xray ناگهان متوقف شد",
+          "config": "<b>{who}</b> تنظیمات Xray را تغییر داد"
+        },
+        "panel": {
+          "update": "<b>{who}</b> پنل را به‌روز کرد"
+        },
+        "settings": {
+          "update": "<b>{who}</b> تنظیمات را تغییر داد"
+        },
+        "account": {
+          "update": "<b>{who}</b> اطلاعات ورود را تغییر داد"
+        },
+        "session": {
+          "signin": "<b>{who}</b> از <b>{target}</b> وارد شد"
+        }
+      },
+      "generic": "<b>{who}</b> {action} <b>{target}</b>"
+    },
+    "alerts": {
+      "title": "هشدارها",
+      "count": "{n} مورد نیاز به توجه",
+      "none": "همه چیز مرتب است",
+      "noneHint": "نودهای قطع، بار زیاد، توقف Xray و کاربرانی که منقضی می‌شوند اینجا نشان داده می‌شوند.",
+      "offline": "{node} قطع است",
+      "offlineSub": "{since} است که پاسخی نداده",
+      "nodeLoad": "{node} روی {pct}٪",
+      "sustained": "{since} ادامه داشته",
+      "cpu": "پردازنده این سرور {pct}٪",
+      "memory": "حافظه این سرور {pct}٪",
+      "xray": "Xray اجرا نمی‌شود",
+      "xraySub": "تا روشن نشود، کاربران وصل نمی‌شوند",
+      "expiring": "{n} کاربر این هفته منقضی می‌شوند",
+      "expiringSub": "از بخش کاربران تمدید یا خبرشان کنید",
+      "review": "بررسی"
+    },
+    "high": "زیاد",
+    "live": "زنده",
+    "health": {
+      "title": "سلامت سرور",
+      "memory": "حافظه",
+      "disk": "دیسک"
+    },
+    "xray": {
+      "core": "هسته Xray",
+      "runningFor": "در حال اجرا · {n} روز",
+      "uptime": "{n} روز روشن",
+      "stoppedSub": "متوقف · کاربران وصل نمی‌شوند",
+      "starting": "در حال روشن شدن…",
+      "stopping": "در حال توقف…",
+      "started": "Xray روشن شد",
+      "stopped": "Xray متوقف شد",
+      "restarting": "راه‌اندازی دوباره Xray",
+      "restartingSub": "روی {where} · کاربران خودشان دوباره وصل می‌شوند",
+      "stepSend": "درخواست راه‌اندازی دوباره",
+      "stepWait": "منتظر اجرای دوباره Xray",
+      "stepDone": "کاربران می‌توانند وصل شوند",
+      "restarted": "Xray دوباره راه افتاد · کاربران خودشان وصل می‌شوند",
+      "restartFailed": "Xray برنگشت: {error}"
+    },
+    "tunnels": {
+      "title": "تونل‌ها",
+      "count": "{on} از {n} روشن",
+      "none": "هنوز تونلی نیست",
+      "add": "افزودن تونل",
+      "route": "این سرور ← {to}",
+      "up": "وصل",
+      "down": "قطع",
+      "testing": "در حال آزمایش",
+      "reverse": "معکوس",
+      "direct": "مستقیم",
+      "layer3": "لایه ۳",
+      "toggle": "تونل {name}",
+      "started": "{name} روشن شد",
+      "paused": "{name} متوقف شد"
+    },
+    "usage": {
+      "title": "مصرف و کاربران آنلاین",
+      "onlineNow": "آنلاین الان",
+      "throughput": "سرعت",
+      "mbits": "مگابیت",
+      "clients": "کاربران",
+      "monthly": "ترافیک ماه",
+      "plan": "از {cap} گیگ · {n} روز تا شروع دوباره"
+    },
+    "nodes": {
+      "connected": "نودهای متصل",
+      "counts": "{direct} مستقیم · {chained} زنجیره‌ای",
+      "latency": "{n} میلی‌ثانیه",
+      "lastSeen": "{ago} پیش دیده شد",
+      "traffic": "ترافیک",
+      "unreachable": "در دسترس نیست",
+      "behind": "{n} نود پشت آن · {names}",
+      "managed": "از همین پنل مدیریت می‌شود",
+      "offlineTitle": "{name} پاسخ نمی‌دهد",
+      "offlineBody": "آخرین پاسخ {ago} پیش. تنظیمات همان‌طور که بود می‌ماند.",
+      "reconnect": "بررسی نود",
+      "lastLogs": "باز کردن لاگ‌ها",
+      "thisNode": "این نود",
+      "country": "کشور",
+      "link": "اتصال به این سرور",
+      "panelLink": "اتصال پنل",
+      "inbounds": "ورودی‌ها",
+      "version": "نسخه پنل",
+      "manage": "مدیریت",
+      "behindTitle": "نودهای پشت {name}",
+      "behindSub": "از راه {name}، فقط اینجا نشان داده می‌شوند",
+      "via": "از راه {name} · {n} میلی‌ثانیه"
+    },
+    "tools": {
+      "title": "ابزارهای سرور",
+      "versions": "پنل {panel} · Xray {xray}",
+      "awgLogs": "لاگ AmneziaWG",
+      "metrics": "آمار Xray"
+    }
+  },
+  "activity": {
+    "sub": "چه کسی، روی کدام سرور، چه کاری کرد و کی. تغییراتی که داخل یک نود می‌دهید هم اینجا ثبت می‌شود.",
+    "export": "خروجی CSV",
+    "filters": "فیلتر فعالیت‌ها",
+    "area": {
+      "all": "همه",
+      "client": "کاربران",
+      "tunnel": "تونل‌ها",
+      "node": "نودها",
+      "session": "ورودها",
+      "system": "سیستم"
+    },
+    "server": "سرور",
+    "any": "همه",
+    "who": "چه کسی",
+    "anyone": "همه",
+    "when": "زمان",
+    "days": "{n} روز اخیر",
+    "allTime": "همه زمان‌ها",
+    "emptyTitle": "هنوز چیزی نیست",
+    "emptyBody": "تغییرات شما و رخدادهای سیستم اینجا نشان داده می‌شوند.",
+    "col": {
+      "when": "زمان",
+      "who": "چه کسی",
+      "what": "چه کاری",
+      "where": "کجا",
+      "details": "جزئیات"
+    },
+    "role": {
+      "you": "مالک",
+      "api": "توکن API",
+      "system": "خودکار"
+    },
+    "throughPanel": "از همین پنل",
+    "showing": "نمایش {from} تا {to} از {total}",
+    "prev": "صفحه قبل",
+    "next": "صفحه بعد",
+    "code": "کد عملیات"
+  },
+  "nodes": {
+    "sub": "سرورهایی که به این سرور وصل‌اند. یک نود را باز کنید تا مثل پنل خودش مدیریتش کنید.",
+    "updateAll": "به‌روزرسانی همه آنلاین‌ها",
+    "open": "باز کردن نود",
+    "behind": "پشت آن",
+    "history": "تاریخچه",
+    "turnOn": "روشن کردن",
+    "turnOff": "خاموش کردن",
+    "addTitle": "افزودن نود",
+    "addBody": "یک دستور روی سرور جدید اجرا کنید. خودش ثبت می‌شود و تونلی به اینجا باز می‌کند.",
+    "countryHint": "پرچم و رنگ پیش‌فرض را تعیین می‌کند.",
+    "colour": "رنگ این نود",
+    "colourHint": "از پرچم گرفته می‌شود. وقتی این نود را باز می‌کنید برای تب، دکمه‌ها، نوارها و نمودارها استفاده می‌شود. رنگ وضعیت‌ها عوض نمی‌شود.",
+    "panelPort": "پورت پنل",
+    "manageThrough": "مدیریت از راه تونل",
+    "moreOptions": "گزینه‌های بیشتر",
+    "remove": "حذف نود",
+    "saving": "در حال آزمایش و ذخیره…"
+  },
+  "tunnels": {
+    "subtitle": "پیوندهای میان این سرور و نودهای شما. اول موتورها آمده‌اند؛ هر تونل روی یک موتور اجرا می‌شود.",
+    "testAll": "آزمایش همه",
+    "test": "آزمایش",
+    "create": "ساخت تونل",
+    "import": "وارد کردن",
+    "backpackBlurb": "در قطعی‌های طولانی اینترنت امتحانش را پس داده. معکوس و مستقیم، TCP و لایه ۳.",
+    "rakhshBlurb": "انتقال سریع و چندمسیره. برای بازی با پینگ پایین خوب است.",
+    "moreEngines": "نصب موتوری دیگر",
+    "moreEnginesHint": "موتورهای بیشتر بعداً اضافه می‌شوند؛ این فهرست با نسخه‌ی سرور تغییر می‌کند.",
+    "installed": "نصب شده",
+    "notInstalled": "نصب نشده",
+    "count": "{n} تونل",
+    "options": "گزینه‌ها",
+    "engineOptions": "گزینه‌های {engine}",
+    "downloadOn": "دانلود روی",
+    "flowTitle": "مسیر ترافیک",
+    "flowHint": "کاربران همیشه از ایران وارد می‌شوند. تونل معکوس از بیرون باز می‌شود، پس در قطعی‌ها می‌ماند.",
+    "flowUsers": "کاربران",
+    "flowUsersSub": "در ایران",
+    "flowEntry": "ورودی و اشتراک‌ها",
+    "flowExitNode": "نود خروجی",
+    "flowOpens": "تونل معکوس را باز می‌کند",
+    "flowDials": "مستقیم به آن وصل می‌شویم",
+    "flowInternet": "← اینترنت",
+    "filters": "پالایش تونل‌ها",
+    "filter": {
+      "all": "همه",
+      "ok": "فعال",
+      "bad": "قطع",
+      "off": "متوقف",
+      "backpack": "BackPack",
+      "rakhsh": "Rakhsh"
+    },
+    "colTunnel": "تونل",
+    "colEngine": "موتور",
+    "colMode": "حالت",
+    "colLatency": "تأخیر",
+    "colLastHour": "یک ساعت اخیر",
+    "colState": "وضعیت",
+    "colRoutes": "مسیرها",
+    "layer3": "لایه ۳",
+    "ms": "{n} میلی‌ثانیه",
+    "enable": "روشن کردن"
+  },
+  "outbounds": {
+    "title": "خروجی‌ها و مسیریابی",
+    "subtitle": "جایی که ترافیک بیرون می‌رود، و قانون‌هایی که راه را انتخاب می‌کنند. تونل‌ها و Tor هم این‌جا کنار بقیه‌ی خروجی‌ها می‌آیند.",
+    "editJson": "ویرایش به‌صورت JSON",
+    "add": "افزودن خروجی",
+    "colName": "نام",
+    "colType": "نوع",
+    "ready": "آماده",
+    "failed": "ناموفق",
+    "testing": "در حال آزمایش",
+    "notTested": "آزمایش نشده",
+    "torExit": "Tor",
+    "unsaved": "تغییرهایی دارید که ذخیره نشده‌اند. ذخیره کردن، Xray را دوباره راه‌اندازی می‌کند."
+  },
+  "routing": {
+    "title": "قانون‌های مسیریابی",
+    "subtitle": "قانون‌هایی که انتخاب می‌کنند هر اتصال از کدام خروجی برود.",
+    "rule": "قانون",
+    "hint": "از بالا به پایین بررسی می‌شوند. اولین قانونی که بخورد، برنده است.",
+    "empty": "هنوز قانونی نیست. بدون قانون، ترافیک از اولین خروجی بیرون می‌رود.",
+    "drag": "برای جابه‌جایی بکشید",
+    "enabled": "روشن کردن"
+  },
+  "hosts": {
+    "subtitle": "نشانی‌ها و نام‌هایی که در لینک‌های اشتراک می‌آیند.",
+    "tipTitle": "هاست همان چیزی است که کاربر در لینکش می‌بیند",
+    "tipBody": "وقتی نشانی‌ای مسدود شد، هاست را این‌جا عوض کنید تا همه‌ی اشتراک‌ها در به‌روزرسانی بعدی عوض شوند. کسی لینک تازه لازم ندارد.",
+    "empty": "هنوز هاستی نیست",
+    "filters": "پالایش هاست‌ها",
+    "filter": {
+      "all": "همه",
+      "on": "روشن",
+      "off": "خاموش"
+    },
+    "on": "روشن",
+    "off": "خاموش",
+    "usedBy": "استفاده در",
+    "copyAddress": "کپی نشانی",
+    "select": "انتخاب {name}",
+    "selectAll": "انتخاب همه"
+  },
+  "groups": {
+    "subtitle": "کاربرانی که یک طرح دارند را کنار هم بگذارید، بعد محدودیت‌های همه را یک‌جا عوض کنید.",
+    "new": "گروه جدید",
+    "empty": "هنوز گروهی نیست",
+    "emptyHint": "یک گروه بسازید، بعد از همین‌جا یا از صفحه‌ی کاربران به آن کاربر اضافه کنید.",
+    "members": "عضو",
+    "share": "سهم از کل ترافیک گروه‌ها"
+  },
+  "inbounds": {
+    "subtitle": "درهایی که کاربران از آن‌ها وارد می‌شوند. هر کدام یک پروتکل روی یک پورت است.",
+    "import": "وارد کردن",
+    "filters": "پالایش ورودی‌ها",
+    "filter": {
+      "all": "همه",
+      "on": "در حال شنیدن",
+      "off": "خاموش",
+      "attention": "نیاز به توجه"
+    },
+    "state": {
+      "ok": "در حال شنیدن",
+      "warn": "به‌زودی تمام می‌شود",
+      "expired": "منقضی شده",
+      "off": "خاموش"
+    },
+    "colInbound": "ورودی",
+    "online": "{n} آنلاین",
+    "expiring": "رو به پایان",
+    "select": "انتخاب {name}",
+    "anyServer": "هر سروری",
+    "searchHint": "نام، پورت یا پروتکل",
+    "empty": "هنوز ورودی‌ای نیست",
+    "emptyHint": "یک ورودی اضافه کنید تا کاربران راهی برای وصل شدن داشته باشند.",
+    "prev": "صفحه‌ی قبل",
+    "next": "صفحه‌ی بعد"
+  },
+  "clientsPage": {
+    "subtitle": "همه‌ی کسانی که می‌توانند از این سرور وصل شوند. برای کار گروهی، ردیف‌ها را انتخاب کنید.",
+    "export": "خروجی گرفتن",
+    "add": "افزودن کاربر",
+    "filters": "پالایش کاربران بر اساس وضعیت",
+    "chip": {
+      "all": "همه",
+      "active": "فعال",
+      "expiring": "رو به پایان",
+      "depleted": "تمام‌شده",
+      "deactive": "متوقف",
+      "online": "الان آنلاین"
+    },
+    "any": "همه",
+    "searchHint": "نام، ایمیل یا UUID",
+    "removeFilter": "حذف پالایه",
+    "empty": "هنوز کاربری نیست",
+    "emptyHint": "یک کاربر اضافه کنید، بعد لینک یا QR او را بفرستید.",
+    "showing": "نمایش {from} تا {to} از {total}",
+    "perPage": "در هر صفحه",
+    "status": {
+      "active": "فعال",
+      "expiring": "رو به پایان",
+      "depleted": "تمام‌شده",
+      "paused": "متوقف"
+    },
+    "select": "انتخاب {name}",
+    "noGroup": "بدون گروه",
+    "unlimited": "نامحدود",
+    "never": "هرگز",
+    "afterFirstUse": "{n} روز پس از اولین اتصال",
+    "pause": "توقف",
+    "resume": "ادامه",
+    "colStatus": "وضعیت",
+    "colUsage": "مصرف",
+    "colExpires": "پایان",
+    "loseAccess": "{names} فوراً دسترسی را از دست می‌دهند.",
+    "andMore": "{names} و {count} نفر دیگر"
+  },
+  "logs": {
+    "subtitle": "لاگ زنده‌ی این سرور. خط‌های تازه بالا می‌آیند؛ با توقف، جریان می‌ایستد.",
+    "pause": "توقف",
+    "resume": "ادامه",
+    "levels": "سطح لاگ",
+    "level": {
+      "info": "همه",
+      "warning": "هشدارها",
+      "err": "خطاها"
+    },
+    "sources": "منبع لاگ",
+    "source": {
+      "panel": "پنل",
+      "xray": "دسترسی Xray"
+    },
+    "search": "جست‌وجو در لاگ",
+    "streaming": "در حال پخش",
+    "paused": "متوقف",
+    "count": "{n} خط · به‌روز شده {at}",
+    "unavailable": "لاگ‌ها خوانده نشد",
+    "xrayHint": "برای دیدن اتصال‌ها، لاگ دسترسی Xray را در تنظیمات Xray روشن کنید.",
+    "empty": "هنوز خطی نیست"
+  },
+  "torPage": {
+    "subtitle": "خروجی‌های اضافه که داخل دالان اجرا می‌شوند. کاربران یا ورودی‌ها را مثل هر خروجی دیگری به آن‌ها بفرستید.",
+    "exitsOn": "کشور خروجی روشن",
+    "exitsWorking": "الان وصل",
+    "notAdded": "استفاده نمی‌شود",
+    "use": "استفاده از {name}",
+    "piaHint": "سرورهای PIA به‌صورت خروجی اضافه می‌شوند. در پنجره‌ی PIA وارد شوید و سرور انتخاب کنید، بعد تنظیمات Xray را ذخیره کنید.",
+    "flagsHint": "پرچم‌ها به‌صورت تصویر کشیده می‌شوند، پس در ویندوز هم دیده می‌شوند."
+  },
+  "settingsPage": {
+    "subtitle": "همه‌چیز درباره‌ی این پنل. هر نود وقتی بازش کنید تنظیمات خودش را دارد.",
+    "sections": "بخش‌های تنظیمات",
+    "nav": {
+      "general": "عمومی",
+      "appearance": "ظاهر",
+      "subscription": "صفحه‌ی اشتراک",
+      "security": "امنیت",
+      "notifications": "اعلان‌ها",
+      "users": "کاربران و دسترسی",
+      "developer": "توسعه‌دهنده",
+      "backups": "پشتیبان‌گیری",
+      "updates": "به‌روزرسانی"
+    },
+    "soon": "به‌زودی",
+    "comingLater": "بعداً می‌آید",
+    "usersLater": "نقش‌ها و دسترسی جدا برای هر مدیر در نسخه‌ی بعد می‌آیند. جایشان همین‌جاست.",
+    "developerHint": "توکن‌های API و راهنمای API. راهنما فقط وقتی بازش کنید بار می‌شود.",
+    "email": "ایمیل",
+    "formats": "قالب‌ها",
+    "balancers": "متعادل‌کننده‌ها",
+    "thisDevice": "این دستگاه",
+    "effects": {
+      "auto": "از این دستگاه پیروی می‌کند: روی دستگاه ضعیف سبک، و خاموش وقتی سیستم حرکت کمتر می‌خواهد.",
+      "full": "درخشش روان، محوشدگی کامل، همه‌ی حرکت‌ها.",
+      "light": "درخشش ثابت، محوشدگی کم، فقط حرکتی که تغییری را نشان دهد.",
+      "off": "کارت‌های ساده، بدون محوشدگی و بدون حرکت پس‌زمینه."
+    },
+    "theme": "پوسته",
+    "dark": "تیره",
+    "light": "روشن",
+    "panelMode": "حالت پنل",
+    "simpleMode": "حالت ساده",
+    "simpleModeHint": "نام‌های ساده (کاربران، سرورها، اتصال‌ها)، گزینه‌های خام Xray پنهان، کارهای رایج با یکی دو لمس.",
+    "updates": {
+      "panel": "پنل دالان",
+      "xray": "هسته‌ی Xray",
+      "upToDate": "به‌روز است",
+      "available": "نسخه‌ی تازه آمده"
+    }
+  },
+  "xrayPage": {
+    "subtitle": "پیشرفته. JSON کامل Xray برای این سرور، و تنظیمات پایه، متعادل‌کننده‌ها و DNS که از آن‌ها ساخته می‌شود.",
+    "reset": "بازگشت به پیش‌فرض",
+    "sections": "بخش‌های تنظیمات Xray",
+    "json": "تنظیمات کامل",
+    "balancers": "متعادل‌کننده‌ها",
+    "lines": "{n} خط · JSON",
+    "check": "پیش از ذخیره بررسی کنید",
+    "jsonValid": "JSON درست است",
+    "jsonInvalid": "JSON خطا دارد",
+    "managed": "پنل آن را مدیریت می‌کند (تونل، Tor یا اشتراک). ویرایش این‌جا در همگام‌سازی بعدی جایگزین می‌شود."
+  },
+  "developer": {
+    "tokens": "توکن‌های API",
+    "newToken": "توکن جدید",
+    "noTokens": "هنوز توکن API نیست.",
+    "manage": "مدیریت توکن‌ها در امنیت",
+    "reference": "راهنمای API",
+    "panelApi": "API پنل",
+    "wsEvents": "رویدادهای WebSocket",
+    "onDemand": "با درخواست بار می‌شود",
+    "load": "بارگذاری راهنمای API",
+    "wsIntro": "پس از ارتقای GET /ws با کوکی، هر پیام به شکل { type, payload, time } است؛ time بر حسب میلی‌ثانیه‌ی یونیکس است."
+  },
+  "loginPage": {
+    "showPassword": "نمایش رمز",
+    "hidePassword": "پنهان کردن رمز",
+    "sixDigits": "۶ رقم",
+    "more": "زبان‌های دیگر",
+    "subtitle": "وارد پنل خود شوید"
+  },
+  "errorPage": {
+    "lost": "در دالان گم شدید",
+    "lostHint": "این صفحه وجود ندارد، یا نودی که صاحب آن است جواب نمی‌دهد. تنظیمات شما سالم است.",
+    "broken": "این صفحه از کار افتاد",
+    "brokenHint": "هنگام نمایش آن چیزی خراب شد. تنظیمات شما سالم است؛ دوباره امتحان کنید یا به داشبورد برگردید.",
+    "home": "رفتن به داشبورد",
+    "retry": "دوباره امتحان کنید"
+  },
+  "subPage": {
+    "hi": "سلام {name}",
+    "ready": "اتصال شما آماده است",
+    "notReady": "از ارائه‌دهنده بخواهید تمدیدش کند",
+    "status": {
+      "active": "فعال",
+      "unlimited": "فعال",
+      "expired": "منقضی",
+      "depleted": "حجم تمام شد",
+      "disabled": "متوقف"
+    },
+    "usedOf": "مصرف از {total}",
+    "until": "معتبر تا {date}",
+    "connect": "باز کردن در {app}",
+    "copy": "کپی لینک",
+    "copied": "لینک کپی شد",
+    "copiedHint": "اگر خودش باز نشد، در برنامه‌تان بچسبانید",
+    "showQr": "نمایش QR",
+    "hideQr": "پنهان کردن QR",
+    "help": "راه‌اندازی در ۳ قدم",
+    "pick": "گوشی‌تان را انتخاب کنید",
+    "step1": "یک برنامه نصب کنید",
+    "step2": "روی «باز کردن در» بالا بزنید",
+    "step3": "اتصال را بزنید",
+    "recommended": "پیشنهادی",
+    "more": "قالب‌های دیگر و کانفیگ‌های تکی",
+    "need": "کمک لازم دارید؟ به ارائه‌دهنده پیام دهید"
+  },
+  "setup": {
+    "time": "راه‌اندازی · حدود ۲ دقیقه",
+    "progress": "پیشرفت راه‌اندازی",
+    "step": {
+      "server": "سرور",
+      "connection": "اتصال",
+      "user": "اولین کاربر"
+    },
+    "server": {
+      "title": "بیایید این سرور را راه بیندازیم",
+      "hint": "نامی بدهید که بشناسید، و بگویید کجاست.",
+      "name": "نام سرور",
+      "country": "کشور",
+      "address": "نشانی عمومی",
+      "addressHint": "نشانی‌ای که این پنل را با آن باز کردید. لینک‌ها از آن استفاده می‌کنند مگر دامنه‌ای در تنظیمات بدهید.",
+      "countryNone": "انتخاب نشده"
+    },
+    "connect": {
+      "title": "کاربران چطور وصل شوند؟",
+      "hint": "یکی را انتخاب کنید. بعداً می‌توانید بیشتر اضافه کنید."
+    },
+    "preset": {
+      "reality": {
+        "title": "بهترین برای بیشتر کاربران",
+        "desc": "VLESS Reality روی پورت ۴۴۳. شبیه HTTPS معمولی است و سخت مسدود می‌شود."
+      },
+      "cdn": {
+        "title": "پشت CDN",
+        "desc": "Trojan روی WebSocket با پورت ۸۰۸۰، برای CDNی که TLS را اضافه می‌کند. وقتی IP مستقیم مسدود می‌شود."
+      },
+      "game": {
+        "title": "پینگ پایین",
+        "desc": "VLESS روی تونل لایه ۳، برای بازی و تماس. اول یک نود و تونل رخش لازم است؛ در صفحه‌ی تونل‌ها راهش بیندازید."
+      }
+    },
+    "user": {
+      "title": "اولین کاربر را اضافه کنید",
+      "hint": "می‌تواند خودتان باشید. لینکی می‌گیرید که در هر برنامه‌ای باز می‌شود.",
+      "name": "نام",
+      "placeholder": "مثلاً sara.k",
+      "traffic": "حجم",
+      "gb50": "۵۰ گیگابایت",
+      "valid": "مدت اعتبار",
+      "days30": "۳۰ روز",
+      "never": "بدون پایان"
+    },
+    "live": {
+      "title": "آماده است",
+      "hint": "{name} الان می‌تواند وصل شود. این لینک را بفرستید یا بگذارید کد را اسکن کند.",
+      "noSub": "{name} آماده است. برای گرفتن لینک، اشتراک را در تنظیمات روشن کنید، یا کانفیگ را از صفحه‌ی کاربران بردارید."
+    },
+    "keysFailed": "ساخت کلیدهای Reality ممکن نشد",
+    "back": "قبلی",
+    "next": "ادامه",
+    "finish": "ساختن و پایان",
+    "later": "بعداً راه می‌اندازم"
+  },
+  "confirmDelete": {
+    "word": "حذف",
+    "type": "برای تأیید {word} را بنویسید"
   }
 }

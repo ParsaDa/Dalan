@@ -1,8 +1,11 @@
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { createBrowserRouter, type RouteObject } from 'react-router';
-import { Spin } from 'antd';
 
+import Mark from '@/components/dl/Mark';
 import PanelLayout from '@/layouts/PanelLayout';
+import ErrorPage from '@/pages/errors/ErrorPage';
+
+const SetupPage = lazy(() => import('@/pages/setup/SetupPage'));
 import { PANEL_ROUTES } from '@/routes/panelRoutes';
 
 function withSuspense(node: React.ReactNode) {
@@ -17,7 +20,7 @@ function withSuspense(node: React.ReactNode) {
             minHeight: '60vh',
           }}
         >
-          <Spin size="large" />
+          <Mark size={56} motion="loop" title="Loading" />
         </div>
       }
     >
@@ -30,11 +33,18 @@ export const routes: RouteObject[] = [
   {
     path: '/',
     element: <PanelLayout />,
-    children: PANEL_ROUTES.map((route) => {
-      const element = withSuspense(<route.component />);
-      return route.path === '/' ? { index: true, element } : { path: route.path.slice(1), element };
-    }),
+    errorElement: <ErrorPage />,
+    children: [
+      ...PANEL_ROUTES.map((route) => {
+        const element = withSuspense(<route.component />);
+        return route.path === '/'
+          ? { index: true, element }
+          : { path: route.path.slice(1), element };
+      }),
+      { path: '*', element: <ErrorPage notFound /> },
+    ],
   },
+  { path: '/setup', element: withSuspense(<SetupPage />), errorElement: <ErrorPage /> },
 ];
 
 function computeBasename() {

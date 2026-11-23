@@ -47,6 +47,9 @@ export class AllSetting {
   subClashAutoDetect = false;
   subClashUserAgentRegex = '';
   subTitle = '';
+  serverName = '';
+  serverCountry = '';
+  setupDone = false;
   subSupportUrl = '';
   subProfileMode: SubProfileMode = 'none';
   subProfileUrl = '';

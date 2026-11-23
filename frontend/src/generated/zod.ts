@@ -30,6 +30,34 @@ export type trafficLocalApplyAction = z.infer<typeof trafficLocalApplyActionSche
 export const transportBitsSchema = z.number().int();
 export type transportBits = z.infer<typeof transportBitsSchema>;
 
+export const ActivitySchema = z.object({
+  action: z.string(),
+  actor: z.string(),
+  at: z.number().int(),
+  id: z.number().int(),
+  nodeId: z.number().int(),
+  target: z.string(),
+});
+export type Activity = z.infer<typeof ActivitySchema>;
+
+export const ActivityPageSchema = z.object({
+  items: z.array(z.lazy(() => ActivitySchema)),
+  total: z.number().int(),
+});
+export type ActivityPage = z.infer<typeof ActivityPageSchema>;
+
+export const AlertSchema = z.object({
+  id: z.number().int(),
+  kind: z.string(),
+  nodeId: z.number().int(),
+  resolvedAt: z.number().int(),
+  startedAt: z.number().int(),
+  subject: z.string(),
+  updatedAt: z.number().int(),
+  value: z.number(),
+});
+export type Alert = z.infer<typeof AlertSchema>;
+
 export const AllSettingSchema = z.object({
   datepicker: z.string(),
   discordAdminIds: z.string(),
@@ -76,7 +104,10 @@ export const AllSettingSchema = z.object({
   realityScanCandidates: z.string(),
   remarkTemplate: z.string(),
   restartXrayOnClientDisable: z.boolean(),
+  serverCountry: z.string(),
+  serverName: z.string(),
   sessionMaxAge: z.number().int().min(1).max(525600),
+  setupDone: z.boolean(),
   smtpCpu: z.number().int().min(0).max(100),
   smtpEnable: z.boolean(),
   smtpEnabledEvents: z.string(),
@@ -200,7 +231,9 @@ export const AllSettingSchema = z.object({
   tgMemory: z.number().int().min(0).max(100),
   tgRunTime: z.string(),
   timeLocation: z.string(),
+  trafficCapGB: z.number().int().min(0),
   trafficDiff: z.number().int().min(0).max(100),
+  trafficResetDay: z.number().int().min(1).max(28),
   trustedProxyCIDRs: z.string(),
   twoFactorEnable: z.boolean(),
   twoFactorToken: z.string(),
@@ -268,7 +301,10 @@ export const AllSettingViewSchema = z.object({
   realityScanCandidates: z.string(),
   remarkTemplate: z.string(),
   restartXrayOnClientDisable: z.boolean(),
+  serverCountry: z.string(),
+  serverName: z.string(),
   sessionMaxAge: z.number().int().min(1).max(525600),
+  setupDone: z.boolean(),
   smtpCpu: z.number().int().min(0).max(100),
   smtpEnable: z.boolean(),
   smtpEnabledEvents: z.string(),
@@ -392,7 +428,9 @@ export const AllSettingViewSchema = z.object({
   tgMemory: z.number().int().min(0).max(100),
   tgRunTime: z.string(),
   timeLocation: z.string(),
+  trafficCapGB: z.number().int().min(0),
   trafficDiff: z.number().int().min(0).max(100),
+  trafficResetDay: z.number().int().min(1).max(28),
   trustedProxyCIDRs: z.string(),
   twoFactorEnable: z.boolean(),
   twoFactorToken: z.string(),
@@ -618,6 +656,11 @@ export const ClientsSummarySchema = z.object({
   total: z.number().int(),
 });
 export type ClientsSummary = z.infer<typeof ClientsSummarySchema>;
+
+export const CurrentUserSchema = z.object({
+  username: z.string(),
+});
+export type CurrentUser = z.infer<typeof CurrentUserSchema>;
 
 export const EngineRouteChoiceSchema = z.object({
   kind: z.string(),
@@ -1262,6 +1305,15 @@ export const TrafficSchema = z.object({
   Up: z.number().int(),
 });
 export type Traffic = z.infer<typeof TrafficSchema>;
+
+export const TrafficUsageSchema = z.object({
+  bytes: z.number().int(),
+  capGB: z.number().int(),
+  nextReset: z.number().int(),
+  periodStart: z.number().int(),
+  resetDay: z.number().int(),
+});
+export type TrafficUsage = z.infer<typeof TrafficUsageSchema>;
 
 export const TrialResultSchema = z.object({
   error: z.string(),

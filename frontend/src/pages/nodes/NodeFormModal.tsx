@@ -1,18 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  Button,
-  Col,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Row,
-  Select,
-  Switch,
-  message,
-} from 'antd';
+import { Button, Col, Form, Input, InputNumber, Row, Select, Switch, message } from 'antd';
 import { FormProvider, useForm, useWatch } from 'react-hook-form';
 import { selectTagRender } from '@/components/form';
 import type { NodeRecord } from '@/api/queries/useNodesQuery';
@@ -22,7 +10,9 @@ import { NodeFormSchema, type NodeFormValues, type ProbeResult } from '@/schemas
 import { FormField, rhfZodValidate } from '@/components/form/rhf';
 import { useOutboundTagGroups } from '@/api/queries/useOutboundTags';
 import { AccentPicker, CountrySelect } from './NodeIdentityFields';
-import './NodeFormModal.css';
+import Icon from '@/components/dl/Icon';
+import { Modal as DlModal } from '@/components/dl/overlays';
+import { Btn, FlagDot, Pill } from '@/components/dl/primitives';
 
 type Mode = 'add' | 'edit';
 
@@ -35,6 +25,7 @@ interface NodeFormModalProps {
   fetchInbounds: (payload: Partial<NodeRecord>) => Promise<Msg<RemoteInboundOption[]>>;
   save: (payload: Partial<NodeRecord>) => Promise<Msg<unknown>>;
   onOpenChange: (open: boolean) => void;
+  onRemove?: () => void;
 }
 
 function defaultValues(): NodeFormValues {
@@ -70,6 +61,7 @@ export default function NodeFormModal({
   fetchInbounds,
   save,
   onOpenChange,
+  onRemove,
 }: NodeFormModalProps) {
   const { t } = useTranslation();
   const methods = useForm<NodeFormValues>({ defaultValues: defaultValues() });
@@ -83,6 +75,7 @@ export default function NodeFormModal({
   const [testResult, setTestResult] = useState<ProbeResult | null>(null);
   const scheme = useWatch({ control: methods.control, name: 'scheme' }) ?? 'https';
   const tlsVerifyMode = useWatch({ control: methods.control, name: 'tlsVerifyMode' }) ?? 'verify';
+  const country = useWatch({ control: methods.control, name: 'country' }) ?? '';
   const inboundSyncMode = useWatch({ control: methods.control, name: 'inboundSyncMode' }) ?? 'all';
   const { data: outboundGroups } = useOutboundTagGroups({ excludeBlackhole: true });
 
@@ -247,23 +240,50 @@ export default function NodeFormModal({
     if (!submitting) onOpenChange(false);
   }
 
+  const note = (tone: 'warn' | 'info', text: string) => (
+    <div
+      className="row"
+      style={{
+        gap: 8,
+        fontSize: 13,
+        fontWeight: 650,
+        color: tone === 'warn' ? 'var(--warn-t)' : 'var(--mut)',
+        marginBottom: 16,
+      }}
+    >
+      <Icon name={tone === 'warn' ? 'alert' : 'info'} size={16} />
+      <span className="f1">{text}</span>
+    </div>
+  );
+
   return (
     <>
       {messageContextHolder}
-      <Modal
-        open={open}
-        title={title}
-        confirmLoading={submitting}
-        okText={t('save')}
-        cancelText={t('cancel')}
-        mask={{ closable: false }}
-        width="640px"
-        onOk={methods.handleSubmit(onFinish)}
-        onCancel={close}
-      >
+      <DlModal open={open} onClose={close} label={title} width={640}>
+        <div className="row sp">
+          <div className="row">
+            <FlagDot country={country || undefined} size={40} />
+            <div>
+              <h2 className="h2">{title}</h2>
+              {mode === 'edit' && node && <div className="mut">{node.name}</div>}
+            </div>
+          </div>
+          <button type="button" className="ib sm" aria-label={t('close')} onClick={close}>
+            <Icon name="x" />
+          </button>
+        </div>
         <FormProvider {...methods}>
-          <Form layout="vertical">
-            <Row gutter={16}>
+          <Form
+            layout="vertical"
+            className="dl-form"
+            style={{
+              maxHeight: 'calc(100vh - 260px)',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              paddingInlineEnd: 4,
+            }}
+          >
+            <Row gutter={14}>
               <Col xs={24} md={12}>
                 <FormField
                   label={t('pages.nodes.name')}
@@ -274,13 +294,19 @@ export default function NodeFormModal({
                 </FormField>
               </Col>
               <Col xs={24} md={12}>
-                <FormField label={t('pages.nodes.remark')} name="remark">
-                  <Input />
+                <FormField
+                  label={t('pages.nodes.country')}
+                  name="country"
+                  extra={t('nodes.countryHint')}
+                >
+                  <CountrySelect />
                 </FormField>
               </Col>
             </Row>
-
-            <Row gutter={16}>
+            <FormField label={t('nodes.colour')} name="accent" extra={t('nodes.colourHint')}>
+              <AccentPicker />
+            </FormField>
+            <Row gutter={14}>
               <Col xs={24} md={6}>
                 <FormField
                   label={t('pages.nodes.scheme')}
@@ -303,12 +329,12 @@ export default function NodeFormModal({
                   name="address"
                   rules={{ validate: rhfZodValidate(NodeFormSchema.shape.address) }}
                 >
-                  <Input placeholder={t('pages.nodes.addressPlaceholder')} />
+                  <Input className="mono" placeholder={t('pages.nodes.addressPlaceholder')} />
                 </FormField>
               </Col>
               <Col xs={24} md={6}>
                 <FormField
-                  label={t('pages.nodes.port')}
+                  label={t('nodes.panelPort')}
                   name="port"
                   rules={{ validate: rhfZodValidate(NodeFormSchema.shape.port) }}
                 >
@@ -316,86 +342,6 @@ export default function NodeFormModal({
                 </FormField>
               </Col>
             </Row>
-
-            <FormField
-              label={t('pages.nodes.publicAddress')}
-              name="publicAddress"
-              tooltip={t('pages.nodes.publicAddressHint')}
-            >
-              <Input placeholder={t('pages.nodes.addressPlaceholder')} />
-            </FormField>
-
-            <Row gutter={16}>
-              <Col xs={24} md={12}>
-                <FormField label={t('pages.nodes.basePath')} name="basePath">
-                  <Input placeholder="/" />
-                </FormField>
-              </Col>
-              <Col xs={24} md={12}>
-                <FormField label={t('pages.nodes.enable')} name="enable" valueProp="checked">
-                  <Switch />
-                </FormField>
-              </Col>
-            </Row>
-
-            <FormField
-              label={t('pages.nodes.allowPrivateAddress')}
-              name="allowPrivateAddress"
-              valueProp="checked"
-              tooltip={t('pages.nodes.allowPrivateAddressHint')}
-            >
-              <Switch />
-            </FormField>
-
-            <FormField
-              label={t('pages.nodes.tlsVerifyMode')}
-              name="tlsVerifyMode"
-              tooltip={t('pages.nodes.tlsVerifyModeHint')}
-            >
-              <Select
-                disabled={scheme === 'http'}
-                options={[
-                  { value: 'verify', label: t('pages.nodes.tlsVerify') },
-                  { value: 'pin', label: t('pages.nodes.tlsPin') },
-                  { value: 'skip', label: t('pages.nodes.tlsSkip') },
-                  { value: 'mtls', label: t('pages.nodes.tlsMtls') },
-                ]}
-              />
-            </FormField>
-
-            {tlsVerifyMode === 'skip' && (
-              <Alert
-                type="warning"
-                showIcon
-                style={{ marginBottom: 16 }}
-                title={t('pages.nodes.tlsSkipWarning')}
-              />
-            )}
-
-            {tlsVerifyMode === 'mtls' && (
-              <Alert
-                type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
-                title={t('pages.nodes.mtlsFormHint')}
-              />
-            )}
-
-            {tlsVerifyMode === 'pin' && (
-              <FormField
-                label={t('pages.nodes.pinnedCert')}
-                name="pinnedCertSha256"
-                tooltip={t('pages.nodes.pinnedCertHint')}
-              >
-                <Input.Search
-                  placeholder={t('pages.nodes.pinnedCertPlaceholder')}
-                  enterButton={t('pages.nodes.fetchPin')}
-                  loading={fetchingPin}
-                  onSearch={onFetchPin}
-                />
-              </FormField>
-            )}
-
             <FormField
               label={t('pages.nodes.apiToken')}
               name="apiToken"
@@ -411,104 +357,188 @@ export default function NodeFormModal({
                 }
               />
             </FormField>
-
-            <FormField label={t('pages.nodes.country')} name="country">
-              <CountrySelect />
-            </FormField>
-
-            <FormField label={t('pages.nodes.accent')} name="accent">
-              <AccentPicker />
-            </FormField>
-
-            <FormField
-              label={t('pages.nodes.outboundTag')}
-              name="outboundTag"
-              tooltip={t('pages.nodes.outboundTagHint')}
-              transform={{ input: (v) => (v as string) || undefined }}
-            >
-              <Select
-                allowClear
-                showSearch
-                placeholder={t('pages.nodes.outboundTagPlaceholder')}
-                options={outboundOptions}
-              />
-            </FormField>
-
-            <FormField
-              label={t('pages.nodes.inboundSyncMode')}
-              name="inboundSyncMode"
-              tooltip={t('pages.nodes.inboundSyncModeHint')}
-            >
-              <Select
-                options={[
-                  { value: 'all', label: t('pages.nodes.allInbounds') },
-                  { value: 'selected', label: t('pages.nodes.selectedInbounds') },
-                ]}
-              />
-            </FormField>
-
-            {inboundSyncMode === 'selected' && (
+            <div className="tile" style={{ padding: 14, marginBottom: 16 }}>
+              <div className="row" style={{ marginBottom: 10 }}>
+                <span className="ico acc">
+                  <Icon name="tunnel" />
+                </span>
+                <div className="f1">
+                  <b>{t('nodes.manageThrough')}</b>
+                  <div className="mut" style={{ fontSize: 12.5 }}>
+                    {t('pages.nodes.outboundTagHint')}
+                  </div>
+                </div>
+              </div>
               <FormField
-                label={t('pages.nodes.inboundTags')}
-                name="inboundTags"
-                tooltip={t('pages.nodes.inboundTagsHint')}
+                label={t('pages.nodes.outboundTag')}
+                name="outboundTag"
+                transform={{ input: (v) => (v as string) || undefined }}
+                style={{ marginBottom: 0 }}
               >
                 <Select
-                  mode="multiple"
-                  tagRender={selectTagRender}
                   allowClear
-                  loading={fetchingInbounds}
-                  placeholder={t('pages.nodes.inboundTagsPlaceholder')}
-                  popupRender={(menu) => (
-                    <>
-                      <Button
-                        type="text"
-                        block
-                        loading={fetchingInbounds}
-                        onClick={onFetchInbounds}
-                      >
-                        {t('pages.nodes.loadInbounds')}
-                      </Button>
-                      {menu}
-                    </>
-                  )}
-                  options={inboundOptions.map((inbound) => ({
-                    value: inbound.tag,
-                    label: `${inbound.remark || inbound.tag}${inbound.protocol ? ` (${inbound.protocol}:${inbound.port || 0})` : ''}`,
-                  }))}
+                  showSearch
+                  placeholder={t('pages.nodes.outboundTagPlaceholder')}
+                  options={outboundOptions}
                 />
               </FormField>
-            )}
-
-            <div className="test-row">
-              <Button type="default" loading={testing} onClick={onTest}>
-                {t('pages.nodes.testConnection')}
-              </Button>
-              {testResult && (
-                <div className="test-result">
-                  {testResult.status === 'online' ? (
-                    <Alert
-                      type="success"
-                      showIcon
-                      title={t('pages.nodes.connectionOk', { ms: testResult.latencyMs })}
-                      description={
-                        testResult.xrayVersion ? `Xray ${testResult.xrayVersion}` : undefined
-                      }
-                    />
-                  ) : (
-                    <Alert
-                      type="error"
-                      showIcon
-                      title={t('pages.nodes.connectionFailed')}
-                      description={testResult.error}
-                    />
-                  )}
-                </div>
-              )}
             </div>
+            <details className="more-opts">
+              <summary>
+                <Icon name="chevd" />
+                {t('nodes.moreOptions')}
+              </summary>
+              <div style={{ paddingTop: 12 }}>
+                <FormField label={t('pages.nodes.remark')} name="remark">
+                  <Input />
+                </FormField>
+                <FormField
+                  label={t('pages.nodes.publicAddress')}
+                  name="publicAddress"
+                  tooltip={t('pages.nodes.publicAddressHint')}
+                >
+                  <Input placeholder={t('pages.nodes.addressPlaceholder')} />
+                </FormField>
+                <Row gutter={14}>
+                  <Col xs={24} md={12}>
+                    <FormField label={t('pages.nodes.basePath')} name="basePath">
+                      <Input placeholder="/" />
+                    </FormField>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <FormField label={t('pages.nodes.enable')} name="enable" valueProp="checked">
+                      <Switch />
+                    </FormField>
+                  </Col>
+                  <Col xs={12} md={6}>
+                    <FormField
+                      label={t('pages.nodes.allowPrivateAddress')}
+                      name="allowPrivateAddress"
+                      valueProp="checked"
+                      tooltip={t('pages.nodes.allowPrivateAddressHint')}
+                    >
+                      <Switch />
+                    </FormField>
+                  </Col>
+                </Row>
+                <FormField
+                  label={t('pages.nodes.tlsVerifyMode')}
+                  name="tlsVerifyMode"
+                  tooltip={t('pages.nodes.tlsVerifyModeHint')}
+                >
+                  <Select
+                    disabled={scheme === 'http'}
+                    options={[
+                      { value: 'verify', label: t('pages.nodes.tlsVerify') },
+                      { value: 'pin', label: t('pages.nodes.tlsPin') },
+                      { value: 'skip', label: t('pages.nodes.tlsSkip') },
+                      { value: 'mtls', label: t('pages.nodes.tlsMtls') },
+                    ]}
+                  />
+                </FormField>
+                {tlsVerifyMode === 'skip' && note('warn', t('pages.nodes.tlsSkipWarning'))}
+                {tlsVerifyMode === 'mtls' && note('info', t('pages.nodes.mtlsFormHint'))}
+                {tlsVerifyMode === 'pin' && (
+                  <FormField
+                    label={t('pages.nodes.pinnedCert')}
+                    name="pinnedCertSha256"
+                    tooltip={t('pages.nodes.pinnedCertHint')}
+                  >
+                    <Input.Search
+                      placeholder={t('pages.nodes.pinnedCertPlaceholder')}
+                      enterButton={t('pages.nodes.fetchPin')}
+                      loading={fetchingPin}
+                      onSearch={onFetchPin}
+                    />
+                  </FormField>
+                )}
+                <FormField
+                  label={t('pages.nodes.inboundSyncMode')}
+                  name="inboundSyncMode"
+                  tooltip={t('pages.nodes.inboundSyncModeHint')}
+                >
+                  <Select
+                    options={[
+                      { value: 'all', label: t('pages.nodes.allInbounds') },
+                      { value: 'selected', label: t('pages.nodes.selectedInbounds') },
+                    ]}
+                  />
+                </FormField>
+                {inboundSyncMode === 'selected' && (
+                  <FormField
+                    label={t('pages.nodes.inboundTags')}
+                    name="inboundTags"
+                    tooltip={t('pages.nodes.inboundTagsHint')}
+                  >
+                    <Select
+                      mode="multiple"
+                      tagRender={selectTagRender}
+                      allowClear
+                      loading={fetchingInbounds}
+                      placeholder={t('pages.nodes.inboundTagsPlaceholder')}
+                      popupRender={(menu) => (
+                        <>
+                          <Button
+                            type="text"
+                            block
+                            loading={fetchingInbounds}
+                            onClick={onFetchInbounds}
+                          >
+                            {t('pages.nodes.loadInbounds')}
+                          </Button>
+                          {menu}
+                        </>
+                      )}
+                      options={inboundOptions.map((inbound) => ({
+                        value: inbound.tag,
+                        label: `${inbound.remark || inbound.tag}${inbound.protocol ? ` (${inbound.protocol}:${inbound.port || 0})` : ''}`,
+                      }))}
+                    />
+                  </FormField>
+                )}
+              </div>
+            </details>
           </Form>
         </FormProvider>
-      </Modal>
+        <div className="row wrap" style={{ gap: 10 }}>
+          <Btn size="sm" icon="refresh" disabled={testing} onClick={onTest}>
+            {t('pages.nodes.testConnection')}
+          </Btn>
+          {testResult &&
+            (testResult.status === 'online' ? (
+              <Pill status="ok">
+                {t('pages.nodes.connectionOk', { ms: testResult.latencyMs })}
+                {testResult.xrayVersion ? ` · Xray ${testResult.xrayVersion}` : ''}
+              </Pill>
+            ) : (
+              <Pill status="bad">{testResult.error || t('pages.nodes.connectionFailed')}</Pill>
+            ))}
+        </div>
+        <div className="mfoot">
+          {onRemove && (
+            <Btn
+              kind="ghost"
+              className="dng"
+              icon="trash"
+              style={{ marginInlineEnd: 'auto' }}
+              onClick={onRemove}
+            >
+              {t('nodes.remove')}
+            </Btn>
+          )}
+          <Btn kind="ghost" onClick={close}>
+            {t('cancel')}
+          </Btn>
+          <Btn
+            kind="pri"
+            icon="check"
+            disabled={submitting}
+            onClick={methods.handleSubmit(onFinish)}
+          >
+            {submitting ? t('nodes.saving') : t('save')}
+          </Btn>
+        </div>
+      </DlModal>
     </>
   );
 }

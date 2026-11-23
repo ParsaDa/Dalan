@@ -1,52 +1,20 @@
 import { lazy, useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Button,
-  Card,
-  Col,
-  ConfigProvider,
-  Dropdown,
-  Form,
-  Input,
-  Layout,
-  Modal,
-  Result,
-  Row,
-  Space,
-  Spin,
-  Statistic,
-  Table,
-  Tag,
-  Tooltip,
-  message,
-} from 'antd';
-import type { MenuProps, TableColumnsType } from 'antd';
-import {
-  ArrowDownOutlined,
-  ArrowUpOutlined,
-  ClockCircleOutlined,
-  DeleteOutlined,
-  EditOutlined,
-  LinkOutlined,
-  MoreOutlined,
-  PieChartOutlined,
-  PlusOutlined,
-  RetweetOutlined,
-  TagsOutlined,
-  TeamOutlined,
-  UsergroupAddOutlined,
-  UsergroupDeleteOutlined,
-} from '@ant-design/icons';
+import { message } from 'antd';
+
+import Icon from '@/components/dl/Icon';
+import { IlloEmpty, IlloOffline } from '@/components/dl/Illustrations';
+import type { MenuAction } from '@/components/dl/MoreMenu';
+import { FormModal, Modal as DlModal } from '@/components/dl/overlays';
+import { Btn, Empty as DlEmpty, Sk } from '@/components/dl/primitives';
+import GroupCard from './GroupCard';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { useTheme } from '@/hooks/useTheme';
-import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { usePageTitle } from '@/hooks/usePageTitle';
 import { useClients } from '@/hooks/useClients';
-import { HttpUtil, SizeFormatter } from '@/utils';
+import { HttpUtil } from '@/utils';
 import { setMessageInstance } from '@/utils/messageBus';
-import AppSidebar from '@/layouts/AppSidebar';
 import { LazyMount } from '@/components/utility';
 import { keys } from '@/api/queryKeys';
 import {
@@ -90,9 +58,6 @@ export default function GroupsPage() {
   usePageTitle();
   const { t } = useTranslation();
   const uid = useId();
-  const { isDark, isUltra, antdThemeConfig } = useTheme();
-  const { isMobile } = useMediaQuery();
-  const [modal, modalContextHolder] = Modal.useModal();
   const [messageApi, messageContextHolder] = message.useMessage();
   useEffect(() => {
     setMessageInstance(messageApi);
@@ -148,6 +113,12 @@ export default function GroupsPage() {
     },
   });
 
+  const [confirm, setConfirm] = useState<{
+    title: string;
+    content: string;
+    danger: string;
+    run: () => Promise<void>;
+  } | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState('');
 
@@ -175,17 +146,10 @@ export default function GroupsPage() {
   });
   const allClients = allClientsQuery.data ?? [];
 
-  const totalGroups = groups.length;
-  const totalClients = useMemo(
-    () => groups.reduce((acc, g) => acc + (g.clientCount || 0), 0),
-    [groups],
-  );
   const totalTraffic = useMemo(
     () => groups.reduce((acc, g) => acc + (g.trafficUsed || 0), 0),
     [groups],
   );
-  const totalUpload = useMemo(() => groups.reduce((acc, g) => acc + (g.up || 0), 0), [groups]);
-  const totalDownload = useMemo(() => groups.reduce((acc, g) => acc + (g.down || 0), 0), [groups]);
 
   function openCreate() {
     setCreateName('');
@@ -236,13 +200,11 @@ export default function GroupsPage() {
   }
 
   function onDelete(g: GroupSummary) {
-    modal.confirm({
+    setConfirm({
       title: t('pages.groups.deleteConfirmTitle', { name: g.name }),
       content: t('pages.groups.deleteConfirmContent', { count: g.clientCount }),
-      okText: t('delete'),
-      okType: 'danger',
-      cancelText: t('cancel'),
-      onOk: async () => {
+      danger: t('delete'),
+      run: async () => {
         const msg = await deleteMut.mutateAsync({ name: g.name });
         if (msg?.success) {
           const affected = (msg.obj as { affected?: number } | undefined)?.affected ?? 0;
@@ -301,13 +263,11 @@ export default function GroupsPage() {
       messageApi.info(t('pages.groups.emptyForAction'));
       return;
     }
-    modal.confirm({
+    setConfirm({
       title: t('pages.groups.deleteClientsConfirmTitle', { name: g.name }),
       content: t('pages.groups.deleteClientsConfirmContent', { count: g.clientCount }),
-      okText: t('delete'),
-      okType: 'danger',
-      cancelText: t('cancel'),
-      onOk: async () => {
+      danger: t('delete'),
+      run: async () => {
         const emails = await fetchEmailsForGroup(g.name);
         if (emails.length === 0) return;
         const msg = await bulkDelete(emails);
@@ -335,13 +295,11 @@ export default function GroupsPage() {
       messageApi.info(t('pages.groups.emptyForAction'));
       return;
     }
-    modal.confirm({
+    setConfirm({
       title: t('pages.groups.resetConfirmTitle', { name: g.name }),
       content: t('pages.groups.resetConfirmContent'),
-      okText: t('reset'),
-      okType: 'danger',
-      cancelText: t('cancel'),
-      onOk: async () => {
+      danger: t('reset'),
+      run: async () => {
         const msg = await groupResetMut.mutateAsync({ name: g.name });
         if (msg?.success) {
           messageApi.success(t('pages.groups.resetSuccess', { name: g.name }));
@@ -350,370 +308,304 @@ export default function GroupsPage() {
     });
   }
 
-  function rowActions(row: GroupSummary): MenuProps['items'] {
+  function rowActions(row: GroupSummary): MenuAction[] {
+    const none = !row.clientCount;
     return [
       {
         key: 'subLinks',
-        icon: <LinkOutlined aria-hidden />,
         label: t('pages.clients.subLinksSelected', { count: row.clientCount || 0 }),
-        disabled: !row.clientCount,
-        onClick: () => openSubLinksFor(row),
+        icon: 'link',
+        disabled: none,
+        onSelect: () => openSubLinksFor(row),
       },
       {
         key: 'adjust',
-        icon: <ClockCircleOutlined aria-hidden />,
         label: t('pages.clients.adjustSelected', { count: row.clientCount || 0 }),
-        disabled: !row.clientCount,
-        onClick: () => openAdjustFor(row),
+        icon: 'clock',
+        disabled: none,
+        onSelect: () => openAdjustFor(row),
       },
       {
         key: 'reset',
-        icon: <RetweetOutlined aria-hidden />,
         label: t('pages.groups.resetTraffic'),
-        disabled: !row.clientCount,
-        onClick: () => onResetTraffic(row),
+        icon: 'refresh',
+        disabled: none,
+        onSelect: () => onResetTraffic(row),
       },
       {
         key: 'addClients',
-        icon: <UsergroupAddOutlined aria-hidden />,
         label: t('pages.groups.addToGroup'),
-        onClick: () => openAddClientsFor(row),
+        icon: 'plus',
+        onSelect: () => openAddClientsFor(row),
       },
-      {
-        key: 'rename',
-        icon: <EditOutlined aria-hidden />,
-        label: t('pages.groups.rename'),
-        onClick: () => openRename(row),
-      },
-      { type: 'divider' },
       {
         key: 'removeClients',
-        icon: <UsergroupDeleteOutlined aria-hidden />,
         label: t('pages.groups.removeFromGroup'),
         danger: true,
-        disabled: !row.clientCount,
-        onClick: () => openRemoveClientsFor(row),
+        disabled: none,
+        onSelect: () => openRemoveClientsFor(row),
       },
       {
         key: 'deleteClients',
-        icon: <DeleteOutlined aria-hidden />,
         label: t('pages.groups.deleteClients'),
+        icon: 'trash',
         danger: true,
-        disabled: !row.clientCount,
-        onClick: () => onDeleteClients(row),
+        disabled: none,
+        onSelect: () => onDeleteClients(row),
       },
       {
         key: 'delete',
-        icon: <DeleteOutlined aria-hidden />,
         label: t('pages.groups.deleteGroupOnly'),
+        icon: 'trash',
         danger: true,
-        onClick: () => onDelete(row),
+        onSelect: () => onDelete(row),
       },
     ];
   }
 
-  const columns: TableColumnsType<GroupSummary> = [
-    {
-      title: t('pages.clients.actions'),
-      key: 'actions',
-      width: 90,
-      render: (_v, row) => (
-        <Space size={4}>
-          <Dropdown trigger={['click']} menu={{ items: rowActions(row) }}>
-            <Button
-              aria-label={t('more')}
-              size="small"
-              type="text"
-              style={{ fontSize: 16 }}
-              icon={<MoreOutlined aria-hidden />}
-            />
-          </Dropdown>
-          <Tooltip title={t('pages.groups.rename')}>
-            <Button
-              aria-label={t('pages.groups.rename')}
-              size="small"
-              type="text"
-              style={{ fontSize: 16 }}
-              icon={<EditOutlined aria-hidden />}
-              onClick={() => openRename(row)}
-            />
-          </Tooltip>
-        </Space>
-      ),
-    },
-    {
-      title: t('pages.groups.name'),
-      dataIndex: 'name',
-      key: 'name',
-      render: (name: string) => (
-        <Tag color="geekblue" style={{ margin: 0, fontSize: 13 }}>
-          {name}
-        </Tag>
-      ),
-    },
-    {
-      title: t('pages.groups.clientCount'),
-      dataIndex: 'clientCount',
-      key: 'clientCount',
-      width: 180,
-      render: (count: number) => <span>{count || 0}</span>,
-    },
-    {
-      title: t('pages.groups.upload'),
-      dataIndex: 'up',
-      key: 'up',
-      width: 140,
-      render: (bytes: number) => <span>{SizeFormatter.sizeFormat(bytes || 0)}</span>,
-    },
-    {
-      title: t('pages.groups.download'),
-      dataIndex: 'down',
-      key: 'down',
-      width: 140,
-      render: (bytes: number) => <span>{SizeFormatter.sizeFormat(bytes || 0)}</span>,
-    },
-    {
-      title: t('pages.groups.trafficUsed'),
-      dataIndex: 'trafficUsed',
-      key: 'trafficUsed',
-      width: 160,
-      render: (bytes: number) => <span>{SizeFormatter.sizeFormat(bytes || 0)}</span>,
-    },
-  ];
-
-  const pageClass = useMemo(() => {
-    const classes = ['groups-page'];
-    if (isDark) classes.push('is-dark');
-    if (isUltra) classes.push('is-ultra');
-    return classes.join(' ');
-  }, [isDark, isUltra]);
-
   return (
-    <ConfigProvider theme={antdThemeConfig}>
+    <div className="col stag" style={{ gap: 18 }}>
       {messageContextHolder}
-      {modalContextHolder}
-      <Layout className={pageClass}>
-        <AppSidebar />
-        <Layout className="content-shell">
-          <Layout.Content id="content-layout" className="content-area">
-            <Spin
-              aria-live="off"
-              spinning={!fetched}
-              delay={200}
-              description={t('loading')}
-              size="large"
-            >
-              {!fetched ? (
-                <div className="loading-spacer" />
-              ) : fetchError ? (
-                <Result
-                  status="error"
-                  title={t('somethingWentWrong')}
-                  subTitle={fetchError}
-                  extra={
-                    <Button type="primary" loading={loading} onClick={() => groupsQuery.refetch()}>
-                      {t('refresh')}
-                    </Button>
-                  }
-                />
-              ) : (
-                <Row gutter={[isMobile ? 8 : 16, isMobile ? 8 : 12]}>
-                  <Col span={24}>
-                    <Card size="small" hoverable className="summary-card">
-                      <Row gutter={[16, isMobile ? 16 : 12]}>
-                        <Col xs={12} sm={12} md={6}>
-                          <Statistic
-                            title={t('pages.groups.totalGroups')}
-                            value={String(totalGroups)}
-                            prefix={<TagsOutlined aria-hidden />}
-                          />
-                        </Col>
-                        <Col xs={12} sm={12} md={6}>
-                          <Statistic
-                            title={t('pages.groups.totalGroupedClients')}
-                            value={String(totalClients)}
-                            prefix={<TeamOutlined aria-hidden />}
-                          />
-                        </Col>
-                        <Col xs={12} sm={12} md={6}>
-                          <Statistic
-                            title={t('pages.groups.totalUpDown')}
-                            value={0}
-                            formatter={() => (
-                              <span>
-                                <ArrowUpOutlined aria-hidden />{' '}
-                                {SizeFormatter.sizeFormat(totalUpload)}
-                                {' / '}
-                                <ArrowDownOutlined aria-hidden />{' '}
-                                {SizeFormatter.sizeFormat(totalDownload)}
-                              </span>
-                            )}
-                          />
-                        </Col>
-                        <Col xs={12} sm={12} md={6}>
-                          <Statistic
-                            title={t('pages.groups.totalTraffic')}
-                            value={SizeFormatter.sizeFormat(totalTraffic)}
-                            prefix={<PieChartOutlined aria-hidden />}
-                          />
-                        </Col>
-                      </Row>
-                    </Card>
-                  </Col>
+      <div className="pagehead">
+        <div>
+          <h2 className="h2" style={{ fontSize: 28 }}>
+            {t('menu.groups')}
+          </h2>
+          <p>{t('groups.subtitle')}</p>
+        </div>
+        <div className="row wrap">
+          <Btn kind="pri" icon="plus" onClick={openCreate}>
+            {t('groups.new')}
+          </Btn>
+        </div>
+      </div>
+      {!fetched ? (
+        <div className="grid">
+          <section className="tile s6">
+            <Sk h={150} />
+          </section>
+          <section className="tile s6">
+            <Sk h={150} />
+          </section>
+        </div>
+      ) : fetchError ? (
+        <section className="tile edge st-bad">
+          <DlEmpty
+            art={<IlloOffline />}
+            title={t('somethingWentWrong')}
+            actions={
+              <Btn
+                kind="pri"
+                icon="refresh"
+                disabled={loading}
+                onClick={() => groupsQuery.refetch()}
+              >
+                {t('refresh')}
+              </Btn>
+            }
+          >
+            {fetchError}
+          </DlEmpty>
+        </section>
+      ) : groups.length === 0 ? (
+        <section className="tile">
+          <DlEmpty
+            art={<IlloEmpty size={130} />}
+            title={t('groups.empty')}
+            actions={
+              <Btn kind="pri" icon="plus" onClick={openCreate}>
+                {t('groups.new')}
+              </Btn>
+            }
+          >
+            {t('groups.emptyHint')}
+          </DlEmpty>
+        </section>
+      ) : (
+        <div className="grid">
+          {groups.map((g) => (
+            <GroupCard
+              key={g.name}
+              group={g}
+              share={totalTraffic ? (g.trafficUsed || 0) / totalTraffic : 0}
+              onRename={() => openRename(g)}
+              actions={rowActions(g)}
+            />
+          ))}
+        </div>
+      )}
 
-                  <Col span={24}>
-                    <Card
-                      size="small"
-                      hoverable
-                      title={
-                        <div className="card-toolbar">
-                          <Button
-                            aria-label={t('pages.groups.addGroup')}
-                            type="primary"
-                            icon={<PlusOutlined aria-hidden />}
-                            onClick={openCreate}
-                          >
-                            {!isMobile && t('pages.groups.addGroup')}
-                          </Button>
-                        </div>
-                      }
-                    >
-                      <Table<GroupSummary>
-                        dataSource={groups}
-                        columns={columns}
-                        rowKey="name"
-                        size="small"
-                        pagination={false}
-                        loading={loading}
-                        locale={{
-                          emptyText: (
-                            <div className="card-empty">
-                              <TagsOutlined aria-hidden style={{ fontSize: 32, marginBottom: 8 }} />
-                              <div>{t('noData')}</div>
-                            </div>
-                          ),
-                        }}
-                      />
-                    </Card>
-                  </Col>
-                </Row>
-              )}
-            </Spin>
-          </Layout.Content>
-        </Layout>
-
-        <Modal
-          open={createOpen}
-          title={t('pages.groups.addGroup')}
-          okText={t('create')}
-          cancelText={t('cancel')}
-          confirmLoading={createMut.isPending}
-          onCancel={() => setCreateOpen(false)}
-          onOk={confirmCreate}
-          destroyOnHidden
-        >
-          <Form layout="vertical">
-            <Form.Item label={t('pages.groups.name')} htmlFor={`${uid}-create-name`}>
-              <Input
-                id={`${uid}-create-name`}
-                value={createName}
-                onChange={(e) => setCreateName(e.target.value)}
-                onPressEnter={confirmCreate}
-                placeholder={t('pages.clients.groupPlaceholder')}
-                autoFocus
-              />
-            </Form.Item>
-          </Form>
-        </Modal>
-
-        <Modal
-          open={renameOpen}
-          title={renameTarget ? t('pages.groups.renameTitle', { name: renameTarget.name }) : ''}
-          okText={t('save')}
-          cancelText={t('cancel')}
-          confirmLoading={renameMut.isPending}
-          onCancel={() => setRenameOpen(false)}
-          onOk={confirmRename}
-          destroyOnHidden
-        >
-          <Form layout="vertical">
-            <Form.Item label={t('pages.groups.name')} htmlFor={`${uid}-rename-name`}>
-              <Input
-                id={`${uid}-rename-name`}
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                onPressEnter={confirmRename}
-                placeholder={t('pages.clients.groupPlaceholder')}
-                autoFocus
-              />
-            </Form.Item>
-          </Form>
-        </Modal>
-
-        <LazyMount when={subLinksOpen}>
-          <SubLinksModal
-            open={subLinksOpen}
-            emails={groupEmails}
-            clients={allClients}
-            subSettings={subSettings}
-            onOpenChange={setSubLinksOpen}
-          />
-        </LazyMount>
-
-        <LazyMount when={adjustOpen}>
-          <ClientBulkAdjustModal
-            open={adjustOpen}
-            count={groupEmails.length}
-            onOpenChange={setAdjustOpen}
-            onSubmit={async (addDays, addBytes, flow, limitHwid, adTag) => {
-              const msg = await bulkAdjust(groupEmails, addDays, addBytes, flow, limitHwid, adTag);
-              if (msg?.success) {
-                const obj = msg.obj ?? { adjusted: 0 };
-                messageApi.success(
-                  t('pages.groups.adjustSuccess', {
-                    count: obj.adjusted ?? 0,
-                    name: groupForAction?.name ?? '',
-                  }),
-                );
-                return obj;
-              }
-              return null;
+      <DlModal
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        label={confirm?.title ?? ''}
+        width={460}
+      >
+        <div className="row" style={{ gap: 12, alignItems: 'flex-start' }}>
+          <span className="ico bad">
+            <Icon name="trash" />
+          </span>
+          <div className="f1">
+            <h2 className="h3">{confirm?.title}</h2>
+            <p className="mut" style={{ margin: '4px 0 0' }}>
+              {confirm?.content}
+            </p>
+          </div>
+        </div>
+        <div className="mfoot">
+          <Btn kind="ghost" onClick={() => setConfirm(null)}>
+            {t('cancel')}
+          </Btn>
+          <Btn
+            kind="dng"
+            onClick={async () => {
+              const run = confirm?.run;
+              setConfirm(null);
+              await run?.();
             }}
-          />
-        </LazyMount>
+          >
+            {confirm?.danger}
+          </Btn>
+        </div>
+      </DlModal>
 
-        <LazyMount when={addClientsOpen}>
-          <GroupAddClientsModal
-            open={addClientsOpen}
-            groupName={groupForAction?.name ?? null}
-            candidates={allClients.filter((c) => c.group !== groupForAction?.name)}
-            onClose={() => setAddClientsOpen(false)}
-            onSubmit={async (emails) => {
-              const msg = await bulkAddToGroup(emails, groupForAction?.name ?? '');
-              if (msg?.success) {
-                return (msg.obj as { affected?: number } | undefined) ?? { affected: 0 };
-              }
-              return null;
+      <FormModal
+        open={createOpen}
+        title={t('pages.groups.addGroup')}
+        art={
+          <span className="ico acc">
+            <Icon name="groups" />
+          </span>
+        }
+        width={460}
+        onClose={() => setCreateOpen(false)}
+        footer={
+          <>
+            <Btn kind="ghost" onClick={() => setCreateOpen(false)}>
+              {t('cancel')}
+            </Btn>
+            <Btn kind="pri" icon="check" disabled={createMut.isPending} onClick={confirmCreate}>
+              {t('create')}
+            </Btn>
+          </>
+        }
+      >
+        <label className="field">
+          <span>{t('pages.groups.name')}</span>
+          <input
+            id={`${uid}-create-name`}
+            className="inp"
+            value={createName}
+            onChange={(e) => setCreateName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') confirmCreate();
             }}
+            placeholder={t('pages.clients.groupPlaceholder')}
+            autoFocus
           />
-        </LazyMount>
+        </label>
+      </FormModal>
 
-        <LazyMount when={removeClientsOpen}>
-          <GroupRemoveClientsModal
-            open={removeClientsOpen}
-            groupName={groupForAction?.name ?? null}
-            members={allClients.filter((c) => c.group === groupForAction?.name)}
-            onClose={() => setRemoveClientsOpen(false)}
-            onSubmit={async (emails) => {
-              const msg = await bulkRemoveFromGroup(emails);
-              if (msg?.success) {
-                return (msg.obj as { affected?: number } | undefined) ?? { affected: 0 };
-              }
-              return null;
+      <FormModal
+        open={renameOpen}
+        title={renameTarget ? t('pages.groups.renameTitle', { name: renameTarget.name }) : ''}
+        art={
+          <span className="ico acc">
+            <Icon name="groups" />
+          </span>
+        }
+        width={460}
+        onClose={() => setRenameOpen(false)}
+        footer={
+          <>
+            <Btn kind="ghost" onClick={() => setRenameOpen(false)}>
+              {t('cancel')}
+            </Btn>
+            <Btn kind="pri" icon="check" disabled={renameMut.isPending} onClick={confirmRename}>
+              {t('save')}
+            </Btn>
+          </>
+        }
+      >
+        <label className="field">
+          <span>{t('pages.groups.name')}</span>
+          <input
+            id={`${uid}-rename-name`}
+            className="inp"
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') confirmRename();
             }}
+            placeholder={t('pages.clients.groupPlaceholder')}
+            autoFocus
           />
-        </LazyMount>
-      </Layout>
-    </ConfigProvider>
+        </label>
+      </FormModal>
+
+      <LazyMount when={subLinksOpen}>
+        <SubLinksModal
+          open={subLinksOpen}
+          emails={groupEmails}
+          clients={allClients}
+          subSettings={subSettings}
+          onOpenChange={setSubLinksOpen}
+        />
+      </LazyMount>
+
+      <LazyMount when={adjustOpen}>
+        <ClientBulkAdjustModal
+          open={adjustOpen}
+          count={groupEmails.length}
+          onOpenChange={setAdjustOpen}
+          onSubmit={async (addDays, addBytes, flow, limitHwid, adTag) => {
+            const msg = await bulkAdjust(groupEmails, addDays, addBytes, flow, limitHwid, adTag);
+            if (msg?.success) {
+              const obj = msg.obj ?? { adjusted: 0 };
+              messageApi.success(
+                t('pages.groups.adjustSuccess', {
+                  count: obj.adjusted ?? 0,
+                  name: groupForAction?.name ?? '',
+                }),
+              );
+              return obj;
+            }
+            return null;
+          }}
+        />
+      </LazyMount>
+
+      <LazyMount when={addClientsOpen}>
+        <GroupAddClientsModal
+          open={addClientsOpen}
+          groupName={groupForAction?.name ?? null}
+          candidates={allClients.filter((c) => c.group !== groupForAction?.name)}
+          onClose={() => setAddClientsOpen(false)}
+          onSubmit={async (emails) => {
+            const msg = await bulkAddToGroup(emails, groupForAction?.name ?? '');
+            if (msg?.success) {
+              return (msg.obj as { affected?: number } | undefined) ?? { affected: 0 };
+            }
+            return null;
+          }}
+        />
+      </LazyMount>
+
+      <LazyMount when={removeClientsOpen}>
+        <GroupRemoveClientsModal
+          open={removeClientsOpen}
+          groupName={groupForAction?.name ?? null}
+          members={allClients.filter((c) => c.group === groupForAction?.name)}
+          onClose={() => setRemoveClientsOpen(false)}
+          onSubmit={async (emails) => {
+            const msg = await bulkRemoveFromGroup(emails);
+            if (msg?.success) {
+              return (msg.obj as { affected?: number } | undefined) ?? { affected: 0 };
+            }
+            return null;
+          }}
+        />
+      </LazyMount>
+    </div>
   );
 }

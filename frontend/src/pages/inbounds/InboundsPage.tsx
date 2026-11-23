@@ -1,28 +1,13 @@
 import { lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Button,
-  Card,
-  Col,
-  ConfigProvider,
-  Layout,
-  Modal,
-  Result,
-  Row,
-  Spin,
-  Statistic,
-  message,
-} from 'antd';
+import { Modal, message } from 'antd';
+
+import { IlloOffline } from '@/components/dl/Illustrations';
+import { Btn, Empty as DlEmpty, Sk } from '@/components/dl/primitives';
 
 import { setMessageInstance } from '@/utils/messageBus';
-import {
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  PieChartOutlined,
-  BarsOutlined,
-} from '@ant-design/icons';
 
-import { HttpUtil, SizeFormatter, RandomUtil } from '@/utils';
+import { HttpUtil, RandomUtil } from '@/utils';
 import { buildClonePayload } from '@/lib/xray/inbound-clone';
 import { NODE_ELIGIBLE_PROTOCOLS } from '@/lib/xray/node-protocols';
 import {
@@ -34,13 +19,11 @@ import {
 import { inboundFromDb } from '@/lib/xray/inbound-from-db';
 import { Protocols } from '@/schemas/primitives';
 import { coerceInboundJsonField, type DBInbound } from '@/models/dbinbound';
-import { useTheme } from '@/hooks/useTheme';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useNodesQuery } from '@/api/queries/useNodesQuery';
 import { useHostsQuery } from '@/api/queries/useHostsQuery';
 import { withHostEndpoints } from '@/lib/hosts/host-link';
-import AppSidebar from '@/layouts/AppSidebar';
 const TextModal = lazy(() => import('@/components/feedback/TextModal'));
 import type { TextModalTab } from '@/components/feedback/TextModal';
 const PromptModal = lazy(() => import('@/components/feedback/PromptModal'));
@@ -81,7 +64,6 @@ interface ClientMatchTarget {
 
 export default function InboundsPage() {
   const { t } = useTranslation();
-  const { isDark, isUltra, antdThemeConfig } = useTheme();
   const { isMobile } = useMediaQuery();
 
   const {
@@ -92,7 +74,6 @@ export default function InboundsPage() {
     onlineClients,
     lastOnlineMap,
     inboundSpeed,
-    totals,
     expireDiff,
     trafficDiff,
     pageSize,
@@ -711,204 +692,164 @@ export default function InboundsPage() {
   );
 
   return (
-    <ConfigProvider theme={antdThemeConfig}>
+    <div className="col stag" style={{ gap: 18 }}>
       {messageContextHolder}
       {modalContextHolder}
-      <Layout className={`inbounds-page${isDark ? ' is-dark' : ''}${isUltra ? ' is-ultra' : ''}`}>
-        <AppSidebar />
+      {!fetched || !hostsFetched ? (
+        <>
+          <div className="pagehead">
+            <div>
+              <h2 className="h2" style={{ fontSize: 28 }}>
+                {t('menu.inbounds')}
+              </h2>
+              <p>{t('inbounds.subtitle')}</p>
+            </div>
+          </div>
+          <section className="tile">
+            <Sk h={160} />
+          </section>
+        </>
+      ) : fetchError || hostsError ? (
+        <section className="tile edge st-bad">
+          <DlEmpty
+            art={<IlloOffline />}
+            title={t('somethingWentWrong')}
+            actions={
+              <Btn
+                kind="pri"
+                icon="refresh"
+                onClick={() => {
+                  void refresh();
+                  void refetchHosts();
+                }}
+              >
+                {t('refresh')}
+              </Btn>
+            }
+          >
+            {fetchError || hostsError}
+          </DlEmpty>
+        </section>
+      ) : (
+        <InboundList
+          dbInbounds={dbInbounds}
+          clientCount={clientCount}
+          onlineClients={onlineClients}
+          lastOnlineMap={lastOnlineMap}
+          inboundSpeed={inboundSpeed}
+          expireDiff={expireDiff}
+          trafficDiff={trafficDiff}
+          pageSize={pageSize}
+          isMobile={isMobile}
+          subEnable={subSettings.enable}
+          nodesById={nodesById}
+          hasActiveNode={showNodeInfo}
+          hosts={hosts}
+          onAddInbound={onAddInbound}
+          onGeneralAction={onGeneralAction}
+          onRowAction={({ key, dbInbound }) =>
+            onRowAction({ key, dbInbound: dbInbound as unknown as DBInbound })
+          }
+          onBulkDelete={confirmBulkDelete}
+        />
+      )}
 
-        <Layout className="content-shell">
-          <Layout.Content id="content-layout" className="content-area">
-            <Spin
-              aria-live="off"
-              spinning={!fetched || !hostsFetched}
-              delay={200}
-              description={t('loading')}
-              size="large"
-            >
-              {!fetched || !hostsFetched ? (
-                <div className="loading-spacer" />
-              ) : fetchError || hostsError ? (
-                <Result
-                  status="error"
-                  title={t('somethingWentWrong')}
-                  subTitle={fetchError || hostsError}
-                  extra={
-                    <Button
-                      type="primary"
-                      onClick={() => {
-                        void refresh();
-                        void refetchHosts();
-                      }}
-                    >
-                      {t('refresh')}
-                    </Button>
-                  }
-                />
-              ) : (
-                <Row gutter={[isMobile ? 8 : 16, 12]}>
-                  <Col span={24}>
-                    <Card size="small" hoverable className="summary-card">
-                      <Row gutter={[16, 12]}>
-                        <Col xs={12} sm={12} md={8}>
-                          <Statistic
-                            title={t('pages.inbounds.totalDownUp')}
-                            value={0}
-                            formatter={() => (
-                              <span>
-                                <ArrowUpOutlined aria-hidden />{' '}
-                                {SizeFormatter.sizeFormat(totals.up)}
-                                {' / '}
-                                <ArrowDownOutlined aria-hidden />{' '}
-                                {SizeFormatter.sizeFormat(totals.down)}
-                              </span>
-                            )}
-                          />
-                        </Col>
-                        <Col xs={12} sm={12} md={8}>
-                          <Statistic
-                            title={t('pages.inbounds.totalUsage')}
-                            value={SizeFormatter.sizeFormat(totals.up + totals.down)}
-                            prefix={<PieChartOutlined aria-hidden />}
-                          />
-                        </Col>
-                        <Col xs={24} sm={24} md={8}>
-                          <Statistic
-                            title={t('pages.inbounds.inboundCount')}
-                            value={String(dbInbounds.length)}
-                            prefix={<BarsOutlined aria-hidden />}
-                          />
-                        </Col>
-                      </Row>
-                    </Card>
-                  </Col>
+      <LazyMount when={formOpen}>
+        <InboundFormModal
+          open={formOpen}
+          onClose={() => setFormOpen(false)}
+          onSaved={refresh}
+          mode={formMode}
+          dbInbound={formDbInbound}
+          dbInbounds={dbInbounds}
+          availableNodes={nodesList}
+          availableNodesFetched={nodesFetched}
+        />
+      </LazyMount>
+      <LazyMount when={infoOpen}>
+        <InboundInfoModal
+          open={infoOpen}
+          onClose={() => setInfoOpen(false)}
+          dbInbound={infoDbInbound}
+          clientIndex={infoClientIndex}
+          expireDiff={expireDiff}
+          trafficDiff={trafficDiff}
+          ipLimitEnable={ipLimitEnable}
+          tgBotEnable={tgBotEnable}
+          subSettings={subSettings}
+          hosts={hosts}
+          lastOnlineMap={lastOnlineMap}
+          nodeAddress={infoNodeAddress}
+        />
+      </LazyMount>
+      <LazyMount when={attachOpen}>
+        <AttachClientsModal
+          open={attachOpen}
+          onClose={() => setAttachOpen(false)}
+          onAttached={refresh}
+          source={attachSource}
+          dbInbounds={dbInbounds}
+        />
+      </LazyMount>
+      <LazyMount when={attachExistingOpen}>
+        <AttachExistingClientsModal
+          open={attachExistingOpen}
+          onClose={() => setAttachExistingOpen(false)}
+          onAttached={refresh}
+          target={attachExistingTarget}
+        />
+      </LazyMount>
+      <LazyMount when={detachOpen}>
+        <DetachClientsModal
+          open={detachOpen}
+          onClose={() => setDetachOpen(false)}
+          onDetached={refresh}
+          source={detachSource}
+        />
+      </LazyMount>
+      <LazyMount when={groupOpen}>
+        <AddClientsToGroupModal
+          open={groupOpen}
+          onClose={() => setGroupOpen(false)}
+          onAdded={refresh}
+          source={groupSource}
+        />
+      </LazyMount>
+      <LazyMount when={cloneOpen}>
+        <CloneInboundModal
+          open={cloneOpen}
+          onClose={() => setCloneOpen(false)}
+          onCloned={refresh}
+          dbInbound={cloneSource}
+          nodes={nodesList || []}
+          portsInUse={clonePortsInUse}
+        />
+      </LazyMount>
 
-                  <Col span={24}>
-                    <InboundList
-                      dbInbounds={dbInbounds}
-                      clientCount={clientCount}
-                      onlineClients={onlineClients}
-                      lastOnlineMap={lastOnlineMap}
-                      inboundSpeed={inboundSpeed}
-                      expireDiff={expireDiff}
-                      trafficDiff={trafficDiff}
-                      pageSize={pageSize}
-                      isMobile={isMobile}
-                      subEnable={subSettings.enable}
-                      nodesById={nodesById}
-                      hasActiveNode={showNodeInfo}
-                      hosts={hosts}
-                      onAddInbound={onAddInbound}
-                      onGeneralAction={onGeneralAction}
-                      onRowAction={({ key, dbInbound }) =>
-                        onRowAction({ key, dbInbound: dbInbound as unknown as DBInbound })
-                      }
-                      onBulkDelete={confirmBulkDelete}
-                    />
-                  </Col>
-                </Row>
-              )}
-            </Spin>
-          </Layout.Content>
-        </Layout>
-
-        <LazyMount when={formOpen}>
-          <InboundFormModal
-            open={formOpen}
-            onClose={() => setFormOpen(false)}
-            onSaved={refresh}
-            mode={formMode}
-            dbInbound={formDbInbound}
-            dbInbounds={dbInbounds}
-            availableNodes={nodesList}
-            availableNodesFetched={nodesFetched}
-          />
-        </LazyMount>
-        <LazyMount when={infoOpen}>
-          <InboundInfoModal
-            open={infoOpen}
-            onClose={() => setInfoOpen(false)}
-            dbInbound={infoDbInbound}
-            clientIndex={infoClientIndex}
-            expireDiff={expireDiff}
-            trafficDiff={trafficDiff}
-            ipLimitEnable={ipLimitEnable}
-            tgBotEnable={tgBotEnable}
-            subSettings={subSettings}
-            hosts={hosts}
-            lastOnlineMap={lastOnlineMap}
-            nodeAddress={infoNodeAddress}
-          />
-        </LazyMount>
-        <LazyMount when={attachOpen}>
-          <AttachClientsModal
-            open={attachOpen}
-            onClose={() => setAttachOpen(false)}
-            onAttached={refresh}
-            source={attachSource}
-            dbInbounds={dbInbounds}
-          />
-        </LazyMount>
-        <LazyMount when={attachExistingOpen}>
-          <AttachExistingClientsModal
-            open={attachExistingOpen}
-            onClose={() => setAttachExistingOpen(false)}
-            onAttached={refresh}
-            target={attachExistingTarget}
-          />
-        </LazyMount>
-        <LazyMount when={detachOpen}>
-          <DetachClientsModal
-            open={detachOpen}
-            onClose={() => setDetachOpen(false)}
-            onDetached={refresh}
-            source={detachSource}
-          />
-        </LazyMount>
-        <LazyMount when={groupOpen}>
-          <AddClientsToGroupModal
-            open={groupOpen}
-            onClose={() => setGroupOpen(false)}
-            onAdded={refresh}
-            source={groupSource}
-          />
-        </LazyMount>
-        <LazyMount when={cloneOpen}>
-          <CloneInboundModal
-            open={cloneOpen}
-            onClose={() => setCloneOpen(false)}
-            onCloned={refresh}
-            dbInbound={cloneSource}
-            nodes={nodesList || []}
-            portsInUse={clonePortsInUse}
-          />
-        </LazyMount>
-
-        <LazyMount when={textOpen}>
-          <TextModal
-            open={textOpen}
-            onClose={() => setTextOpen(false)}
-            title={textTitle}
-            content={textContent}
-            fileName={textFileName}
-            json={textJson}
-            tabs={textTabs}
-          />
-        </LazyMount>
-        <LazyMount when={promptOpen}>
-          <PromptModal
-            open={promptOpen}
-            onClose={() => setPromptOpen(false)}
-            title={promptTitle}
-            okText={promptOkText}
-            type={promptType}
-            initialValue={promptInitial}
-            loading={promptLoading}
-            json={promptJson}
-            onConfirm={onPromptConfirm}
-          />
-        </LazyMount>
-      </Layout>
-    </ConfigProvider>
+      <LazyMount when={textOpen}>
+        <TextModal
+          open={textOpen}
+          onClose={() => setTextOpen(false)}
+          title={textTitle}
+          content={textContent}
+          fileName={textFileName}
+          json={textJson}
+          tabs={textTabs}
+        />
+      </LazyMount>
+      <LazyMount when={promptOpen}>
+        <PromptModal
+          open={promptOpen}
+          onClose={() => setPromptOpen(false)}
+          title={promptTitle}
+          okText={promptOkText}
+          type={promptType}
+          initialValue={promptInitial}
+          loading={promptLoading}
+          json={promptJson}
+          onConfirm={onPromptConfirm}
+        />
+      </LazyMount>
+    </div>
   );
 }

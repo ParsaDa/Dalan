@@ -1,13 +1,11 @@
 import { fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
-import NodeList from '@/pages/nodes/NodeList';
+import ReenrolNotices from '@/pages/nodes/ReenrolNotices';
 import type { NodeRecord } from '@/schemas/node';
 import { HttpUtil, Msg } from '@/utils';
 
 import { renderWithProviders } from './test-utils';
-
-const noop = () => {};
 
 const node = (id: number, name: string): NodeRecord => ({
   id,
@@ -47,22 +45,7 @@ afterEach(() => {
 });
 
 function renderList() {
-  renderWithProviders(
-    <NodeList
-      nodes={[node(7, 'de1'), node(8, 'nl1')]}
-      isMobile={false}
-      selectedIds={[]}
-      onSelectionChange={noop}
-      onAdd={noop}
-      onMtls={noop}
-      onEdit={noop}
-      onDelete={noop}
-      onProbe={noop}
-      onToggleEnable={noop}
-      onUpdateNode={noop}
-      onUpdateSelected={noop}
-    />,
-  );
+  renderWithProviders(<ReenrolNotices nodes={[node(7, 'de1'), node(8, 'nl1')]} />);
 }
 
 test('says which node must be enrolled again and opens the enrolment prefilled with its name', async () => {

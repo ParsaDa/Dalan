@@ -34,7 +34,9 @@ describe('panel navigation', () => {
     const childPaths = (routes[0].children ?? []).map((child) =>
       child.index ? '/' : `/${child.path ?? ''}`,
     );
-    expect(childPaths.sort()).toEqual([...PANEL_ROUTE_PATHS].sort());
+    // The catch-all is the not-found page, not a page of the manifest.
+    expect(childPaths.filter((p) => p !== '/*').sort()).toEqual([...PANEL_ROUTE_PATHS].sort());
+    expect(childPaths.at(-1)).toBe('/*');
   });
 
   it('translates every title key', () => {

@@ -15,6 +15,17 @@
   "copy": "复制",
   "copied": "已复制",
   "more": "更多",
+  "morePage": {
+    "panel": "Panel",
+    "server": "Server",
+    "account": "Account",
+    "dark": "Dark",
+    "light": "Light",
+    "language": "Language",
+    "outboundsRouting": "Outbounds and routing",
+    "twoStepOn": "2-step on",
+    "twoStepOff": "2-step off"
+  },
   "download": "下载",
   "regenerate": "重新生成",
   "jsonEditor": "JSON 编辑器",
@@ -83,31 +94,11 @@
   "somethingWentWrong": "出了点问题",
   "subscription": {
     "title": "订阅信息",
-    "status": "状态",
-    "downloaded": "已下载",
-    "uploaded": "已上传",
-    "expiry": "到期",
-    "totalQuota": "总配额",
     "active": "启用",
-    "inactive": "停用",
     "unlimited": "无限制",
     "noExpiry": "无到期",
-    "copyAllConfigs": "复制全部配置",
-    "copyAllConfigsCopied": "已复制全部配置",
     "daysLeft": "剩余天数",
-    "expired": "已过期",
-    "depleted": "流量已用完",
-    "ofTotal": "共 {total}",
-    "tabLinks": "订阅",
-    "tabApps": "应用",
-    "tabConfigs": "配置",
-    "scanTitle": "用手机扫码",
-    "scanHint": "在 VPN 应用中扫描此二维码，无需复制链接即可添加订阅。",
-    "updateInterval": "每 {hours} 小时自动更新",
-    "support": "支持",
-    "qrTitle": "扫码。导入。连接。",
-    "qrHint": "使用客户端应用扫描。请勿泄露此二维码。",
-    "saveQr": "保存二维码"
+    "updateInterval": "每 {hours} 小时自动更新"
   },
   "menu": {
     "theme": "主题",
@@ -121,19 +112,15 @@
     "routing": "路由",
     "outbounds": "出站",
     "apiDocs": "API 文档",
-    "donate": "捐赠",
     "hosts": "主机",
-    "docs": "文档",
-    "openMenu": "打开菜单",
-    "pinSidebar": "固定侧边栏",
-    "unpinSidebar": "取消固定侧边栏",
     "subFormats": "Sub Formats",
-    "tunnels": "Tunnels"
+    "tunnels": "Tunnels",
+    "activity": "Activity",
+    "torPia": "Tor and PIA",
+    "logs": "Logs"
   },
   "pages": {
     "login": {
-      "hello": "你好",
-      "title": "欢迎",
       "loginAgain": "登录时效已过，请重新登录",
       "toasts": {
         "invalidFormData": "数据格式错误",
@@ -145,19 +132,10 @@
     },
     "index": {
       "thisServer": "This server",
-      "greetMorning": "Good morning",
-      "greetAfternoon": "Good afternoon",
-      "greetEvening": "Good evening",
-      "nodesStatusLine": "{online} of {total} nodes online",
       "cpu": "CPU",
       "swap": "交换空间",
-      "storage": "存储",
       "memory": "内存",
-      "xrayStatus": "Xray",
-      "stopXray": "停止",
       "restartXray": "重启",
-      "startXray": "启动",
-      "stopXrayDisabledHint": "Xray 未运行",
       "stopXrayConfirmTitle": "停止 Xray?",
       "stopXrayConfirmContent": "停止 Xray 将立即中断所有代理连接。确定要继续吗?",
       "stopXrayConfirmOk": "停止 Xray",
@@ -174,7 +152,6 @@
       "currentCommit": "当前提交",
       "latestCommit": "最新提交",
       "updateChannelChanged": "更新通道已切换",
-      "xrayStatusUnknown": "未知",
       "xrayStatusRunning": "运行中",
       "xrayStatusStop": "停止",
       "xrayStatusError": "错误",
@@ -217,10 +194,6 @@
       "xrayObservatoryDead": "离线",
       "xrayObservatoryLastSeen": "最后在线",
       "xrayObservatoryLastTry": "最后尝试",
-      "connectionCount": "连接数",
-      "ipAddresses": "IP 地址",
-      "toggleIpVisibility": "切换 IP 可见性",
-      "overallSpeed": "整体速度",
       "upload": "上传",
       "download": "下载",
       "sent": "已发送",
@@ -256,7 +229,6 @@
       "geodataEmpty": "尚未配置文件。路由规则中可通过 ext:geosite_custom.dat:category 引用文件。",
       "dontRefresh": "安装中，请勿刷新此页面",
       "logs": "日志",
-      "accessLogs": "访问日志",
       "autoUpdate": "自动更新",
       "amneziawgLogs": "AmneziaWG 日志",
       "amneziawgHandshake": "最后握手",
@@ -283,38 +255,16 @@
       "importDatabasePgDesc": "点击选择并上传 PostgreSQL 备份（.dump）、SQLite 数据库（.db）或 SQLite 迁移导出文件以恢复您的数据库。此操作将替换所有当前数据。",
       "migrationDownload": "下载迁移文件",
       "migrationDownloadPgDesc": "点击下载由 PostgreSQL 数据构建的 .db SQLite 数据库，可用于在 SQLite 上运行本面板。",
-      "avg": "均值",
-      "peak": "峰值",
-      "free": "剩余",
-      "openSockets": "打开的套接字",
-      "throughputSub": "网卡总计",
-      "avgWindow": "窗口均值",
-      "healthWarm": "{list} — 偏高",
-      "healthCritical": "{list} — 危险",
-      "panel": "面板",
-      "threads": "线程",
       "uptime": "运行时间",
-      "logLevelDebug": "Debug",
-      "logLevelInfo": "Info",
-      "logLevelNotice": "Notice",
-      "logLevelWarning": "Warning",
-      "logLevelError": "Error",
-      "accessDirect": "DIRECT",
-      "accessBlocked": "BLOCKED",
-      "accessProxy": "PROXY",
       "importKeepHostSettings": "保留本机设置",
       "importKeepHostSettingsDesc": "保留本面板的监听地址、端口、基础路径、证书和节点身份，而不是使用上传文件中的值。",
       "logLines": "行数",
       "timeRange": "时间范围"
     },
     "inbounds": {
-      "totalDownUp": "总上传 / 下载",
       "totalUsage": "总用量",
-      "inboundCount": "入站数量",
-      "operate": "菜单",
       "enable": "启用",
       "remark": "备注",
-      "node": "节点",
       "deployTo": "部署到",
       "localPanel": "本地面板",
       "fallbacks": {
@@ -332,7 +282,6 @@
       "port": "端口",
       "portMap": "端口映射",
       "traffic": "流量",
-      "speed": "速度",
       "expireDate": "到期时间",
       "createdAt": "创建时间",
       "updatedAt": "更新时间",
@@ -440,7 +389,6 @@
         "stream": "Stream",
         "streamHelp": "Xray stream 块包装："
       },
-      "subSortIndex": "订阅排序",
       "inboundInfo": "入站信息",
       "exportInbound": "导出入站规则",
       "import": "导入",
@@ -841,7 +789,6 @@
       "renew": "自动续期",
       "renewDesc": "到期后自动续期。(单位: 天)",
       "renewDays": "自动续期 (天)",
-      "searchPlaceholder": "搜索邮箱、备注、sub ID、UUID、密码、auth、Telegram ID…",
       "filterTitle": "筛选客户端",
       "clearAllFilters": "清除全部",
       "filters": {
@@ -864,7 +811,6 @@
       "totalGB": "流量上限 (GB)",
       "totalGBDesc": "该客户端的流量配额。0 = 不限制。",
       "expiryTime": "过期时间",
-      "addClients": "添加客户端",
       "limitIp": "IP 限制",
       "limitIpDesc": "最大同时连接 IP 数。0 = 不限制。",
       "limitHwid": "HWID 限制",
@@ -896,16 +842,12 @@
       "groupPlaceholder": "如 customer-a",
       "comment": "备注",
       "traffic": "流量",
-      "speed": "速度",
       "offline": "离线",
       "addClient": "添加客户端",
       "qrCode": "二维码",
       "clientInfo": "客户端信息",
       "editClient": "编辑客户端",
       "client": "客户端",
-      "enabled": "已启用",
-      "remaining": "剩余",
-      "duration": "时长",
       "attachedInbounds": "关联入站",
       "selectInbound": "选择一个或多个入站",
       "selectAllInbounds": "全选",
@@ -1074,14 +1016,6 @@
     },
     "groups": {
       "name": "名称",
-      "clientCount": "客户端",
-      "totalGroups": "分组总数",
-      "totalGroupedClients": "有分组的客户端",
-      "trafficUsed": "已用流量",
-      "upload": "上传",
-      "download": "下载",
-      "totalTraffic": "总流量",
-      "totalUpDown": "总上传 / 下载",
       "addGroup": "添加分组",
       "createSuccess": "已创建分组 “{name}”。",
       "rename": "重命名",
@@ -1116,10 +1050,6 @@
     "nodes": {
       "addNode": "添加节点",
       "editNode": "编辑节点",
-      "totalNodes": "节点总数",
-      "onlineNodes": "在线",
-      "offlineNodes": "离线",
-      "avgLatency": "平均延迟",
       "name": "名称",
       "namePlaceholder": "例如：de-frankfurt-1",
       "addressPlaceholder": "panel.example.com 或 1.2.3.4",
@@ -1128,7 +1058,6 @@
       "remark": "备注",
       "scheme": "协议",
       "address": "地址",
-      "port": "端口",
       "basePath": "基础路径",
       "apiToken": "API 令牌",
       "apiTokenPlaceholder": "远程面板设置页中的令牌",
@@ -1140,7 +1069,6 @@
       "outboundTagHint": "通过选定的 Xray 出站路由此节点的面板 API 流量。系统会自动将回环桥接入站添加到运行配置并实时应用。留空表示直接连接。",
       "outboundTagPlaceholder": "直接连接",
       "country": "Country",
-      "accent": "Node colour",
       "accentAuto": "Auto (from country)",
       "accentCustom": "Custom #rrggbb",
       "accentCustomRefused": "This colour is too close to the warning or success colour. Pick another.",
@@ -1155,20 +1083,15 @@
       "inboundsLoaded": "已加载 {{count}} 个入站",
       "inboundsLoadFailed": "加载入站失败",
       "enable": "已启用",
-      "status": "状态",
       "cpu": "CPU",
       "mem": "内存",
       "netUp": "网络上行 (KB/s)",
       "netDown": "网络下行 (KB/s)",
       "uptime": "运行时长",
       "latency": "延迟",
-      "lastHeartbeat": "上次心跳",
-      "xrayVersion": "Xray 版本",
-      "panelVersion": "面板版本",
       "actions": "操作",
       "probe": "立即探测",
       "updatePanel": "更新面板",
-      "updateSelected": "更新所选 ({count})",
       "updateAvailable": "有可用更新",
       "updateConfirmTitle": "将 {count} 个节点更新到最新版本？",
       "updateConfirmContent": "每个所选节点会下载最新版本并重启。仅更新已启用且在线的节点。",
@@ -1178,17 +1101,8 @@
       "connectionFailed": "连接失败",
       "never": "从未",
       "justNow": "刚刚",
-      "subNode": "子节点",
-      "subNodeTip": "只读：通过 {parent} 接入的下游节点。请在 {parent} 自己的面板中管理。",
       "deleteConfirmTitle": "删除节点 \"{name}\"？",
       "deleteConfirmContent": "这将停止监控该节点。远程面板本身不受影响。",
-      "statusValues": {
-        "online": "在线",
-        "offline": "离线",
-        "unknown": "未知",
-        "xrayError": "Xray 错误",
-        "xrayStopped": "已停止"
-      },
       "toasts": {
         "list": "加载节点失败",
         "obtain": "加载节点失败",
@@ -1201,7 +1115,6 @@
         "probeFailed": "探测失败",
         "updateStarted": "已开始更新面板",
         "updateResult": "已在 {ok} 个节点上触发更新，{failed} 个失败",
-        "updateNoneEligible": "请至少选择一个在线且已启用的节点",
         "saveMtls": "保存节点 mTLS",
         "reloadMtls": "Reload master mTLS credential"
       },
@@ -1967,8 +1880,6 @@
       "bufferSizePlaceholder": "自动",
       "seconds": "秒",
       "rules": {
-        "source": "来源",
-        "dest": "目的地址",
         "inbound": "入站",
         "balancer": "负载均衡",
         "useComma": "逗号分隔的项目"
@@ -2080,8 +1991,6 @@
       },
       "outbound": {
         "tag": "标签",
-        "egress": "出口",
-        "egressHint": "执行 HTTP 测试以显示出口 IP 和所在国家/地区。",
         "outboundStatus": "出站状态",
         "sendThrough": "发送通过",
         "targetStrategy": "目标解析策略",
@@ -2418,11 +2327,6 @@
       "editHost": "编辑主机",
       "selectInbound": "选择一个入站",
       "selectedCount": "已选 {count} 项",
-      "summary": {
-        "total": "总计",
-        "enabled": "已启用",
-        "disabled": "已禁用"
-      },
       "moveUp": "上移",
       "moveDown": "下移",
       "bulkEnable": "启用",
@@ -2536,12 +2440,10 @@
     },
     "tunnels": {
       "title": "Tunnels",
-      "subtitle": "Tunnels between this server and your other servers. Reverse: the exit server opens the connection toward the entry server. Direct: the entry server dials the exit server over a layer-3 link, for games.",
       "newPortal": "New tunnel",
       "importLink": "Import link",
       "empty": "No tunnels yet",
       "name": "Name",
-      "role": "Role",
       "rolePortal": "Entry (listens)",
       "roleBridge": "Exit (dials)",
       "address": "Address",
@@ -2556,9 +2458,7 @@
       "copyLink": "Copy setup link",
       "linkCopied": "Setup link copied",
       "pasteLink": "Paste the setup link from the entry server",
-      "enabled": "Enabled",
       "deleteConfirm": "Delete this tunnel?",
-      "status": "Status",
       "statusConnected": "Connected",
       "statusDown": "Down",
       "statusExit": "Exits from",
@@ -2593,7 +2493,6 @@
       "newPool": "New pool",
       "poolsHint": "Tunnels in a pool stand in for each other. Traffic leaves through the one in use and moves to a spare only after the spare has been clearly better several checks in a row. The balancer is also available to routing rules as pool-<name>.",
       "poolsEmpty": "No pools yet",
-      "poolMembers": "Tunnels",
       "poolInUse": "in use",
       "poolDeleteConfirm": "Delete this pool? Its tunnels stay.",
       "poolTunnels": "Tunnels",
@@ -2604,7 +2503,6 @@
       "engineVersion": "{engine} engine {version}",
       "engineVersionUnknown": "(installed by hand)",
       "updateEngine": "Update engine",
-      "engineViaNode": "Download through node",
       "mode": "Mode",
       "modeReverse": "Reverse",
       "modeDirect": "Direct",
@@ -2724,8 +2622,6 @@
       "search": "Search country",
       "empty": "No country matches",
       "test": "Test",
-      "add": "Add",
-      "remove": "Remove",
       "result": {
         "works": "Works · {ms} ms",
         "exit": "exit {loc}"
@@ -3089,9 +2985,6 @@
     "statusUp": "恢复"
   },
   "commandPalette": {
-    "title": "命令面板",
-    "placeholder": "输入命令或搜索客户端、入站、页面...",
-    "search": "搜索...",
     "navigation": "页面导航",
     "actions": "系统操作",
     "navigate": "导航",
@@ -3100,5 +2993,684 @@
     "restartXray": "重启 Xray 服务",
     "restartXraySuccess": "Xray 服务已成功重启",
     "settings": "设置"
+  },
+  "shell": {
+    "brand": "Dalan",
+    "nav": {
+      "main": "Main navigation",
+      "overview": "Overview",
+      "usersAccess": "Users and access",
+      "network": "Network",
+      "system": "System",
+      "home": "Home",
+      "users": "Users",
+      "connections": "Connections",
+      "servers": "Servers",
+      "more": "More",
+      "help": "Help",
+      "collapse": "Collapse menu",
+      "expand": "Expand menu",
+      "collapseShort": "Collapse"
+    },
+    "greeting": {
+      "morning": "Good morning, {name}",
+      "afternoon": "Good afternoon, {name}",
+      "evening": "Good evening, {name}",
+      "morningBare": "Good morning",
+      "afternoonBare": "Good afternoon",
+      "eveningBare": "Good evening"
+    },
+    "status": {
+      "healthy": "all systems healthy",
+      "attention": "needs attention",
+      "highLoad": "running under high load",
+      "notAnswering": "not answering",
+      "paused": "Paused",
+      "online": "Online",
+      "offline": "Offline",
+      "offlineShort": "offline",
+      "highLoadShort": "High load",
+      "updated": "updated {n}s ago"
+    },
+    "ms": "{n} ms",
+    "search": {
+      "label": "Search",
+      "field": "Search users, inbounds, nodes…",
+      "everything": "Search everything",
+      "placeholder": "Search users, inbounds, nodes, settings…",
+      "nothing": "Nothing found for “{q}”. Search looks across every node.",
+      "across": "Searching {n} servers"
+    },
+    "mode": {
+      "label": "Mode",
+      "simple": "Simple",
+      "advanced": "Advanced"
+    },
+    "effects": {
+      "label": "Effects",
+      "full": "Full",
+      "light": "Light",
+      "off": "Off"
+    },
+    "theme": {
+      "toLight": "Switch to light theme",
+      "toDark": "Switch to dark theme"
+    },
+    "notifications": "Notifications",
+    "account": "Account",
+    "servers": "Servers",
+    "addNode": "Add node",
+    "allServers": "All {n} servers",
+    "findServer": "Find a server",
+    "quick": {
+      "label": "Add",
+      "title": "Quick add on {name}",
+      "user": "New user",
+      "connection": "New connection",
+      "server": "New server"
+    }
+  },
+  "dashboard": {
+    "open": "Open",
+    "ago": {
+      "now": "now",
+      "min": "{n} min",
+      "hour": "{n} h",
+      "day": "{n} d"
+    },
+    "activity": {
+      "title": "Activity",
+      "viewAll": "View all",
+      "empty": "Nothing has happened yet. Changes you make show up here.",
+      "who": {
+        "you": "You",
+        "system": "System",
+        "api": "API"
+      },
+      "act": {
+        "client": {
+          "add": "<b>{who}</b> added client <b>{target}</b>",
+          "update": "<b>{who}</b> edited client <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted client <b>{target}</b>",
+          "bulkAdd": "<b>{who}</b> added <b>{target}</b> clients",
+          "bulkDelete": "<b>{who}</b> deleted <b>{target}</b> clients",
+          "bulkAdjust": "<b>{who}</b> changed limits for <b>{target}</b> clients",
+          "bulkEnable": "<b>{who}</b> turned on <b>{target}</b> clients",
+          "bulkDisable": "<b>{who}</b> paused <b>{target}</b> clients",
+          "resetTraffic": "<b>{who}</b> reset traffic for <b>{target}</b>"
+        },
+        "group": {
+          "add": "<b>{who}</b> created group <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted group <b>{target}</b>"
+        },
+        "inbound": {
+          "add": "<b>{who}</b> added inbound <b>{target}</b>",
+          "update": "<b>{who}</b> edited inbound <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted inbound <b>{target}</b>",
+          "enable": "<b>{who}</b> turned on inbound <b>{target}</b>",
+          "disable": "<b>{who}</b> turned off inbound <b>{target}</b>"
+        },
+        "tunnel": {
+          "add": "<b>{who}</b> added tunnel <b>{target}</b>",
+          "update": "<b>{who}</b> edited tunnel <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted tunnel <b>{target}</b>",
+          "enable": "<b>{who}</b> started tunnel <b>{target}</b>",
+          "disable": "<b>{who}</b> paused tunnel <b>{target}</b>"
+        },
+        "node": {
+          "add": "<b>{who}</b> added node <b>{target}</b>",
+          "update": "<b>{who}</b> edited node <b>{target}</b>",
+          "delete": "<b>{who}</b> removed node <b>{target}</b>",
+          "enable": "<b>{who}</b> turned on node <b>{target}</b>",
+          "disable": "<b>{who}</b> turned off node <b>{target}</b>",
+          "offline": "<b>{who}</b>: <b>{target}</b> went offline",
+          "online": "<b>{who}</b>: <b>{target}</b> is back online"
+        },
+        "host": {
+          "add": "<b>{who}</b> added host <b>{target}</b>",
+          "update": "<b>{who}</b> edited host <b>{target}</b>",
+          "delete": "<b>{who}</b> deleted host <b>{target}</b>"
+        },
+        "tor": {
+          "add": "<b>{who}</b> added Tor exit <b>{target}</b>",
+          "delete": "<b>{who}</b> removed Tor exit <b>{target}</b>"
+        },
+        "xray": {
+          "restart": "<b>{who}</b> restarted Xray",
+          "stop": "<b>{who}</b> stopped Xray",
+          "install": "<b>{who}</b> installed Xray <b>{target}</b>",
+          "crash": "<b>{who}</b>: Xray stopped unexpectedly",
+          "config": "<b>{who}</b> changed the Xray config"
+        },
+        "panel": {
+          "update": "<b>{who}</b> updated the panel"
+        },
+        "settings": {
+          "update": "<b>{who}</b> changed settings"
+        },
+        "account": {
+          "update": "<b>{who}</b> changed the sign-in details"
+        },
+        "session": {
+          "signin": "<b>{who}</b> signed in from <b>{target}</b>"
+        }
+      },
+      "generic": "<b>{who}</b> {action} <b>{target}</b>"
+    },
+    "alerts": {
+      "title": "Alerts",
+      "count": "{n} need attention",
+      "none": "Nothing needs attention",
+      "noneHint": "Offline nodes, high load, a stopped Xray and expiring users show up here.",
+      "offline": "{node} is offline",
+      "offlineSub": "No heartbeat for {since}",
+      "nodeLoad": "{node} at {pct}%",
+      "sustained": "Sustained for {since}",
+      "cpu": "This server's CPU at {pct}%",
+      "memory": "This server's memory at {pct}%",
+      "xray": "Xray is not running",
+      "xraySub": "Users cannot connect until it starts",
+      "expiring": "{n} users expire this week",
+      "expiringSub": "Renew or notify them from Clients",
+      "review": "Review"
+    },
+    "high": "High",
+    "live": "Live",
+    "health": {
+      "title": "Server health",
+      "memory": "Memory",
+      "disk": "Disk"
+    },
+    "xray": {
+      "core": "Xray core",
+      "runningFor": "Running · uptime {n} d",
+      "uptime": "uptime {n} d",
+      "stoppedSub": "Stopped · users cannot connect",
+      "starting": "Starting…",
+      "stopping": "Stopping…",
+      "started": "Xray started",
+      "stopped": "Xray stopped",
+      "restarting": "Restarting Xray",
+      "restartingSub": "on {where} · users reconnect on their own",
+      "stepSend": "Asking Xray to restart",
+      "stepWait": "Waiting for Xray to run again",
+      "stepDone": "Users can connect",
+      "restarted": "Xray restarted · users reconnect on their own",
+      "restartFailed": "Xray did not come back: {error}"
+    },
+    "tunnels": {
+      "title": "Tunnels",
+      "count": "{on} of {n} on",
+      "none": "No tunnels yet",
+      "add": "Add a tunnel",
+      "route": "This server → {to}",
+      "up": "Up",
+      "down": "Down",
+      "testing": "Testing",
+      "reverse": "reverse",
+      "direct": "direct",
+      "layer3": "layer 3",
+      "toggle": "{name} tunnel",
+      "started": "{name} started",
+      "paused": "{name} paused"
+    },
+    "usage": {
+      "title": "Usage and online users",
+      "onlineNow": "online now",
+      "throughput": "throughput",
+      "mbits": "Mbit/s",
+      "clients": "Clients",
+      "monthly": "Monthly traffic",
+      "plan": "of {cap} GB plan · resets in {n} days"
+    },
+    "nodes": {
+      "connected": "Connected nodes",
+      "counts": "{direct} direct · {chained} chained",
+      "latency": "{n} ms latency",
+      "lastSeen": "last seen {ago} ago",
+      "traffic": "Traffic",
+      "unreachable": "Unreachable",
+      "behind": "{n} behind it · {names}",
+      "managed": "Managed through this panel",
+      "offlineTitle": "{name} is not answering",
+      "offlineBody": "Last heartbeat {ago} ago. Settings stay as they were.",
+      "reconnect": "Check the node",
+      "lastLogs": "Open logs",
+      "thisNode": "This node",
+      "country": "Country",
+      "link": "Link to this server",
+      "panelLink": "Panel connection",
+      "inbounds": "Inbounds",
+      "version": "Panel version",
+      "manage": "Manage",
+      "behindTitle": "Nodes behind {name}",
+      "behindSub": "Reached through {name}, shown only here",
+      "via": "via {name} · {n} ms"
+    },
+    "tools": {
+      "title": "Server tools",
+      "versions": "Panel {panel} · Xray {xray}",
+      "awgLogs": "AmneziaWG logs",
+      "metrics": "Xray metrics"
+    }
+  },
+  "activity": {
+    "sub": "Who did what, on which server, and when. Changes you make inside a node are recorded here too.",
+    "export": "Export CSV",
+    "filters": "Filter activity",
+    "area": {
+      "all": "Everything",
+      "client": "Clients",
+      "tunnel": "Tunnels",
+      "node": "Nodes",
+      "session": "Sign-ins",
+      "system": "System"
+    },
+    "server": "Server",
+    "any": "all",
+    "who": "Who",
+    "anyone": "anyone",
+    "when": "When",
+    "days": "Last {n} days",
+    "allTime": "All time",
+    "emptyTitle": "Nothing here yet",
+    "emptyBody": "Changes you make and things the system notices show up here.",
+    "col": {
+      "when": "When",
+      "who": "Who",
+      "what": "What",
+      "where": "Where",
+      "details": "Details"
+    },
+    "role": {
+      "you": "Owner",
+      "api": "API token",
+      "system": "Automatic"
+    },
+    "throughPanel": "through this panel",
+    "showing": "Showing {from}–{to} of {total}",
+    "prev": "Previous page",
+    "next": "Next page",
+    "code": "Action code"
+  },
+  "nodes": {
+    "sub": "Servers connected to this one. Open a node to manage it as if its own panel were open.",
+    "updateAll": "Update all online",
+    "open": "Open node",
+    "behind": "Behind it",
+    "history": "History",
+    "turnOn": "Turn on",
+    "turnOff": "Turn off",
+    "addTitle": "Add a node",
+    "addBody": "Run one command on the new server. It registers itself and opens a tunnel back here.",
+    "countryHint": "Sets the flag and the default colour.",
+    "colour": "Colour for this node",
+    "colourHint": "Taken from the flag. Used for the tab, buttons, bars and charts when you open this node. Status colours never change.",
+    "panelPort": "Panel port",
+    "manageThrough": "Manage through a tunnel",
+    "moreOptions": "More options",
+    "remove": "Remove node",
+    "saving": "Testing and saving…"
+  },
+  "tunnels": {
+    "subtitle": "Links between this server and your nodes. Engines are listed first; each tunnel runs on one engine.",
+    "testAll": "Test all",
+    "test": "Test",
+    "create": "Create tunnel",
+    "import": "Import",
+    "backpackBlurb": "Proved itself through long internet cuts. Reverse and direct, TCP and layer 3.",
+    "rakhshBlurb": "Fast multiplexed transport. Good for gaming at low ping.",
+    "moreEngines": "Install another engine",
+    "moreEnginesHint": "More engines can be added later; the list changes with the backend.",
+    "installed": "Installed",
+    "notInstalled": "Not installed",
+    "count": "{n} tunnels",
+    "options": "Options",
+    "engineOptions": "{engine} options",
+    "downloadOn": "Download on",
+    "flowTitle": "How traffic flows",
+    "flowHint": "Users always enter in Iran. Reverse tunnels are opened from outside, so they survive cuts.",
+    "flowUsers": "Users",
+    "flowUsersSub": "in Iran",
+    "flowEntry": "entry and subscriptions",
+    "flowExitNode": "Exit node",
+    "flowOpens": "opens the reverse tunnel",
+    "flowDials": "is dialled directly",
+    "flowInternet": "→ internet",
+    "filters": "Filter tunnels",
+    "filter": {
+      "all": "All",
+      "ok": "Up",
+      "bad": "Down",
+      "off": "Paused",
+      "backpack": "BackPack",
+      "rakhsh": "Rakhsh"
+    },
+    "colTunnel": "Tunnel",
+    "colEngine": "Engine",
+    "colMode": "Mode",
+    "colLatency": "Latency",
+    "colLastHour": "Last hour",
+    "colState": "State",
+    "colRoutes": "Routes",
+    "layer3": "Layer 3",
+    "ms": "{n} ms",
+    "enable": "Turn on"
+  },
+  "outbounds": {
+    "title": "Outbounds and routing",
+    "subtitle": "Where traffic leaves, and the rules that pick the way. Tunnels and Tor appear here next to the other outbounds.",
+    "editJson": "Edit as JSON",
+    "add": "Add outbound",
+    "colName": "Name",
+    "colType": "Type",
+    "ready": "Ready",
+    "failed": "Failed",
+    "testing": "Testing",
+    "notTested": "Not tested",
+    "torExit": "Tor",
+    "unsaved": "You have changes that are not saved. Saving restarts Xray."
+  },
+  "routing": {
+    "title": "Routing rules",
+    "subtitle": "The rules that pick which outbound each connection uses.",
+    "rule": "Rule",
+    "hint": "Checked from top to bottom. The first match wins.",
+    "empty": "No rules yet. Without rules, traffic leaves through the first outbound.",
+    "drag": "Drag to reorder",
+    "enabled": "Turn on"
+  },
+  "hosts": {
+    "subtitle": "The addresses and names that go into subscription links.",
+    "tipTitle": "Hosts are what users see in their link",
+    "tipBody": "When an address is blocked, change the host here and every subscription updates on its next refresh. No one needs a new link.",
+    "empty": "No hosts yet",
+    "filters": "Filter hosts",
+    "filter": {
+      "all": "All",
+      "on": "On",
+      "off": "Off"
+    },
+    "on": "On",
+    "off": "Off",
+    "usedBy": "Used by",
+    "copyAddress": "Copy address",
+    "select": "Select {name}",
+    "selectAll": "Select all"
+  },
+  "groups": {
+    "subtitle": "Put clients with the same plan together, then change limits for all of them at once.",
+    "new": "New group",
+    "empty": "No groups yet",
+    "emptyHint": "Make a group, then add clients to it from here or from the Clients page.",
+    "members": "members",
+    "share": "Share of all group traffic"
+  },
+  "inbounds": {
+    "subtitle": "The doors users come in through. Each one is a protocol on a port.",
+    "import": "Import",
+    "filters": "Filter inbounds",
+    "filter": {
+      "all": "All",
+      "on": "Listening",
+      "off": "Off",
+      "attention": "Needs attention"
+    },
+    "state": {
+      "ok": "Listening",
+      "warn": "Expires soon",
+      "expired": "Expired",
+      "off": "Off"
+    },
+    "colInbound": "Inbound",
+    "online": "{n} online",
+    "expiring": "Expiring",
+    "select": "Select {name}",
+    "anyServer": "Any server",
+    "searchHint": "Name, port or protocol",
+    "empty": "No inbounds yet",
+    "emptyHint": "Add an inbound so clients have a way in.",
+    "prev": "Previous page",
+    "next": "Next page"
+  },
+  "clientsPage": {
+    "subtitle": "Everyone who can connect through this server. Select rows for bulk actions.",
+    "export": "Export",
+    "add": "Add client",
+    "filters": "Filter clients by status",
+    "chip": {
+      "all": "All",
+      "active": "Active",
+      "expiring": "Expiring",
+      "depleted": "Expired",
+      "deactive": "Paused",
+      "online": "Online now"
+    },
+    "any": "Any",
+    "searchHint": "Name, email or UUID",
+    "removeFilter": "Remove filter",
+    "empty": "No clients yet",
+    "emptyHint": "Add a client, then share their link or QR code.",
+    "showing": "Showing {from}–{to} of {total}",
+    "perPage": "Per page",
+    "status": {
+      "active": "Active",
+      "expiring": "Expiring",
+      "depleted": "Expired",
+      "paused": "Paused"
+    },
+    "select": "Select {name}",
+    "noGroup": "No group",
+    "unlimited": "Unlimited",
+    "never": "Never",
+    "afterFirstUse": "{n} days after first use",
+    "pause": "Pause",
+    "resume": "Resume",
+    "colStatus": "Status",
+    "colUsage": "Usage",
+    "colExpires": "Expires",
+    "loseAccess": "{names} lose access right away.",
+    "andMore": "{names} and {count} more"
+  },
+  "logs": {
+    "subtitle": "Live log of this server. New lines appear at the top; pausing stops the stream.",
+    "pause": "Pause",
+    "resume": "Resume",
+    "levels": "Log level",
+    "level": {
+      "info": "All",
+      "warning": "Warnings",
+      "err": "Errors"
+    },
+    "sources": "Log source",
+    "source": {
+      "panel": "Panel",
+      "xray": "Xray access"
+    },
+    "search": "Search logs",
+    "streaming": "Streaming",
+    "paused": "Paused",
+    "count": "{n} lines · updated {at}",
+    "unavailable": "Logs could not be read",
+    "xrayHint": "Turn on the Xray access log in Xray config to see connections here.",
+    "empty": "No lines yet"
+  },
+  "torPage": {
+    "subtitle": "Extra exits that run inside Dalan. Route users or inbounds to them like any outbound.",
+    "exitsOn": "exit countries on",
+    "exitsWorking": "connected now",
+    "notAdded": "Not in use",
+    "use": "Use {name}",
+    "piaHint": "PIA servers are added as outbounds. Sign in and pick servers in the PIA dialog, then save the Xray config.",
+    "flagsHint": "Flags are drawn as images, so they show on Windows too."
+  },
+  "settingsPage": {
+    "subtitle": "Everything about this panel. Each node has its own settings when you open it.",
+    "sections": "Settings sections",
+    "nav": {
+      "general": "General",
+      "appearance": "Appearance",
+      "subscription": "Subscription page",
+      "security": "Security",
+      "notifications": "Notifications",
+      "users": "Users and access",
+      "developer": "Developer",
+      "backups": "Backups",
+      "updates": "Updates"
+    },
+    "soon": "Soon",
+    "comingLater": "Coming later",
+    "usersLater": "Roles and per-admin access arrive in a later version. This is where they will live.",
+    "developerHint": "API tokens and the API reference. The reference loads only when you open it.",
+    "email": "Email",
+    "formats": "Formats",
+    "balancers": "Balancers",
+    "thisDevice": "This device",
+    "effects": {
+      "auto": "Follows this device: light on weak devices, off when the system asks for less motion.",
+      "full": "Drifting glow, full blur, all motion.",
+      "light": "Still glow, small blur, only motion that explains a change.",
+      "off": "Solid cards, no blur, no ambient motion."
+    },
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "panelMode": "Panel mode",
+    "simpleMode": "Simple mode",
+    "simpleModeHint": "Plain names (Users, Servers, Connections), hides raw Xray options, keeps common tasks one or two taps away.",
+    "updates": {
+      "panel": "Dalan panel",
+      "xray": "Xray core",
+      "upToDate": "up to date",
+      "available": "Update available"
+    }
+  },
+  "xrayPage": {
+    "subtitle": "Advanced. The full Xray JSON for this server, and the basics, balancers and DNS it is built from.",
+    "reset": "Reset to generated",
+    "sections": "Xray config sections",
+    "json": "Full config",
+    "balancers": "Balancers",
+    "lines": "{n} lines · JSON",
+    "check": "Check before saving",
+    "jsonValid": "JSON is valid",
+    "jsonInvalid": "JSON has an error",
+    "managed": "Managed by the panel (tunnels, Tor or a subscription). Edits here are replaced on the next sync."
+  },
+  "developer": {
+    "tokens": "API tokens",
+    "newToken": "New token",
+    "noTokens": "No API tokens yet.",
+    "manage": "Manage tokens in Security",
+    "reference": "API reference",
+    "panelApi": "Panel API",
+    "wsEvents": "WebSocket events",
+    "onDemand": "Loads on demand",
+    "load": "Load the API reference",
+    "wsIntro": "After the cookie-authenticated GET /ws upgrade, every message is { type, payload, time }; time is Unix milliseconds."
+  },
+  "loginPage": {
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "sixDigits": "6 digits",
+    "more": "More languages",
+    "subtitle": "Sign in to your panel"
+  },
+  "errorPage": {
+    "lost": "Lost in the corridor",
+    "lostHint": "This page does not exist, or the node that owns it is not answering. Your settings are safe.",
+    "broken": "This page stopped working",
+    "brokenHint": "Something failed while showing it. Your settings are safe; try again or go back to the dashboard.",
+    "home": "Go to dashboard",
+    "retry": "Try again"
+  },
+  "subPage": {
+    "hi": "Hi {name}",
+    "ready": "Your connection is ready",
+    "notReady": "Ask your provider to renew it",
+    "status": {
+      "active": "Active",
+      "unlimited": "Active",
+      "expired": "Expired",
+      "depleted": "Out of data",
+      "disabled": "Paused"
+    },
+    "usedOf": "used of {total}",
+    "until": "Valid until {date}",
+    "connect": "Open in {app}",
+    "copy": "Copy link",
+    "copied": "Link copied",
+    "copiedHint": "Paste it in your app if it did not open by itself",
+    "showQr": "Show QR code",
+    "hideQr": "Hide QR code",
+    "help": "Set up in 3 steps",
+    "pick": "Pick your phone",
+    "step1": "Install an app",
+    "step2": "Tap “Open in” above",
+    "step3": "Press connect",
+    "recommended": "Recommended",
+    "more": "Other formats and single configs",
+    "need": "Need help? Message your provider"
+  },
+  "setup": {
+    "time": "Setup · about 2 minutes",
+    "progress": "Setup progress",
+    "step": {
+      "server": "Server",
+      "connection": "Connection",
+      "user": "First user"
+    },
+    "server": {
+      "title": "Let’s set up this server",
+      "hint": "Give it a name you will recognise, and say where it is.",
+      "name": "Server name",
+      "country": "Country",
+      "address": "Public address",
+      "addressHint": "The address you opened this panel at. Links use it unless you set a domain in Settings.",
+      "countryNone": "Not set"
+    },
+    "connect": {
+      "title": "How should people connect?",
+      "hint": "Pick one. You can add more later."
+    },
+    "preset": {
+      "reality": {
+        "title": "Best for most people",
+        "desc": "VLESS Reality on port 443. Looks like normal HTTPS, hard to block."
+      },
+      "cdn": {
+        "title": "Behind a CDN",
+        "desc": "Trojan over WebSocket on port 8080, for a CDN that adds TLS. Use when direct IPs get blocked."
+      },
+      "game": {
+        "title": "Low ping",
+        "desc": "VLESS on a layer 3 tunnel, for gaming and calls. Needs a node and a Rakhsh tunnel first; set it up on the Tunnels page."
+      }
+    },
+    "user": {
+      "title": "Add your first user",
+      "hint": "This can be you. You will get a link to open in any app.",
+      "name": "Name",
+      "placeholder": "For example sara.k",
+      "traffic": "Traffic",
+      "gb50": "50 GB",
+      "valid": "Valid for",
+      "days30": "30 days",
+      "never": "Never expires"
+    },
+    "live": {
+      "title": "You’re live",
+      "hint": "{name} can connect now. Send this link or let them scan the code.",
+      "noSub": "{name} is ready. Turn on subscriptions in Settings to get a link, or copy their config from the Clients page."
+    },
+    "keysFailed": "Could not make Reality keys",
+    "back": "Back",
+    "next": "Continue",
+    "finish": "Create and finish",
+    "later": "Set up later"
+  },
+  "confirmDelete": {
+    "word": "DELETE",
+    "type": "Type {word} to confirm"
   }
 }
