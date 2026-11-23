@@ -22,7 +22,9 @@
     "dark": "تیره",
     "light": "روشن",
     "language": "زبان",
-    "outboundsRouting": "خروجی‌ها و مسیریابی"
+    "outboundsRouting": "خروجی‌ها و مسیریابی",
+    "twoStepOn": "تأیید دومرحله‌ای روشن",
+    "twoStepOff": "تأیید دومرحله‌ای خاموش"
   },
   "download": "دانلود",
   "regenerate": "تولید مجدد",

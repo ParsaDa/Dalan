@@ -1,4 +1,8 @@
 import { useTranslation } from 'react-i18next';
+
+import { useAllSettings } from '@/api/queries/useAllSettings';
+import { useInboundOptions } from '@/api/queries/useInboundOptions';
+import { fmtInt } from '@/components/dl/numbers';
 import { Link } from 'react-router';
 
 import Icon from '@/components/dl/Icon';
@@ -25,6 +29,8 @@ export default function MorePage() {
   const { t, i18n } = useTranslation();
   const { isDark, toggleTheme, effects, setEffectsPref } = useTheme();
   const { simple } = useShellPrefs();
+  const settings = useAllSettings();
+  const inbounds = useInboundOptions();
   const groups: { title: string; rows: Row[] }[] = [
     {
       title: t('morePage.panel'),
@@ -59,24 +65,46 @@ export default function MorePage() {
     {
       title: t('morePage.server'),
       rows: [
-        { icon: 'inbound', label: t('menu.inbounds'), to: '/inbounds' },
+        {
+          icon: 'inbound',
+          label: t('menu.inbounds'),
+          value: inbounds.data ? fmtInt(inbounds.data.length) : undefined,
+          to: '/inbounds',
+        },
         { icon: 'groups', label: t('menu.groups'), to: '/groups' },
         { icon: 'hosts', label: t('menu.hosts'), to: '/hosts' },
         { icon: 'nodes', label: t('menu.nodes'), to: '/nodes' },
         { icon: 'outbound', label: t('morePage.outboundsRouting'), to: '/outbound' },
+        { icon: 'tor', label: t('menu.torPia'), to: '/tor' },
         { icon: 'xray', label: t('menu.xray'), to: '/xray' },
+        { icon: 'logs', label: t('menu.logs'), to: '/logs' },
       ],
     },
     {
       title: t('morePage.account'),
       rows: [
         { icon: 'settings', label: t('menu.settings'), to: '/settings' },
+        {
+          icon: 'lock',
+          label: t('settingsPage.nav.security'),
+          value: settings.fetched
+            ? t(settings.allSetting.twoFactorEnable ? 'morePage.twoStepOn' : 'morePage.twoStepOff')
+            : undefined,
+          to: '/settings#security',
+        },
+        { icon: 'server', label: t('settingsPage.nav.backups'), to: '/settings#backups' },
         { icon: 'code', label: t('menu.apiDocs'), to: '/api-docs' },
+        {
+          icon: 'users',
+          label: t('settingsPage.nav.users'),
+          value: t('settingsPage.comingLater'),
+          to: '/settings#users',
+        },
       ],
     },
   ];
   return (
-    <>
+    <div className="col stag" style={{ gap: 22 }}>
       <div className="ptop">
         <Mark size={30} />
         <h1 className="h2" style={{ flex: 1, fontSize: 22 }}>
@@ -142,6 +170,6 @@ export default function MorePage() {
           </section>
         </div>
       ))}
-    </>
+    </div>
   );
 }

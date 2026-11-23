@@ -99,7 +99,10 @@ export default function LoginPage() {
           position: 'relative',
         }}
       >
-        <div className="col" style={{ alignItems: 'center', gap: 26, width: 'min(400px, 100%)' }}>
+        <div
+          className="col stag"
+          style={{ alignItems: 'center', gap: 26, width: 'min(400px, 100%)' }}
+        >
           <div className="col" style={{ alignItems: 'center', gap: 12 }}>
             <Mark size={76} motion="anim" title="Dalan" />
             <div className="wm" style={{ fontSize: 32 }}>

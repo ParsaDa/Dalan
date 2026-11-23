@@ -22,7 +22,9 @@
     "dark": "Dark",
     "light": "Light",
     "language": "Language",
-    "outboundsRouting": "Outbounds and routing"
+    "outboundsRouting": "Outbounds and routing",
+    "twoStepOn": "2-step on",
+    "twoStepOff": "2-step off"
   },
   "download": "Завантажити",
   "regenerate": "Згенерувати заново",
