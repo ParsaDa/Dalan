@@ -139,8 +139,6 @@
   },
   "pages": {
     "login": {
-      "hello": "Xin chào",
-      "title": "Chào mừng",
       "loginAgain": "Thời hạn đăng nhập đã hết. Vui lòng đăng nhập lại.",
       "toasts": {
         "invalidFormData": "Dạng dữ liệu nhập không hợp lệ.",
@@ -3579,5 +3577,12 @@
     "onDemand": "Loads on demand",
     "load": "Load the API reference",
     "wsIntro": "After the cookie-authenticated GET /ws upgrade, every message is { type, payload, time }; time is Unix milliseconds."
+  },
+  "loginPage": {
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "sixDigits": "6 digits",
+    "more": "More languages",
+    "subtitle": "Sign in to your panel"
   }
 }

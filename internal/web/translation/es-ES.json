@@ -139,8 +139,6 @@
   },
   "pages": {
     "login": {
-      "hello": "Hola",
-      "title": "Bienvenido",
       "loginAgain": "El límite de tiempo de inicio de sesión ha expirado. Por favor, inicia sesión nuevamente.",
       "toasts": {
         "invalidFormData": "El formato de los datos de entrada es inválido.",
@@ -3579,5 +3577,12 @@
     "onDemand": "Loads on demand",
     "load": "Load the API reference",
     "wsIntro": "After the cookie-authenticated GET /ws upgrade, every message is { type, payload, time }; time is Unix milliseconds."
+  },
+  "loginPage": {
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "sixDigits": "6 digits",
+    "more": "More languages",
+    "subtitle": "Sign in to your panel"
   }
 }
