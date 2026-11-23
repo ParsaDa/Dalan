@@ -341,7 +341,12 @@ func TestNodeResetDeliveryDoesNotHoldTheRequestBehindASilentNode(t *testing.T) {
 	t.Cleanup(func() {
 		close(stall.release)
 		lock, _ := nodeResetDeliveryLocks.LoadOrStore(node.Id, &sync.Mutex{})
-		lock.(*sync.Mutex).Lock()
+		for deadline := time.Now().Add(nodeClientPushTimeout); !lock.(*sync.Mutex).TryLock(); {
+			if time.Now().After(deadline) {
+				t.Fatal("the stalled reset delivery never let go of the node lock")
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
 		lock.(*sync.Mutex).Unlock()
 	})
 	ib := nodeInbound(t, node.Id, 41912, []model.Client{{Email: "held", ID: "11111111-1111-1111-1111-1111111111ab", Enable: true}})
