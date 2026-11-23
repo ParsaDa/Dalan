@@ -3615,7 +3615,8 @@
       "name": "Server name",
       "country": "Country",
       "address": "Public address",
-      "addressHint": "The address you opened this panel at. Links use it unless you set a domain in Settings."
+      "addressHint": "The address you opened this panel at. Links use it unless you set a domain in Settings.",
+      "countryNone": "Not set"
     },
     "connect": {
       "title": "How should people connect?",

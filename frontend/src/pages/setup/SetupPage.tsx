@@ -7,6 +7,7 @@ import { QRCode } from 'antd';
 import { useAllSettings } from '@/api/queries/useAllSettings';
 import Icon from '@/components/dl/Icon';
 import Mark from '@/components/dl/Mark';
+import { fmtInt } from '@/components/dl/numbers';
 import { FlagDot } from '@/components/dl/primitives';
 import { formValuesToWirePayload } from '@/lib/xray/inbound-form-adapter';
 import { countryName } from '@/pages/xray/outbounds/outbounds-tab-helpers';
@@ -35,7 +36,7 @@ export default function SetupPage() {
   const { allSetting, savePayload } = useAllSettings();
   const [step, setStep] = useState(0);
   const [name, setName] = useState(() => window.location.hostname);
-  const [country, setCountry] = useState('IR');
+  const [country, setCountry] = useState('');
   const [preset, setPreset] = useState<Preset>('reality');
   const [user, setUser] = useState('');
   const [traffic, setTraffic] = useState<'50' | '0'>('50');
@@ -126,7 +127,7 @@ export default function SetupPage() {
                 className={`st${i < step ? ' done' : i === step ? ' on' : ''}`}
                 aria-current={i === step ? 'step' : undefined}
               >
-                <i>{i < step ? <Icon name="check" size={14} /> : i + 1}</i>
+                <i>{i < step ? <Icon name="check" size={14} /> : fmtInt(i + 1)}</i>
                 <span>{label}</span>
               </div>
               {i < steps.length - 1 && <div className={`ln${i < step ? ' done' : ''}`} />}
@@ -164,6 +165,7 @@ export default function SetupPage() {
                         value={country}
                         onChange={(e) => setCountry(e.target.value)}
                       >
+                        <option value="">{t('setup.server.countryNone')}</option>
                         {countries.map((c) => (
                           <option key={c.code} value={c.code}>
                             {c.label}
