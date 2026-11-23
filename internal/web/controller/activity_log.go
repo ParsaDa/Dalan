@@ -59,6 +59,7 @@ var activityRoutes = map[string]activityRoute{
 	"/server/installXray/:version": {action: "xray.install"},
 	"/server/updatePanel":          {action: "panel.update"},
 	"/setting/update":              {action: "settings.update"},
+	"/setting/profile":             {action: "settings.update"},
 	"/setting/updateUser":          {action: "account.update"},
 	"/xray/update":                 {action: "xray.config"},
 }

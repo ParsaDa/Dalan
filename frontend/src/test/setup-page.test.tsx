@@ -1,89 +1,113 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { useAllSettings } from '@/api/queries/useAllSettings';
 import SetupPage from '@/pages/setup/SetupPage';
 import { HttpUtil, Msg } from '@/utils';
 import { renderWithProviders } from './test-utils';
+
+const PROFILE = '/panel/api/setting/profile';
+const ALL = '/panel/api/setting/all';
 
 function postCalls(url: string) {
   return vi.mocked(HttpUtil.post).mock.calls.filter((c) => c[0] === url);
 }
 
+// Stands in for the dashboard redirect: it holds the settings query and records what it saw first.
+const seenOnArrival: boolean[] = [];
+
+function Holder() {
+  useAllSettings();
+  return null;
+}
+
+function Dashboard() {
+  const { allSetting } = useAllSettings();
+  if (seenOnArrival.length === 0) seenOnArrival.push(allSetting.setupDone);
+  return <h1>Dashboard</h1>;
+}
+
+function renderWizard() {
+  seenOnArrival.length = 0;
+  return renderWithProviders(
+    <MemoryRouter initialEntries={['/setup']}>
+      <Holder />
+      <Routes>
+        <Route path="/setup" element={<SetupPage />} />
+        <Route path="/" element={<Dashboard />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
 describe('first-run wizard', () => {
+  let setupDone: boolean;
+
   beforeEach(() => {
     vi.restoreAllMocks();
-    vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) =>
-      url === '/panel/api/server/getNewX25519Cert'
-        ? new Msg(true, '', { privateKey: 'priv', publicKey: 'pub' })
-        : new Msg(true, '', {}),
-    );
+    setupDone = false;
+    vi.spyOn(HttpUtil, 'get').mockResolvedValue(new Msg(true, '', []));
     vi.spyOn(HttpUtil, 'post').mockImplementation(async (url) => {
-      if (url === '/panel/api/setting/all')
-        return new Msg(true, '', { webPort: 2053, subEnable: true });
-      if (url === '/panel/api/setting/defaultSettings')
-        return new Msg(true, '', { subEnable: true, subURI: 'https://sub.example/s/' });
+      if (url === ALL) {
+        const snapshot = setupDone;
+        await new Promise((r) => setTimeout(r, 25));
+        return new Msg(true, '', { webPort: 2053, setupDone: snapshot });
+      }
+      if (url === PROFILE) {
+        setupDone = true;
+        return new Msg(true, '', null);
+      }
       return new Msg(true, '', {});
     });
   });
 
-  it('walks the three steps and creates a Reality inbound, then shows the link', async () => {
-    renderWithProviders(
-      <MemoryRouter>
-        <SetupPage />
-      </MemoryRouter>,
-    );
+  it('saves name, country and address on their own, then opens the dashboard', async () => {
+    renderWizard();
     fireEvent.change(screen.getByLabelText('Server name'), { target: { value: 'Frankfurt 1' } });
     fireEvent.change(screen.getByLabelText('Country'), { target: { value: 'DE' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect(
-      screen.getByRole('radio', { name: /Best for most people/ }).getAttribute('aria-checked'),
-    ).toBe('true');
-    expect((screen.getByRole('radio', { name: /Low ping/ }) as HTMLButtonElement).disabled).toBe(
-      true,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'sara.k' } });
-    await waitFor(() => expect(postCalls('/panel/api/setting/all').length).toBeGreaterThan(0));
-    fireEvent.click(screen.getByRole('button', { name: 'Create and finish' }));
+    fireEvent.change(screen.getByLabelText('Public address'), {
+      target: { value: '203.0.113.7' },
+    });
+    await waitFor(() => expect(postCalls(ALL).length).toBeGreaterThan(0));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
 
-    expect(await screen.findByRole('heading', { name: 'You’re live' })).toBeTruthy();
-    const [add] = postCalls('/panel/api/inbounds/add');
-    const body = add[1] as {
-      protocol: string;
-      port: number;
-      settings: string;
-      streamSettings: string;
-    };
-    expect(body.protocol).toBe('vless');
-    expect(body.port).toBe(443);
-    expect(JSON.parse(body.settings).clients[0].email).toBe('sara.k');
-    expect(JSON.parse(body.streamSettings).realitySettings.privateKey).toBe('priv');
-    const [save] = postCalls('/panel/api/setting/update');
-    expect(save[1]).toMatchObject({
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeTruthy();
+    expect(postCalls(PROFILE)[0][1]).toEqual({
       serverName: 'Frankfurt 1',
       serverCountry: 'DE',
+      serverAddress: '203.0.113.7',
       setupDone: true,
     });
-    const subId = JSON.parse(body.settings).clients[0].subId;
-    expect(screen.getByText(`https://sub.example/s/${subId}`)).toBeTruthy();
+    expect(postCalls('/panel/api/inbounds/add')).toHaveLength(0);
+    expect(postCalls('/panel/api/setting/update')).toHaveLength(0);
+    // The dashboard must see setupDone=true on arrival, or it sends the person straight back here.
+    expect(seenOnArrival).toEqual([true]);
   });
 
-  it('keeps the user on the last step and shows why when the inbound is refused', async () => {
+  it('skips from the one step by marking setup done and leaving the name alone', async () => {
+    renderWizard();
+    fireEvent.click(screen.getByRole('button', { name: 'Set up later' }));
+
+    expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeTruthy();
+    expect(postCalls(PROFILE)[0][1]).toEqual({ setupDone: true });
+  });
+
+  it('stays on the page and shows the server message when the save is refused', async () => {
     vi.mocked(HttpUtil.post).mockImplementation(async (url) =>
-      url === '/panel/api/inbounds/add'
-        ? new Msg(false, 'Port 443 is already in use', null)
-        : new Msg(true, '', {}),
+      url === PROFILE
+        ? new Msg(false, 'server address must be an IP address or a domain', null)
+        : new Msg(true, '', { webPort: 2053, setupDone: false }),
     );
-    renderWithProviders(
-      <MemoryRouter>
-        <SetupPage />
-      </MemoryRouter>,
+    renderWizard();
+    fireEvent.change(screen.getByLabelText('Public address'), {
+      target: { value: 'https://x.example/a' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect((await screen.findByRole('alert')).textContent).toContain(
+      'server address must be an IP address or a domain',
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Create and finish' }));
-    expect((await screen.findByRole('alert')).textContent).toContain('Port 443 is already in use');
-    expect(postCalls('/panel/api/setting/update')).toHaveLength(0);
+    expect(screen.queryByRole('heading', { name: 'Dashboard' })).toBeNull();
   });
 });

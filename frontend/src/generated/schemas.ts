@@ -112,6 +112,9 @@ export const SCHEMAS: Record<string, unknown> = {
   },
   "AllSetting": {
     "properties": {
+      "accent": {
+        "type": "string"
+      },
       "datepicker": {
         "type": "string"
       },
@@ -262,6 +265,9 @@ export const SCHEMAS: Record<string, unknown> = {
       },
       "restartXrayOnClientDisable": {
         "type": "boolean"
+      },
+      "serverAddress": {
+        "type": "string"
       },
       "serverCountry": {
         "type": "string"
@@ -712,6 +718,7 @@ export const SCHEMAS: Record<string, unknown> = {
       }
     },
     "required": [
+      "accent",
       "datepicker",
       "discordAdminIds",
       "discordBotBackup",
@@ -757,6 +764,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "realityScanCandidates",
       "remarkTemplate",
       "restartXrayOnClientDisable",
+      "serverAddress",
       "serverCountry",
       "serverName",
       "sessionMaxAge",
@@ -902,6 +910,9 @@ export const SCHEMAS: Record<string, unknown> = {
   },
   "AllSettingView": {
     "properties": {
+      "accent": {
+        "type": "string"
+      },
       "datepicker": {
         "type": "string"
       },
@@ -1077,6 +1088,9 @@ export const SCHEMAS: Record<string, unknown> = {
       "restartXrayOnClientDisable": {
         "type": "boolean"
       },
+      "serverAddress": {
+        "type": "string"
+      },
       "serverCountry": {
         "type": "string"
       },
@@ -1526,6 +1540,7 @@ export const SCHEMAS: Record<string, unknown> = {
       }
     },
     "required": [
+      "accent",
       "datepicker",
       "discordAdminIds",
       "discordBotBackup",
@@ -1579,6 +1594,7 @@ export const SCHEMAS: Record<string, unknown> = {
       "realityScanCandidates",
       "remarkTemplate",
       "restartXrayOnClientDisable",
+      "serverAddress",
       "serverCountry",
       "serverName",
       "sessionMaxAge",

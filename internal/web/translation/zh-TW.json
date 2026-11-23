@@ -3613,13 +3613,6 @@
     "need": "Need help? Message your provider"
   },
   "setup": {
-    "time": "Setup · about 2 minutes",
-    "progress": "Setup progress",
-    "step": {
-      "server": "Server",
-      "connection": "Connection",
-      "user": "First user"
-    },
     "server": {
       "title": "Let’s set up this server",
       "hint": "Give it a name you will recognise, and say where it is.",
@@ -3629,44 +3622,6 @@
       "addressHint": "The address you opened this panel at. Links use it unless you set a domain in Settings.",
       "countryNone": "Not set"
     },
-    "connect": {
-      "title": "How should people connect?",
-      "hint": "Pick one. You can add more later."
-    },
-    "preset": {
-      "reality": {
-        "title": "Best for most people",
-        "desc": "VLESS Reality on port 443. Looks like normal HTTPS, hard to block."
-      },
-      "cdn": {
-        "title": "Behind a CDN",
-        "desc": "Trojan over WebSocket on port 8080, for a CDN that adds TLS. Use when direct IPs get blocked."
-      },
-      "game": {
-        "title": "Low ping",
-        "desc": "VLESS on a layer 3 tunnel, for gaming and calls. Needs a node and a Rakhsh tunnel first; set it up on the Tunnels page."
-      }
-    },
-    "user": {
-      "title": "Add your first user",
-      "hint": "This can be you. You will get a link to open in any app.",
-      "name": "Name",
-      "placeholder": "For example sara.k",
-      "traffic": "Traffic",
-      "gb50": "50 GB",
-      "valid": "Valid for",
-      "days30": "30 days",
-      "never": "Never expires"
-    },
-    "live": {
-      "title": "You’re live",
-      "hint": "{name} can connect now. Send this link or let them scan the code.",
-      "noSub": "{name} is ready. Turn on subscriptions in Settings to get a link, or copy their config from the Clients page."
-    },
-    "keysFailed": "Could not make Reality keys",
-    "back": "Back",
-    "next": "Continue",
-    "finish": "Create and finish",
     "later": "Set up later"
   },
   "confirmDelete": {

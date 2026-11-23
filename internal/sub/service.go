@@ -360,6 +360,9 @@ func (s *SubService) configuredPublicHost() string {
 	if d, err := s.settingService.GetWebDomain(); err == nil && d != "" {
 		return d
 	}
+	if d, err := s.settingService.GetServerAddress(); err == nil && d != "" {
+		return d
+	}
 	return ""
 }
 

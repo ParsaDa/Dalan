@@ -70,6 +70,7 @@ func (a *SettingController) initRouter(g *gin.RouterGroup) {
 	g.POST("/defaultSettings", a.getDefaultSettings)
 	g.POST("/factoryDefaults", a.getFactoryDefaults)
 	g.POST("/update", a.updateSetting)
+	g.POST("/profile", a.updateServerProfile)
 	g.POST("/validateRegex", a.validateRegex)
 	g.POST("/updateUser", a.updateUser)
 	g.GET("/user", a.currentUser)
@@ -191,6 +192,15 @@ func (a *SettingController) updateSetting(c *gin.Context) {
 		}
 	}
 	jsonMsg(c, I18nWeb(c, "pages.settings.toasts.modifySettings"), err)
+}
+
+// updateServerProfile saves the wizard's and the accent picker's few settings without the rest.
+func (a *SettingController) updateServerProfile(c *gin.Context) {
+	form, ok := middleware.BindAndValidate[service.ServerProfile](c)
+	if !ok {
+		return
+	}
+	jsonMsg(c, I18nWeb(c, "pages.settings.toasts.modifySettings"), a.settingService.UpdateServerProfile(*form))
 }
 
 // updateUser updates the current user's username and password.

@@ -113,6 +113,8 @@ var defaultValueMap = map[string]string{
 	"subTitle":                    "",
 	"serverName":                  "",
 	"serverCountry":               "",
+	"serverAddress":               "",
+	"accent":                      "",
 	"setupDone":                   "false",
 	"subSupportUrl":               "",
 	"subProfileMode":              SubProfileModeNone,
@@ -2002,6 +2004,7 @@ func (s *SettingService) GetDefaultSettings(host string) (any, error) {
 		"accessLogEnable":  func() (any, error) { return s.GetAccessLogEnable() },
 		"webDomain":        func() (any, error) { return s.GetWebDomain() },
 		"subDomain":        func() (any, error) { return s.GetSubDomain() },
+		"serverAddress":    func() (any, error) { return s.GetServerAddress() },
 		"devChannelEnable": func() (any, error) { return s.GetDevChannelEnable() },
 		"isDevBuild":       func() (any, error) { return config.IsDevBuild(), nil },
 	}

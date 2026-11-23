@@ -138,6 +138,9 @@
       },
       "AllSetting": {
         "properties": {
+          "accent": {
+            "type": "string"
+          },
           "datepicker": {
             "type": "string"
           },
@@ -288,6 +291,9 @@
           },
           "restartXrayOnClientDisable": {
             "type": "boolean"
+          },
+          "serverAddress": {
+            "type": "string"
           },
           "serverCountry": {
             "type": "string"
@@ -738,6 +744,7 @@
           }
         },
         "required": [
+          "accent",
           "datepicker",
           "discordAdminIds",
           "discordBotBackup",
@@ -783,6 +790,7 @@
           "realityScanCandidates",
           "remarkTemplate",
           "restartXrayOnClientDisable",
+          "serverAddress",
           "serverCountry",
           "serverName",
           "sessionMaxAge",
@@ -928,6 +936,9 @@
       },
       "AllSettingView": {
         "properties": {
+          "accent": {
+            "type": "string"
+          },
           "datepicker": {
             "type": "string"
           },
@@ -1103,6 +1114,9 @@
           "restartXrayOnClientDisable": {
             "type": "boolean"
           },
+          "serverAddress": {
+            "type": "string"
+          },
           "serverCountry": {
             "type": "string"
           },
@@ -1552,6 +1566,7 @@
           }
         },
         "required": [
+          "accent",
           "datepicker",
           "discordAdminIds",
           "discordBotBackup",
@@ -1605,6 +1620,7 @@
           "realityScanCandidates",
           "remarkTemplate",
           "restartXrayOnClientDisable",
+          "serverAddress",
           "serverCountry",
           "serverName",
           "sessionMaxAge",
@@ -15885,6 +15901,57 @@
                     },
                     "obj": {}
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/setting/profile": {
+      "post": {
+        "tags": [
+          "Settings"
+        ],
+        "summary": "Save only the server name, country, public address, accent colour and first-run flag. Every field is optional and a missing one is left as it is; one invalid value saves nothing.",
+        "operationId": "post_panel_api_setting_profile",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "example": {
+                "serverName": "Frankfurt 1",
+                "serverCountry": "DE",
+                "serverAddress": "203.0.113.7",
+                "accent": "violet",
+                "setupDone": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "msg": ""
                 }
               }
             }

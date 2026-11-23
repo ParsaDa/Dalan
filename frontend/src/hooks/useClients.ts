@@ -276,7 +276,11 @@ export function useClients(options: UseClientsOptions = {}) {
       subJsonEnable: !!defaults.subJsonEnable,
       subClashURI: (defaults.subClashURI as string) || '',
       subClashEnable: !!defaults.subClashEnable,
-      publicHost: (defaults.subDomain as string) || (defaults.webDomain as string) || '',
+      publicHost:
+        (defaults.subDomain as string) ||
+        (defaults.webDomain as string) ||
+        (defaults.serverAddress as string) ||
+        '',
     }),
     [
       defaults.subEnable,
@@ -288,6 +292,7 @@ export function useClients(options: UseClientsOptions = {}) {
       defaults.subClashEnable,
       defaults.subDomain,
       defaults.webDomain,
+      defaults.serverAddress,
     ],
   );
 

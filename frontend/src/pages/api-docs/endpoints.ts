@@ -2327,6 +2327,14 @@ export const sections: readonly Section[] = [
       },
       {
         method: 'POST',
+        path: '/panel/api/setting/profile',
+        summary:
+          'Save only the server name, country, public address, accent colour and first-run flag. Every field is optional and a missing one is left as it is; one invalid value saves nothing.',
+        body: '{\n  "serverName": "Frankfurt 1",\n  "serverCountry": "DE",\n  "serverAddress": "203.0.113.7",\n  "accent": "violet",\n  "setupDone": true\n}',
+        response: '{\n  "success": true,\n  "msg": ""\n}',
+      },
+      {
+        method: 'POST',
         path: '/panel/api/setting/validateRegex',
         summary:
           'Validate any regular expression with the backend Go RE2 compiler without saving it.',
