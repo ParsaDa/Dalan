@@ -235,6 +235,141 @@ test('installs the BackPack engine through the outbound chosen as the download r
   );
 });
 
+const RELEASES_URL = '/panel/api/tunnels/engine/releases';
+const lastFour = ['v1.9.0', 'v1.8.5', 'v1.8.4', 'v1.8.3'];
+
+function listReleasesWith(answer: () => Msg<unknown>) {
+  const base = vi.mocked(HttpUtil.post).getMockImplementation();
+  vi.spyOn(HttpUtil, 'post').mockImplementation(async (url, ...rest) =>
+    url === RELEASES_URL ? answer() : base!(url, ...rest),
+  );
+}
+
+test('lists the last four releases of the engine whose options opened and installs the one picked', async () => {
+  listed = [backpackPortal];
+  engineInstalled = false;
+  listReleasesWith(() => new Msg(true, '', lastFour));
+  openTunnels();
+
+  fireEvent.click(await screen.findByRole('button', { name: 'BackPack options' }));
+  for (const version of lastFour) {
+    expect(await screen.findByRole('radio', { name: new RegExp(version) })).toBeTruthy();
+  }
+  expect(HttpUtil.post).toHaveBeenCalledWith(
+    RELEASES_URL,
+    { nodeId: 0, engine: 'backpack', route: { via: 'panel', value: '' } },
+    { headers: { 'Content-Type': 'application/json' }, silent: true },
+  );
+  expect((screen.getByRole('radio', { name: /v1\.8\.5/ }) as HTMLInputElement).checked).toBe(true);
+
+  fireEvent.click(screen.getByRole('radio', { name: /v1\.8\.4/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Install BackPack' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/engine/install',
+      { engine: 'backpack', version: 'v1.8.4', route: { via: 'panel', value: '' } },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('updates an installed engine to the release that was picked', async () => {
+  listed = [backpackPortal];
+  listReleasesWith(() => new Msg(true, '', lastFour));
+  openTunnels();
+
+  fireEvent.click(await screen.findByRole('button', { name: 'BackPack options' }));
+  fireEvent.click(await screen.findByRole('radio', { name: /v1\.9\.0/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Update engine' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/engine/update',
+      { nodeId: 0, engine: 'backpack', version: 'v1.9.0', route: { via: 'panel', value: '' } },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('says the release list could not be reached and points to a tunnel, another route or a link', async () => {
+  listed = [backpackPortal];
+  engineInstalled = false;
+  listReleasesWith(() => new Msg(false, 'could not list the BackPack releases: i/o timeout'));
+  openTunnels();
+
+  fireEvent.click(await screen.findByRole('button', { name: 'BackPack options' }));
+  const notice = await screen.findByText(/cannot reach GitHub to list the BackPack releases/);
+  expect(notice.textContent).toMatch(/tunnel/);
+  expect(notice.textContent).toMatch(/link/);
+  expect(screen.getByText(/i\/o timeout/)).toBeTruthy();
+  expect(screen.queryByRole('radio')).toBeNull();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Install BackPack' }));
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/engine/install',
+      { engine: 'backpack', route: { via: 'panel', value: '' } },
+      { headers: { 'Content-Type': 'application/json' } },
+    ),
+  );
+});
+
+test('looks the releases up again through the route that is chosen', async () => {
+  listed = [backpackPortal];
+  engineInstalled = false;
+  const base = vi.mocked(HttpUtil.get).getMockImplementation();
+  vi.spyOn(HttpUtil, 'get').mockImplementation(async (url, ...rest) =>
+    url === '/panel/api/tunnels/engine/routes'
+      ? new Msg(true, '', [
+          { via: 'panel', value: '', kind: 'panel' },
+          { via: 'outbound', value: 'tunnel-de1', kind: 'tunnel' },
+        ])
+      : base!(url, ...rest),
+  );
+  listReleasesWith(() => new Msg(true, '', lastFour));
+  openTunnels();
+
+  fireEvent.click(await screen.findByRole('button', { name: 'BackPack options' }));
+  fireEvent.mouseDown(await screen.findByLabelText('Download route'));
+  fireEvent.click(await screen.findByText('tunnel-de1'));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      RELEASES_URL,
+      { nodeId: 0, engine: 'backpack', route: { via: 'outbound', value: 'tunnel-de1' } },
+      { headers: { 'Content-Type': 'application/json' }, silent: true },
+    ),
+  );
+});
+
+test('waits for the link to be typed before it looks the releases up through it', async () => {
+  listed = [backpackPortal];
+  engineInstalled = false;
+  listReleasesWith(() => new Msg(true, '', lastFour));
+  openTunnels();
+
+  fireEvent.click(await screen.findByRole('button', { name: 'BackPack options' }));
+  await screen.findByRole('radio', { name: /v1\.9\.0/ });
+  fireEvent.mouseDown(await screen.findByLabelText('Download route'));
+  fireEvent.click(await screen.findByText('A proxy address or share link'));
+  fireEvent.change(screen.getByRole('textbox', { name: 'Proxy address or share link' }), {
+    target: { value: 'socks5://127.0.0.1:1080' },
+  });
+  const releaseCalls = () =>
+    vi.mocked(HttpUtil.post).mock.calls.filter(([url]) => url === RELEASES_URL);
+  expect(releaseCalls()).toHaveLength(1);
+
+  fireEvent.click(screen.getByRole('button', { name: 'Look up releases' }));
+
+  await waitFor(() => expect(releaseCalls()).toHaveLength(2));
+  expect(releaseCalls()[1][1]).toEqual({
+    nodeId: 0,
+    engine: 'backpack',
+    route: { via: 'link', value: 'socks5://127.0.0.1:1080' },
+  });
+});
+
 test('will not install through a link until an address is typed', async () => {
   listed = [backpackPortal];
   engineInstalled = false;

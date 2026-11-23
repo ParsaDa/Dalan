@@ -2055,8 +2055,16 @@ export const sections: readonly Section[] = [
         method: 'POST',
         path: '/panel/api/tunnels/engine/install',
         summary:
-          'Download the pinned release of an engine (BackPack by default, or Rakhsh with engine "rakhsh") for this CPU, verify it against the checksums published with it, put it in the panel bin folder and start that engine\'s tunnels. Can take a few minutes. route says how the download travels: via is panel (as the panel proxy is set, the default), direct (straight from this server), outbound (value is the tag of one of the outbounds of the panel, a tunnel or a Tor exit included) or link (value is a socks5:// or http:// proxy address, or a vless/vmess/trojan/ss share link). See GET /panel/api/tunnels/engine/routes.',
-        body: '{\n  "engine": "backpack",\n  "route": {\n    "via": "outbound",\n    "value": "tunnel-de1"\n  }\n}',
+          'Download a release of an engine (BackPack by default, or Rakhsh with engine "rakhsh") for this CPU, the one named in version or, when it is empty, the pinned one, verify it against the checksums published with it, put it in the panel bin folder and start that engine\'s tunnels. Can take a few minutes. route says how the download travels: via is panel (as the panel proxy is set, the default), direct (straight from this server), outbound (value is the tag of one of the outbounds of the panel, a tunnel or a Tor exit included) or link (value is a socks5:// or http:// proxy address, or a vless/vmess/trojan/ss share link). See GET /panel/api/tunnels/engine/routes.',
+        body: '{\n  "engine": "backpack",\n  "version": "v1.8.5",\n  "route": {\n    "via": "outbound",\n    "value": "tunnel-de1"\n  }\n}',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnels/engine/releases',
+        summary:
+          'List the newest four releases of an engine (engine is backpack or rakhsh), newest first, so one can be picked for install or update. With nodeId the node reads the list, for a server that cannot reach GitHub; otherwise this server reads it through route (see GET /panel/api/tunnels/engine/routes). Fails with the reason when GitHub cannot be reached. Needs an admin or node-admin token.',
+        body: '{\n  "nodeId": 0,\n  "engine": "backpack",\n  "route": {\n    "via": "panel"\n  }\n}',
+        response: '{\n  "success": true,\n  "obj": ["v1.9.0", "v1.8.5", "v1.8.4", "v1.8.3"]\n}',
       },
       {
         method: 'POST',

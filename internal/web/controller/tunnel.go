@@ -40,6 +40,7 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.POST("/engine/install", a.installEngine)
 	g.POST("/engine/update", a.updateEngine)
 	g.POST("/engine/release", a.engineRelease)
+	g.POST("/engine/releases", a.engineReleases)
 	g.POST("/update/:id", a.update)
 	g.POST("/setEnable/:id", a.setEnable)
 	g.POST("/del/:id", a.del)
@@ -52,6 +53,8 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 const (
 	dialTimeout         = 5 * time.Second
 	engineUpdateTimeout = 8 * time.Minute
+	// engineReleasesTimeout covers a node reading the list for this server, then this server answering.
+	engineReleasesTimeout = time.Minute
 )
 
 // dial runs on the node during a route test: it tries each port from this server's side.
@@ -343,10 +346,31 @@ func (a *TunnelController) engineRelease(c *gin.Context) {
 	jsonObj(c, chunk, nil)
 }
 
-func (a *TunnelController) installEngine(c *gin.Context) {
+func (a *TunnelController) engineReleases(c *gin.Context) {
 	var req struct {
+		NodeId int                 `json:"nodeId"`
 		Engine string              `json:"engine"`
 		Route  service.EngineRoute `json:"route"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.engineReleases"), err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(c.Request.Context(), engineReleasesTimeout)
+	defer cancel()
+	versions, err := a.tunnelService.EngineReleases(ctx, req.NodeId, req.Engine, req.Route)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.engineReleases"), err)
+		return
+	}
+	jsonObj(c, versions, nil)
+}
+
+func (a *TunnelController) installEngine(c *gin.Context) {
+	var req struct {
+		Engine  string              `json:"engine"`
+		Version string              `json:"version"`
+		Route   service.EngineRoute `json:"route"`
 	}
 	// The body is optional: an empty one installs BackPack, as before there was a second engine.
 	if c.Request.ContentLength != 0 {
@@ -355,5 +379,5 @@ func (a *TunnelController) installEngine(c *gin.Context) {
 			return
 		}
 	}
-	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.installEngine"), a.tunnelService.InstallEngine(req.Engine, req.Route))
+	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.installEngine"), a.tunnelService.InstallEngineVersion(req.Engine, req.Version, req.Route))
 }

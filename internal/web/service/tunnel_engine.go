@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
 	"runtime"
 	"sync"
 	"time"
@@ -28,6 +27,7 @@ type externalEngine struct {
 	pinned     string
 	arch       func() (string, error)
 	latest     func(ctx context.Context, client *http.Client) (string, error)
+	recent     func(ctx context.Context, client *http.Client, limit int) ([]string, error)
 	fetch      func(ctx context.Context, client *http.Client, version, arch string) (engine.Release, error)
 	place      func(rel engine.Release, version, arch, dest string) error
 	rollback   func(dest string) error
@@ -44,6 +44,9 @@ func backpackEngine() externalEngine {
 		arch:       backpackArch,
 		latest: func(ctx context.Context, client *http.Client) (string, error) {
 			return backpack.LatestVersion(ctx, client, backpack.APIBaseURL)
+		},
+		recent: func(ctx context.Context, client *http.Client, limit int) ([]string, error) {
+			return backpack.RecentVersions(ctx, client, backpack.APIBaseURL, limit)
 		},
 		fetch: func(ctx context.Context, client *http.Client, version, arch string) (engine.Release, error) {
 			return backpack.Fetch(ctx, client, backpack.ReleaseBaseURL, version, arch)
@@ -66,6 +69,9 @@ func rakhshEngine() externalEngine {
 		arch:       func() (string, error) { return runtime.GOARCH, nil },
 		latest: func(ctx context.Context, client *http.Client) (string, error) {
 			return rakhsh.LatestVersion(ctx, client, rakhsh.APIBaseURL)
+		},
+		recent: func(ctx context.Context, client *http.Client, limit int) ([]string, error) {
+			return rakhsh.RecentVersions(ctx, client, rakhsh.APIBaseURL, limit)
 		},
 		fetch: func(ctx context.Context, client *http.Client, version, arch string) (engine.Release, error) {
 			return rakhsh.Fetch(ctx, client, rakhsh.ReleaseBaseURL, version, arch)
@@ -190,7 +196,7 @@ func (s *TunnelService) EngineReleaseChunk(id, version string, offset int) (engi
 	return d.release.ChunkAt(offset), nil
 }
 
-var engineVersionPattern = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
+var engineVersionPattern = engine.VersionPattern
 
 // checkEngineVersion lets an empty version (the newest) or a plain vX.Y.Z tag through; the tag becomes part of a URL.
 func checkEngineVersion(kind externalEngine, version string) error {
@@ -198,6 +204,49 @@ func checkEngineVersion(kind externalEngine, version string) error {
 		return fmt.Errorf("%q is not a %s version such as v1.8.5", version, kind.label)
 	}
 	return nil
+}
+
+// engineSourceFor opens the release source of a route; tests replace it.
+var engineSourceFor = func(route EngineRoute) (engineSource, func(), error) {
+	return (&EngineRouteService{}).Source(route)
+}
+
+// engineListClient opens the client a release list is read through; tests replace it.
+var engineListClient = func(route EngineRoute) (*http.Client, func(), error) {
+	return (&EngineRouteService{}).Client(route, engineListTimeout)
+}
+
+const (
+	// engineReleaseChoices is how many recent releases the install dialog offers.
+	engineReleaseChoices = 4
+	// engineListTimeout bounds one release list; the list is small, so a slow route should fail rather than hang.
+	engineListTimeout = 30 * time.Second
+)
+
+// EngineReleases lists the newest releases of one engine. With a node the node reads the list, since it may
+// reach GitHub where this server cannot; otherwise this server reads it through route.
+func (s *TunnelService) EngineReleases(ctx context.Context, nodeID int, id string, route EngineRoute) ([]string, error) {
+	kind, err := externalEngineFor(id)
+	if err != nil {
+		return nil, err
+	}
+	if nodeID != 0 {
+		remote, err := s.remoteFor(nodeID)
+		if err != nil {
+			return nil, err
+		}
+		return remote.ListEngineReleases(ctx, kind.id)
+	}
+	client, release, err := engineListClient(route)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+	versions, err := kind.recent(ctx, client, engineReleaseChoices)
+	if err != nil {
+		return nil, fmt.Errorf("could not list the %s releases: %w", kind.label, err)
+	}
+	return versions, nil
 }
 
 // UpdateEngine installs a release of one engine (empty version means the newest), downloaded through route. With a
@@ -211,7 +260,7 @@ func (s *TunnelService) UpdateEngine(ctx context.Context, nodeID int, id, versio
 		return err
 	}
 	if nodeID == 0 {
-		src, release, err := (&EngineRouteService{}).Source(route)
+		src, release, err := engineSourceFor(route)
 		if err != nil {
 			return err
 		}

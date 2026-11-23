@@ -69,6 +69,11 @@ func LatestVersion(ctx context.Context, client *http.Client, apiURL string) (str
 	return engine.LatestTag(ctx, client, apiURL, releaseRepo, "Rakhsh")
 }
 
+// RecentVersions lists the newest Rakhsh releases, newest first, read from the GitHub API at apiURL.
+func RecentVersions(ctx context.Context, client *http.Client, apiURL string, limit int) ([]string, error) {
+	return engine.RecentTags(ctx, client, apiURL, releaseRepo, "Rakhsh", limit)
+}
+
 // Install downloads a Rakhsh release, checks it against its published checksum, and only then replaces dest.
 func Install(ctx context.Context, client *http.Client, baseURL, version, arch, dest string) error {
 	rel, err := Fetch(ctx, client, baseURL, version, arch)

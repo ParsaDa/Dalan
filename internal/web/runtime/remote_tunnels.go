@@ -95,6 +95,19 @@ func (r *Remote) FetchEngineRelease(ctx context.Context, engineID, version strin
 	}
 }
 
+// ListEngineReleases asks the node for the newest releases of one engine, read from where the node is.
+func (r *Remote) ListEngineReleases(ctx context.Context, engineID string) ([]string, error) {
+	env, err := r.do(ctx, http.MethodPost, "panel/api/tunnels/engine/releases", map[string]any{"engine": engineID})
+	if err != nil {
+		return nil, err
+	}
+	var versions []string
+	if err := json.Unmarshal(env.Obj, &versions); err != nil {
+		return nil, fmt.Errorf("decode engine releases: %w", err)
+	}
+	return versions, nil
+}
+
 const (
 	engineChunkPoll  = time.Second
 	maxEngineArchive = 200 << 20

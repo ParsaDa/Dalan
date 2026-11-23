@@ -372,6 +372,7 @@ var remoteMethodsOutsideContract = map[string]string{
 	"DeleteTunnel":          "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
 	"DialPorts":             "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
 	"FetchEngineRelease":    "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
+	"ListEngineReleases":    "needs admin or node-admin, covered by TestMasterNodeTunnelContract",
 }
 
 // A Remote method with no cell is how activeInbounds and bulkResetTraffic
@@ -432,6 +433,9 @@ func TestMasterNodeTunnelContract(t *testing.T) {
 			if _, err := master.FetchEngineRelease(ctx, "rakhsh", "not-a-version"); err == nil || !strings.Contains(err.Error(), "Rakhsh") {
 				t.Fatalf("FetchEngineRelease for rakhsh = %v, want the node's refusal naming Rakhsh, which shows the engine travelled", err)
 			}
+			if _, err := master.ListEngineReleases(ctx, "carrier-pigeon"); err == nil || !strings.Contains(err.Error(), "carrier-pigeon") {
+				t.Fatalf("ListEngineReleases = %v, want the node's own refusal of the engine, which shows the call reached it", err)
+			}
 			if err := master.DeleteTunnel(ctx, imported.Id); err != nil {
 				t.Fatalf("DeleteTunnel: %v", err)
 			}
@@ -459,6 +463,9 @@ func TestMasterNodeTunnelContract(t *testing.T) {
 		}
 		if _, err := master.FetchEngineRelease(context.Background(), "backpack", "v1.8.5"); err == nil {
 			t.Fatal("a node-sync token was allowed to make the node download an engine")
+		}
+		if _, err := master.ListEngineReleases(context.Background(), "backpack"); err == nil {
+			t.Fatal("a node-sync token was allowed to make the node read an engine's release list")
 		}
 	})
 }

@@ -2471,6 +2471,13 @@
       "acceptUdp": "Carry UDP too",
       "engineMissing": "The {engine} engine is not installed on this server, so {engine} tunnels cannot run.",
       "engineMissingHint": "If this server cannot reach GitHub, copy the {engine} binary into the panel's bin folder by hand, or download it through a node.",
+      "release": "Release",
+      "releasesLookup": "Look up releases",
+      "releasesLoading": "Looking up the latest releases…",
+      "releasesIdle": "Look up the releases to pick one. Without a pick, the default release is installed.",
+      "releasesFailed": "This server cannot reach GitHub to list the {engine} releases. Download through a tunnel or another route, or give a link (a proxy address or share link), then look up again. Installing without a pick uses the default release.",
+      "releaseRecommended": "recommended",
+      "releaseInstalled": "installed",
       "installEngine": "Install {engine}",
       "toasts": {
         "list": "Load tunnels",
@@ -2482,7 +2489,8 @@
         "status": "Test tunnel",
         "installEngine": "Install the BackPack engine",
         "routeTest": "The route test could not run",
-        "updateEngine": "Update the BackPack engine"
+        "updateEngine": "Update the BackPack engine",
+        "engineReleases": "List the engine releases"
       },
       "nodeEnd": "Create the other end on a node",
       "nodeEndHint": "This panel also sets up the exit end on the chosen node, so nothing needs to be copied or pasted. Deleting the tunnel removes both ends.",

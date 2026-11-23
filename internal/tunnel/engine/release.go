@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -78,6 +79,44 @@ func LatestTag(ctx context.Context, client *http.Client, apiURL, repo, label str
 		return "", fmt.Errorf("the release list names no latest %s release", label)
 	}
 	return latest.Tag, nil
+}
+
+// VersionPattern is the tag a release must have to be installable; the tag becomes part of a download URL.
+var VersionPattern = regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
+
+// releaseListPage is how many releases one list call reads, enough to find a few plain ones past
+// pre-releases and drafts.
+const releaseListPage = 30
+
+// RecentTags lists up to limit tags of repo, newest first, that name a plain vX.Y.Z release (no drafts,
+// pre-releases or other tags), read from the GitHub API at apiURL.
+func RecentTags(ctx context.Context, client *http.Client, apiURL, repo, label string, limit int) ([]string, error) {
+	raw, err := Download(ctx, client, fmt.Sprintf("%s/repos/%s/releases?per_page=%d", apiURL, repo, releaseListPage))
+	if err != nil {
+		return nil, err
+	}
+	var releases []struct {
+		Tag        string `json:"tag_name"`
+		Draft      bool   `json:"draft"`
+		Prerelease bool   `json:"prerelease"`
+	}
+	if err := json.Unmarshal(raw, &releases); err != nil {
+		return nil, fmt.Errorf("the %s release list could not be read: %w", label, err)
+	}
+	var tags []string
+	for _, r := range releases {
+		if r.Draft || r.Prerelease || !VersionPattern.MatchString(r.Tag) {
+			continue
+		}
+		tags = append(tags, r.Tag)
+		if len(tags) == limit {
+			break
+		}
+	}
+	if len(tags) == 0 {
+		return nil, fmt.Errorf("the release list names no %s release", label)
+	}
+	return tags, nil
 }
 
 func publishedChecksum(sums []byte, asset string) (string, bool) {

@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
+import { Alert, Radio } from 'antd';
 
 import EngineRoutePicker from '@/components/engine/EngineRoutePicker';
 import { engineRouteReady, PANEL_ROUTE, type EngineRoute } from '@/schemas/engineRoute';
 import {
   TUNNELS_KEY,
+  useEngineReleases,
   useTunnelEngine,
   useTunnelMutations,
+  type EngineReleaseLookup,
   type ServerTunnel,
   type TunnelEngine,
   type TunnelStatus,
@@ -295,6 +298,16 @@ export function TunnelCard(p: RowProps) {
   );
 }
 
+// A node reads the list as its own panel is set, so the route only counts for this server.
+function releaseLookup(
+  engine: TunnelEngine,
+  nodeId: number,
+  route: EngineRoute,
+): EngineReleaseLookup | null {
+  if (!engineRouteReady(route)) return null;
+  return { engine, nodeId, route: nodeId ? PANEL_ROUTE : route };
+}
+
 // One engine: its release and tunnel count, with install, update and the download route in Options.
 export function EngineCard({
   engine,
@@ -318,13 +331,44 @@ export function EngineCard({
   const [open, setOpen] = useState(false);
   const [route, setRoute] = useState<EngineRoute>(PANEL_ROUTE);
   const [via, setVia] = useState('');
+  const [lookup, setLookup] = useState<EngineReleaseLookup | null>(null);
+  const [picked, setPicked] = useState('');
+  const releases = useEngineReleases(lookup);
   const nodeId = via ? Number(via) : 0;
   const installed = info?.installed ?? false;
+  const list = releases.data;
+  const pinned = info?.pinned ?? '';
+  const chosen = list
+    ? list.includes(picked)
+      ? picked
+      : list.includes(pinned)
+        ? pinned
+        : list[0]
+    : '';
+  // A typed link is looked up on request, so a release list is not asked for at every keystroke.
+  const lookUp = (nextVia: string, nextRoute: EngineRoute) => {
+    const next = releaseLookup(engine, nextVia ? Number(nextVia) : 0, nextRoute);
+    if (next && JSON.stringify(next) === JSON.stringify(lookup)) void releases.refetch();
+    else setLookup(next);
+  };
+  const changeVia = (next: string) => {
+    setVia(next);
+    setLookup(releaseLookup(engine, next ? Number(next) : 0, route));
+  };
+  const changeRoute = (next: EngineRoute) => {
+    setRoute(next);
+    setLookup(next.via === 'link' ? null : releaseLookup(engine, nodeId, next));
+  };
+  const openOptions = () => {
+    setOpen(true);
+    setLookup(route.via === 'link' ? null : releaseLookup(engine, nodeId, route));
+  };
   const run = async () => {
+    const version = chosen || undefined;
     const msg =
       installed || nodeId
-        ? await updateEngine({ nodeId, engine, route })
-        : await installEngine({ engine, route });
+        ? await updateEngine({ nodeId, engine, route, version })
+        : await installEngine({ engine, route, version });
     if (report(msg)) setOpen(false);
   };
   return (
@@ -365,7 +409,7 @@ export function EngineCard({
           size="sm"
           icon="settings"
           aria-label={t('tunnels.engineOptions', { engine: label })}
-          onClick={() => setOpen(true)}
+          onClick={openOptions}
         >
           {t('tunnels.options')}
         </Btn>
@@ -403,7 +447,7 @@ export function EngineCard({
             icon="nodes"
             label={t('tunnels.downloadOn')}
             value={via}
-            onChange={setVia}
+            onChange={changeVia}
             options={[
               { value: '', label: t('pages.index.thisServer') },
               ...nodes
@@ -413,8 +457,58 @@ export function EngineCard({
           />
           {/* A node downloads as its own panel is set, so the route is only offered for this server. */}
           {!nodeId && (
-            <EngineRoutePicker id={`engine-route-${engine}`} value={route} onChange={setRoute} />
+            <EngineRoutePicker id={`engine-route-${engine}`} value={route} onChange={changeRoute} />
           )}
+          <div className="col" style={{ gap: 8 }}>
+            <div className="row sp">
+              <span className="mut" style={{ fontSize: 12 }}>
+                {t('pages.tunnels.release')}
+              </span>
+              <Btn
+                size="sm"
+                icon="refresh"
+                disabled={releases.isFetching || (!nodeId && !engineRouteReady(route))}
+                onClick={() => lookUp(via, route)}
+              >
+                {t('pages.tunnels.releasesLookup')}
+              </Btn>
+            </div>
+            {releases.isFetching && (
+              <span className="mut" style={{ fontSize: 13 }}>
+                {t('pages.tunnels.releasesLoading')}
+              </span>
+            )}
+            {!releases.isFetching && releases.isError && (
+              <Alert
+                type="warning"
+                showIcon
+                title={t('pages.tunnels.releasesFailed', { engine: label })}
+                description={releases.error.message}
+              />
+            )}
+            {!releases.isFetching && !releases.isError && !list && (
+              <span className="mut" style={{ fontSize: 13 }}>
+                {t('pages.tunnels.releasesIdle')}
+              </span>
+            )}
+            {!releases.isFetching && list && (
+              <Radio.Group
+                value={chosen}
+                onChange={(e) => setPicked(e.target.value)}
+                style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                options={list.map((version) => ({
+                  value: version,
+                  label: [
+                    version,
+                    version === pinned && t('pages.tunnels.releaseRecommended'),
+                    version === info?.version && t('pages.tunnels.releaseInstalled'),
+                  ]
+                    .filter(Boolean)
+                    .join(' · '),
+                }))}
+              />
+            )}
+          </div>
         </div>
       </FormModal>
     </section>
