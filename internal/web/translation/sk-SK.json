@@ -249,7 +249,6 @@
       "geodataEmpty": "Nie sú nastavené žiadne súbory. V pravidlách smerovania na ne odkazujte ako ext:geosite_custom.dat:category.",
       "dontRefresh": "Prebieha inštalácia. Neobnovujte stránku.",
       "logs": "Systémové záznamy",
-      "accessLogs": "Záznamy prístupov",
       "autoUpdate": "Automatické obnovenie",
       "amneziawgLogs": "Záznamy AmneziaWG",
       "amneziawgHandshake": "Posledné nadviazanie spojenia",
@@ -277,14 +276,6 @@
       "migrationDownload": "Stiahnuť migračnú databázu",
       "migrationDownloadPgDesc": "Stiahne sa databáza SQLite (.db) vytvorená z vašich údajov PostgreSQL, pripravená na spustenie panelu so SQLite.",
       "uptime": "Čas prevádzky",
-      "logLevelDebug": "Ladenie",
-      "logLevelInfo": "Informácia",
-      "logLevelNotice": "Oznámenie",
-      "logLevelWarning": "Upozornenie",
-      "logLevelError": "Chyba",
-      "accessDirect": "PRIAMO",
-      "accessBlocked": "BLOKOVANÉ",
-      "accessProxy": "PROXY",
       "importKeepHostSettings": "Ponechať nastavenia tohto servera",
       "importKeepHostSettingsDesc": "Ponechajú sa adresy počúvania, porty, základná cesta, certifikáty a identita tohto servera namiesto nastavení z nahraného súboru.",
       "logLines": "Počet riadkov",
@@ -3281,8 +3272,6 @@
     "tools": {
       "title": "Server tools",
       "versions": "Panel {panel} · Xray {xray}",
-      "panelLogs": "Panel logs",
-      "xrayLogs": "Xray access log",
       "awgLogs": "AmneziaWG logs",
       "backup": "Backup and restore",
       "metrics": "Xray metrics"
@@ -3503,5 +3492,28 @@
     "colStatus": "Status",
     "colUsage": "Usage",
     "colExpires": "Expires"
+  },
+  "logs": {
+    "subtitle": "Live log of this server. New lines appear at the top; pausing stops the stream.",
+    "pause": "Pause",
+    "resume": "Resume",
+    "levels": "Log level",
+    "level": {
+      "info": "All",
+      "warning": "Warnings",
+      "err": "Errors"
+    },
+    "sources": "Log source",
+    "source": {
+      "panel": "Panel",
+      "xray": "Xray access"
+    },
+    "search": "Search logs",
+    "streaming": "Streaming",
+    "paused": "Paused",
+    "count": "{n} lines · updated {at}",
+    "unavailable": "Logs could not be read",
+    "xrayHint": "Turn on the Xray access log in Xray config to see connections here.",
+    "empty": "No lines yet"
   }
 }

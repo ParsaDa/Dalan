@@ -249,7 +249,6 @@
       "geodataEmpty": "Belum ada berkas yang dikonfigurasi. Pada aturan routing, rujuk berkas sebagai ext:geosite_custom.dat:category.",
       "dontRefresh": "Instalasi sedang berlangsung, harap jangan menyegarkan halaman ini",
       "logs": "Log",
-      "accessLogs": "Log Akses",
       "autoUpdate": "Pembaruan Otomatis",
       "amneziawgLogs": "Log AmneziaWG",
       "amneziawgHandshake": "Handshake Terakhir",
@@ -277,14 +276,6 @@
       "migrationDownload": "Unduh migrasi",
       "migrationDownloadPgDesc": "Klik untuk mengunduh basis data SQLite .db yang dibuat dari data PostgreSQL Anda, siap menjalankan panel ini di SQLite.",
       "uptime": "Waktu aktif",
-      "logLevelDebug": "Debug",
-      "logLevelInfo": "Info",
-      "logLevelNotice": "Notice",
-      "logLevelWarning": "Warning",
-      "logLevelError": "Error",
-      "accessDirect": "DIRECT",
-      "accessBlocked": "BLOCKED",
-      "accessProxy": "PROXY",
       "importKeepHostSettings": "Pertahankan pengaturan mesin ini",
       "importKeepHostSettingsDesc": "Mempertahankan alamat dengar, port, path dasar, sertifikat, dan identitas node panel ini alih-alih mengambilnya dari berkas yang diunggah.",
       "logLines": "Jumlah baris",
@@ -3281,8 +3272,6 @@
     "tools": {
       "title": "Server tools",
       "versions": "Panel {panel} · Xray {xray}",
-      "panelLogs": "Panel logs",
-      "xrayLogs": "Xray access log",
       "awgLogs": "AmneziaWG logs",
       "backup": "Backup and restore",
       "metrics": "Xray metrics"
@@ -3503,5 +3492,28 @@
     "colStatus": "Status",
     "colUsage": "Usage",
     "colExpires": "Expires"
+  },
+  "logs": {
+    "subtitle": "Live log of this server. New lines appear at the top; pausing stops the stream.",
+    "pause": "Pause",
+    "resume": "Resume",
+    "levels": "Log level",
+    "level": {
+      "info": "All",
+      "warning": "Warnings",
+      "err": "Errors"
+    },
+    "sources": "Log source",
+    "source": {
+      "panel": "Panel",
+      "xray": "Xray access"
+    },
+    "search": "Search logs",
+    "streaming": "Streaming",
+    "paused": "Paused",
+    "count": "{n} lines · updated {at}",
+    "unavailable": "Logs could not be read",
+    "xrayHint": "Turn on the Xray access log in Xray config to see connections here.",
+    "empty": "No lines yet"
   }
 }

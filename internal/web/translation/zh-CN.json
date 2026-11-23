@@ -249,7 +249,6 @@
       "geodataEmpty": "尚未配置文件。路由规则中可通过 ext:geosite_custom.dat:category 引用文件。",
       "dontRefresh": "安装中，请勿刷新此页面",
       "logs": "日志",
-      "accessLogs": "访问日志",
       "autoUpdate": "自动更新",
       "amneziawgLogs": "AmneziaWG 日志",
       "amneziawgHandshake": "最后握手",
@@ -277,14 +276,6 @@
       "migrationDownload": "下载迁移文件",
       "migrationDownloadPgDesc": "点击下载由 PostgreSQL 数据构建的 .db SQLite 数据库，可用于在 SQLite 上运行本面板。",
       "uptime": "运行时间",
-      "logLevelDebug": "Debug",
-      "logLevelInfo": "Info",
-      "logLevelNotice": "Notice",
-      "logLevelWarning": "Warning",
-      "logLevelError": "Error",
-      "accessDirect": "DIRECT",
-      "accessBlocked": "BLOCKED",
-      "accessProxy": "PROXY",
       "importKeepHostSettings": "保留本机设置",
       "importKeepHostSettingsDesc": "保留本面板的监听地址、端口、基础路径、证书和节点身份，而不是使用上传文件中的值。",
       "logLines": "行数",
@@ -3281,8 +3272,6 @@
     "tools": {
       "title": "Server tools",
       "versions": "Panel {panel} · Xray {xray}",
-      "panelLogs": "Panel logs",
-      "xrayLogs": "Xray access log",
       "awgLogs": "AmneziaWG logs",
       "backup": "Backup and restore",
       "metrics": "Xray metrics"
@@ -3503,5 +3492,28 @@
     "colStatus": "Status",
     "colUsage": "Usage",
     "colExpires": "Expires"
+  },
+  "logs": {
+    "subtitle": "Live log of this server. New lines appear at the top; pausing stops the stream.",
+    "pause": "Pause",
+    "resume": "Resume",
+    "levels": "Log level",
+    "level": {
+      "info": "All",
+      "warning": "Warnings",
+      "err": "Errors"
+    },
+    "sources": "Log source",
+    "source": {
+      "panel": "Panel",
+      "xray": "Xray access"
+    },
+    "search": "Search logs",
+    "streaming": "Streaming",
+    "paused": "Paused",
+    "count": "{n} lines · updated {at}",
+    "unavailable": "Logs could not be read",
+    "xrayHint": "Turn on the Xray access log in Xray config to see connections here.",
+    "empty": "No lines yet"
   }
 }

@@ -249,7 +249,6 @@
       "geodataEmpty": "No hay archivos configurados. En las reglas de enrutamiento se referencian como ext:geosite_custom.dat:category.",
       "dontRefresh": "La instalación está en progreso, por favor no actualices esta página.",
       "logs": "Registros",
-      "accessLogs": "Registros de acceso",
       "autoUpdate": "Actualización automática",
       "amneziawgLogs": "Registros de AmneziaWG",
       "amneziawgHandshake": "Último handshake",
@@ -277,14 +276,6 @@
       "migrationDownload": "Descargar migración",
       "migrationDownloadPgDesc": "Haz clic para descargar una base de datos SQLite .db creada a partir de tus datos de PostgreSQL, lista para ejecutar este panel en SQLite.",
       "uptime": "Tiempo activo",
-      "logLevelDebug": "Debug",
-      "logLevelInfo": "Info",
-      "logLevelNotice": "Notice",
-      "logLevelWarning": "Warning",
-      "logLevelError": "Error",
-      "accessDirect": "DIRECT",
-      "accessBlocked": "BLOCKED",
-      "accessProxy": "PROXY",
       "importKeepHostSettings": "Mantener la configuración de esta máquina",
       "importKeepHostSettingsDesc": "Conserva las direcciones de escucha, los puertos, la ruta base, los certificados y la identidad de nodo de este panel en lugar de tomarlos del archivo subido.",
       "logLines": "Número de líneas",
@@ -3281,8 +3272,6 @@
     "tools": {
       "title": "Server tools",
       "versions": "Panel {panel} · Xray {xray}",
-      "panelLogs": "Panel logs",
-      "xrayLogs": "Xray access log",
       "awgLogs": "AmneziaWG logs",
       "backup": "Backup and restore",
       "metrics": "Xray metrics"
@@ -3503,5 +3492,28 @@
     "colStatus": "Status",
     "colUsage": "Usage",
     "colExpires": "Expires"
+  },
+  "logs": {
+    "subtitle": "Live log of this server. New lines appear at the top; pausing stops the stream.",
+    "pause": "Pause",
+    "resume": "Resume",
+    "levels": "Log level",
+    "level": {
+      "info": "All",
+      "warning": "Warnings",
+      "err": "Errors"
+    },
+    "sources": "Log source",
+    "source": {
+      "panel": "Panel",
+      "xray": "Xray access"
+    },
+    "search": "Search logs",
+    "streaming": "Streaming",
+    "paused": "Paused",
+    "count": "{n} lines · updated {at}",
+    "unavailable": "Logs could not be read",
+    "xrayHint": "Turn on the Xray access log in Xray config to see connections here.",
+    "empty": "No lines yet"
   }
 }

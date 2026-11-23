@@ -249,7 +249,6 @@
       "geodataEmpty": "لا توجد ملفات مهيأة. في قواعد التوجيه يُشار إلى الملفات بالشكل ext:geosite_custom.dat:category.",
       "dontRefresh": "التثبيت شغال، متعملش Refresh للصفحة",
       "logs": "السجلات",
-      "accessLogs": "سجلات الوصول",
       "autoUpdate": "تحديث تلقائي",
       "amneziawgLogs": "سجلات AmneziaWG",
       "amneziawgHandshake": "آخر مصافحة",
@@ -277,14 +276,6 @@
       "migrationDownload": "تنزيل ملف الترحيل",
       "migrationDownloadPgDesc": "انقر لتنزيل قاعدة بيانات SQLite بامتداد .db مبنية من بيانات PostgreSQL الخاصة بك، جاهزة لتشغيل هذه اللوحة على SQLite.",
       "uptime": "مدة التشغيل",
-      "logLevelDebug": "Debug",
-      "logLevelInfo": "Info",
-      "logLevelNotice": "Notice",
-      "logLevelWarning": "Warning",
-      "logLevelError": "Error",
-      "accessDirect": "DIRECT",
-      "accessBlocked": "BLOCKED",
-      "accessProxy": "PROXY",
       "importKeepHostSettings": "الاحتفاظ بإعدادات هذا الجهاز",
       "importKeepHostSettingsDesc": "يحتفظ بعناوين الاستماع والمنافذ والمسار الأساسي والشهادات وهوية العقدة الخاصة بهذه اللوحة بدلًا من أخذها من الملف المرفوع.",
       "logLines": "عدد الأسطر",
@@ -3281,8 +3272,6 @@
     "tools": {
       "title": "Server tools",
       "versions": "Panel {panel} · Xray {xray}",
-      "panelLogs": "Panel logs",
-      "xrayLogs": "Xray access log",
       "awgLogs": "AmneziaWG logs",
       "backup": "Backup and restore",
       "metrics": "Xray metrics"
@@ -3503,5 +3492,28 @@
     "colStatus": "Status",
     "colUsage": "Usage",
     "colExpires": "Expires"
+  },
+  "logs": {
+    "subtitle": "Live log of this server. New lines appear at the top; pausing stops the stream.",
+    "pause": "Pause",
+    "resume": "Resume",
+    "levels": "Log level",
+    "level": {
+      "info": "All",
+      "warning": "Warnings",
+      "err": "Errors"
+    },
+    "sources": "Log source",
+    "source": {
+      "panel": "Panel",
+      "xray": "Xray access"
+    },
+    "search": "Search logs",
+    "streaming": "Streaming",
+    "paused": "Paused",
+    "count": "{n} lines · updated {at}",
+    "unavailable": "Logs could not be read",
+    "xrayHint": "Turn on the Xray access log in Xray config to see connections here.",
+    "empty": "No lines yet"
   }
 }

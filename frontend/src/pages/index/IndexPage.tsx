@@ -1,5 +1,6 @@
 import { lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 import { Button, ConfigProvider, Modal, message } from 'antd';
 import { CopyOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 
@@ -18,11 +19,9 @@ import { IlloOffline } from '@/components/dl/Illustrations';
 import Mark from '@/components/dl/Mark';
 const JsonEditor = lazy(() => import('@/components/form/JsonEditor'));
 const PanelUpdateModal = lazy(() => import('./PanelUpdateModal'));
-const LogModal = lazy(() => import('./LogModal'));
 const BackupModal = lazy(() => import('./BackupModal'));
 const SystemHistoryModal = lazy(() => import('./SystemHistoryModal'));
 const XrayMetricsModal = lazy(() => import('./XrayMetricsModal'));
-const XrayLogModal = lazy(() => import('./XrayLogModal'));
 const AmneziaWGLogModal = lazy(() => import('./AmneziaWGLogModal'));
 const VersionModal = lazy(() => import('./VersionModal'));
 
@@ -36,7 +35,6 @@ export default function IndexPage() {
     setMessageInstance(messageApi);
   }, [messageApi]);
 
-  const [accessLogEnable, setAccessLogEnable] = useState(false);
   const [devChannelEnable, setDevChannelEnable] = useState(false);
   const [panelUpdateInfo, setPanelUpdateInfo] = useState<PanelUpdateInfo>({
     currentVersion: '',
@@ -46,28 +44,26 @@ export default function IndexPage() {
 
   const basePath = window.X_UI_BASE_PATH || '';
 
-  const [logsOpen, setLogsOpen] = useState(false);
   const [backupOpen, setBackupOpen] = useState(false);
   const [panelUpdateOpen, setPanelUpdateOpen] = useState(false);
   const [sysHistoryOpen, setSysHistoryOpen] = useState(false);
   const [xrayMetricsOpen, setXrayMetricsOpen] = useState(false);
-  const [xrayLogsOpen, setXrayLogsOpen] = useState(false);
   const [amneziawgLogsOpen, setAmneziawgLogsOpen] = useState(false);
   const [versionOpen, setVersionOpen] = useState(false);
   const [configTextOpen, setConfigTextOpen] = useState(false);
   const [configText, setConfigText] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingTip, setLoadingTip] = useState(t('loading'));
+  const navigate = useNavigate();
 
   useEffect(() => {
-    HttpUtil.post<{ accessLogEnable?: boolean; devChannelEnable?: boolean }>(
-      '/panel/api/setting/defaultSettings',
-    ).then((msg) => {
-      if (msg?.success && msg.obj) {
-        setAccessLogEnable(!!msg.obj.accessLogEnable);
-        setDevChannelEnable(!!msg.obj.devChannelEnable);
-      }
-    });
+    HttpUtil.post<{ devChannelEnable?: boolean }>('/panel/api/setting/defaultSettings').then(
+      (msg) => {
+        if (msg?.success && msg.obj) {
+          setDevChannelEnable(!!msg.obj.devChannelEnable);
+        }
+      },
+    );
     HttpUtil.get<PanelUpdateInfo>('/panel/api/server/getPanelUpdateInfo').then((msg) => {
       if (msg?.success && msg.obj) setPanelUpdateInfo(msg.obj);
     });
@@ -158,8 +154,7 @@ export default function IndexPage() {
               updateAvailable={panelUpdateInfo.updateAvailable}
               xrayVersion={status.xray.version}
               actions={{
-                onLogs: () => setLogsOpen(true),
-                onXrayLogs: accessLogEnable ? () => setXrayLogsOpen(true) : undefined,
+                onLogs: () => navigate('/logs'),
                 onAmneziaWGLogs: status.amneziawg.configured
                   ? () => setAmneziawgLogsOpen(true)
                   : undefined,
@@ -185,9 +180,6 @@ export default function IndexPage() {
           onBusy={setBusy}
         />
       </LazyMount>
-      <LazyMount when={logsOpen}>
-        <LogModal open={logsOpen} onClose={() => setLogsOpen(false)} />
-      </LazyMount>
       <LazyMount when={backupOpen}>
         <BackupModal
           open={backupOpen}
@@ -205,9 +197,6 @@ export default function IndexPage() {
       </LazyMount>
       <LazyMount when={xrayMetricsOpen}>
         <XrayMetricsModal open={xrayMetricsOpen} onClose={() => setXrayMetricsOpen(false)} />
-      </LazyMount>
-      <LazyMount when={xrayLogsOpen}>
-        <XrayLogModal open={xrayLogsOpen} onClose={() => setXrayLogsOpen(false)} />
       </LazyMount>
       <LazyMount when={amneziawgLogsOpen}>
         <AmneziaWGLogModal open={amneziawgLogsOpen} onClose={() => setAmneziawgLogsOpen(false)} />

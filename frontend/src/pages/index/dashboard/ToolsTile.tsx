@@ -5,7 +5,6 @@ import { formatPanelVersion } from '@/lib/panel-version';
 
 export interface ToolsActions {
   onLogs: () => void;
-  onXrayLogs?: () => void;
   onAmneziaWGLogs?: () => void;
   onConfig: () => void;
   onBackup: () => void;
@@ -53,13 +52,8 @@ export function ToolsTile({
           {t('pages.index.xraySwitch')}
         </Btn>
         <Btn size="sm" icon="logs" onClick={actions.onLogs}>
-          {t('dashboard.tools.panelLogs')}
+          {t('menu.logs')}
         </Btn>
-        {actions.onXrayLogs && (
-          <Btn size="sm" icon="logs" onClick={actions.onXrayLogs}>
-            {t('dashboard.tools.xrayLogs')}
-          </Btn>
-        )}
         {actions.onAmneziaWGLogs && (
           <Btn size="sm" icon="logs" onClick={actions.onAmneziaWGLogs}>
             {t('dashboard.tools.awgLogs')}

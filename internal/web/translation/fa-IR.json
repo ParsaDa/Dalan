@@ -249,7 +249,6 @@
       "geodataEmpty": "فایلی پیکربندی نشده است. در قوانین مسیریابی فایل‌ها به صورت ext:geosite_custom.dat:category استفاده می‌شوند.",
       "dontRefresh": "در حال نصب، لطفا صفحه را رفرش نکنید",
       "logs": "لاگ‌ها",
-      "accessLogs": "لاگ‌های دسترسی",
       "autoUpdate": "به‌روزرسانی خودکار",
       "amneziawgLogs": "لاگ‌های AmneziaWG",
       "amneziawgHandshake": "آخرین دست‌دهی",
@@ -277,14 +276,6 @@
       "migrationDownload": "دانلود فایل مهاجرت",
       "migrationDownloadPgDesc": "برای دانلود یک پایگاه‌دادهٔ SQLite با پسوند ‎.db که از داده‌های PostgreSQL شما ساخته می‌شود کلیک کنید؛ آمادهٔ اجرای این پنل روی SQLite.",
       "uptime": "مدت کارکرد",
-      "logLevelDebug": "Debug",
-      "logLevelInfo": "Info",
-      "logLevelNotice": "Notice",
-      "logLevelWarning": "Warning",
-      "logLevelError": "Error",
-      "accessDirect": "DIRECT",
-      "accessBlocked": "BLOCKED",
-      "accessProxy": "PROXY",
       "importKeepHostSettings": "حفظ تنظیمات این دستگاه",
       "importKeepHostSettingsDesc": "آدرس‌ها و پورت‌های شنود، مسیر پایه، گواهی‌ها و هویت نودِ همین پنل را نگه می‌دارد و آن‌ها را از فایل بارگذاری‌شده نمی‌گیرد.",
       "logLines": "تعداد خطوط",
@@ -3281,8 +3272,6 @@
     "tools": {
       "title": "ابزارهای سرور",
       "versions": "پنل {panel} · Xray {xray}",
-      "panelLogs": "لاگ پنل",
-      "xrayLogs": "لاگ دسترسی Xray",
       "awgLogs": "لاگ AmneziaWG",
       "backup": "پشتیبان و بازیابی",
       "metrics": "آمار Xray"
@@ -3503,5 +3492,28 @@
     "colStatus": "وضعیت",
     "colUsage": "مصرف",
     "colExpires": "پایان"
+  },
+  "logs": {
+    "subtitle": "لاگ زنده‌ی این سرور. خط‌های تازه بالا می‌آیند؛ با توقف، جریان می‌ایستد.",
+    "pause": "توقف",
+    "resume": "ادامه",
+    "levels": "سطح لاگ",
+    "level": {
+      "info": "همه",
+      "warning": "هشدارها",
+      "err": "خطاها"
+    },
+    "sources": "منبع لاگ",
+    "source": {
+      "panel": "پنل",
+      "xray": "دسترسی Xray"
+    },
+    "search": "جست‌وجو در لاگ",
+    "streaming": "در حال پخش",
+    "paused": "متوقف",
+    "count": "{n} خط · به‌روز شده {at}",
+    "unavailable": "لاگ‌ها خوانده نشد",
+    "xrayHint": "برای دیدن اتصال‌ها، لاگ دسترسی Xray را در تنظیمات Xray روشن کنید.",
+    "empty": "هنوز خطی نیست"
   }
 }

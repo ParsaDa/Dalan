@@ -5,6 +5,7 @@ import {
   ClusterOutlined,
   NodeIndexOutlined,
   DashboardOutlined,
+  FileTextOutlined,
   ExportOutlined,
   GlobalOutlined,
   HistoryOutlined,
@@ -29,6 +30,7 @@ const XrayPage = lazy(() => import('@/pages/xray/XrayPage'));
 const ApiDocsPage = lazy(() => import('@/pages/api-docs/ApiDocsPage'));
 const MorePage = lazy(() => import('@/pages/more/MorePage'));
 const ActivityPage = lazy(() => import('@/pages/activity/ActivityPage'));
+const LogsPage = lazy(() => import('@/pages/logs/LogsPage'));
 
 export interface PanelRoute {
   path: string;
@@ -52,6 +54,7 @@ export const PANEL_ROUTES: PanelRoute[] = [
   { path: '/routing', titleKey: 'menu.routing', icon: SwapOutlined, component: XrayPage },
   { path: '/settings', titleKey: 'menu.settings', icon: SettingOutlined, component: SettingsPage },
   { path: '/xray', titleKey: 'menu.xray', icon: ToolOutlined, component: XrayPage },
+  { path: '/logs', titleKey: 'menu.logs', icon: FileTextOutlined, component: LogsPage },
   { path: '/api-docs', titleKey: 'menu.apiDocs', icon: ApiOutlined, component: ApiDocsPage },
   { path: '/more', titleKey: 'shell.nav.more', icon: MenuOutlined, component: MorePage },
 ];
