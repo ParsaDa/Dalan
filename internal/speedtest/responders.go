@@ -43,7 +43,7 @@ func (r *Responders) Sync(addrs []string) error {
 		if _, ok := r.running[a]; ok {
 			continue
 		}
-		ln, err := net.Listen("tcp", a)
+		ln, err := (&net.ListenConfig{}).Listen(context.Background(), "tcp", a)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("speed test responder on %s: %w", a, err))
 			continue
