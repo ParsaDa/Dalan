@@ -30,19 +30,22 @@ _openapi:
         restart.'
       url: '#send-one-request-through-an-entry-tunnel-and-report-whether-it-came-back-the-round-trip-time-and-the-address-and-country-it-left-from-a-tunnel-that-is-down-is-a-normal-answer-with-connectedfalse-and-the-reason-in-error-a-rakhsh-tunnel-is-judged-by-its-lanes-instead-connected-while-at-least-one-lane-is-up-with-lanesup-targetlanes-latencyms-and-losspct-from-the-engine-only-the-entry-end-can-be-tested-history-lists-the-latency-of-every-probe-in-the-last-hour-oldest-first-with-0-for-a-failed-probe-it-lives-in-memory-and-starts-empty-after-a-restart'
     - depth: 2
-      title: 'Start a speed test through an entry tunnel: the connections leave at the
-        exit server, so the result is the speed of this tunnel to the internet.
-        Only one speed test runs at a time on a panel. Starting a test of the
-        same tunnel while it runs joins it; starting another tunnel meanwhile
-        fails. Only an enabled BackPack or Rakhsh entry tunnel with a relay can
-        be tested; an exit end, a direct tunnel and a management tunnel are
-        refused.'
-      url: '#start-a-speed-test-through-an-entry-tunnel-the-connections-leave-at-the-exit-server-so-the-result-is-the-speed-of-this-tunnel-to-the-internet-only-one-speed-test-runs-at-a-time-on-a-panel-starting-a-test-of-the-same-tunnel-while-it-runs-joins-it-starting-another-tunnel-meanwhile-fails-only-an-enabled-backpack-or-rakhsh-entry-tunnel-with-a-relay-can-be-tested-an-exit-end-a-direct-tunnel-and-a-management-tunnel-are-refused'
+      title: 'Start a speed test of an entry tunnel: ping, download and upload are
+        measured through the tunnel to the exit server, which answers on a
+        loopback port next to the relay port, so the result is the speed of the
+        tunnel itself and speedtest.net is not used (the exit server needs a
+        Dalan version with this test). Only one speed test runs at a time on a
+        panel. Starting a test of the same tunnel while it runs joins it;
+        starting another tunnel meanwhile fails. Only an enabled entry tunnel
+        with a relay (BackPack, Rakhsh or a forwarding engine) can be tested; an
+        exit end, a direct tunnel and a management tunnel are refused.'
+      url: '#start-a-speed-test-of-an-entry-tunnel-ping-download-and-upload-are-measured-through-the-tunnel-to-the-exit-server-which-answers-on-a-loopback-port-next-to-the-relay-port-so-the-result-is-the-speed-of-the-tunnel-itself-and-speedtestnet-is-not-used-the-exit-server-needs-a-dalan-version-with-this-test-only-one-speed-test-runs-at-a-time-on-a-panel-starting-a-test-of-the-same-tunnel-while-it-runs-joins-it-starting-another-tunnel-meanwhile-fails-only-an-enabled-entry-tunnel-with-a-relay-backpack-rakhsh-or-a-forwarding-engine-can-be-tested-an-exit-end-a-direct-tunnel-and-a-management-tunnel-are-refused'
     - depth: 2
-      title: 'Live state of the speed test of one tunnel: phase (servers, ping,
-        download, upload), progress 0-1 and the current rate in Mbps; result
-        holds the finished measurement and error says why a run failed.'
-      url: '#live-state-of-the-speed-test-of-one-tunnel-phase-servers-ping-download-upload-progress-0-1-and-the-current-rate-in-mbps-result-holds-the-finished-measurement-and-error-says-why-a-run-failed'
+      title: 'Live state of the speed test of one tunnel: phase (ping, download,
+        upload), progress 0-1 and the current rate in Mbps; result holds the
+        finished measurement (its server.id is "link", not a speedtest.net host)
+        and error says why a run failed.'
+      url: '#live-state-of-the-speed-test-of-one-tunnel-phase-ping-download-upload-progress-0-1-and-the-current-rate-in-mbps-result-holds-the-finished-measurement-its-serverid-is-link-not-a-speedtestnet-host-and-error-says-why-a-run-failed'
     - depth: 2
       title: The last 20 finished speed tests of one tunnel, newest first.
       url: '#the-last-20-finished-speed-tests-of-one-tunnel-newest-first'
@@ -50,15 +53,15 @@ _openapi:
       title: Try tunnel methods against one node and rank them. For each method in
         candidates the panel makes a temporary tunnel on this server and on the
         node (named dalan-bench-N, a name regular tunnels cannot take), waits
-        until it connects, runs the speed test through it, then removes it on
-        both servers. objective "speed" ranks by throughput with download
-        weighted over upload; "balanced" weighs throughput, ping and jitter. A
-        reverse method needs address, this server's address as the node dials
-        it; a direct method uses the node's own. Between 1 and 60 methods are
-        accepted; only one benchmark runs at a time and it also holds the speed
-        test slot while a method is measured. Poll /benchmark/status for
-        progress.
-      url: '#try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-runs-the-speed-test-through-it-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-between-1-and-60-methods-are-accepted-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress'
+        until it connects, measures the speed between the two servers through it
+        (the tunnel speed test), then removes it on both servers. objective
+        "speed" ranks by throughput with download weighted over upload;
+        "balanced" weighs throughput, ping and jitter. A reverse method needs
+        address, this server's address as the node dials it; a direct method
+        uses the node's own. Between 1 and 60 methods are accepted; only one
+        benchmark runs at a time and it also holds the speed test slot while a
+        method is measured. Poll /benchmark/status for progress.
+      url: '#try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-measures-the-speed-between-the-two-servers-through-it-the-tunnel-speed-test-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-between-1-and-60-methods-are-accepted-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress'
     - depth: 2
       title: "Progress of the current or last benchmark: how many methods are done,
         the method and step in progress (create, connect, measure or remove),
@@ -238,32 +241,36 @@ _openapi:
           oldest first, with 0 for a failed probe; it lives in memory and starts
           empty after a restart.'
         id: send-one-request-through-an-entry-tunnel-and-report-whether-it-came-back-the-round-trip-time-and-the-address-and-country-it-left-from-a-tunnel-that-is-down-is-a-normal-answer-with-connectedfalse-and-the-reason-in-error-a-rakhsh-tunnel-is-judged-by-its-lanes-instead-connected-while-at-least-one-lane-is-up-with-lanesup-targetlanes-latencyms-and-losspct-from-the-engine-only-the-entry-end-can-be-tested-history-lists-the-latency-of-every-probe-in-the-last-hour-oldest-first-with-0-for-a-failed-probe-it-lives-in-memory-and-starts-empty-after-a-restart
-      - content: 'Start a speed test through an entry tunnel: the connections leave at
-          the exit server, so the result is the speed of this tunnel to the
-          internet. Only one speed test runs at a time on a panel. Starting a
-          test of the same tunnel while it runs joins it; starting another
-          tunnel meanwhile fails. Only an enabled BackPack or Rakhsh entry
-          tunnel with a relay can be tested; an exit end, a direct tunnel and a
-          management tunnel are refused.'
-        id: start-a-speed-test-through-an-entry-tunnel-the-connections-leave-at-the-exit-server-so-the-result-is-the-speed-of-this-tunnel-to-the-internet-only-one-speed-test-runs-at-a-time-on-a-panel-starting-a-test-of-the-same-tunnel-while-it-runs-joins-it-starting-another-tunnel-meanwhile-fails-only-an-enabled-backpack-or-rakhsh-entry-tunnel-with-a-relay-can-be-tested-an-exit-end-a-direct-tunnel-and-a-management-tunnel-are-refused
-      - content: 'Live state of the speed test of one tunnel: phase (servers, ping,
-          download, upload), progress 0-1 and the current rate in Mbps; result
-          holds the finished measurement and error says why a run failed.'
-        id: live-state-of-the-speed-test-of-one-tunnel-phase-servers-ping-download-upload-progress-0-1-and-the-current-rate-in-mbps-result-holds-the-finished-measurement-and-error-says-why-a-run-failed
+      - content: 'Start a speed test of an entry tunnel: ping, download and upload are
+          measured through the tunnel to the exit server, which answers on a
+          loopback port next to the relay port, so the result is the speed of
+          the tunnel itself and speedtest.net is not used (the exit server needs
+          a Dalan version with this test). Only one speed test runs at a time on
+          a panel. Starting a test of the same tunnel while it runs joins it;
+          starting another tunnel meanwhile fails. Only an enabled entry tunnel
+          with a relay (BackPack, Rakhsh or a forwarding engine) can be tested;
+          an exit end, a direct tunnel and a management tunnel are refused.'
+        id: start-a-speed-test-of-an-entry-tunnel-ping-download-and-upload-are-measured-through-the-tunnel-to-the-exit-server-which-answers-on-a-loopback-port-next-to-the-relay-port-so-the-result-is-the-speed-of-the-tunnel-itself-and-speedtestnet-is-not-used-the-exit-server-needs-a-dalan-version-with-this-test-only-one-speed-test-runs-at-a-time-on-a-panel-starting-a-test-of-the-same-tunnel-while-it-runs-joins-it-starting-another-tunnel-meanwhile-fails-only-an-enabled-entry-tunnel-with-a-relay-backpack-rakhsh-or-a-forwarding-engine-can-be-tested-an-exit-end-a-direct-tunnel-and-a-management-tunnel-are-refused
+      - content: 'Live state of the speed test of one tunnel: phase (ping, download,
+          upload), progress 0-1 and the current rate in Mbps; result holds the
+          finished measurement (its server.id is "link", not a speedtest.net
+          host) and error says why a run failed.'
+        id: live-state-of-the-speed-test-of-one-tunnel-phase-ping-download-upload-progress-0-1-and-the-current-rate-in-mbps-result-holds-the-finished-measurement-its-serverid-is-link-not-a-speedtestnet-host-and-error-says-why-a-run-failed
       - content: The last 20 finished speed tests of one tunnel, newest first.
         id: the-last-20-finished-speed-tests-of-one-tunnel-newest-first
       - content: Try tunnel methods against one node and rank them. For each method in
           candidates the panel makes a temporary tunnel on this server and on
           the node (named dalan-bench-N, a name regular tunnels cannot take),
-          waits until it connects, runs the speed test through it, then removes
-          it on both servers. objective "speed" ranks by throughput with
-          download weighted over upload; "balanced" weighs throughput, ping and
-          jitter. A reverse method needs address, this server's address as the
-          node dials it; a direct method uses the node's own. Between 1 and 60
-          methods are accepted; only one benchmark runs at a time and it also
-          holds the speed test slot while a method is measured. Poll
-          /benchmark/status for progress.
-        id: try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-runs-the-speed-test-through-it-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-between-1-and-60-methods-are-accepted-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress
+          waits until it connects, measures the speed between the two servers
+          through it (the tunnel speed test), then removes it on both servers.
+          objective "speed" ranks by throughput with download weighted over
+          upload; "balanced" weighs throughput, ping and jitter. A reverse
+          method needs address, this server's address as the node dials it; a
+          direct method uses the node's own. Between 1 and 60 methods are
+          accepted; only one benchmark runs at a time and it also holds the
+          speed test slot while a method is measured. Poll /benchmark/status for
+          progress.
+        id: try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-measures-the-speed-between-the-two-servers-through-it-the-tunnel-speed-test-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-between-1-and-60-methods-are-accepted-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress
       - content: "Progress of the current or last benchmark: how many methods are done,
           the method and step in progress (create, connect, measure or remove),
           and one result per finished method with its measurement and score

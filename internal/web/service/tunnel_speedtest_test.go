@@ -45,3 +45,37 @@ func TestSpeedtestDialAcceptsOnlyAnEnabledEntryTunnelWithARelay(t *testing.T) {
 		}
 	}
 }
+
+func TestSpeedtestLinkPointsAtTheExitEndsResponderBesideTheRelayPort(t *testing.T) {
+	svc := newTunnelDB(t)
+	good := storeTunnel(t, model.ServerTunnel{Name: "de1", Role: model.TunnelRolePortal, Engine: model.TunnelEngineBackpack, Enable: true, RelayPort: 63500, UUID: "u"})
+
+	dial, addr, err := svc.SpeedtestLink(good.Id)
+	if err != nil || dial == nil {
+		t.Fatalf("dial = %v, err = %v", dial != nil, err)
+	}
+	if addr != "127.0.0.1:64500" {
+		t.Fatalf("addr = %q, want the loopback port 1000 above the relay port", addr)
+	}
+	if _, _, err := svc.SpeedtestLink(9999); err == nil {
+		t.Fatal("a missing tunnel must be refused")
+	}
+}
+
+func TestExitSpeedtestAddrsAreTheEnabledExitEndsWithARelay(t *testing.T) {
+	tunnels := []model.ServerTunnel{
+		{Name: "exit", Role: model.TunnelRoleBridge, Engine: model.TunnelEngineBackpack, Enable: true, RelayPort: 63501},
+		{Name: "entry", Role: model.TunnelRolePortal, Engine: model.TunnelEngineBackpack, Enable: true, RelayPort: 63502},
+		{Name: "off", Role: model.TunnelRoleBridge, Engine: model.TunnelEngineBackpack, Enable: false, RelayPort: 63503},
+		{Name: "norelay", Role: model.TunnelRoleBridge, Engine: model.TunnelEngineBackpack, Enable: true},
+		{Name: "child", Role: model.TunnelRoleBridge, Engine: model.TunnelEngineBackpack, Enable: true, RelayPort: 63504, ParentId: 7},
+		{Name: "exit2", Role: model.TunnelRoleBridge, Engine: model.TunnelEngineRakhsh, Enable: true, RelayPort: 63505},
+	}
+
+	got := exitSpeedtestAddrs(tunnels)
+
+	want := []string{"127.0.0.1:64501", "127.0.0.1:64505"}
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Fatalf("addrs = %v, want %v", got, want)
+	}
+}

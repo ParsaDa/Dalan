@@ -144,11 +144,13 @@ export function SpeedtestPanel({ run }: { run: SpeedtestRun }) {
             </div>
           ) : last ? (
             <div className="mut" style={{ fontSize: 12.5 }}>
-              {t('dashboard.speedtest.server', {
-                sponsor: last.server.sponsor,
-                name: last.server.name,
-                country: last.server.country,
-              })}
+              {last.server.id === 'link'
+                ? t('dashboard.speedtest.serverLink')
+                : t('dashboard.speedtest.server', {
+                    sponsor: last.server.sponsor,
+                    name: last.server.name,
+                    country: last.server.country,
+                  })}
             </div>
           ) : (
             <div className="mut">{t('dashboard.speedtest.empty')}</div>

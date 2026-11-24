@@ -99,3 +99,15 @@ func TestRelayDialReachesTheFarEndThroughTheRelayWithTheTunnelsAccount(t *testin
 		t.Fatalf("relay saw login %v, want the tunnel's own account %v", got, [2]string{user, pass})
 	}
 }
+
+func TestThroughputPortNeverLandsOnAnotherTunnelsRelayPortOrPastTheLastPort(t *testing.T) {
+	for relay := RelayPortMin; relay <= RelayPortMax; relay++ {
+		p := ThroughputPort(relay)
+		if p >= RelayPortMin && p <= RelayPortMax {
+			t.Fatalf("relay %d: speed test port %d is inside the relay range", relay, p)
+		}
+		if p > 65535 {
+			t.Fatalf("relay %d: speed test port %d is not a port", relay, p)
+		}
+	}
+}

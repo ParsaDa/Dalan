@@ -3279,7 +3279,8 @@
         "ping": "Testing ping…",
         "download": "Testing download…",
         "upload": "Testing upload…"
-      }
+      },
+      "serverLink": "Speed between this server and the exit server"
     }
   },
   "activity": {
@@ -3397,7 +3398,7 @@
     "speedtest": {
       "open": "Speed test",
       "title": "Speed test of {name}",
-      "hint": "The test goes through this tunnel: its connections leave from the exit server, so the result is the tunnel's speed to the internet. Tests run one at a time."
+      "hint": "The test goes through this tunnel and measures its own speed between this server and the exit server: ping, download and upload of the tunnel, not of the internet. Tests run one at a time."
     },
     "benchmark": {
       "open": "Compare methods",

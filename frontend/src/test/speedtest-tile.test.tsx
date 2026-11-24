@@ -66,6 +66,19 @@ describe('dashboard speed test card', () => {
     expect(button.disabled).toBe(true);
   });
 
+  it('names a tunnel test as the link between the two servers, not a speedtest.net host', async () => {
+    const link = {
+      ...finished,
+      server: { ...finished.server, id: 'link', sponsor: '', name: 'tunnel link' },
+    };
+    serve(idle, [link]);
+    renderWithProviders(<SpeedtestTile />);
+
+    expect(await screen.findByText('412.6')).toBeTruthy();
+    expect(screen.getByText('Speed between this server and the exit server')).toBeTruthy();
+    expect(screen.queryByText(/tunnel link/)).toBeNull();
+  });
+
   it('tells the person when speedtest.net could not be reached', async () => {
     serve({ ...idle, error: 'could not get the server list from speedtest.net: status 503' });
     renderWithProviders(<SpeedtestTile />);

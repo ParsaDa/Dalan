@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
+	"github.com/mhsanaei/3x-ui/v3/internal/speedtest"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
@@ -427,6 +429,34 @@ func (s *TunnelService) SpeedtestDial(id int) (func(ctx context.Context, network
 	return backpack.RelayDial(*t), nil
 }
 
+// SpeedtestLink returns the dialer of an entry tunnel and the address its exit end answers a speed test at,
+// as seen from the exit server.
+func (s *TunnelService) SpeedtestLink(id int) (func(ctx context.Context, network, addr string) (net.Conn, error), string, error) {
+	dial, err := s.SpeedtestDial(id)
+	if err != nil {
+		return nil, "", err
+	}
+	t, err := s.get(id)
+	if err != nil {
+		return nil, "", err
+	}
+	return dial, net.JoinHostPort("127.0.0.1", strconv.Itoa(backpack.ThroughputPort(t.RelayPort))), nil
+}
+
+// exitSpeedtestAddrs lists where this server answers speed tests: one loopback port for every enabled exit end.
+func exitSpeedtestAddrs(tunnels []model.ServerTunnel) []string {
+	var addrs []string
+	for _, t := range tunnels {
+		if t.Role == model.TunnelRoleBridge && t.Enable && t.ParentId == 0 && model.ExternalEngine(t.Engine) && t.RelayPort > 0 {
+			addrs = append(addrs, net.JoinHostPort("127.0.0.1", strconv.Itoa(backpack.ThroughputPort(t.RelayPort))))
+		}
+	}
+	return addrs
+}
+
+// speedtestResponders answers the speed tests that entry ends run through this server's exit tunnels.
+var speedtestResponders speedtest.Responders
+
 // applyChange lets every engine pick up a stored change; a missing engine binary is reported by Status.
 func (s *TunnelService) applyChange() {
 	s.xrayService.SetToNeedRestart()
@@ -449,6 +479,9 @@ func (s *TunnelService) ReconcileEngines() error {
 			firstErr = err
 		}
 	}
+	if err := speedtestResponders.Sync(exitSpeedtestAddrs(tunnels)); err != nil {
+		logger.Warning("tunnel speed test:", err)
+	}
 	return firstErr
 }
 
@@ -457,6 +490,7 @@ func (s *TunnelService) StopEngines() {
 	for _, kind := range allExternalEngines() {
 		kind.supervisor().StopAll()
 	}
+	_ = speedtestResponders.Sync(nil)
 }
 
 // EngineInfo reports on one engine; an empty id means BackPack.
