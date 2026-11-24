@@ -5,14 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"runtime"
 	"sync"
 	"time"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/config"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/forwarder"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 )
 
@@ -34,11 +38,13 @@ type externalEngine struct {
 	installed  func(dest string) string
 	// connected says whether the engine currently reports this tunnel as connected.
 	connected func(dir string, t model.ServerTunnel) bool
+	// preinstalled engines are put in place by the install script; the others are installed from the panel.
+	preinstalled bool
 }
 
 func backpackEngine() externalEngine {
 	return externalEngine{
-		id: model.TunnelEngineBackpack, label: "BackPack",
+		id: model.TunnelEngineBackpack, label: "BackPack", preinstalled: true,
 		supervisor: func() *engine.Supervisor { return tunnelEngines },
 		pinned:     backpack.PinnedVersion,
 		arch:       backpackArch,
@@ -63,7 +69,7 @@ func backpackEngine() externalEngine {
 
 func rakhshEngine() externalEngine {
 	return externalEngine{
-		id: model.TunnelEngineRakhsh, label: "Rakhsh",
+		id: model.TunnelEngineRakhsh, label: "Rakhsh", preinstalled: true,
 		supervisor: func() *engine.Supervisor { return rakhshEngines },
 		pinned:     rakhsh.PinnedVersion,
 		arch:       func() (string, error) { return runtime.GOARCH, nil },
@@ -90,6 +96,82 @@ func rakhshEngine() externalEngine {
 
 const rakhshStatusTimeout = 5 * time.Second
 
+// forwarderStatusTimeout bounds the greeting a forwarding engine's relay is asked to answer.
+const forwarderStatusTimeout = 5 * time.Second
+
+// forwarderEngines run the GOST, Rathole, Backhaul, Kariz, sing-box and Xray processes of this panel,
+// keyed by engine id; tests replace entries with ones on a fake engine.
+var forwarderEngines = newForwarderEngines()
+
+func newForwarderEngines() map[string]*engine.Supervisor {
+	out := map[string]*engine.Supervisor{}
+	for _, e := range forwarder.Registry() {
+		out[e.ID] = e.NewSupervisor(forwarderBinary(e), filepath.Join(config.GetDBFolderPath(), "tunnels"))
+	}
+	return out
+}
+
+// forwarderBinary is the file an engine runs from: its own download, or this panel for an engine that is part of it.
+func forwarderBinary(e forwarder.Engine) string {
+	if e.Self {
+		if exe, err := os.Executable(); err == nil {
+			return exe
+		}
+	}
+	return filepath.Join(config.GetBinFolderPath(), e.ID)
+}
+
+func forwarderKind(e forwarder.Engine) externalEngine {
+	if e.Self {
+		return selfKind(e)
+	}
+	return externalEngine{
+		id: e.ID, label: e.Label,
+		supervisor: func() *engine.Supervisor { return forwarderEngines[e.ID] },
+		pinned:     e.Pinned,
+		arch:       func() (string, error) { return forwarder.Arch(), nil },
+		latest: func(ctx context.Context, client *http.Client) (string, error) {
+			return e.LatestVersion(ctx, client, forwarder.APIBaseURL)
+		},
+		recent: func(ctx context.Context, client *http.Client, limit int) ([]string, error) {
+			return e.RecentVersions(ctx, client, forwarder.APIBaseURL, limit)
+		},
+		fetch: func(ctx context.Context, client *http.Client, version, arch string) (engine.Release, error) {
+			return e.Fetch(ctx, client, forwarder.ReleaseBaseURL, version, arch)
+		},
+		place:     e.Place,
+		rollback:  e.Rollback,
+		installed: e.InstalledVersion,
+		connected: func(_ string, t model.ServerTunnel) bool {
+			_, ok := forwarder.Check(t, forwarderEngines[e.ID].Running, forwarderStatusTimeout)
+			return ok
+		},
+	}
+}
+
+// selfKind is an engine that is this panel's own binary: always installed at the panel's version, never downloaded.
+func selfKind(e forwarder.Engine) externalEngine {
+	none := func() error { return fmt.Errorf("%s: %w", e.Label, errEngineHasNoBinary) }
+	return externalEngine{
+		id: e.ID, label: e.Label,
+		supervisor: func() *engine.Supervisor { return forwarderEngines[e.ID] },
+		pinned:     e.Pinned,
+		arch:       func() (string, error) { return forwarder.Arch(), nil },
+		latest:     func(context.Context, *http.Client) (string, error) { return "", none() },
+		recent:     func(context.Context, *http.Client, int) ([]string, error) { return nil, none() },
+		fetch: func(context.Context, *http.Client, string, string) (engine.Release, error) {
+			return engine.Release{}, none()
+		},
+		place:     func(engine.Release, string, string, string) error { return none() },
+		rollback:  func(string) error { return none() },
+		installed: func(string) string { return config.GetPanelVersion() },
+		connected: func(_ string, t model.ServerTunnel) bool {
+			_, ok := forwarder.Check(t, forwarderEngines[e.ID].Running, forwarderStatusTimeout)
+			return ok
+		},
+	}
+}
+
 var errEngineHasNoBinary = errors.New("this tunnel engine runs inside the panel and has no engine to manage")
 
 // externalEngineFor finds an engine by its id; an empty id means BackPack, as before there was a second one.
@@ -100,10 +182,19 @@ func externalEngineFor(id string) (externalEngine, error) {
 	case model.TunnelEngineRakhsh:
 		return rakhshEngine(), nil
 	}
+	if e, ok := forwarder.ByID(id); ok {
+		return forwarderKind(e), nil
+	}
 	return externalEngine{}, fmt.Errorf("tunnel engine %q: %w", id, errEngineHasNoBinary)
 }
 
-func allExternalEngines() []externalEngine { return []externalEngine{backpackEngine(), rakhshEngine()} }
+func allExternalEngines() []externalEngine {
+	kinds := []externalEngine{backpackEngine(), rakhshEngine()}
+	for _, e := range forwarder.Registry() {
+		kinds = append(kinds, forwarderKind(e))
+	}
+	return kinds
+}
 
 // engineSource fetches a release of one engine; an empty version means the newest one.
 type engineSource func(ctx context.Context, id, version, arch string) (engine.Release, error)
@@ -285,27 +376,27 @@ func backpackArch() (string, error) {
 	return "", fmt.Errorf("BackPack publishes no build for %s", arch)
 }
 
-func (s *TunnelService) connectedTunnels(kind externalEngine) []string {
+func (s *TunnelService) connectedTunnels(kind externalEngine) []model.ServerTunnel {
 	tunnels, err := s.GetAll()
 	if err != nil {
 		return nil
 	}
 	dir := kind.supervisor().Dir
-	var names []string
+	var connected []model.ServerTunnel
 	for _, t := range tunnels {
 		if t.Engine == kind.id && t.Enable && kind.connected(dir, t) {
-			names = append(names, t.Name)
+			connected = append(connected, t)
 		}
 	}
-	return names
+	return connected
 }
 
-func (s *TunnelService) waitConnected(kind externalEngine, names []string, within time.Duration) bool {
+func (s *TunnelService) waitConnected(kind externalEngine, tunnels []model.ServerTunnel, within time.Duration) bool {
 	dir := kind.supervisor().Dir
 	for deadline := time.Now().Add(within); ; time.Sleep(200 * time.Millisecond) {
 		all := true
-		for _, name := range names {
-			if !kind.connected(dir, model.ServerTunnel{Name: name}) {
+		for _, t := range tunnels {
+			if !kind.connected(dir, t) {
 				all = false
 				break
 			}
@@ -352,7 +443,7 @@ func (s *TunnelService) updateEngineFrom(ctx context.Context, kind externalEngin
 		return reconcileErr
 	}
 
-	logger.Warningf("%s %s did not bring %v back; rolling back", kind.label, version, connected)
+	logger.Warningf("%s %s did not bring %d tunnel(s) back; rolling back", kind.label, version, len(connected))
 	if err := kind.rollback(binary); err != nil {
 		return fmt.Errorf("%s %s did not reconnect its tunnels and the earlier engine could not be restored: %w", kind.label, version, err)
 	}

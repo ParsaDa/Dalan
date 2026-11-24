@@ -154,6 +154,16 @@ func run(root, outDir string) error {
 			AliasAllow:  setOf(),
 		},
 		{
+			Path:        resolveRel(root, "internal/tunnel/benchmark"),
+			StructAllow: setOf("RunStatus", "MethodResult", "Candidate", "Measurement"),
+			AliasAllow:  setOf("Objective", "Phase"),
+		},
+		{
+			Path:        resolveRel(root, "internal/tunnel/forwarder"),
+			StructAllow: setOf("ForwardingEngine", "ForwardingTransport", "ForwardingSetting"),
+			AliasAllow:  setOf(),
+		},
+		{
 			Path:        resolveRel(root, "internal/tor"),
 			StructAllow: setOf("Status", "TrialResult"),
 			AliasAllow:  setOf(),

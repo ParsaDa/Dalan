@@ -6,8 +6,14 @@ export type BlockerCode = z.infer<typeof BlockerCodeSchema>;
 export const GeoKindSchema = z.string();
 export type GeoKind = z.infer<typeof GeoKindSchema>;
 
+export const ObjectiveSchema = z.string();
+export type Objective = z.infer<typeof ObjectiveSchema>;
+
 export const OnlineAPISupportSchema = z.number().int();
 export type OnlineAPISupport = z.infer<typeof OnlineAPISupportSchema>;
+
+export const PhaseSchema = z.string();
+export type Phase = z.infer<typeof PhaseSchema>;
 
 export const ProcessStateSchema = z.string();
 export type ProcessState = z.infer<typeof ProcessStateSchema>;
@@ -483,6 +489,13 @@ export const BlockerSchema = z.object({
 });
 export type Blocker = z.infer<typeof BlockerSchema>;
 
+export const CandidateSchema = z.object({
+  engine: z.string(),
+  mode: z.string(),
+  transport: z.string(),
+});
+export type Candidate = z.infer<typeof CandidateSchema>;
+
 export const ClientSchema = z.object({
   adTag: z.string().optional(),
   allowedIPs: z.array(z.string()).optional(),
@@ -678,6 +691,32 @@ export const FallbackParentInfoSchema = z.object({
   path: z.string().optional(),
 });
 export type FallbackParentInfo = z.infer<typeof FallbackParentInfoSchema>;
+
+export const ForwardingEngineSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  options: z.array(z.lazy(() => ForwardingSettingSchema)),
+  pinned: z.string(),
+  transports: z.array(z.lazy(() => ForwardingTransportSchema)),
+});
+export type ForwardingEngine = z.infer<typeof ForwardingEngineSchema>;
+
+export const ForwardingSettingSchema = z.object({
+  choices: z.array(z.string()),
+  default: z.string(),
+  key: z.string(),
+  kind: z.string().optional(),
+  label: z.string(),
+});
+export type ForwardingSetting = z.infer<typeof ForwardingSettingSchema>;
+
+export const ForwardingTransportSchema = z.object({
+  direct: z.boolean(),
+  id: z.string(),
+  label: z.string(),
+  reverse: z.boolean(),
+});
+export type ForwardingTransport = z.infer<typeof ForwardingTransportSchema>;
 
 export const GeoCategorySchema = z.object({
   attributes: z.array(z.string()),
@@ -940,6 +979,30 @@ export const MLKEM768ResponseSchema = z.object({
 });
 export type MLKEM768Response = z.infer<typeof MLKEM768ResponseSchema>;
 
+export const MeasurementSchema = z.object({
+  downMbps: z.number(),
+  jitterMs: z.number(),
+  pingMs: z.number(),
+  upMbps: z.number(),
+});
+export type Measurement = z.infer<typeof MeasurementSchema>;
+
+export const MethodResultSchema = z.object({
+  connectMs: z.number().int(),
+  downMbps: z.number(),
+  engine: z.string(),
+  error: z.string(),
+  jitterMs: z.number(),
+  leftover: z.string(),
+  mode: z.string(),
+  ok: z.boolean(),
+  pingMs: z.number(),
+  score: z.number(),
+  transport: z.string(),
+  upMbps: z.number(),
+});
+export type MethodResult = z.infer<typeof MethodResultSchema>;
+
 export const MsgSchema = z.object({
   msg: z.string(),
   obj: z.unknown(),
@@ -1175,6 +1238,19 @@ export const RealityScanResultSchema = z.object({
   x25519: z.boolean(),
 });
 export type RealityScanResult = z.infer<typeof RealityScanResultSchema>;
+
+export const RunStatusSchema = z.object({
+  best: z.lazy(() => CandidateSchema).nullable().optional(),
+  cancelled: z.boolean(),
+  current: z.lazy(() => CandidateSchema).nullable().optional(),
+  done: z.number().int(),
+  objective: z.lazy(() => ObjectiveSchema),
+  phase: z.lazy(() => PhaseSchema),
+  results: z.array(z.lazy(() => MethodResultSchema)),
+  running: z.boolean(),
+  total: z.number().int(),
+});
+export type RunStatus = z.infer<typeof RunStatusSchema>;
 
 export const ServerSettingsSchema = z.object({
   contentPaddingAddition: z.string().optional(),

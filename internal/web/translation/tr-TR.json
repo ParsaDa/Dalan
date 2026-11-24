@@ -2491,7 +2491,8 @@
         "routeTest": "The route test could not run",
         "updateEngine": "Update the BackPack engine",
         "engineReleases": "List the engine releases",
-        "speedtest": "The speed test could not run"
+        "speedtest": "The speed test could not run",
+        "benchmark": "The benchmark could not run"
       },
       "nodeEnd": "Create the other end on a node",
       "nodeEndHint": "This panel also sets up the exit end on the chosen node, so nothing needs to be copied or pasted. Deleting the tunnel removes both ends.",
@@ -2516,6 +2517,7 @@
       "modeDirect": "Direct",
       "modeReverseHint": "The exit server dials the entry server. Works through filtering and behind a CDN, and carries Xray traffic.",
       "modeDirectHint": "Layer 3 (BackPack): the entry server dials the exit server over a datagram carrier. Lowest ping, for games. Needs root and /dev/net/tun on both servers; cannot pass a CDN and is not an Xray outbound.",
+      "modeDirectHintForwarder": "The entry server dials the exit server directly, so the exit server must be reachable from here.",
       "directAddressHint": "Address of the exit server. Leave it empty when you pick a node below.",
       "directPortHint": "The port the exit server listens on for the link.",
       "advancedOptions": "Advanced options",
@@ -3348,6 +3350,15 @@
     "rakhshBlurb": "Fast multiplexed transport. Good for gaming at low ping.",
     "moreEngines": "Install another engine",
     "moreEnginesHint": "More engines can be added later; the list changes with the backend.",
+    "blurb": {
+      "gost": "GOST: a general tunnel with TLS, WebSocket and gRPC carriers, in reverse or direct mode.",
+      "rathole": "Rathole: a light reverse tunnel with plain TCP, Noise encryption or WebSocket.",
+      "backhaul": "Backhaul: a fast reverse tunnel with multiplexed TCP and WebSocket carriers.",
+      "kariz": "Kariz: a reverse or direct tunnel with TCP, QUIC, KCP and a raw-packet mode, with tunable profiles.",
+      "singbox": "sing-box: a direct tunnel over WebSocket with TLS, run by the sing-box core.",
+      "xraycore": "Xray: a direct tunnel over WebSocket with TLS, run as its own Xray process.",
+      "carrier": "Kernel carriers: a GRE, IPIP or VXLAN link between the two servers with the ports relayed over it. Needs root on both and the ip command."
+    },
     "installed": "Installed",
     "notInstalled": "Not installed",
     "count": "{n} tunnels",
@@ -3370,7 +3381,8 @@
       "bad": "Down",
       "off": "Paused",
       "backpack": "BackPack",
-      "rakhsh": "Rakhsh"
+      "rakhsh": "Rakhsh",
+      "forwarding": "Other engines"
     },
     "colTunnel": "Tunnel",
     "colEngine": "Engine",
@@ -3386,7 +3398,42 @@
       "open": "Speed test",
       "title": "Speed test of {name}",
       "hint": "The test goes through this tunnel: its connections leave from the exit server, so the result is the tunnel's speed to the internet. Tests run one at a time."
-    }
+    },
+    "benchmark": {
+      "open": "Compare methods",
+      "title": "Compare tunnel methods",
+      "hint": "Each method is tried between this server and a node with a temporary tunnel: it is made on both ends, measured, then removed. A run can take several minutes.",
+      "node": "Node",
+      "address": "This server's address",
+      "addressHint": "How the node reaches this server. Reverse methods need it.",
+      "objective": "Rank by",
+      "speed": "Speed",
+      "balanced": "Balanced",
+      "direction": "Direction",
+      "both": "Both",
+      "engines": "Engines",
+      "methods": "{count} methods",
+      "tooMany": "At most {max} methods per run.",
+      "start": "Start",
+      "stop": "Stop",
+      "progress": "{done} of {total} done",
+      "phase": {
+        "create": "Creating the tunnel",
+        "connect": "Waiting for it to connect",
+        "measure": "Measuring",
+        "remove": "Removing the tunnel"
+      },
+      "colMethod": "Method",
+      "colDown": "Down (Mbps)",
+      "colUp": "Up (Mbps)",
+      "colPing": "Ping (ms)",
+      "colScore": "Score",
+      "best": "Best",
+      "use": "Use this method",
+      "leftover": "Left behind: {what}"
+    },
+    "advancedEngines": "Advanced engines",
+    "advancedEnginesHint": "Show engines that change the server network (kernel carriers; they need root)."
   },
   "outbounds": {
     "title": "Outbounds and routing",

@@ -8,20 +8,42 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import Icon from '@/components/dl/Icon';
 import { IlloEmpty, IlloOffline } from '@/components/dl/Illustrations';
 import { FormModal, Modal as DlModal } from '@/components/dl/overlays';
-import { Btn, Chip, Empty as DlEmpty, FlagDot, Sk, TileHead } from '@/components/dl/primitives';
+import {
+  Btn,
+  Chip,
+  Empty as DlEmpty,
+  FlagDot,
+  Sk,
+  TileHead,
+  Toggle,
+} from '@/components/dl/primitives';
 import { fmtInt } from '@/components/dl/numbers';
 import { EngineCard, FlowArrow, TunnelCard, TunnelRow } from './TunnelParts';
 import PortTest from './PortTest';
+import { TunnelBenchmark, type BenchmarkPick } from './TunnelBenchmark';
 import { TunnelSpeedtest } from './TunnelSpeedtest';
 import TunnelEditModal from './TunnelEditModal';
 import TunnelOptionFields, { TunnelOptionField, cleanOptions } from './TunnelOptionFields';
 import TunnelPools from './TunnelPools';
 import { BACKPACK_TRANSPORTS } from './backpackTransports';
+import {
+  FORWARDER_ENGINES,
+  FORWARDER_LABELS,
+  isBuiltIn,
+  requiredSettings,
+  isForwarder,
+  modeAfterEngineChange,
+  modesOf,
+  settingsAsOptions,
+  transportAfterChange,
+  transportsFor,
+} from './forwardingEngines';
 import { RAKHSH_CARRIERS, isRawCarrier, needsPeerIp } from './rakhshCarriers';
 import { useNodesQuery } from '@/api/queries/useNodesQuery';
 import { useInboundOptions } from '@/api/queries/useInboundOptions';
 import {
   fetchSetupLink,
+  useForwardingEngines,
   useTunnelMutations,
   useTunnelOptions,
   TUNNELS_KEY,
@@ -30,6 +52,7 @@ import {
   type NewPortalValues,
   type ServerTunnel,
   type TunnelEditValues,
+  type TunnelEngine,
   type TunnelMode,
   type TunnelOptionValues,
 } from '@/api/queries/useTunnels';
@@ -45,7 +68,7 @@ interface PortalFormValues {
   name: string;
   address: string;
   port: number;
-  engine: 'backpack' | 'rakhsh';
+  engine: TunnelEngine;
   routeInbounds?: string[];
   nodeId?: number;
   transport: string;
@@ -84,6 +107,7 @@ export default function TunnelsPage() {
 
   const [portalOpen, setPortalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [benchmarkOpen, setBenchmarkOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [portalForm] = Form.useForm<PortalFormValues>();
   const [importForm] = Form.useForm<{ link: string; exitOutbound?: string }>();
@@ -101,9 +125,25 @@ export default function TunnelsPage() {
     'rakhsh',
     usesRakhsh || engine === 'rakhsh',
   );
+  const { data: forwardingEngines = [] } = useForwardingEngines();
+  const forwarder = isForwarder(engine);
+  const forwarderDef = forwardingEngines.find((e) => e.id === engine);
+  const editingEngine = forwardingEngines.find((e) => e.id === editing?.engine);
+  const forwarderOptions = useMemo(() => settingsAsOptions(forwarderDef), [forwarderDef]);
+  const [advancedEngines, setAdvancedEngines] = useState(false);
+  const showAdvanced = advancedEngines || tunnels.some((tu) => isBuiltIn(tu.engine));
+  const visibleForwarders = FORWARDER_ENGINES.filter((id) => showAdvanced || !isBuiltIn(id));
+  // The mode and transport must be ones the chosen engine runs, also once its list has arrived.
+  useEffect(() => {
+    if (!forwarderDef) return;
+    const nextMode = modeAfterEngineChange(forwarderDef, mode);
+    if (nextMode !== mode) portalForm.setFieldValue('mode', nextMode);
+    const nextTransport = transportAfterChange(forwarderDef, nextMode, chosenTransport);
+    if (nextTransport !== chosenTransport) portalForm.setFieldValue('transport', nextTransport);
+  }, [forwarderDef, mode, chosenTransport, portalForm]);
   const direct = engine === 'backpack' && mode === 'direct';
   // A direct tunnel's entry end dials the exit end, which is where the node (if any) is.
-  const dialsExit = mode === 'direct' && (engine === 'backpack' || engine === 'rakhsh');
+  const dialsExit = mode === 'direct';
   const carrierOption = backpackCatalog.find((o) => o.mode === 'direct' && o.key === 'carrier');
   const rakhshNeedsPeerIp = needsPeerIp([
     chosenTransport,
@@ -138,8 +178,17 @@ export default function TunnelsPage() {
         port: values.port,
         ...(values.nodeId ? { nodeId: values.nodeId } : {}),
       };
-      const request: NewPortalValues =
-        values.engine === 'rakhsh'
+      const request: NewPortalValues = isForwarder(values.engine)
+        ? {
+            ...common,
+            engine: values.engine,
+            transport: values.transport,
+            forwardPorts: values.forwardPorts ?? [],
+            routeInbounds: values.routeInbounds ?? [],
+            mode: values.mode,
+            options: cleanOptions(values.options),
+          }
+        : values.engine === 'rakhsh'
           ? {
               ...common,
               engine: 'rakhsh',
@@ -168,6 +217,18 @@ export default function TunnelsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const applyBenchmarkMethod = ({ candidate, nodeId, address }: BenchmarkPick) => {
+    setBenchmarkOpen(false);
+    setPortalOpen(true);
+    portalForm.setFieldsValue({
+      engine: candidate.engine as TunnelEngine,
+      mode: candidate.mode as TunnelMode,
+      transport: candidate.transport,
+      nodeId,
+      address,
+    });
   };
 
   const submitImport = async () => {
@@ -213,13 +274,17 @@ export default function TunnelsPage() {
           : statusOf(tu.id)
             ? 'bad'
             : 'none';
-  const [filter, setFilter] = useState<'all' | 'ok' | 'bad' | 'off' | 'backpack' | 'rakhsh'>('all');
+  const [filter, setFilter] = useState<
+    'all' | 'ok' | 'bad' | 'off' | 'backpack' | 'rakhsh' | 'forwarding'
+  >('all');
   const shown = tunnels.filter((tu) =>
     filter === 'all'
       ? true
-      : filter === 'backpack' || filter === 'rakhsh'
-        ? tu.engine === filter
-        : stateOf(tu) === filter,
+      : filter === 'forwarding'
+        ? isForwarder(tu.engine)
+        : filter === 'backpack' || filter === 'rakhsh'
+          ? tu.engine === filter
+          : stateOf(tu) === filter,
   );
   const [deleting, setDeleting] = useState<ServerTunnel | null>(null);
   const [speedtesting, setSpeedtesting] = useState<ServerTunnel | null>(null);
@@ -231,7 +296,11 @@ export default function TunnelsPage() {
   const flowNode = flowTunnel ? nodes.find((n) => n.id === flowTunnel.nodeId) : undefined;
   const count = (f: typeof filter) =>
     tunnels.filter((tu) =>
-      f === 'backpack' || f === 'rakhsh' ? tu.engine === f : stateOf(tu) === f,
+      f === 'forwarding'
+        ? isForwarder(tu.engine)
+        : f === 'backpack' || f === 'rakhsh'
+          ? tu.engine === f
+          : stateOf(tu) === f,
     ).length;
 
   return (
@@ -248,6 +317,11 @@ export default function TunnelsPage() {
           <Btn icon="refresh" onClick={testAll}>
             {t('tunnels.testAll')}
           </Btn>
+          {nodes.length > 0 && (
+            <Btn icon="bolt" onClick={() => setBenchmarkOpen(true)}>
+              {t('tunnels.benchmark.open')}
+            </Btn>
+          )}
           <Btn icon="down" onClick={() => setImportOpen(true)}>
             {t('pages.tunnels.importLink')}
           </Btn>
@@ -276,6 +350,17 @@ export default function TunnelsPage() {
         </section>
       ) : (
         <>
+          <div className="row" style={{ gap: 8 }}>
+            <Toggle
+              on={showAdvanced}
+              label={t('tunnels.advancedEngines')}
+              disabled={tunnels.some((tu) => isBuiltIn(tu.engine))}
+              onChange={setAdvancedEngines}
+            />
+            <span className="mut" style={{ fontSize: 13 }}>
+              {t('tunnels.advancedEnginesHint')}
+            </span>
+          </div>
           <div className="grid">
             <EngineCard
               engine="backpack"
@@ -293,6 +378,18 @@ export default function TunnelsPage() {
               nodes={nodeRefs}
               report={report}
             />
+            {visibleForwarders.map((id) => (
+              <EngineCard
+                key={id}
+                engine={id}
+                builtIn={isBuiltIn(id)}
+                label={FORWARDER_LABELS[id]}
+                blurb={t(`tunnels.blurb.${id}`)}
+                count={tunnels.filter((tu) => tu.engine === id).length}
+                nodes={nodeRefs}
+                report={report}
+              />
+            ))}
             <section
               className="tile s4"
               style={{
@@ -327,7 +424,12 @@ export default function TunnelsPage() {
               <div className="row wrap" style={{ gap: 14, alignItems: 'center' }}>
                 <div
                   className="tile"
-                  style={{ padding: '14px 16px', display: 'flex', gap: 10, alignItems: 'center' }}
+                  style={{
+                    padding: '14px 16px',
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'center',
+                  }}
                 >
                   <span className="ico">
                     <Icon name="users" />
@@ -342,7 +444,12 @@ export default function TunnelsPage() {
                 <FlowArrow />
                 <div
                   className="tile edge"
-                  style={{ padding: '14px 16px', display: 'flex', gap: 10, alignItems: 'center' }}
+                  style={{
+                    padding: '14px 16px',
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'center',
+                  }}
                 >
                   <FlagDot size={28} />
                   <div>
@@ -355,7 +462,12 @@ export default function TunnelsPage() {
                 <FlowArrow reverse={flowTunnel?.mode !== 'direct'} />
                 <div
                   className="tile"
-                  style={{ padding: '14px 16px', display: 'flex', gap: 10, alignItems: 'center' }}
+                  style={{
+                    padding: '14px 16px',
+                    display: 'flex',
+                    gap: 10,
+                    alignItems: 'center',
+                  }}
                 >
                   <FlagDot country={flowNode?.country} size={28} />
                   <div>
@@ -378,7 +490,7 @@ export default function TunnelsPage() {
             </div>
           )}
           <div className="chips" role="group" aria-label={t('tunnels.filters')}>
-            {(['all', 'ok', 'bad', 'off', 'backpack', 'rakhsh'] as const).map((f) => (
+            {(['all', 'ok', 'bad', 'off', 'backpack', 'rakhsh', 'forwarding'] as const).map((f) => (
               <Chip
                 key={f}
                 on={filter === f}
@@ -475,6 +587,13 @@ export default function TunnelsPage() {
       )}
 
       <TunnelSpeedtest tunnel={speedtesting} onClose={() => setSpeedtesting(null)} />
+      <TunnelBenchmark
+        open={benchmarkOpen}
+        nodes={nodes.map((n) => ({ id: n.id, name: n.name ?? '', enable: n.enable ?? false }))}
+        catalog={forwardingEngines}
+        onUse={applyBenchmarkMethod}
+        onClose={() => setBenchmarkOpen(false)}
+      />
       <DlModal
         open={deleting !== null}
         onClose={() => setDeleting(null)}
@@ -500,7 +619,11 @@ export default function TunnelsPage() {
               if (!row) return;
               const msg = await remove({ id: row.id });
               if (msg?.success || !row.nodeId) report(msg);
-              else setRemoveHere({ row, reason: msg?.msg || t('somethingWentWrong') });
+              else
+                setRemoveHere({
+                  row,
+                  reason: msg?.msg || t('somethingWentWrong'),
+                });
             }}
           >
             {t('delete')}
@@ -606,10 +729,11 @@ export default function TunnelsPage() {
               options={[
                 { value: 'backpack', label: t('pages.tunnels.engineBackpack') },
                 { value: 'rakhsh', label: t('pages.tunnels.engineRakhsh') },
+                ...visibleForwarders.map((id) => ({ value: id, label: FORWARDER_LABELS[id] })),
               ]}
             />
           </Form.Item>
-          {(engine === 'backpack' || engine === 'rakhsh') && (
+          {(engine === 'backpack' || engine === 'rakhsh' || forwarderDef) && (
             <Form.Item
               name="mode"
               label={t('pages.tunnels.mode')}
@@ -617,7 +741,9 @@ export default function TunnelsPage() {
                 mode === 'direct'
                   ? engine === 'rakhsh'
                     ? t('pages.tunnels.modeDirectHintRakhsh')
-                    : t('pages.tunnels.modeDirectHint')
+                    : forwarder
+                      ? t('pages.tunnels.modeDirectHintForwarder')
+                      : t('pages.tunnels.modeDirectHint')
                   : t('pages.tunnels.modeReverseHint')
               }
             >
@@ -625,7 +751,9 @@ export default function TunnelsPage() {
                 options={[
                   { value: 'reverse', label: t('pages.tunnels.modeReverse') },
                   { value: 'direct', label: t('pages.tunnels.modeDirect') },
-                ]}
+                ].filter(
+                  (o) => !forwarderDef || modesOf(forwarderDef).includes(o.value as TunnelMode),
+                )}
               />
             </Form.Item>
           )}
@@ -650,12 +778,14 @@ export default function TunnelsPage() {
               onPick={(port) => portalForm.setFieldValue('port', port)}
             />
           ) : null}
-          {engine === 'rakhsh' ? (
+          {engine === 'rakhsh' || forwarder ? (
             <>
               <Form.Item name="transport" label={t('pages.tunnels.transport')}>
-                <Select options={RAKHSH_CARRIERS} />
+                <Select
+                  options={forwarderDef ? transportsFor(forwarderDef, mode) : RAKHSH_CARRIERS}
+                />
               </Form.Item>
-              {isRawCarrier(chosenTransport) && (
+              {engine === 'rakhsh' && isRawCarrier(chosenTransport) && (
                 <Alert
                   type="warning"
                   showIcon
@@ -676,12 +806,20 @@ export default function TunnelsPage() {
                   placeholder={RAKHSH_FORWARD_PLACEHOLDER}
                 />
               </Form.Item>
-              <TunnelOptionFields
-                options={rakhshCatalog}
-                mode={mode}
-                forRole="portal"
-                pinned={rakhshNeedsPeerIp ? ['peer_ip'] : []}
-              />
+              {forwarder ? (
+                <TunnelOptionFields
+                  options={forwarderOptions}
+                  mode={mode}
+                  pinned={requiredSettings(forwarderOptions)}
+                />
+              ) : (
+                <TunnelOptionFields
+                  options={rakhshCatalog}
+                  mode={mode}
+                  forRole="portal"
+                  pinned={rakhshNeedsPeerIp ? ['peer_ip'] : []}
+                />
+              )}
             </>
           ) : (
             <>
@@ -753,8 +891,20 @@ export default function TunnelsPage() {
         <TunnelEditModal
           key={editing.id}
           tunnel={editing}
-          options={editing.engine === 'rakhsh' ? rakhshCatalog : backpackCatalog}
-          transports={editing.engine === 'rakhsh' ? RAKHSH_CARRIERS : BACKPACK_TRANSPORTS}
+          options={
+            editingEngine
+              ? settingsAsOptions(editingEngine)
+              : editing.engine === 'rakhsh'
+                ? rakhshCatalog
+                : backpackCatalog
+          }
+          transports={
+            editingEngine
+              ? transportsFor(editingEngine, editing.mode === 'direct' ? 'direct' : 'reverse')
+              : editing.engine === 'rakhsh'
+                ? RAKHSH_CARRIERS
+                : BACKPACK_TRANSPORTS
+          }
           inboundTagOptions={inboundTagOptions}
           onSubmit={saveEdit}
           onClose={() => setEditing(null)}

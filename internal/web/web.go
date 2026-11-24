@@ -334,6 +334,7 @@ func (s *Server) startTask(restartXray bool, loc *time.Location) {
 		if err := (&service.TunnelService{}).ReconcileEngines(); err != nil {
 			logger.Warning("start BackPack tunnels failed:", err)
 		}
+		go service.NewBenchmarkService().RemoveLeftovers()
 		if err := (&service.TorService{}).ReconcileExits(); err != nil {
 			logger.Warning("start Tor exits failed:", err)
 		}

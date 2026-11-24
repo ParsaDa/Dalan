@@ -94,6 +94,47 @@ A direct tunnel needs root and `/dev/net/tun` on **both** servers, so it does no
 
 The pencil in the tunnel list changes a tunnel without deleting it. On an entry end you can change the address, port, transport, forwarded ports, options and routed inbounds; the name, secrets, engine and mode stay. When this panel made the other end on a node, the change is sent to the node first and nothing changes if the node refuses. On an exit end only the exit outbound and the options can change; to change a shared setting of a tunnel made by pasting a link, edit the entry end and import its new link on the exit server, which then updates that end instead of failing. A tunnel that carries a node's management cannot have its address, port or transport changed.
 
+## Forwarding engines
+
+Besides BackPack and Rakhsh, 0.7.0 can run a tunnel on six more engines. Each is a program that Dalan installs and supervises, one process per tunnel, and each carries the ports you list from the entry server to a target through the exit server over a loopback relay, so the speed test, the status and the setup links work the same as for a Rakhsh tunnel.
+
+| Engine | Pinned | Carriers | Directions |
+|---|---|---|---|
+| GOST | v3.3.3 | `tls`, `ws`, `wss`, `grpc`, `h2` | reverse and direct |
+| Rathole | v0.5.0 | `tcp`, `noise`, `ws` | reverse |
+| Backhaul | v0.6.5 | `tcp`, `tcpmux`, `ws`, `wsmux`, `wss`, `wssmux` | reverse |
+| Kariz | v2.8.1 | `tcp`, `tcpmux`, `ws`, `wss`, `quic`, `kcp`, `paqet` | reverse and direct |
+| sing-box | v1.14.4 | `tcp-tls`, `smux-tls`, `yamux-tls`, `h2mux-tls`, `wss`, `grpc-tls`, `h2-tls`, `httpupgrade-tls`, `quic-tls` | direct |
+| Xray | v26.11.9 | `wss`, `grpc-tls`, `httpupgrade-tls`, `xhttp-tls`, `mkcp-chacha`, `mkcp-aes` | direct |
+
+Each engine has its own card on the Tunnels page with its install and update button (the same checksum check, download route and node download as for the engines above; see "Installing and updating the engines"). A tunnel is made from **New tunnel** by choosing the engine, then one of its carriers. Engine settings, such as Kariz's `profile`, appear in the same dialog.
+
+Both ends share one secret that Dalan generates and carries in the setup link (version 5), so the second server is set up by importing the link, exactly as for Rakhsh. The relay of a forwarding tunnel listens only on loopback, in ports 63400-64399.
+
+`paqet` (Kariz) needs root and an IPv4 address. A tunnel that fails to start shows the engine's own output in the panel log as `<Engine> <tunnel>: ...`.
+
+## Kernel carriers
+
+The **Kernel carriers** engine builds the link in the Linux kernel instead of running a proxy program: a **GRE**, **IPIP** or **VXLAN** interface between the two servers, with a private /30 link in 10.222.0.0/16 chosen from the relay port, and a TCP relay on that link carrying the forwarded ports. There is nothing to download: the panel's own binary runs it (`x-ui carrier <config>`).
+
+It is behind the **Advanced engines** switch on the Tunnels page, because it changes the server's network. It stays visible while any carrier tunnel exists.
+
+- Both servers need **root**, **Linux** and the `ip` command (iproute2). A tunnel is refused with that reason when they are missing, when it is made and when its link is imported.
+- Fill in **Public IPv4 address of the end that dials**: the exit's address in a reverse tunnel, the entry's address in a direct one. A tunnel cannot be made without it.
+- Open the protocol in the firewall of both servers: IP protocol 47 for GRE, IP protocol 4 for IPIP, and the tunnel's port (UDP) for VXLAN.
+- GRE and IPIP have no encryption or authentication of their own, and many hosting networks drop them or cannot NAT them. Prefer a server with a public IPv4 address and test with **Speed test** before relying on it. A Xray relay is protected by a SOCKS login; a carrier link is not.
+- Kernel carriers are not part of **Compare methods**, because each needs root and the other end's address.
+
+## Compare methods
+
+**Compare methods** (a button on the Tunnels page, shown when a node is connected) finds out which method works best between this server and a node. For every method you pick it makes a temporary tunnel named `dalan-bench-<n>` on both servers, waits until it connects, runs the speed test through it, and removes it. The result is a table ranked by a score; **Use this method** copies the best row into the new-tunnel dialog.
+
+- Choose the node, this server's address as the node reaches it (reverse methods need it), the direction (reverse, direct or both) and the engines. At most 60 methods run in one run, and a run can take several minutes.
+- **Rank by** *Speed* weighs download 70% and upload 30%. *Balanced* weighs throughput 50%, ping 30% and jitter 20%. A method that fails to connect or measure scores 0 and shows the reason.
+- One run goes at a time on a panel, and **Stop** cancels it after the current method.
+- A temporary tunnel that cannot be removed is listed as *Left behind*. Tunnels named `dalan-bench-*` that a crash left are deleted when the panel starts.
+- The routes behind it: `POST /panel/api/tunnels/benchmark/start`, `GET /panel/api/tunnels/benchmark/status` and `POST /panel/api/tunnels/benchmark/cancel`.
+
 ## Status
 
 The Tunnels page shows the state each engine reports for every enabled tunnel, on both servers: **Connected** (BackPack has no latency figure; Rakhsh shows how many lanes are up) or **Down**, with the engine's reason on hover. A node's management tunnel is not tested on its own; its state is the node's status in the node list.
@@ -196,7 +237,7 @@ Everything a BackPack or Rakhsh process prints goes to the panel log as `BackPac
 ## Not built yet
 
 - Loss-aware switching between carriers or tunnels (planned for a later version).
-- Rakhsh's router sections and a possible fourth engine.
+- Rakhsh's router sections.
 - A direct tunnel as an Xray outbound, and a direct tunnel through a CDN (neither is possible with a layer-3 link).
 - BackPack's `spoof` carrier and its Naive and Xray helper sections.
 - One shared port for the management tunnels of all nodes.

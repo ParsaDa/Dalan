@@ -459,6 +459,11 @@ export const EXAMPLES: Record<string, unknown> = {
     "code": "tools",
     "detail": "awg"
   },
+  "Candidate": {
+    "engine": "gost",
+    "mode": "reverse",
+    "transport": "tls"
+  },
   "Client": {
     "adTag": "0123456789abcdef0123456789abcdef",
     "allowedIPs": [
@@ -684,6 +689,49 @@ export const EXAMPLES: Record<string, unknown> = {
   "FallbackParentInfo": {
     "masterId": 0,
     "path": ""
+  },
+  "ForwardingEngine": {
+    "id": "gost",
+    "label": "GOST",
+    "options": [
+      {
+        "choices": [
+          "balanced",
+          "ultraspeed",
+          "gaming"
+        ],
+        "default": "balanced",
+        "key": "profile",
+        "kind": "ip",
+        "label": "Profile"
+      }
+    ],
+    "pinned": "v3.3.3",
+    "transports": [
+      {
+        "direct": true,
+        "id": "wss",
+        "label": "WebSocket over TLS",
+        "reverse": true
+      }
+    ]
+  },
+  "ForwardingSetting": {
+    "choices": [
+      "balanced",
+      "ultraspeed",
+      "gaming"
+    ],
+    "default": "balanced",
+    "key": "profile",
+    "kind": "ip",
+    "label": "Profile"
+  },
+  "ForwardingTransport": {
+    "direct": true,
+    "id": "wss",
+    "label": "WebSocket over TLS",
+    "reverse": true
   },
   "GeoCategory": {
     "attributes": [
@@ -971,6 +1019,26 @@ export const EXAMPLES: Record<string, unknown> = {
     "client": "mlkem768-client",
     "seed": "mlkem768-seed"
   },
+  "Measurement": {
+    "downMbps": 92.4,
+    "jitterMs": 3.2,
+    "pingMs": 84.5,
+    "upMbps": 41.7
+  },
+  "MethodResult": {
+    "connectMs": 2100,
+    "downMbps": 92.4,
+    "engine": "gost",
+    "error": "",
+    "jitterMs": 3.2,
+    "leftover": "",
+    "mode": "reverse",
+    "ok": true,
+    "pingMs": 84.5,
+    "score": 88.4,
+    "transport": "tls",
+    "upMbps": 41.7
+  },
   "Msg": {
     "msg": "",
     "obj": null,
@@ -1202,6 +1270,32 @@ export const EXAMPLES: Record<string, unknown> = {
     "tls13": true,
     "tlsVersion": "1.3",
     "x25519": true
+  },
+  "RunStatus": {
+    "best": null,
+    "cancelled": false,
+    "current": null,
+    "done": 4,
+    "objective": "balanced",
+    "phase": "measure",
+    "results": [
+      {
+        "connectMs": 2100,
+        "downMbps": 92.4,
+        "engine": "gost",
+        "error": "",
+        "jitterMs": 3.2,
+        "leftover": "",
+        "mode": "reverse",
+        "ok": true,
+        "pingMs": 84.5,
+        "score": 88.4,
+        "transport": "tls",
+        "upMbps": 41.7
+      }
+    ],
+    "running": true,
+    "total": 12
   },
   "ServerSettings": {
     "contentPaddingAddition": "",

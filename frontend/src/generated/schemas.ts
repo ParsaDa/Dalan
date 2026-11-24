@@ -1866,6 +1866,29 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "Candidate": {
+    "description": "Candidate is one method to try: an engine, one of its transports and the direction of the tunnel.",
+    "properties": {
+      "engine": {
+        "example": "gost",
+        "type": "string"
+      },
+      "mode": {
+        "example": "reverse",
+        "type": "string"
+      },
+      "transport": {
+        "example": "tls",
+        "type": "string"
+      }
+    },
+    "required": [
+      "engine",
+      "mode",
+      "transport"
+    ],
+    "type": "object"
+  },
   "Client": {
     "description": "Client represents a client configuration for Xray inbounds with traffic limits and settings.",
     "properties": {
@@ -2723,6 +2746,112 @@ export const SCHEMAS: Record<string, unknown> = {
     },
     "required": [
       "masterId"
+    ],
+    "type": "object"
+  },
+  "ForwardingEngine": {
+    "description": "ForwardingEngine is an engine as the panel's forms and API list it.",
+    "properties": {
+      "id": {
+        "example": "gost",
+        "type": "string"
+      },
+      "label": {
+        "example": "GOST",
+        "type": "string"
+      },
+      "options": {
+        "items": {
+          "$ref": "#/components/schemas/ForwardingSetting"
+        },
+        "type": "array"
+      },
+      "pinned": {
+        "example": "v3.3.3",
+        "type": "string"
+      },
+      "transports": {
+        "items": {
+          "$ref": "#/components/schemas/ForwardingTransport"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "id",
+      "label",
+      "options",
+      "pinned",
+      "transports"
+    ],
+    "type": "object"
+  },
+  "ForwardingSetting": {
+    "description": "ForwardingSetting is one setting of an engine that the panel lets the operator choose. Both ends read it\nfrom the tunnel's options, so it is shared through the setup link.",
+    "properties": {
+      "choices": {
+        "example": [
+          "balanced",
+          "ultraspeed",
+          "gaming"
+        ],
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "default": {
+        "example": "balanced",
+        "type": "string"
+      },
+      "key": {
+        "example": "profile",
+        "type": "string"
+      },
+      "kind": {
+        "description": "Kind is \"ip\" for a setting that takes an IPv4 address; empty means a choice among Choices.",
+        "example": "ip",
+        "type": "string"
+      },
+      "label": {
+        "example": "Profile",
+        "type": "string"
+      }
+    },
+    "required": [
+      "choices",
+      "default",
+      "key",
+      "label"
+    ],
+    "type": "object"
+  },
+  "ForwardingTransport": {
+    "description": "ForwardingTransport is one way an engine can carry a tunnel; the tunnel's Transport field holds its id.",
+    "properties": {
+      "direct": {
+        "example": true,
+        "type": "boolean"
+      },
+      "id": {
+        "example": "wss",
+        "type": "string"
+      },
+      "label": {
+        "example": "WebSocket over TLS",
+        "type": "string"
+      },
+      "reverse": {
+        "description": "Reverse and Direct say which directions the engine can run this transport in.",
+        "example": true,
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "direct",
+      "id",
+      "label",
+      "reverse"
     ],
     "type": "object"
   },
@@ -3815,6 +3944,101 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "Measurement": {
+    "description": "Measurement is what one speed test through a tunnel reports.",
+    "properties": {
+      "downMbps": {
+        "example": 92.4,
+        "type": "number"
+      },
+      "jitterMs": {
+        "example": 3.2,
+        "type": "number"
+      },
+      "pingMs": {
+        "example": 84.5,
+        "type": "number"
+      },
+      "upMbps": {
+        "example": 41.7,
+        "type": "number"
+      }
+    },
+    "required": [
+      "downMbps",
+      "jitterMs",
+      "pingMs",
+      "upMbps"
+    ],
+    "type": "object"
+  },
+  "MethodResult": {
+    "description": "MethodResult is the outcome for one candidate; Score is zero for a failure.",
+    "properties": {
+      "connectMs": {
+        "example": 2100,
+        "format": "int64",
+        "type": "integer"
+      },
+      "downMbps": {
+        "example": 92.4,
+        "type": "number"
+      },
+      "engine": {
+        "example": "gost",
+        "type": "string"
+      },
+      "error": {
+        "type": "string"
+      },
+      "jitterMs": {
+        "example": 3.2,
+        "type": "number"
+      },
+      "leftover": {
+        "type": "string"
+      },
+      "mode": {
+        "example": "reverse",
+        "type": "string"
+      },
+      "ok": {
+        "example": true,
+        "type": "boolean"
+      },
+      "pingMs": {
+        "example": 84.5,
+        "type": "number"
+      },
+      "score": {
+        "example": 88.4,
+        "type": "number"
+      },
+      "transport": {
+        "example": "tls",
+        "type": "string"
+      },
+      "upMbps": {
+        "example": 41.7,
+        "type": "number"
+      }
+    },
+    "required": [
+      "connectMs",
+      "downMbps",
+      "engine",
+      "error",
+      "jitterMs",
+      "leftover",
+      "mode",
+      "ok",
+      "pingMs",
+      "score",
+      "transport",
+      "upMbps"
+    ],
+    "type": "object"
+  },
   "Msg": {
     "properties": {
       "msg": {
@@ -4876,6 +5100,67 @@ export const SCHEMAS: Record<string, unknown> = {
       "tls13",
       "tlsVersion",
       "x25519"
+    ],
+    "type": "object"
+  },
+  "RunStatus": {
+    "description": "RunStatus is a snapshot that is safe to hold while a run goes on.",
+    "properties": {
+      "best": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Candidate"
+          }
+        ],
+        "nullable": true
+      },
+      "cancelled": {
+        "example": false,
+        "type": "boolean"
+      },
+      "current": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Candidate"
+          }
+        ],
+        "nullable": true
+      },
+      "done": {
+        "example": 4,
+        "type": "integer"
+      },
+      "objective": {
+        "example": "balanced",
+        "type": "string"
+      },
+      "phase": {
+        "example": "measure",
+        "type": "string"
+      },
+      "results": {
+        "items": {
+          "$ref": "#/components/schemas/MethodResult"
+        },
+        "type": "array"
+      },
+      "running": {
+        "example": true,
+        "type": "boolean"
+      },
+      "total": {
+        "example": 12,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "cancelled",
+      "done",
+      "objective",
+      "phase",
+      "results",
+      "running",
+      "total"
     ],
     "type": "object"
   },

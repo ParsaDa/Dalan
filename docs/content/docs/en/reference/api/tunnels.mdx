@@ -47,10 +47,37 @@ _openapi:
       title: The last 20 finished speed tests of one tunnel, newest first.
       url: '#the-last-20-finished-speed-tests-of-one-tunnel-newest-first'
     - depth: 2
-      title: Whether an engine binary (BackPack or Rakhsh) is on this server, which
-        release is installed (empty when it was placed by hand), and the release
-        this Dalan version installs by default.
-      url: '#whether-an-engine-binary-backpack-or-rakhsh-is-on-this-server-which-release-is-installed-empty-when-it-was-placed-by-hand-and-the-release-this-dalan-version-installs-by-default'
+      title: Try tunnel methods against one node and rank them. For each method in
+        candidates the panel makes a temporary tunnel on this server and on the
+        node (named dalan-bench-N, a name regular tunnels cannot take), waits
+        until it connects, runs the speed test through it, then removes it on
+        both servers. objective "speed" ranks by throughput with download
+        weighted over upload; "balanced" weighs throughput, ping and jitter. A
+        reverse method needs address, this server's address as the node dials
+        it; a direct method uses the node's own. Between 1 and 60 methods are
+        accepted; only one benchmark runs at a time and it also holds the speed
+        test slot while a method is measured. Poll /benchmark/status for
+        progress.
+      url: '#try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-runs-the-speed-test-through-it-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-between-1-and-60-methods-are-accepted-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress'
+    - depth: 2
+      title: "Progress of the current or last benchmark: how many methods are done,
+        the method and step in progress (create, connect, measure or remove),
+        and one result per finished method with its measurement and score
+        (higher is better; 0 for a method that failed, with error saying why).
+        best names the highest score once the run has ended, and cancelled is
+        true when it was stopped. leftover on a result says what a failed
+        cleanup left behind, such as the node's end of a tunnel."
+      url: '#progress-of-the-current-or-last-benchmark-how-many-methods-are-done-the-method-and-step-in-progress-create-connect-measure-or-remove-and-one-result-per-finished-method-with-its-measurement-and-score-higher-is-better-0-for-a-method-that-failed-with-error-saying-why-best-names-the-highest-score-once-the-run-has-ended-and-cancelled-is-true-when-it-was-stopped-leftover-on-a-result-says-what-a-failed-cleanup-left-behind-such-as-the-nodes-end-of-a-tunnel'
+    - depth: 2
+      title: Stop the running benchmark after the tunnel being measured is removed.
+        Results so far are kept. Does nothing when no benchmark runs.
+      url: '#stop-the-running-benchmark-after-the-tunnel-being-measured-is-removed-results-so-far-are-kept-does-nothing-when-no-benchmark-runs'
+    - depth: 2
+      title: Whether an engine binary (BackPack, Rakhsh or one of the forwarding
+        engines) is on this server, which release is installed (empty when it
+        was placed by hand), and the release this Dalan version installs by
+        default.
+      url: '#whether-an-engine-binary-backpack-rakhsh-or-one-of-the-forwarding-engines-is-on-this-server-which-release-is-installed-empty-when-it-was-placed-by-hand-and-the-release-this-dalan-version-installs-by-default'
     - depth: 2
       title: 'The ways an engine download (BackPack, Rakhsh or Tor) can travel, for
         the install dialogs: the panel proxy setting, direct from this server,
@@ -59,47 +86,55 @@ _openapi:
         Send a chosen entry as route to the install and update calls.'
       url: '#the-ways-an-engine-download-backpack-rakhsh-or-tor-can-travel-for-the-install-dialogs-the-panel-proxy-setting-direct-from-this-server-and-every-outbound-of-the-running-core-tunnels-and-tor-exits-included-a-proxy-address-or-share-link-is-typed-by-the-user-and-is-not-listed-send-a-chosen-entry-as-route-to-the-install-and-update-calls'
     - depth: 2
-      title: 'Every setting of one engine (BackPack or Rakhsh) the panel can write,
-        for reverse and direct tunnels: key, kind, which end reads it, group,
-        allowed values and a hint in English (hintEn) and Persian (hintFa). Send
-        values under options of add or update, keyed as listed here.'
-      url: '#every-setting-of-one-engine-backpack-or-rakhsh-the-panel-can-write-for-reverse-and-direct-tunnels-key-kind-which-end-reads-it-group-allowed-values-and-a-hint-in-english-hinten-and-persian-hintfa-send-values-under-options-of-add-or-update-keyed-as-listed-here'
+      title: The forwarding engines (GOST, Rathole, Backhaul, Kariz, sing-box and
+        Xray) with the release Dalan installs, the transports each can run and
+        whether each runs in a reverse tunnel, a direct tunnel or both, and the
+        settings each one reads. Send an engine id as engine and one of its
+        transport ids as transport when adding a tunnel; settings go under
+        options.
+      url: '#the-forwarding-engines-gost-rathole-backhaul-kariz-sing-box-and-xray-with-the-release-dalan-installs-the-transports-each-can-run-and-whether-each-runs-in-a-reverse-tunnel-a-direct-tunnel-or-both-and-the-settings-each-one-reads-send-an-engine-id-as-engine-and-one-of-its-transport-ids-as-transport-when-adding-a-tunnel-settings-go-under-options'
     - depth: 2
-      title: 'Download a release of an engine (BackPack by default, or Rakhsh with
-        engine "rakhsh") for this CPU, the one named in version or, when it is
-        empty, the pinned one, verify it against the checksums published with
-        it, put it in the panel bin folder and start that engine''s tunnels. Can
+      title: 'Every setting of BackPack or Rakhsh the panel can write, for reverse and
+        direct tunnels: key, kind, which end reads it, group, allowed values and
+        a hint in English (hintEn) and Persian (hintFa). Send values under
+        options of add or update, keyed as listed here.'
+      url: '#every-setting-of-backpack-or-rakhsh-the-panel-can-write-for-reverse-and-direct-tunnels-key-kind-which-end-reads-it-group-allowed-values-and-a-hint-in-english-hinten-and-persian-hintfa-send-values-under-options-of-add-or-update-keyed-as-listed-here'
+    - depth: 2
+      title: "Download a release of an engine (BackPack by default, or another one
+        with its engine id) for this CPU, the one named in version or, when it
+        is empty, the pinned one, verify it against the checksums published with
+        it, put it in the panel bin folder and start that engine's tunnels. Can
         take a few minutes. route says how the download travels: via is panel
         (as the panel proxy is set, the default), direct (straight from this
         server), outbound (value is the tag of one of the outbounds of the
         panel, a tunnel or a Tor exit included) or link (value is a socks5:// or
         http:// proxy address, or a vless/vmess/trojan/ss share link). See GET
-        /panel/api/tunnels/engine/routes.'
-      url: '#download-a-release-of-an-engine-backpack-by-default-or-rakhsh-with-engine-rakhsh-for-this-cpu-the-one-named-in-version-or-when-it-is-empty-the-pinned-one-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes'
+        /panel/api/tunnels/engine/routes."
+      url: '#download-a-release-of-an-engine-backpack-by-default-or-another-one-with-its-engine-id-for-this-cpu-the-one-named-in-version-or-when-it-is-empty-the-pinned-one-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes'
     - depth: 2
-      title: List the newest four releases of an engine (engine is backpack or
-        rakhsh), newest first, so one can be picked for install or update. With
-        nodeId the node reads the list, for a server that cannot reach GitHub;
-        otherwise this server reads it through route (see GET
+      title: List the newest four releases of an engine (engine is backpack, rakhsh or
+        a forwarding engine id), newest first, so one can be picked for install
+        or update. With nodeId the node reads the list, for a server that cannot
+        reach GitHub; otherwise this server reads it through route (see GET
         /panel/api/tunnels/engine/routes). Fails with the reason when GitHub
         cannot be reached. Needs an admin or node-admin token.
-      url: '#list-the-newest-four-releases-of-an-engine-engine-is-backpack-or-rakhsh-newest-first-so-one-can-be-picked-for-install-or-update-with-nodeid-the-node-reads-the-list-for-a-server-that-cannot-reach-github-otherwise-this-server-reads-it-through-route-see-get-panelapitunnelsengineroutes-fails-with-the-reason-when-github-cannot-be-reached-needs-an-admin-or-node-admin-token'
+      url: '#list-the-newest-four-releases-of-an-engine-engine-is-backpack-rakhsh-or-a-forwarding-engine-id-newest-first-so-one-can-be-picked-for-install-or-update-with-nodeid-the-node-reads-the-list-for-a-server-that-cannot-reach-github-otherwise-this-server-reads-it-through-route-see-get-panelapitunnelsengineroutes-fails-with-the-reason-when-github-cannot-be-reached-needs-an-admin-or-node-admin-token'
     - depth: 2
-      title: "Install a release of an engine (engine is backpack or rakhsh; empty
-        version means the newest) and restart that engine's tunnels on it. With
-        nodeId the release is downloaded by that node and sent over the
-        management channel, for a server that cannot reach GitHub. The release
-        is verified against its published checksums. When tunnels that were
-        connected do not reconnect within about 75 seconds, the earlier engine
-        is put back and the call fails. Can take several minutes. route says how
-        the download travels: via is panel (as the panel proxy is set, the
-        default), direct (straight from this server), outbound (value is the tag
-        of one of the outbounds of the panel, a tunnel or a Tor exit included)
-        or link (value is a socks5:// or http:// proxy address, or a
-        vless/vmess/trojan/ss share link). See GET
+      title: "Install a release of an engine (engine is backpack, rakhsh or a
+        forwarding engine id; empty version means the newest) and restart that
+        engine's tunnels on it. With nodeId the release is downloaded by that
+        node and sent over the management channel, for a server that cannot
+        reach GitHub. The release is verified against its published checksums.
+        When tunnels that were connected do not reconnect within about 75
+        seconds, the earlier engine is put back and the call fails. Can take
+        several minutes. route says how the download travels: via is panel (as
+        the panel proxy is set, the default), direct (straight from this
+        server), outbound (value is the tag of one of the outbounds of the
+        panel, a tunnel or a Tor exit included) or link (value is a socks5:// or
+        http:// proxy address, or a vless/vmess/trojan/ss share link). See GET
         /panel/api/tunnels/engine/routes. The route is used when nodeId is 0; a
         node downloads as its own panel is set."
-      url: '#install-a-release-of-an-engine-engine-is-backpack-or-rakhsh-empty-version-means-the-newest-and-restart-that-engines-tunnels-on-it-with-nodeid-the-release-is-downloaded-by-that-node-and-sent-over-the-management-channel-for-a-server-that-cannot-reach-github-the-release-is-verified-against-its-published-checksums-when-tunnels-that-were-connected-do-not-reconnect-within-about-75-seconds-the-earlier-engine-is-put-back-and-the-call-fails-can-take-several-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes-the-route-is-used-when-nodeid-is-0-a-node-downloads-as-its-own-panel-is-set'
+      url: '#install-a-release-of-an-engine-engine-is-backpack-rakhsh-or-a-forwarding-engine-id-empty-version-means-the-newest-and-restart-that-engines-tunnels-on-it-with-nodeid-the-release-is-downloaded-by-that-node-and-sent-over-the-management-channel-for-a-server-that-cannot-reach-github-the-release-is-verified-against-its-published-checksums-when-tunnels-that-were-connected-do-not-reconnect-within-about-75-seconds-the-earlier-engine-is-put-back-and-the-call-fails-can-take-several-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes-the-route-is-used-when-nodeid-is-0-a-node-downloads-as-its-own-panel-is-set'
     - depth: 2
       title: 'Node side of an engine update through a node: the first call starts
         downloading a release of the engine named in engine (BackPack or Rakhsh)
@@ -110,26 +145,31 @@ _openapi:
     - depth: 2
       title: 'Create the entry end of a tunnel on this server. Secrets are generated
         by the panel. routeInbounds lists the local inbound tags whose traffic
-        leaves through the tunnel. The engine is "backpack" (default) or
-        "rakhsh"; the former Xray engine was removed. With engine "rakhsh", send
-        transport (the carrier, such as wss or quic), forwardPorts and options
-        (see /options?engine=rakhsh); the entry end gets a relay port like
-        BackPack, so the tunnel is also an Xray outbound, and the setup link
-        carries the exit end secret key. With engine "backpack", send transport,
-        forwardPorts (for example "443=127.0.0.1:2096") and optionally
-        fallbackTransports, acceptUdp and options (see /options) and
-        routeInbounds. With mode "direct" and engine "rakhsh" the entry end
-        dials the exit end, which listens, and the tunnel stays an Xray
-        outbound; options.l3_addr adds a routed tun device and needs root. With
-        mode "direct" and engine "backpack" the entry end dials the exit end
-        over a layer-3 link: send options.carrier (udp, pck, quic, sni, xdi or
-        spoof) and forwardPorts, and the panel picks the tunnel addresses; this
-        mode needs root and /dev/net/tun on both servers, and the tunnel is not
-        an Xray outbound. Send nodeId to also create the dialling end on that
-        node through its management channel; exitOutbound then names the
-        outbound traffic leaves from there. If the node does not take its end,
-        nothing is created.'
-      url: '#create-the-entry-end-of-a-tunnel-on-this-server-secrets-are-generated-by-the-panel-routeinbounds-lists-the-local-inbound-tags-whose-traffic-leaves-through-the-tunnel-the-engine-is-backpack-default-or-rakhsh-the-former-xray-engine-was-removed-with-engine-rakhsh-send-transport-the-carrier-such-as-wss-or-quic-forwardports-and-options-see-optionsenginerakhsh-the-entry-end-gets-a-relay-port-like-backpack-so-the-tunnel-is-also-an-xray-outbound-and-the-setup-link-carries-the-exit-end-secret-key-with-engine-backpack-send-transport-forwardports-for-example-4431270012096-and-optionally-fallbacktransports-acceptudp-and-options-see-options-and-routeinbounds-with-mode-direct-and-engine-rakhsh-the-entry-end-dials-the-exit-end-which-listens-and-the-tunnel-stays-an-xray-outbound-optionsl3_addr-adds-a-routed-tun-device-and-needs-root-with-mode-direct-and-engine-backpack-the-entry-end-dials-the-exit-end-over-a-layer-3-link-send-optionscarrier-udp-pck-quic-sni-xdi-or-spoof-and-forwardports-and-the-panel-picks-the-tunnel-addresses-this-mode-needs-root-and-devnettun-on-both-servers-and-the-tunnel-is-not-an-xray-outbound-send-nodeid-to-also-create-the-dialling-end-on-that-node-through-its-management-channel-exitoutbound-then-names-the-outbound-traffic-leaves-from-there-if-the-node-does-not-take-its-end-nothing-is-created'
+        leaves through the tunnel. The engine is "backpack" (default), "rakhsh"
+        or a forwarding engine id from /engines; the former Xray engine was
+        removed. With a forwarding engine, send transport (one of its transports
+        for the chosen mode), mode ("reverse", or "direct" where the transport
+        allows it), forwardPorts and options; the panel makes the secret shared
+        by both ends and the relay port, so the tunnel is also an Xray outbound.
+        The setup link then carries the secret, so treat it as one. With engine
+        "rakhsh", send transport (the carrier, such as wss or quic),
+        forwardPorts and options (see /options?engine=rakhsh); the entry end
+        gets a relay port like BackPack, so the tunnel is also an Xray outbound,
+        and the setup link carries the exit end secret key. With engine
+        "backpack", send transport, forwardPorts (for example
+        "443=127.0.0.1:2096") and optionally fallbackTransports, acceptUdp and
+        options (see /options) and routeInbounds. With mode "direct" and engine
+        "rakhsh" the entry end dials the exit end, which listens, and the tunnel
+        stays an Xray outbound; options.l3_addr adds a routed tun device and
+        needs root. With mode "direct" and engine "backpack" the entry end dials
+        the exit end over a layer-3 link: send options.carrier (udp, pck, quic,
+        sni, xdi or spoof) and forwardPorts, and the panel picks the tunnel
+        addresses; this mode needs root and /dev/net/tun on both servers, and
+        the tunnel is not an Xray outbound. Send nodeId to also create the
+        dialling end on that node through its management channel; exitOutbound
+        then names the outbound traffic leaves from there. If the node does not
+        take its end, nothing is created.'
+      url: '#create-the-entry-end-of-a-tunnel-on-this-server-secrets-are-generated-by-the-panel-routeinbounds-lists-the-local-inbound-tags-whose-traffic-leaves-through-the-tunnel-the-engine-is-backpack-default-rakhsh-or-a-forwarding-engine-id-from-engines-the-former-xray-engine-was-removed-with-a-forwarding-engine-send-transport-one-of-its-transports-for-the-chosen-mode-mode-reverse-or-direct-where-the-transport-allows-it-forwardports-and-options-the-panel-makes-the-secret-shared-by-both-ends-and-the-relay-port-so-the-tunnel-is-also-an-xray-outbound-the-setup-link-then-carries-the-secret-so-treat-it-as-one-with-engine-rakhsh-send-transport-the-carrier-such-as-wss-or-quic-forwardports-and-options-see-optionsenginerakhsh-the-entry-end-gets-a-relay-port-like-backpack-so-the-tunnel-is-also-an-xray-outbound-and-the-setup-link-carries-the-exit-end-secret-key-with-engine-backpack-send-transport-forwardports-for-example-4431270012096-and-optionally-fallbacktransports-acceptudp-and-options-see-options-and-routeinbounds-with-mode-direct-and-engine-rakhsh-the-entry-end-dials-the-exit-end-which-listens-and-the-tunnel-stays-an-xray-outbound-optionsl3_addr-adds-a-routed-tun-device-and-needs-root-with-mode-direct-and-engine-backpack-the-entry-end-dials-the-exit-end-over-a-layer-3-link-send-optionscarrier-udp-pck-quic-sni-xdi-or-spoof-and-forwardports-and-the-panel-picks-the-tunnel-addresses-this-mode-needs-root-and-devnettun-on-both-servers-and-the-tunnel-is-not-an-xray-outbound-send-nodeid-to-also-create-the-dialling-end-on-that-node-through-its-management-channel-exitoutbound-then-names-the-outbound-traffic-leaves-from-there-if-the-node-does-not-take-its-end-nothing-is-created'
     - depth: 2
       title: Change a tunnel in place. On an entry end send the shared settings
         (address, port, transport, fallbackTransports, forwardPorts, acceptUdp,
@@ -212,10 +252,34 @@ _openapi:
         id: live-state-of-the-speed-test-of-one-tunnel-phase-servers-ping-download-upload-progress-0-1-and-the-current-rate-in-mbps-result-holds-the-finished-measurement-and-error-says-why-a-run-failed
       - content: The last 20 finished speed tests of one tunnel, newest first.
         id: the-last-20-finished-speed-tests-of-one-tunnel-newest-first
-      - content: Whether an engine binary (BackPack or Rakhsh) is on this server, which
-          release is installed (empty when it was placed by hand), and the
-          release this Dalan version installs by default.
-        id: whether-an-engine-binary-backpack-or-rakhsh-is-on-this-server-which-release-is-installed-empty-when-it-was-placed-by-hand-and-the-release-this-dalan-version-installs-by-default
+      - content: Try tunnel methods against one node and rank them. For each method in
+          candidates the panel makes a temporary tunnel on this server and on
+          the node (named dalan-bench-N, a name regular tunnels cannot take),
+          waits until it connects, runs the speed test through it, then removes
+          it on both servers. objective "speed" ranks by throughput with
+          download weighted over upload; "balanced" weighs throughput, ping and
+          jitter. A reverse method needs address, this server's address as the
+          node dials it; a direct method uses the node's own. Between 1 and 60
+          methods are accepted; only one benchmark runs at a time and it also
+          holds the speed test slot while a method is measured. Poll
+          /benchmark/status for progress.
+        id: try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-runs-the-speed-test-through-it-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-between-1-and-60-methods-are-accepted-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress
+      - content: "Progress of the current or last benchmark: how many methods are done,
+          the method and step in progress (create, connect, measure or remove),
+          and one result per finished method with its measurement and score
+          (higher is better; 0 for a method that failed, with error saying why).
+          best names the highest score once the run has ended, and cancelled is
+          true when it was stopped. leftover on a result says what a failed
+          cleanup left behind, such as the node's end of a tunnel."
+        id: progress-of-the-current-or-last-benchmark-how-many-methods-are-done-the-method-and-step-in-progress-create-connect-measure-or-remove-and-one-result-per-finished-method-with-its-measurement-and-score-higher-is-better-0-for-a-method-that-failed-with-error-saying-why-best-names-the-highest-score-once-the-run-has-ended-and-cancelled-is-true-when-it-was-stopped-leftover-on-a-result-says-what-a-failed-cleanup-left-behind-such-as-the-nodes-end-of-a-tunnel
+      - content: Stop the running benchmark after the tunnel being measured is removed.
+          Results so far are kept. Does nothing when no benchmark runs.
+        id: stop-the-running-benchmark-after-the-tunnel-being-measured-is-removed-results-so-far-are-kept-does-nothing-when-no-benchmark-runs
+      - content: Whether an engine binary (BackPack, Rakhsh or one of the forwarding
+          engines) is on this server, which release is installed (empty when it
+          was placed by hand), and the release this Dalan version installs by
+          default.
+        id: whether-an-engine-binary-backpack-rakhsh-or-one-of-the-forwarding-engines-is-on-this-server-which-release-is-installed-empty-when-it-was-placed-by-hand-and-the-release-this-dalan-version-installs-by-default
       - content: 'The ways an engine download (BackPack, Rakhsh or Tor) can travel, for
           the install dialogs: the panel proxy setting, direct from this server,
           and every outbound of the running core, tunnels and Tor exits
@@ -223,44 +287,52 @@ _openapi:
           not listed. Send a chosen entry as route to the install and update
           calls.'
         id: the-ways-an-engine-download-backpack-rakhsh-or-tor-can-travel-for-the-install-dialogs-the-panel-proxy-setting-direct-from-this-server-and-every-outbound-of-the-running-core-tunnels-and-tor-exits-included-a-proxy-address-or-share-link-is-typed-by-the-user-and-is-not-listed-send-a-chosen-entry-as-route-to-the-install-and-update-calls
-      - content: 'Every setting of one engine (BackPack or Rakhsh) the panel can write,
-          for reverse and direct tunnels: key, kind, which end reads it, group,
-          allowed values and a hint in English (hintEn) and Persian (hintFa).
-          Send values under options of add or update, keyed as listed here.'
-        id: every-setting-of-one-engine-backpack-or-rakhsh-the-panel-can-write-for-reverse-and-direct-tunnels-key-kind-which-end-reads-it-group-allowed-values-and-a-hint-in-english-hinten-and-persian-hintfa-send-values-under-options-of-add-or-update-keyed-as-listed-here
-      - content: 'Download a release of an engine (BackPack by default, or Rakhsh with
-          engine "rakhsh") for this CPU, the one named in version or, when it is
-          empty, the pinned one, verify it against the checksums published with
-          it, put it in the panel bin folder and start that engine''s tunnels.
-          Can take a few minutes. route says how the download travels: via is
-          panel (as the panel proxy is set, the default), direct (straight from
-          this server), outbound (value is the tag of one of the outbounds of
-          the panel, a tunnel or a Tor exit included) or link (value is a
-          socks5:// or http:// proxy address, or a vless/vmess/trojan/ss share
-          link). See GET /panel/api/tunnels/engine/routes.'
-        id: download-a-release-of-an-engine-backpack-by-default-or-rakhsh-with-engine-rakhsh-for-this-cpu-the-one-named-in-version-or-when-it-is-empty-the-pinned-one-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes
-      - content: List the newest four releases of an engine (engine is backpack or
-          rakhsh), newest first, so one can be picked for install or update.
-          With nodeId the node reads the list, for a server that cannot reach
-          GitHub; otherwise this server reads it through route (see GET
-          /panel/api/tunnels/engine/routes). Fails with the reason when GitHub
-          cannot be reached. Needs an admin or node-admin token.
-        id: list-the-newest-four-releases-of-an-engine-engine-is-backpack-or-rakhsh-newest-first-so-one-can-be-picked-for-install-or-update-with-nodeid-the-node-reads-the-list-for-a-server-that-cannot-reach-github-otherwise-this-server-reads-it-through-route-see-get-panelapitunnelsengineroutes-fails-with-the-reason-when-github-cannot-be-reached-needs-an-admin-or-node-admin-token
-      - content: "Install a release of an engine (engine is backpack or rakhsh; empty
-          version means the newest) and restart that engine's tunnels on it.
-          With nodeId the release is downloaded by that node and sent over the
-          management channel, for a server that cannot reach GitHub. The release
-          is verified against its published checksums. When tunnels that were
-          connected do not reconnect within about 75 seconds, the earlier engine
-          is put back and the call fails. Can take several minutes. route says
-          how the download travels: via is panel (as the panel proxy is set, the
-          default), direct (straight from this server), outbound (value is the
-          tag of one of the outbounds of the panel, a tunnel or a Tor exit
-          included) or link (value is a socks5:// or http:// proxy address, or a
+      - content: The forwarding engines (GOST, Rathole, Backhaul, Kariz, sing-box and
+          Xray) with the release Dalan installs, the transports each can run and
+          whether each runs in a reverse tunnel, a direct tunnel or both, and
+          the settings each one reads. Send an engine id as engine and one of
+          its transport ids as transport when adding a tunnel; settings go under
+          options.
+        id: the-forwarding-engines-gost-rathole-backhaul-kariz-sing-box-and-xray-with-the-release-dalan-installs-the-transports-each-can-run-and-whether-each-runs-in-a-reverse-tunnel-a-direct-tunnel-or-both-and-the-settings-each-one-reads-send-an-engine-id-as-engine-and-one-of-its-transport-ids-as-transport-when-adding-a-tunnel-settings-go-under-options
+      - content: 'Every setting of BackPack or Rakhsh the panel can write, for reverse
+          and direct tunnels: key, kind, which end reads it, group, allowed
+          values and a hint in English (hintEn) and Persian (hintFa). Send
+          values under options of add or update, keyed as listed here.'
+        id: every-setting-of-backpack-or-rakhsh-the-panel-can-write-for-reverse-and-direct-tunnels-key-kind-which-end-reads-it-group-allowed-values-and-a-hint-in-english-hinten-and-persian-hintfa-send-values-under-options-of-add-or-update-keyed-as-listed-here
+      - content: "Download a release of an engine (BackPack by default, or another one
+          with its engine id) for this CPU, the one named in version or, when it
+          is empty, the pinned one, verify it against the checksums published
+          with it, put it in the panel bin folder and start that engine's
+          tunnels. Can take a few minutes. route says how the download travels:
+          via is panel (as the panel proxy is set, the default), direct
+          (straight from this server), outbound (value is the tag of one of the
+          outbounds of the panel, a tunnel or a Tor exit included) or link
+          (value is a socks5:// or http:// proxy address, or a
           vless/vmess/trojan/ss share link). See GET
-          /panel/api/tunnels/engine/routes. The route is used when nodeId is 0;
-          a node downloads as its own panel is set."
-        id: install-a-release-of-an-engine-engine-is-backpack-or-rakhsh-empty-version-means-the-newest-and-restart-that-engines-tunnels-on-it-with-nodeid-the-release-is-downloaded-by-that-node-and-sent-over-the-management-channel-for-a-server-that-cannot-reach-github-the-release-is-verified-against-its-published-checksums-when-tunnels-that-were-connected-do-not-reconnect-within-about-75-seconds-the-earlier-engine-is-put-back-and-the-call-fails-can-take-several-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes-the-route-is-used-when-nodeid-is-0-a-node-downloads-as-its-own-panel-is-set
+          /panel/api/tunnels/engine/routes."
+        id: download-a-release-of-an-engine-backpack-by-default-or-another-one-with-its-engine-id-for-this-cpu-the-one-named-in-version-or-when-it-is-empty-the-pinned-one-verify-it-against-the-checksums-published-with-it-put-it-in-the-panel-bin-folder-and-start-that-engines-tunnels-can-take-a-few-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes
+      - content: List the newest four releases of an engine (engine is backpack, rakhsh
+          or a forwarding engine id), newest first, so one can be picked for
+          install or update. With nodeId the node reads the list, for a server
+          that cannot reach GitHub; otherwise this server reads it through route
+          (see GET /panel/api/tunnels/engine/routes). Fails with the reason when
+          GitHub cannot be reached. Needs an admin or node-admin token.
+        id: list-the-newest-four-releases-of-an-engine-engine-is-backpack-rakhsh-or-a-forwarding-engine-id-newest-first-so-one-can-be-picked-for-install-or-update-with-nodeid-the-node-reads-the-list-for-a-server-that-cannot-reach-github-otherwise-this-server-reads-it-through-route-see-get-panelapitunnelsengineroutes-fails-with-the-reason-when-github-cannot-be-reached-needs-an-admin-or-node-admin-token
+      - content: "Install a release of an engine (engine is backpack, rakhsh or a
+          forwarding engine id; empty version means the newest) and restart that
+          engine's tunnels on it. With nodeId the release is downloaded by that
+          node and sent over the management channel, for a server that cannot
+          reach GitHub. The release is verified against its published checksums.
+          When tunnels that were connected do not reconnect within about 75
+          seconds, the earlier engine is put back and the call fails. Can take
+          several minutes. route says how the download travels: via is panel (as
+          the panel proxy is set, the default), direct (straight from this
+          server), outbound (value is the tag of one of the outbounds of the
+          panel, a tunnel or a Tor exit included) or link (value is a socks5://
+          or http:// proxy address, or a vless/vmess/trojan/ss share link). See
+          GET /panel/api/tunnels/engine/routes. The route is used when nodeId is
+          0; a node downloads as its own panel is set."
+        id: install-a-release-of-an-engine-engine-is-backpack-rakhsh-or-a-forwarding-engine-id-empty-version-means-the-newest-and-restart-that-engines-tunnels-on-it-with-nodeid-the-release-is-downloaded-by-that-node-and-sent-over-the-management-channel-for-a-server-that-cannot-reach-github-the-release-is-verified-against-its-published-checksums-when-tunnels-that-were-connected-do-not-reconnect-within-about-75-seconds-the-earlier-engine-is-put-back-and-the-call-fails-can-take-several-minutes-route-says-how-the-download-travels-via-is-panel-as-the-panel-proxy-is-set-the-default-direct-straight-from-this-server-outbound-value-is-the-tag-of-one-of-the-outbounds-of-the-panel-a-tunnel-or-a-tor-exit-included-or-link-value-is-a-socks5-or-http-proxy-address-or-a-vlessvmesstrojanss-share-link-see-get-panelapitunnelsengineroutes-the-route-is-used-when-nodeid-is-0-a-node-downloads-as-its-own-panel-is-set
       - content: 'Node side of an engine update through a node: the first call starts
           downloading a release of the engine named in engine (BackPack or
           Rakhsh) and answers pending until it is done, then each call returns
@@ -269,12 +341,18 @@ _openapi:
         id: node-side-of-an-engine-update-through-a-node-the-first-call-starts-downloading-a-release-of-the-engine-named-in-engine-backpack-or-rakhsh-and-answers-pending-until-it-is-done-then-each-call-returns-the-part-of-the-archive-that-starts-at-offset-the-checksums-come-with-the-first-part-needs-an-admin-or-node-admin-token
       - content: 'Create the entry end of a tunnel on this server. Secrets are generated
           by the panel. routeInbounds lists the local inbound tags whose traffic
-          leaves through the tunnel. The engine is "backpack" (default) or
-          "rakhsh"; the former Xray engine was removed. With engine "rakhsh",
-          send transport (the carrier, such as wss or quic), forwardPorts and
-          options (see /options?engine=rakhsh); the entry end gets a relay port
-          like BackPack, so the tunnel is also an Xray outbound, and the setup
-          link carries the exit end secret key. With engine "backpack", send
+          leaves through the tunnel. The engine is "backpack" (default),
+          "rakhsh" or a forwarding engine id from /engines; the former Xray
+          engine was removed. With a forwarding engine, send transport (one of
+          its transports for the chosen mode), mode ("reverse", or "direct"
+          where the transport allows it), forwardPorts and options; the panel
+          makes the secret shared by both ends and the relay port, so the tunnel
+          is also an Xray outbound. The setup link then carries the secret, so
+          treat it as one. With engine "rakhsh", send transport (the carrier,
+          such as wss or quic), forwardPorts and options (see
+          /options?engine=rakhsh); the entry end gets a relay port like
+          BackPack, so the tunnel is also an Xray outbound, and the setup link
+          carries the exit end secret key. With engine "backpack", send
           transport, forwardPorts (for example "443=127.0.0.1:2096") and
           optionally fallbackTransports, acceptUdp and options (see /options)
           and routeInbounds. With mode "direct" and engine "rakhsh" the entry
@@ -288,7 +366,7 @@ _openapi:
           dialling end on that node through its management channel; exitOutbound
           then names the outbound traffic leaves from there. If the node does
           not take its end, nothing is created.'
-        id: create-the-entry-end-of-a-tunnel-on-this-server-secrets-are-generated-by-the-panel-routeinbounds-lists-the-local-inbound-tags-whose-traffic-leaves-through-the-tunnel-the-engine-is-backpack-default-or-rakhsh-the-former-xray-engine-was-removed-with-engine-rakhsh-send-transport-the-carrier-such-as-wss-or-quic-forwardports-and-options-see-optionsenginerakhsh-the-entry-end-gets-a-relay-port-like-backpack-so-the-tunnel-is-also-an-xray-outbound-and-the-setup-link-carries-the-exit-end-secret-key-with-engine-backpack-send-transport-forwardports-for-example-4431270012096-and-optionally-fallbacktransports-acceptudp-and-options-see-options-and-routeinbounds-with-mode-direct-and-engine-rakhsh-the-entry-end-dials-the-exit-end-which-listens-and-the-tunnel-stays-an-xray-outbound-optionsl3_addr-adds-a-routed-tun-device-and-needs-root-with-mode-direct-and-engine-backpack-the-entry-end-dials-the-exit-end-over-a-layer-3-link-send-optionscarrier-udp-pck-quic-sni-xdi-or-spoof-and-forwardports-and-the-panel-picks-the-tunnel-addresses-this-mode-needs-root-and-devnettun-on-both-servers-and-the-tunnel-is-not-an-xray-outbound-send-nodeid-to-also-create-the-dialling-end-on-that-node-through-its-management-channel-exitoutbound-then-names-the-outbound-traffic-leaves-from-there-if-the-node-does-not-take-its-end-nothing-is-created
+        id: create-the-entry-end-of-a-tunnel-on-this-server-secrets-are-generated-by-the-panel-routeinbounds-lists-the-local-inbound-tags-whose-traffic-leaves-through-the-tunnel-the-engine-is-backpack-default-rakhsh-or-a-forwarding-engine-id-from-engines-the-former-xray-engine-was-removed-with-a-forwarding-engine-send-transport-one-of-its-transports-for-the-chosen-mode-mode-reverse-or-direct-where-the-transport-allows-it-forwardports-and-options-the-panel-makes-the-secret-shared-by-both-ends-and-the-relay-port-so-the-tunnel-is-also-an-xray-outbound-the-setup-link-then-carries-the-secret-so-treat-it-as-one-with-engine-rakhsh-send-transport-the-carrier-such-as-wss-or-quic-forwardports-and-options-see-optionsenginerakhsh-the-entry-end-gets-a-relay-port-like-backpack-so-the-tunnel-is-also-an-xray-outbound-and-the-setup-link-carries-the-exit-end-secret-key-with-engine-backpack-send-transport-forwardports-for-example-4431270012096-and-optionally-fallbacktransports-acceptudp-and-options-see-options-and-routeinbounds-with-mode-direct-and-engine-rakhsh-the-entry-end-dials-the-exit-end-which-listens-and-the-tunnel-stays-an-xray-outbound-optionsl3_addr-adds-a-routed-tun-device-and-needs-root-with-mode-direct-and-engine-backpack-the-entry-end-dials-the-exit-end-over-a-layer-3-link-send-optionscarrier-udp-pck-quic-sni-xdi-or-spoof-and-forwardports-and-the-panel-picks-the-tunnel-addresses-this-mode-needs-root-and-devnettun-on-both-servers-and-the-tunnel-is-not-an-xray-outbound-send-nodeid-to-also-create-the-dialling-end-on-that-node-through-its-management-channel-exitoutbound-then-names-the-outbound-traffic-leaves-from-there-if-the-node-does-not-take-its-end-nothing-is-created
       - content: Change a tunnel in place. On an entry end send the shared settings
           (address, port, transport, fallbackTransports, forwardPorts,
           acceptUdp, options, routeInbounds); when this panel made the other end
@@ -340,7 +418,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/speedtest/start/{id}","method":"post"},{"path":"/panel/api/tunnels/speedtest/status/{id}","method":"get"},{"path":"/panel/api/tunnels/speedtest/history/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/routes","method":"get"},{"path":"/panel/api/tunnels/options","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/engine/releases","method":"post"},{"path":"/panel/api/tunnels/engine/update","method":"post"},{"path":"/panel/api/tunnels/engine/release","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/update/{id}","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/speedtest/start/{id}","method":"post"},{"path":"/panel/api/tunnels/speedtest/status/{id}","method":"get"},{"path":"/panel/api/tunnels/speedtest/history/{id}","method":"get"},{"path":"/panel/api/tunnels/benchmark/start","method":"post"},{"path":"/panel/api/tunnels/benchmark/status","method":"get"},{"path":"/panel/api/tunnels/benchmark/cancel","method":"post"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/routes","method":"get"},{"path":"/panel/api/tunnels/engines","method":"get"},{"path":"/panel/api/tunnels/options","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/engine/releases","method":"post"},{"path":"/panel/api/tunnels/engine/update","method":"post"},{"path":"/panel/api/tunnels/engine/release","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/update/{id}","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
     </>
   );
 }

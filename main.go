@@ -709,6 +709,8 @@ func main() {
 		joinMainPanel(os.Args[2:])
 	case "install-engines":
 		installEngines()
+	case "carrier":
+		runCarrier(os.Args[2:])
 	case "migrate-db":
 		if err := migrateDbCmd.Parse(os.Args[2:]); err != nil {
 			fmt.Println(err)

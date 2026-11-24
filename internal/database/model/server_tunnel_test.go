@@ -12,6 +12,12 @@ func TestExternalEngineNamesTheEnginesRunAsOwnProcesses(t *testing.T) {
 		"":                   false,
 		TunnelEngineBackpack: true,
 		TunnelEngineRakhsh:   true,
+		TunnelEngineGost:     true,
+		TunnelEngineRathole:  true,
+		TunnelEngineBackhaul: true,
+		TunnelEngineSingbox:  true,
+		TunnelEngineXrayCore: true,
+		TunnelEngineKariz:    true,
 	} {
 		if got := ExternalEngine(engine); got != want {
 			t.Errorf("ExternalEngine(%q) = %v, want %v", engine, got, want)
@@ -32,5 +38,15 @@ func TestRakhshSecretNeverLeavesInJSON(t *testing.T) {
 	}
 	if !strings.Contains(text, "the-public-key") {
 		t.Fatalf("the peer's public key should be listed: %s", text)
+	}
+}
+
+func TestEngineSecretNeverLeavesInJSON(t *testing.T) {
+	raw, err := json.Marshal(ServerTunnel{Name: "g1", Engine: TunnelEngineGost, EngineSecret: "shared-token-value"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(raw), "shared-token-value") {
+		t.Fatalf("the engine secret is in the tunnel JSON: %s", raw)
 	}
 }

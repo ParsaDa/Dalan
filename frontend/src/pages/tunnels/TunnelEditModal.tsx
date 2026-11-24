@@ -14,6 +14,7 @@ import type {
   TunnelOption,
 } from '@/api/queries/useTunnels';
 import TunnelOptionFields, { cleanOptions } from './TunnelOptionFields';
+import { isForwarder, requiredSettings } from './forwardingEngines';
 import { isRawCarrier, needsPeerIp } from './rakhshCarriers';
 
 interface Props {
@@ -42,6 +43,7 @@ export default function TunnelEditModal({
   const portal = tunnel.role === 'portal';
   const backpack = tunnel.engine === 'backpack';
   const rakhsh = tunnel.engine === 'rakhsh';
+  const forwarder = isForwarder(tunnel.engine);
   const transport = Form.useWatch('transport', form) ?? tunnel.transport;
   const links = Form.useWatch(['options', 'links'], form) as { carrier?: string }[] | undefined;
   const rakhshNeedsPeerIp = needsPeerIp([transport, ...(links ?? []).map((l) => l.carrier)]);
@@ -57,7 +59,7 @@ export default function TunnelEditModal({
             address: (values.address ?? '').trim(),
             port: values.port,
             routeInbounds: values.routeInbounds ?? [],
-            ...(rakhsh
+            ...(rakhsh || forwarder
               ? {
                   transport: values.transport,
                   forwardPorts: values.forwardPorts ?? [],
@@ -134,12 +136,12 @@ export default function TunnelEditModal({
             >
               <InputNumber min={1} max={65535} style={{ width: '100%' }} />
             </Form.Item>
-            {rakhsh ? (
+            {rakhsh || forwarder ? (
               <>
                 <Form.Item name="transport" label={t('pages.tunnels.transport')}>
                   <Select options={transports} />
                 </Form.Item>
-                {isRawCarrier(transport) && (
+                {rakhsh && isRawCarrier(transport) && (
                   <Alert
                     type="warning"
                     showIcon
@@ -202,7 +204,7 @@ export default function TunnelEditModal({
                 </Form.Item>
               </>
             )}
-            {(mode === 'reverse' || rakhsh) && (
+            {(mode === 'reverse' || rakhsh || forwarder) && (
               <Form.Item
                 name="routeInbounds"
                 label={t('pages.tunnels.routeInbounds')}
@@ -232,6 +234,9 @@ export default function TunnelEditModal({
             mode={mode}
             skip={mode === 'direct' ? ['local_ip', 'peer_ip'] : []}
           />
+        )}
+        {forwarder && portal && (
+          <TunnelOptionFields options={options} mode={mode} pinned={requiredSettings(options)} />
         )}
         {rakhsh && (
           <TunnelOptionFields
