@@ -94,6 +94,10 @@ jobs:
           export CC=$(realpath "$(find "$TOOLCHAIN_DIR/bin" -name '*-gcc.br_real' -type f -executable | head -n1)")
           [ -z "$CC" ] && { echo "No gcc.br_real found in $TOOLCHAIN_DIR/bin" >&2; exit 1; }
           cd -
+          # A tagged release carries its own tag as the version the update check reads.
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            bash scripts/dalan/stamp-version.sh "$GITHUB_REF_NAME" internal/config/dalan_version
+          fi
           # Stamp the commit into per-commit (dev channel) builds only; tagged
           # stable releases stay unstamped so config.IsDevBuild() returns false.
           LDFLAGS="-w -s -linkmode external -extldflags '-static'"
@@ -266,6 +270,10 @@ jobs:
           go run github.com/tc-hib/go-winres@v0.3.3 make --arch amd64 \
             --product-version "$PANEL_VERSION" --file-version "$PANEL_VERSION"
 
+          # A tagged release carries its own tag as the version the update check reads.
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            bash scripts/dalan/stamp-version.sh "$GITHUB_REF_NAME" internal/config/dalan_version
+          fi
           # Stamp the commit into per-commit (dev channel) builds only.
           LDFLAGS="-w -s"
           if [[ "$GITHUB_REF" != refs/tags/* ]]; then

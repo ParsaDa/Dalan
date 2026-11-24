@@ -108,6 +108,7 @@ build-storybook: ## Build the static Storybook (compile-checks all stories)
 .PHONY: brand-check
 brand-check: ## Fail if an upstream release URL survives in scripts or workflows
 	bash scripts/dalan/rebrand_test.sh
+	bash scripts/dalan/stamp-version_test.sh
 	bash scripts/dalan/check-brand.sh
 	sh deploy/test/container-prepare.sh
 
