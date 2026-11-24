@@ -6,6 +6,13 @@ const (
 
 	TunnelEngineBackpack = "backpack"
 	TunnelEngineRakhsh   = "rakhsh"
+	TunnelEngineGost     = "gost"
+	TunnelEngineRathole  = "rathole"
+	TunnelEngineBackhaul = "backhaul"
+	TunnelEngineSingbox  = "singbox"
+	TunnelEngineXrayCore = "xraycore"
+	TunnelEngineKariz    = "kariz"
+	TunnelEngineDagger   = "dagger"
 
 	TunnelModeReverse = "reverse"
 	TunnelModeDirect  = "direct"
@@ -13,7 +20,12 @@ const (
 
 // ExternalEngine reports whether an engine runs as its own process and reaches Xray through a loopback relay.
 func ExternalEngine(engine string) bool {
-	return engine == TunnelEngineBackpack || engine == TunnelEngineRakhsh
+	switch engine {
+	case TunnelEngineBackpack, TunnelEngineRakhsh, TunnelEngineGost, TunnelEngineRathole, TunnelEngineBackhaul,
+		TunnelEngineSingbox, TunnelEngineXrayCore, TunnelEngineKariz, TunnelEngineDagger:
+		return true
+	}
+	return false
 }
 
 // ServerTunnel is one end of a tunnel between two panels. The portal listens and
@@ -47,6 +59,10 @@ type ServerTunnel struct {
 	// RakhshSecret is this end's private key for the Rakhsh handshake; RakhshPeerPublic pins the other end's.
 	RakhshSecret     string `json:"-" gorm:"column:rakhsh_secret"`
 	RakhshPeerPublic string `json:"rakhshPeerPublic" gorm:"column:rakhsh_peer_public" example:"MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM="`
+
+	// EngineSecret is the token or password both ends of a GOST, Rathole, Backhaul, sing-box, Xray, Kariz or
+	// Dagger tunnel share; the setup link carries it.
+	EngineSecret string `json:"-" gorm:"column:engine_secret"`
 
 	// RouteInbounds (portal) lists the local inbound tags whose traffic leaves through this tunnel.
 	RouteInbounds []string `json:"routeInbounds" gorm:"serializer:json;column:route_inbounds"`
