@@ -95,7 +95,7 @@ func listenSocks(t *testing.T, reply []byte) int {
 	return l.Addr().(*net.TCPAddr).Port
 }
 
-func TestRelayAliveNeedsASocksServerBehindThePort(t *testing.T) {
+func TestRelayRTTNeedsASocksServerBehindThePort(t *testing.T) {
 	cases := []struct {
 		name  string
 		reply []byte
@@ -107,17 +107,18 @@ func TestRelayAliveNeedsASocksServerBehindThePort(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			if got := RelayAlive(listenSocks(t, c.reply), 500*time.Millisecond); got != c.want {
-				t.Fatalf("RelayAlive = %v, want %v", got, c.want)
+			rtt, got := RelayRTT(listenSocks(t, c.reply), 500*time.Millisecond)
+			if got != c.want || (got && rtt <= 0) || (!got && rtt != 0) {
+				t.Fatalf("RelayRTT = %v, %v; want ok=%v and a delay only when ok", rtt, got, c.want)
 			}
 		})
 	}
-	if RelayAlive(1, 200*time.Millisecond) {
+	if _, ok := RelayRTT(1, 200*time.Millisecond); ok {
 		t.Fatal("nothing listens on port 1")
 	}
 }
 
-func TestConnectedOnTheEntryEndFollowsTheRelayAndOnTheExitEndTheProcess(t *testing.T) {
+func TestCheckOnTheEntryEndFollowsTheRelayAndOnTheExitEndTheProcess(t *testing.T) {
 	port := listenSocks(t, []byte{5, 2})
 	entry := gostPortal()
 	entry.RelayPort = port
@@ -126,18 +127,21 @@ func TestConnectedOnTheEntryEndFollowsTheRelayAndOnTheExitEndTheProcess(t *testi
 	running := func(string) bool { return true }
 	stopped := func(string) bool { return false }
 
-	if !Connected(entry, running, time.Second) || !Connected(exit, running, time.Second) {
-		t.Fatal("a running process with a live relay is connected at both ends")
+	if rtt, ok := Check(entry, running, time.Second); !ok || rtt <= 0 {
+		t.Fatalf("a running entry with a live relay: rtt %v ok %v", rtt, ok)
 	}
-	if Connected(entry, stopped, time.Second) || Connected(exit, stopped, time.Second) {
-		t.Fatal("a stopped process is never connected")
+	if _, ok := Check(exit, running, time.Second); !ok {
+		t.Fatal("a running exit end is connected")
+	}
+	if _, ok := Check(entry, stopped, time.Second); ok {
+		t.Fatal("a stopped entry is never connected")
+	}
+	if _, ok := Check(exit, stopped, time.Second); ok {
+		t.Fatal("a stopped exit is never connected")
 	}
 	entry.RelayPort = 1
-	if Connected(entry, running, 200*time.Millisecond) {
+	if _, ok := Check(entry, running, 200*time.Millisecond); ok {
 		t.Fatal("an entry end whose relay does not answer is not connected")
-	}
-	if !Connected(exit, running, time.Second) {
-		t.Fatal("the exit end only has its process to show")
 	}
 }
 
@@ -210,5 +214,37 @@ func TestValidateRefusesATunnelWhoseExitEndCannotBeRendered(t *testing.T) {
 	tun.Engine = exitOnlyBroken.ID
 	if err := Validate(tun); err == nil || !strings.Contains(err.Error(), "exit end") {
 		t.Fatalf("Validate error = %v, want the exit end's refusal", err)
+	}
+}
+
+func TestOptionsAreCheckedAgainstTheEnginesCatalog(t *testing.T) {
+	tun := gostPortal()
+	tun.Engine, tun.Transport, tun.Mode = model.TunnelEngineKariz, "tcpmux", model.TunnelModeReverse
+	for _, c := range []struct {
+		name    string
+		options map[string]any
+		want    string
+	}{
+		{"unknown key", map[string]any{"turbo": true}, "turbo"},
+		{"value outside the choices", map[string]any{"profile": "warp"}, "profile"},
+		{"value of the wrong kind", map[string]any{"profile": 3}, "profile"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			bad := tun
+			bad.Options = c.options
+			if err := Validate(bad); err == nil || !strings.Contains(err.Error(), c.want) {
+				t.Fatalf("Validate error = %v, want one mentioning %q", err, c.want)
+			}
+		})
+	}
+	good := tun
+	good.Options = map[string]any{"profile": "gaming"}
+	if err := Validate(good); err != nil {
+		t.Fatalf("a catalogued option failed: %v", err)
+	}
+	other := gostPortal()
+	other.Options = map[string]any{"profile": "gaming"}
+	if err := Validate(other); err == nil {
+		t.Fatal("GOST has no options, so a profile must be refused")
 	}
 }

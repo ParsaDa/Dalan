@@ -12,6 +12,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/forwarder"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 )
 
@@ -124,6 +125,14 @@ func (s *TunnelService) applyEntryEdit(old, next *model.ServerTunnel, edit Tunne
 		if next.Mode != model.TunnelModeDirect {
 			next.Transport, next.FallbackTransports = edit.Transport, edit.FallbackTransports
 		} else if err := keepLinkAddresses(next, old.Options); err != nil {
+			return err
+		}
+	default:
+		if _, ok := forwarder.ByID(next.Engine); !ok {
+			break
+		}
+		next.ForwardPorts, next.Options, next.Transport = edit.ForwardPorts, maps.Clone(edit.Options), edit.Transport
+		if err := forwarder.Validate(*next); err != nil {
 			return err
 		}
 	}

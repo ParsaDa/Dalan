@@ -17,6 +17,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/engine"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/forwarder"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/tunnelroute"
 
@@ -395,6 +396,9 @@ func (s *TunnelService) probe(id int) (tunnel.Status, error) {
 	if t.Engine == model.TunnelEngineRakhsh {
 		return s.rakhshStatus(t), nil
 	}
+	if _, ok := forwarder.ByID(t.Engine); ok {
+		return s.forwarderStatus(t), nil
+	}
 	if t.Mode == model.TunnelModeDirect {
 		return s.directStatus(t), nil
 	}
@@ -412,7 +416,7 @@ func (s *TunnelService) applyChange() {
 	}
 }
 
-// ReconcileEngines starts and stops BackPack and Rakhsh processes to match the stored tunnels. Both are
+// ReconcileEngines starts and stops the engine processes to match the stored tunnels. Both are
 // reconciled even when one fails, and the first error is returned.
 func (s *TunnelService) ReconcileEngines() error {
 	tunnels, err := s.GetAll()
@@ -510,6 +514,34 @@ func (s *TunnelService) backpackStatus(t *model.ServerTunnel) tunnel.Status {
 		if host, _, err := net.SplitHostPort(snap.Peer); err == nil {
 			status.ExitIP = host
 		}
+	}
+	return status
+}
+
+// forwarderStatus judges a tunnel on a forwarding engine by its process and, on the entry end, by an answer
+// that comes back from the exit through the relay.
+func (s *TunnelService) forwarderStatus(t *model.ServerTunnel) tunnel.Status {
+	kind, err := externalEngineFor(t.Engine)
+	if err != nil {
+		return tunnel.Status{Error: err.Error()}
+	}
+	sup := kind.supervisor()
+	if _, err := os.Stat(sup.Binary); err != nil {
+		return tunnel.Status{Error: sup.NotInstalled.Error()}
+	}
+	if !sup.Running(t.Name) {
+		return tunnel.Status{Error: kind.label + " is not running this tunnel"}
+	}
+	rtt, ok := forwarder.Check(*t, sup.Running, forwarderStatusTimeout)
+	if !ok {
+		return tunnel.Status{Error: "the exit server does not answer through the tunnel"}
+	}
+	status := tunnel.Status{Connected: true}
+	if rtt > 0 {
+		status.LatencyMs = max(rtt.Milliseconds(), 1)
+	}
+	if t.Role == model.TunnelRolePortal && t.Mode == model.TunnelModeDirect {
+		status.ExitIP = t.Address
 	}
 	return status
 }

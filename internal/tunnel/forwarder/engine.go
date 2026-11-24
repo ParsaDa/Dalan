@@ -43,6 +43,15 @@ type Plan struct {
 	Options map[string]any
 }
 
+// Option is one setting of an engine that the panel lets the operator choose. Both ends read it from the
+// tunnel's options, so it is shared through the setup link.
+type Option struct {
+	Key     string   `json:"key" example:"profile"`
+	Label   string   `json:"label" example:"Profile"`
+	Choices []string `json:"choices" example:"[\"balanced\",\"ultraspeed\",\"gaming\"]"`
+	Default string   `json:"default" example:"balanced"`
+}
+
 // Engine describes one forwarding engine: how to install it, which transports it has and how to write
 // the file for each end.
 type Engine struct {
@@ -50,6 +59,7 @@ type Engine struct {
 	Repo       string
 	Pinned     string
 	Transports []Transport
+	Options    []Option
 	// Render writes the engine's file for one end; Ext is that file's suffix and Args its command line.
 	Render func(p Plan) (string, error)
 	Ext    string
@@ -105,6 +115,9 @@ func (e Engine) PlanFor(t model.ServerTunnel, dir string) (Plan, error) {
 	if mode == model.TunnelModeDirect && !tr.Direct {
 		return Plan{}, fmt.Errorf("%s cannot run %s in a direct tunnel", e.Label, tr.Label)
 	}
+	if err := e.checkOptions(t.Options); err != nil {
+		return Plan{}, err
+	}
 	if t.EngineSecret == "" {
 		return Plan{}, errors.New("the tunnel has no shared secret")
 	}
@@ -120,6 +133,20 @@ func (e Engine) PlanFor(t model.ServerTunnel, dir string) (Plan, error) {
 		return Plan{}, err
 	}
 	return p, nil
+}
+
+func (e Engine) checkOptions(options map[string]any) error {
+	for key, value := range options {
+		i := slices.IndexFunc(e.Options, func(o Option) bool { return o.Key == key })
+		if i < 0 {
+			return fmt.Errorf("%s has no option %q", e.Label, key)
+		}
+		choice, ok := value.(string)
+		if !ok || (choice != "" && !slices.Contains(e.Options[i].Choices, choice)) {
+			return fmt.Errorf("%s option %q must be one of %s", e.Label, key, strings.Join(e.Options[i].Choices, ", "))
+		}
+	}
+	return nil
 }
 
 func forwardsOf(t model.ServerTunnel) ([]Forward, error) {

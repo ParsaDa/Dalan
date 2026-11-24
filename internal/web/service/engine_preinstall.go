@@ -22,7 +22,8 @@ type EngineInstall struct {
 	Err       error
 }
 
-// InstallMissingEngines puts every engine that is not on this server yet in place at its pinned version.
+// InstallMissingEngines puts BackPack and Rakhsh in place at their pinned version when they are missing; the
+// forwarding engines are large and are installed from the panel when a tunnel needs one.
 // It never starts an engine and never fails as a whole: each engine reports its own outcome. route is how the downloads travel.
 func InstallMissingEngines(ctx context.Context, route EngineRoute) []EngineInstall {
 	client, release, err := (&EngineRouteService{}).Client(route, engineInstallTimeout)
@@ -39,6 +40,9 @@ func InstallMissingEngines(ctx context.Context, route EngineRoute) []EngineInsta
 func installMissingEngines(ctx context.Context, src engineSource, fetchTor func(context.Context) (engine.Release, error)) []EngineInstall {
 	var results []EngineInstall
 	for _, kind := range allExternalEngines() {
+		if !kind.preinstalled {
+			continue
+		}
 		engineCtx, cancel := context.WithTimeout(ctx, preinstallTimeout)
 		results = append(results, installExternalEngine(engineCtx, kind, src))
 		cancel()

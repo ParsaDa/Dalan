@@ -3,7 +3,6 @@ package forwarder
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -11,6 +10,7 @@ import (
 // Kariz is a Rust tunnel with seven transports, UDP, and both directions; the entry owns the forwards.
 var karizEngine = Engine{
 	ID: "kariz", Label: "Kariz", Repo: "Erfan-XRay/Kariz", Pinned: "v2.8.1",
+	Options: []Option{{Key: "profile", Label: "Profile", Choices: karizProfiles, Default: "balanced"}},
 	Transports: []Transport{
 		{ID: "tcp", Label: "TCP", Reverse: true, Direct: true},
 		{ID: "tcpmux", Label: "TCP multiplexed", Reverse: true, Direct: true},
@@ -44,11 +44,8 @@ var karizProfiles = []string{"balanced", "ultraspeed", "gaming"}
 var errKarizUDP = errors.New("Kariz carries UDP forwards only on a multiplexed transport: tcpmux, ws, wss, quic, kcp or paqet")
 
 func renderKariz(p Plan) (string, error) {
-	profile := "balanced"
-	if v, ok := p.Options["profile"].(string); ok && v != "" {
-		if !slices.Contains(karizProfiles, v) {
-			return "", fmt.Errorf("Kariz has no profile %q", v)
-		}
+	profile := karizProfiles[0]
+	if v, _ := p.Options["profile"].(string); v != "" {
 		profile = v
 	}
 	role, mode := "exit", "reverse"

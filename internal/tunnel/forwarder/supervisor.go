@@ -35,36 +35,36 @@ func (e Engine) NewSupervisor(binary, dir string) *engine.Supervisor {
 // socksGreeting offers password authentication, which is the only method the exit's relay inbound accepts.
 var socksGreeting = []byte{5, 1, 2}
 
-// RelayAlive reports whether a SOCKS5 server answers behind the entry's relay port. The answer comes from
-// the exit's Xray, so it proves the whole path through the engine and not just a local listener.
-func RelayAlive(port int, timeout time.Duration) bool {
-	deadline := time.Now().Add(timeout)
+// RelayRTT sends a SOCKS5 greeting to the entry's relay port and reports how long the answer took. The
+// answer comes from the exit's Xray, so it proves the whole path through the engine, not a local listener.
+func RelayRTT(port int, timeout time.Duration) (time.Duration, bool) {
+	start := time.Now()
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), timeout)
 	if err != nil {
-		return false
+		return 0, false
 	}
 	defer conn.Close()
-	_ = conn.SetDeadline(deadline)
+	_ = conn.SetDeadline(start.Add(timeout))
 	if _, err := conn.Write(socksGreeting); err != nil {
-		return false
+		return 0, false
 	}
 	reply := make([]byte, 2)
-	if _, err := conn.Read(reply); err != nil {
-		return false
+	if _, err := conn.Read(reply); err != nil || reply[0] != 5 {
+		return 0, false
 	}
-	return reply[0] == 5
+	return max(time.Since(start), time.Microsecond), true
 }
 
-// Connected says whether a tunnel end is up. The entry end proves it through its relay; the exit end has
-// no listener of its own to ask, so its running process is all there is to show.
-func Connected(t model.ServerTunnel, running func(name string) bool, timeout time.Duration) bool {
+// Check says whether a tunnel end is up. The entry end proves it through its relay and reports the answer's
+// delay; the exit end has no listener of its own to ask, so its running process is all there is to show.
+func Check(t model.ServerTunnel, running func(name string) bool, timeout time.Duration) (time.Duration, bool) {
 	if !running(t.Name) {
-		return false
+		return 0, false
 	}
 	if t.Role != model.TunnelRolePortal || t.RelayPort == 0 {
-		return true
+		return 0, true
 	}
-	return RelayAlive(t.RelayPort, timeout)
+	return RelayRTT(t.RelayPort, timeout)
 }
 
 var errUnknownEngine = errors.New("unknown tunnel engine")

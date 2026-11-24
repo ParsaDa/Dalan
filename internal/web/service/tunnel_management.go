@@ -137,6 +137,12 @@ func (s *TunnelService) deleteNodeEnd(t *model.ServerTunnel) error {
 	return nil
 }
 
+// carriesManagement says whether an engine hands the entry end's forwards to the exit end itself. The
+// forwarding engines read them from their own file on each end, which the node's management cannot reach.
+func carriesManagement(engine string) bool {
+	return engine == model.TunnelEngineBackpack || engine == model.TunnelEngineRakhsh
+}
+
 // CreateManagementRider opens a node's management channel on an existing tunnel: the same address and
 // port, and a loopback port of its own on this server, so no second address gets exposed.
 func (s *TunnelService) CreateManagementRider(parentId int, name string) (*model.ServerTunnel, error) {
@@ -144,8 +150,8 @@ func (s *TunnelService) CreateManagementRider(parentId int, name string) (*model
 	if err != nil {
 		return nil, err
 	}
-	if parent.Role != model.TunnelRolePortal || parent.ManagePort > 0 || parent.ParentId > 0 || !model.ExternalEngine(parent.Engine) {
-		return nil, errors.New("a node's management can only ride on the entry end of an ordinary tunnel")
+	if parent.Role != model.TunnelRolePortal || parent.ManagePort > 0 || parent.ParentId > 0 || !carriesManagement(parent.Engine) {
+		return nil, errors.New("a node's management can only ride on the entry end of an ordinary BackPack or Rakhsh tunnel")
 	}
 	if parent.Mode == model.TunnelModeDirect {
 		return nil, errors.New("a direct tunnel cannot carry a node's management")
