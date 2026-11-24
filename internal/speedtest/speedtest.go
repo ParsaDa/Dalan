@@ -50,6 +50,8 @@ type Config struct {
 	Warmup       time.Duration
 	Connections  int
 	Candidates   int
+	// Dial, when set, carries every connection (for example through a tunnel); the far end then refuses internal targets.
+	Dial func(ctx context.Context, network, addr string) (net.Conn, error)
 }
 
 // DefaultConfig is what the panel runs with.
@@ -100,9 +102,9 @@ func Run(ctx context.Context, cfg Config, onUpdate func(Update)) (Result, error)
 			onUpdate(u)
 		}
 	}
-	client := newClient(cfg.AllowPrivate)
+	client := newClient(cfg, cfg.AllowPrivate)
 	defer client.CloseIdleConnections()
-	directory := newClient(true)
+	directory := newClient(cfg, true)
 	defer directory.CloseIdleConnections()
 
 	emit(Update{Phase: PhaseServers})
@@ -161,9 +163,9 @@ func normalize(cfg Config) Config {
 }
 
 // newClient guards test-server connections so a listed server cannot point the panel at an internal address.
-func newClient(allowPrivate bool) *http.Client {
+func newClient(cfg Config, allowPrivate bool) *http.Client {
 	dialer := &net.Dialer{Timeout: probeTimeout}
-	if !allowPrivate {
+	if !allowPrivate && cfg.Dial == nil {
 		dialer.Control = func(_, address string, _ syscall.RawConn) error {
 			host, _, err := net.SplitHostPort(address)
 			if err != nil {
@@ -179,8 +181,12 @@ func newClient(allowPrivate bool) *http.Client {
 			return nil
 		}
 	}
+	dial := dialer.DialContext
+	if cfg.Dial != nil {
+		dial = cfg.Dial
+	}
 	return &http.Client{Transport: &http.Transport{
-		DialContext: dialer.DialContext, DisableCompression: true,
+		DialContext: dial, DisableCompression: true,
 		MaxIdleConnsPerHost: 16, TLSHandshakeTimeout: probeTimeout,
 	}}
 }

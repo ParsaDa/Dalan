@@ -36,6 +36,7 @@ export interface RowProps {
   onEdit: () => void;
   onCopy: () => void;
   onDelete: () => void;
+  onSpeedtest: () => void;
 }
 
 // The arrow between two boxes of the flow tile; reverse points back at the entry, as the exit dials in.
@@ -120,12 +121,24 @@ function StatePill({ state, status }: { state: TunnelState; status?: TunnelStatu
   );
 }
 
+// Only an enabled reverse entry tunnel has a loopback relay, which is what a speed test goes through.
+function canSpeedtest(row: ServerTunnel): boolean {
+  return (
+    row.role === 'portal' &&
+    row.enable &&
+    !row.managePort &&
+    row.mode !== 'direct' &&
+    row.relayPort > 0
+  );
+}
+
 function Actions({
   row,
   onEdit,
   onCopy,
   onDelete,
-}: Pick<RowProps, 'row' | 'onEdit' | 'onCopy' | 'onDelete'>) {
+  onSpeedtest,
+}: Pick<RowProps, 'row' | 'onEdit' | 'onCopy' | 'onDelete' | 'onSpeedtest'>) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   return (
@@ -139,6 +152,14 @@ function Actions({
           icon="refresh"
           label={`${t('tunnels.test')} ${row.name}`}
           onClick={() => qc.invalidateQueries({ queryKey: [...TUNNELS_KEY, 'status', row.id] })}
+        />
+      )}
+      {canSpeedtest(row) && (
+        <IconBtn
+          small
+          icon="bolt"
+          label={`${t('tunnels.speedtest.open')} ${row.name}`}
+          onClick={onSpeedtest}
         />
       )}
       <MoreMenu
@@ -245,7 +266,13 @@ export function TunnelRow(p: RowProps) {
         </div>
       </td>
       <td>
-        <Actions row={p.row} onEdit={p.onEdit} onCopy={p.onCopy} onDelete={p.onDelete} />
+        <Actions
+          row={p.row}
+          onEdit={p.onEdit}
+          onCopy={p.onCopy}
+          onDelete={p.onDelete}
+          onSpeedtest={p.onSpeedtest}
+        />
       </td>
     </tr>
   );
@@ -292,7 +319,13 @@ export function TunnelCard(p: RowProps) {
         ) : (
           <span />
         )}
-        <Actions row={p.row} onEdit={p.onEdit} onCopy={p.onCopy} onDelete={p.onDelete} />
+        <Actions
+          row={p.row}
+          onEdit={p.onEdit}
+          onCopy={p.onCopy}
+          onDelete={p.onDelete}
+          onSpeedtest={p.onSpeedtest}
+        />
       </div>
     </div>
   );

@@ -4,8 +4,8 @@ export const keys = {
     fail2banStatus: () => ['server', 'fail2banStatus'] as const,
   },
   speedtest: {
-    status: () => ['speedtest', 'status'] as const,
-    history: () => ['speedtest', 'history'] as const,
+    status: (tunnelId = 0) => ['speedtest', tunnelId, 'status'] as const,
+    history: (tunnelId = 0) => ['speedtest', tunnelId, 'history'] as const,
   },
   nodes: {
     root: () => ['nodes'] as const,

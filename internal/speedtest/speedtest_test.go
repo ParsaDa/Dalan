@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -158,5 +159,30 @@ func TestJitterIsTheMeanChangeBetweenNeighbouringPings(t *testing.T) {
 	}
 	if got := jitter([]float64{7}); got != 0 {
 		t.Fatalf("jitter of one sample = %v, want 0", got)
+	}
+}
+
+func TestRunSendsEveryRequestThroughTheDialerItIsGiven(t *testing.T) {
+	fast := newFakeServer(t, 0)
+	list := listServer(t, http.StatusOK, fast.entry("2"))
+	cfg := fastConfig(list)
+	cfg.AllowPrivate = false
+	var dials atomic.Int64
+	var plain net.Dialer
+	cfg.Dial = func(ctx context.Context, network, addr string) (net.Conn, error) {
+		dials.Add(1)
+		return plain.DialContext(ctx, network, addr)
+	}
+
+	res, err := Run(context.Background(), cfg, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Server.ID != "2" {
+		t.Fatalf("tested server %q, want 2", res.Server.ID)
+	}
+	// The list fetch, the probes and the transfers all open their connections through Dial.
+	if dials.Load() < 3 {
+		t.Fatalf("only %d connections went through the dialer", dials.Load())
 	}
 }

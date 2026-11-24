@@ -2490,7 +2490,8 @@
         "installEngine": "Install the BackPack engine",
         "routeTest": "The route test could not run",
         "updateEngine": "Update the BackPack engine",
-        "engineReleases": "List the engine releases"
+        "engineReleases": "List the engine releases",
+        "speedtest": "The speed test could not run"
       },
       "nodeEnd": "Create the other end on a node",
       "nodeEndHint": "This panel also sets up the exit end on the chosen node, so nothing needs to be copied or pasted. Deleting the tunnel removes both ends.",
@@ -3380,7 +3381,12 @@
     "colRoutes": "Routes",
     "layer3": "Layer 3",
     "ms": "{n} ms",
-    "enable": "Turn on"
+    "enable": "Turn on",
+    "speedtest": {
+      "open": "Speed test",
+      "title": "Speed test of {name}",
+      "hint": "The test goes through this tunnel: its connections leave from the exit server, so the result is the tunnel's speed to the internet. Tests run one at a time."
+    }
   },
   "outbounds": {
     "title": "Outbounds and routing",
