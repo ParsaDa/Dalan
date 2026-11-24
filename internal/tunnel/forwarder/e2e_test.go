@@ -163,3 +163,19 @@ func TestBackhaulCarriesTrafficOnItsTransports(t *testing.T) {
 		})
 	}
 }
+
+func TestGostCarriesTrafficInBothDirectionsOnEveryTransport(t *testing.T) {
+	binary := engineBinary(t, "gost")
+	for _, tr := range gostEngine.Transports {
+		for _, mode := range []string{model.TunnelModeReverse, model.TunnelModeDirect} {
+			t.Run(tr.ID+"/"+mode, func(t *testing.T) {
+				portal, bridge, listen := pairOf(t, gostEngine, tr.ID, mode)
+				runEnd(t, gostEngine, binary, portal)
+				runEnd(t, gostEngine, binary, bridge)
+				if !carries(t, listen) {
+					t.Fatalf("no traffic crossed the %s %s tunnel", tr.ID, mode)
+				}
+			})
+		}
+	}
+}
