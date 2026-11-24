@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -159,5 +160,26 @@ func TestRemoveLeftoversTouchesOnlyEntryTunnelsWithTheReservedPrefix(t *testing.
 
 	if len(f.deleted) != 1 || f.deleted[0] != 1 {
 		t.Fatalf("deleted %v, want only tunnel 1", f.deleted)
+	}
+}
+
+func TestBenchmarkStopsAfterThreeMethodsInARowGetNoAnswerFromTheExitServer(t *testing.T) {
+	f := &fakeBenchTunnels{}
+	s := newBenchmarkForTest(f)
+	s.measure = func(context.Context, int) (speedtest.Result, error) {
+		return speedtest.Result{}, fmt.Errorf("tunnel speed test: %w", speedtest.ErrNoAnswer)
+	}
+	cands := make([]benchmark.Candidate, 6)
+	for i := range cands {
+		cands[i] = benchmark.Candidate{Engine: "gost", Transport: "tls", Mode: "reverse"}
+	}
+
+	if err := s.Start(BenchmarkRequest{NodeId: 3, Address: "203.0.113.10", Objective: benchmark.Speed, Candidates: cands}); err != nil {
+		t.Fatal(err)
+	}
+	st := waitBenchmarkDone(t, s)
+
+	if len(st.Results) != 3 || len(f.made) != 3 {
+		t.Fatalf("results = %d, tunnels made = %d, want the run to stop at 3", len(st.Results), len(f.made))
 	}
 }

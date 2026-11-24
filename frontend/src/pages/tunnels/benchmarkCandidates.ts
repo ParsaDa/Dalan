@@ -3,9 +3,6 @@ import type { TunnelMode } from '@/api/queries/useTunnels';
 import { BACKPACK_TRANSPORTS } from './backpackTransports';
 import { RAKHSH_STREAM_CARRIERS } from './rakhshCarriers';
 
-// Mirrors benchmark.MaxCandidates; the panel refuses a longer list.
-export const BENCHMARK_MAX = 60;
-
 export type BenchmarkDirection = TunnelMode | 'both';
 
 // BackPack and Rakhsh are compared as reverse tunnels over their stream transports only:

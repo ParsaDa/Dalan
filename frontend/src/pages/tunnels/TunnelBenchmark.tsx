@@ -6,7 +6,7 @@ import { useBenchmark } from '@/api/queries/useBenchmark';
 import { Btn, Chip, Seg } from '@/components/dl/primitives';
 import { Modal } from '@/components/dl/overlays';
 import type { Candidate, ForwardingEngine, MethodResult } from '@/generated/zod';
-import { BENCHMARK_MAX, benchmarkCandidates, type BenchmarkDirection } from './benchmarkCandidates';
+import { benchmarkCandidates, type BenchmarkDirection } from './benchmarkCandidates';
 import { FORWARDER_ENGINES, FORWARDER_LABELS, isBuiltIn, isForwarder } from './forwardingEngines';
 
 export interface BenchmarkNode {
@@ -60,12 +60,8 @@ function Body({
   );
   const needsAddress = candidates.some((c) => c.mode === 'reverse');
   const running = status?.running ?? false;
-  const tooMany = candidates.length > BENCHMARK_MAX;
   const ready =
-    nodeId !== undefined &&
-    candidates.length > 0 &&
-    !tooMany &&
-    (!needsAddress || address.trim() !== '');
+    nodeId !== undefined && candidates.length > 0 && (!needsAddress || address.trim() !== '');
 
   const toggleEngine = (id: string) =>
     setEngines((now) => (now.includes(id) ? now.filter((e) => e !== id) : [...now, id]));
@@ -140,10 +136,8 @@ function Body({
               </Chip>
             ))}
           </div>
-          <span className={tooMany ? 'mut st-bad' : 'mut'} style={{ fontSize: 12 }}>
-            {tooMany
-              ? t('tunnels.benchmark.tooMany', { max: BENCHMARK_MAX })
-              : t('tunnels.benchmark.methods', { count: candidates.length })}
+          <span className="mut" style={{ fontSize: 12 }}>
+            {t('tunnels.benchmark.methods', { count: candidates.length })}
           </span>
         </div>
 

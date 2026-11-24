@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	// MaxCandidates bounds one run; every candidate makes tunnels on two servers and runs a speed test.
-	MaxCandidates = 60
+	// silentLimit is how many methods in a row may get no answer from the exit server before the run stops.
+	silentLimit = 3
 	// NamePrefix marks the temporary tunnels, so leftovers of an interrupted run can be told apart.
 	NamePrefix = "dalan-bench-"
 
@@ -22,6 +22,18 @@ const (
 
 // ErrRunning is returned by Start while a run is going on.
 var ErrRunning = errors.New("a benchmark is already running")
+
+// ErrUnanswered marks a measurement that failed because the exit server gave no answer at all.
+var ErrUnanswered = errors.New("the exit server gave no answer")
+
+type unanswered struct{ err error }
+
+func (u unanswered) Error() string        { return u.err.Error() }
+func (u unanswered) Unwrap() error        { return u.err }
+func (u unanswered) Is(target error) bool { return target == ErrUnanswered }
+
+// Unanswered wraps err so that errors.Is(err, ErrUnanswered) holds while the message stays err's own.
+func Unanswered(err error) error { return unanswered{err} }
 
 // Candidate is one method to try: an engine, one of its transports and the direction of the tunnel.
 type Candidate struct {
@@ -88,8 +100,8 @@ func (r *Runner) Start(objective Objective, candidates []Candidate) error {
 	if !objective.valid() {
 		return fmt.Errorf("unknown objective %q", objective)
 	}
-	if len(candidates) == 0 || len(candidates) > MaxCandidates {
-		return fmt.Errorf("a benchmark needs between 1 and %d methods, got %d", MaxCandidates, len(candidates))
+	if len(candidates) == 0 {
+		return errors.New("a benchmark needs at least one method")
 	}
 	for _, c := range candidates {
 		if c.Engine == "" || c.Transport == "" || (c.Mode != "reverse" && c.Mode != "direct") {
@@ -143,18 +155,32 @@ func (r *Runner) update(change func(*RunStatus)) {
 
 func (r *Runner) run(ctx context.Context, objective Objective, candidates []Candidate) {
 	defer r.cancel()
+	silent := 0
 	for i, c := range candidates {
 		if ctx.Err() != nil {
 			break
 		}
 		c := c
 		r.update(func(s *RunStatus) { s.Current, s.Phase = &c, PhaseCreate })
-		result := r.try(ctx, fmt.Sprintf("%s%d", NamePrefix, i+1), c)
+		result, noAnswer := r.try(ctx, fmt.Sprintf("%s%d", NamePrefix, i+1), c)
+		stop := false
+		if noAnswer {
+			silent++
+			if silent >= silentLimit && i < len(candidates)-1 {
+				result.Error += fmt.Sprintf(" (the run was stopped: the exit server gave no answer for %d methods in a row)", silent)
+				stop = true
+			}
+		} else {
+			silent = 0
+		}
 		r.update(func(s *RunStatus) {
 			s.Results = append(s.Results, result)
 			s.Done = len(s.Results)
 			scoreAll(s.Results, objective)
 		})
+		if stop {
+			break
+		}
 	}
 	r.update(func(s *RunStatus) {
 		s.Running, s.Current, s.Phase = false, nil, ""
@@ -165,14 +191,15 @@ func (r *Runner) run(ctx context.Context, objective Objective, candidates []Cand
 	})
 }
 
-// try makes the tunnel, measures it and always removes it again.
-func (r *Runner) try(ctx context.Context, name string, c Candidate) (result MethodResult) {
+// try makes the tunnel, measures it and always removes it again; noAnswer is true when the exit server
+// gave the measurement no answer at all.
+func (r *Runner) try(ctx context.Context, name string, c Candidate) (result MethodResult, noAnswer bool) {
 	result = MethodResult{Candidate: c}
 	started := time.Now()
 	id, err := r.Create(ctx, name, c)
 	if err != nil {
 		result.Error = err.Error()
-		return result
+		return result, false
 	}
 	defer func() {
 		r.update(func(s *RunStatus) { s.Phase = PhaseRemove })
@@ -184,7 +211,7 @@ func (r *Runner) try(ctx context.Context, name string, c Candidate) (result Meth
 	r.update(func(s *RunStatus) { s.Phase = PhaseConnect })
 	if detail, ok := r.waitConnected(ctx, id); !ok {
 		result.Error = detail
-		return result
+		return result, false
 	}
 	result.ConnectMs = time.Since(started).Milliseconds()
 
@@ -192,10 +219,10 @@ func (r *Runner) try(ctx context.Context, name string, c Candidate) (result Meth
 	m, err := r.Measure(ctx, id)
 	if err != nil {
 		result.Error = err.Error()
-		return result
+		return result, errors.Is(err, ErrUnanswered)
 	}
 	result.Measurement, result.OK = m, true
-	return result
+	return result, false
 }
 
 func (r *Runner) waitConnected(ctx context.Context, id int) (string, bool) {

@@ -42,6 +42,7 @@ const idle = {
 };
 
 let benchmarkStatus: Record<string, unknown>;
+let engineCatalog: unknown[];
 
 function openBenchmark() {
   renderWithProviders(
@@ -56,11 +57,12 @@ function openBenchmark() {
 
 beforeEach(() => {
   benchmarkStatus = idle;
+  engineCatalog = catalog;
   vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
     if (url === '/panel/api/nodes/list')
       return new Msg(true, '', [{ id: 9, name: 'nl1', enable: true }]);
     if (url === '/panel/api/tunnels/list') return new Msg(true, '', []);
-    if (url === '/panel/api/tunnels/engines') return new Msg(true, '', catalog);
+    if (url === '/panel/api/tunnels/engines') return new Msg(true, '', engineCatalog);
     if (url === '/panel/api/tunnels/benchmark/status') return new Msg(true, '', benchmarkStatus);
     if (url === '/panel/api/tunnels/engine')
       return new Msg(true, '', { installed: true, version: 'v1.0.0', pinned: 'v1.0.0' });
@@ -167,4 +169,38 @@ test('Start is reachable without scrolling, whatever the settings above it hold'
   const scroller = await within(dialog).findByTestId('benchmark-scroll');
 
   expect(scroller.contains(within(dialog).getByRole('button', { name: 'Start' }))).toBe(false);
+});
+
+test('a run of more than sixty methods can be started', async () => {
+  engineCatalog = [
+    {
+      id: 'gost',
+      label: 'GOST',
+      pinned: 'v3.3.3',
+      transports: Array.from({ length: 70 }, (_, i) => transport(`t${i}`, `T${i}`)),
+      options: [],
+    },
+  ];
+  await openBenchmark();
+  const dialog = await screen.findByRole('dialog');
+  fireEvent.click(within(dialog).getByRole('button', { name: 'BackPack' }));
+  fireEvent.click(within(dialog).getByRole('button', { name: 'GOST' }));
+  fireEvent.change(within(dialog).getByLabelText("This server's address"), {
+    target: { value: '203.0.113.10' },
+  });
+  await waitFor(() => expect(within(dialog).getByText('70 methods')).toBeTruthy());
+
+  const start = within(dialog).getByRole('button', { name: 'Start' }) as HTMLButtonElement;
+  expect(start.disabled).toBe(false);
+  fireEvent.click(start);
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/benchmark/start',
+      expect.objectContaining({
+        candidates: expect.arrayContaining([{ engine: 'gost', transport: 't69', mode: 'reverse' }]),
+      }),
+      JSON_HEADERS,
+    ),
+  );
 });
