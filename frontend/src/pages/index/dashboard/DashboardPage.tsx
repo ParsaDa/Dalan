@@ -41,6 +41,7 @@ import { countryName } from '@/pages/xray/outbounds/outbounds-tab-helpers';
 import { HttpUtil, SizeFormatter } from '@/utils';
 import { ActivityList } from './ActivityList';
 import { AlertsTile } from './AlertsTile';
+import { SpeedtestTile } from './SpeedtestTile';
 import { tunnelRow } from './tunnelRow';
 import type { NodeRef } from './tunnelRow';
 import { fmtInt, useNum } from '@/components/dl/numbers';
@@ -780,6 +781,7 @@ export default function DashboardPage({ tools }: { tools?: ReactNode }) {
               onRestartXray={xray.start}
             />
             <ActivityTile nodes={refs} />
+            <SpeedtestTile />
             {direct.length > 0 && (
               <section
                 className="s12"

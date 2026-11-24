@@ -3259,6 +3259,24 @@
       "versions": "Panel {panel} · Xray {xray}",
       "awgLogs": "AmneziaWG logs",
       "metrics": "Xray metrics"
+    },
+    "speedtest": {
+      "title": "Speed test",
+      "run": "Run speed test",
+      "running": "Testing…",
+      "download": "Download",
+      "upload": "Upload",
+      "ping": "Ping",
+      "jitter": "Jitter",
+      "server": "{sponsor} · {name}, {country}",
+      "empty": "Measure this server's real speed to speedtest.net.",
+      "history": "Last {n} tests · download and upload",
+      "phase": {
+        "servers": "Finding the closest server…",
+        "ping": "Testing ping…",
+        "download": "Testing download…",
+        "upload": "Testing upload…"
+      }
     }
   },
   "activity": {
