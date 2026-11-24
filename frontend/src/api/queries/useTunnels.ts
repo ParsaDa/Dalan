@@ -3,12 +3,18 @@ import { z } from 'zod';
 
 import { HttpUtil } from '@/utils';
 import { parseMsg } from '@/utils/zodValidate';
-import { OptionSchema, ServerTunnelSchema, type ServerTunnel } from '@/generated/zod';
+import {
+  ForwardingEngineSchema,
+  OptionSchema,
+  ServerTunnelSchema,
+  type ServerTunnel,
+} from '@/generated/zod';
+import type { ForwarderEngine } from '@/pages/tunnels/forwardingEngines';
 import type { EngineRoute } from '@/schemas/engineRoute';
 
 export type { ServerTunnel };
 export type TunnelMode = 'reverse' | 'direct';
-export type TunnelEngine = 'backpack' | 'rakhsh';
+export type TunnelEngine = 'backpack' | 'rakhsh' | ForwarderEngine;
 export type TunnelOptionValues = Record<string, unknown>;
 
 const JSON_HEADERS = { headers: { 'Content-Type': 'application/json' } };
@@ -49,6 +55,18 @@ export type NewPortalValues =
       address: string;
       port: number;
       engine: 'rakhsh';
+      transport: string;
+      forwardPorts: string[];
+      routeInbounds: string[];
+      mode: TunnelMode;
+      options: TunnelOptionValues;
+      nodeId?: number;
+    }
+  | {
+      name: string;
+      address: string;
+      port: number;
+      engine: ForwarderEngine;
       transport: string;
       forwardPorts: string[];
       routeInbounds: string[];
@@ -305,6 +323,19 @@ export function useTunnelOptions(engine: TunnelEngine, enabled = true) {
       if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the tunnel options');
       const options = parseMsg(msg, TunnelOptionListSchema, 'tunnels/options').obj ?? [];
       return options.map((o) => ({ ...o, choices: o.choices ?? [] }));
+    },
+  });
+}
+
+// The forwarding engines with the transports and settings each offers; it changes only with a Dalan release.
+export function useForwardingEngines() {
+  return useQuery({
+    queryKey: ['tunnel-engines'],
+    staleTime: Infinity,
+    queryFn: async () => {
+      const msg = await HttpUtil.get('/panel/api/tunnels/engines', undefined, { silent: true });
+      if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the tunnel engines');
+      return parseMsg(msg, z.array(ForwardingEngineSchema), 'tunnels/engines').obj ?? [];
     },
   });
 }

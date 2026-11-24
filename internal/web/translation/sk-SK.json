@@ -2515,6 +2515,7 @@
       "modeDirect": "Direct",
       "modeReverseHint": "The exit server dials the entry server. Works through filtering and behind a CDN, and carries Xray traffic.",
       "modeDirectHint": "Layer 3 (BackPack): the entry server dials the exit server over a datagram carrier. Lowest ping, for games. Needs root and /dev/net/tun on both servers; cannot pass a CDN and is not an Xray outbound.",
+      "modeDirectHintForwarder": "The entry server dials the exit server directly, so the exit server must be reachable from here.",
       "directAddressHint": "Address of the exit server. Leave it empty when you pick a node below.",
       "directPortHint": "The port the exit server listens on for the link.",
       "advancedOptions": "Advanced options",
@@ -3347,6 +3348,14 @@
     "rakhshBlurb": "Fast multiplexed transport. Good for gaming at low ping.",
     "moreEngines": "Install another engine",
     "moreEnginesHint": "More engines can be added later; the list changes with the backend.",
+    "blurb": {
+      "gost": "GOST: a general tunnel with TLS, WebSocket and gRPC carriers, in reverse or direct mode.",
+      "rathole": "Rathole: a light reverse tunnel with plain TCP, Noise encryption or WebSocket.",
+      "backhaul": "Backhaul: a fast reverse tunnel with multiplexed TCP and WebSocket carriers.",
+      "kariz": "Kariz: a reverse or direct tunnel with TCP, QUIC, KCP and a raw-packet mode, with tunable profiles.",
+      "singbox": "sing-box: a direct tunnel over WebSocket with TLS, run by the sing-box core.",
+      "xraycore": "Xray: a direct tunnel over WebSocket with TLS, run as its own Xray process."
+    },
     "installed": "Installed",
     "notInstalled": "Not installed",
     "count": "{n} tunnels",
@@ -3369,7 +3378,8 @@
       "bad": "Down",
       "off": "Paused",
       "backpack": "BackPack",
-      "rakhsh": "Rakhsh"
+      "rakhsh": "Rakhsh",
+      "forwarding": "Other engines"
     },
     "colTunnel": "Tunnel",
     "colEngine": "Engine",

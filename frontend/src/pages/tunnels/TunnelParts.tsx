@@ -16,6 +16,7 @@ import {
   type TunnelStatus,
 } from '@/api/queries/useTunnels';
 import { tunnelRow, type NodeRef } from '@/pages/index/dashboard/tunnelRow';
+import { FORWARDER_LABELS, isForwarder } from '@/pages/tunnels/forwardingEngines';
 import Icon from '@/components/dl/Icon';
 import { DropChip } from '@/components/dl/DropChip';
 import { MoreMenu } from '@/components/dl/MoreMenu';
@@ -78,7 +79,9 @@ function useRowText(row: ServerTunnel, nodes: RowProps['nodes'], status?: Tunnel
   const loss = status?.lossPct ? t('pages.tunnels.statusLoss', { pct: status.lossPct }) : '';
   // Xray counts traffic only where the tunnel is an Xray outbound: a reverse entry or a Rakhsh entry.
   const traffic =
-    row.role === 'portal' && !row.managePort && (row.mode !== 'direct' || row.engine === 'rakhsh')
+    row.role === 'portal' &&
+    !row.managePort &&
+    (row.mode !== 'direct' || row.engine === 'rakhsh' || isForwarder(row.engine))
       ? `↑ ${SizeFormatter.sizeFormat(row.up)} · ↓ ${SizeFormatter.sizeFormat(row.down)}`
       : '';
   const routes =
@@ -92,8 +95,11 @@ function useRowText(row: ServerTunnel, nodes: RowProps['nodes'], status?: Tunnel
     traffic,
     routes,
     role: row.role === 'portal' ? t('pages.tunnels.rolePortal') : t('pages.tunnels.roleBridge'),
-    engine:
-      row.engine === 'rakhsh' ? t('pages.tunnels.engineRakhsh') : t('pages.tunnels.engineBackpack'),
+    engine: isForwarder(row.engine)
+      ? FORWARDER_LABELS[row.engine]
+      : row.engine === 'rakhsh'
+        ? t('pages.tunnels.engineRakhsh')
+        : t('pages.tunnels.engineBackpack'),
     mode: row.mode === 'direct' ? t('pages.tunnels.modeDirect') : t('pages.tunnels.modeReverse'),
     layer: info.layer3 ? t('tunnels.layer3') : row.transport,
   };
