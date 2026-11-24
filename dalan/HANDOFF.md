@@ -164,11 +164,9 @@ Verified once by hand, not in CI:
 
 ## Releasing
 
-1. Raise `internal/config/dalan_version` in a PR and merge it. The update check compares this with the newest release tag, so it must move before the tag.
-2. Create the release on GitHub with a new tag `vX.Y.Z` on `main`, marked latest.
-3. `release.yml` uploads the build to that release as a pre-release upload; afterwards confirm the release is still marked **Latest**. The installer and the in-panel update only see the latest release.
-
-Note: CI does not run for a PR that changes only `dalan_version` (path filters).
+1. Create the release on GitHub with a new tag `vX.Y.Z` on `main`, marked latest. `release.yml` writes the tag into `internal/config/dalan_version` before it builds, so the binary reports the tag it was released as; the file in the repo does not need to move first.
+2. `release.yml` uploads the build to that release as a pre-release upload; afterwards confirm the release is still marked **Latest**. The installer and the in-panel update only see the latest release.
+3. A tag must be exactly `vX.Y.Z`; the build fails on anything else, e.g. `v1.2.3-rc1`.
 
 ## Reference projects that were reviewed
 
