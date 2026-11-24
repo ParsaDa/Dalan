@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { ForwardingEngine } from '@/generated/zod';
 import {
+  isBuiltIn,
   isForwarder,
   modeAfterEngineChange,
   modesOf,
+  requiredSettings,
   settingsAsOptions,
   transportAfterChange,
   transportsFor,
@@ -48,6 +50,16 @@ const mixed: ForwardingEngine = {
   ],
 };
 
+const carrier: ForwardingEngine = {
+  id: 'carrier',
+  label: 'Kernel carriers',
+  pinned: 'built in',
+  transports: [tr('gre', true, true)],
+  options: [
+    { key: 'dialerIp', label: 'Public IPv4 address', choices: [], default: '', kind: 'ip' },
+  ],
+};
+
 describe('forwarding engines', () => {
   it('lists the modes an engine can run, reverse first', () => {
     expect(modesOf(rathole)).toEqual(['reverse']);
@@ -83,6 +95,21 @@ describe('forwarding engines', () => {
       },
     ]);
     expect(settingsAsOptions(undefined)).toEqual([]);
+  });
+
+  it('turns an address setting into a text option the tunnel cannot be made without', () => {
+    const options = settingsAsOptions(carrier);
+    expect(options).toMatchObject([
+      { key: 'dialerIp', kind: 'text', hintEn: 'Public IPv4 address' },
+    ]);
+    expect(requiredSettings(options)).toEqual(['dialerIp']);
+    expect(requiredSettings(settingsAsOptions(mixed))).toEqual([]);
+  });
+
+  it('knows which engine is part of the panel and has nothing to install', () => {
+    expect(isBuiltIn('carrier')).toBe(true);
+    expect(isBuiltIn('gost')).toBe(false);
+    expect(isBuiltIn(undefined)).toBe(false);
   });
 
   it('tells a forwarding engine id from the two built-in engines', () => {

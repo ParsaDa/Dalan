@@ -3,6 +3,7 @@ package tunnel
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"reflect"
 	"regexp"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/forwarder"
 )
 
 func forwarderSpec(engine, transport, mode string) PortalSpec {
@@ -164,5 +166,40 @@ func TestParseSetupLinkRefusesAForwardingLinkThatCannotRun(t *testing.T) {
 				t.Fatalf("ParseSetupLink error = %v, want one mentioning %q", err, c.want)
 			}
 		})
+	}
+}
+
+func carrierSpec() PortalSpec {
+	spec := forwarderSpec(model.TunnelEngineCarrier, "gre", "")
+	spec.Options = map[string]any{"dialerIp": "198.51.100.7"}
+	return spec
+}
+
+func carrierProbe(t *testing.T, err error) {
+	t.Helper()
+	saved := forwarder.CarrierProbe
+	t.Cleanup(func() { forwarder.CarrierProbe = saved })
+	forwarder.CarrierProbe = func() error { return err }
+}
+
+func TestAKernelCarrierTunnelIsRefusedOnAServerThatCannotMakeInterfaces(t *testing.T) {
+	carrierProbe(t, errors.New("kernel carriers need the panel to run as root"))
+	if _, err := NewPortal(carrierSpec()); err == nil || !strings.Contains(err.Error(), "root") {
+		t.Fatalf("NewPortal = %v, want the missing root named", err)
+	}
+
+	carrierProbe(t, nil)
+	portal, err := NewPortal(carrierSpec())
+	if err != nil {
+		t.Fatalf("NewPortal on a server that can run carriers: %v", err)
+	}
+	link, err := SetupLink(portal)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	carrierProbe(t, errors.New("kernel carriers need the ip command (iproute2)"))
+	if _, err := ParseSetupLink(link); err == nil || !strings.Contains(err.Error(), "ip command") {
+		t.Fatalf("ParseSetupLink = %v, want the exit server's missing ip command named", err)
 	}
 }

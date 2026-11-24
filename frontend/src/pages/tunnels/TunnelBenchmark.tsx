@@ -7,7 +7,7 @@ import { Btn, Chip, Seg } from '@/components/dl/primitives';
 import { Modal } from '@/components/dl/overlays';
 import type { Candidate, ForwardingEngine, MethodResult } from '@/generated/zod';
 import { BENCHMARK_MAX, benchmarkCandidates, type BenchmarkDirection } from './benchmarkCandidates';
-import { FORWARDER_ENGINES, FORWARDER_LABELS, isForwarder } from './forwardingEngines';
+import { FORWARDER_ENGINES, FORWARDER_LABELS, isBuiltIn, isForwarder } from './forwardingEngines';
 
 export interface BenchmarkNode {
   id: number;
@@ -21,7 +21,8 @@ export interface BenchmarkPick {
   address: string;
 }
 
-const ENGINE_IDS = ['backpack', 'rakhsh', ...FORWARDER_ENGINES];
+// Kernel carriers need root and the other end's address, so a benchmark does not try them.
+const ENGINE_IDS = ['backpack', 'rakhsh', ...FORWARDER_ENGINES.filter((id) => !isBuiltIn(id))];
 
 function Body({
   nodes,

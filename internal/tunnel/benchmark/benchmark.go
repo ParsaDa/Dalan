@@ -53,15 +53,15 @@ const (
 
 // RunStatus is a snapshot that is safe to hold while a run goes on.
 type RunStatus struct {
-	Running   bool       `json:"running" example:"true"`
-	Cancelled bool       `json:"cancelled" example:"false"`
-	Objective Objective  `json:"objective" example:"balanced"`
-	Total     int        `json:"total" example:"12"`
-	Done      int        `json:"done" example:"4"`
-	Current   *Candidate `json:"current"`
-	Phase     Phase      `json:"phase" example:"measure"`
-	Results   []MethodResult   `json:"results"`
-	Best      *Candidate `json:"best"`
+	Running   bool           `json:"running" example:"true"`
+	Cancelled bool           `json:"cancelled" example:"false"`
+	Objective Objective      `json:"objective" example:"balanced"`
+	Total     int            `json:"total" example:"12"`
+	Done      int            `json:"done" example:"4"`
+	Current   *Candidate     `json:"current"`
+	Phase     Phase          `json:"phase" example:"measure"`
+	Results   []MethodResult `json:"results"`
+	Best      *Candidate     `json:"best"`
 }
 
 // Runner runs one benchmark at a time. The function fields are how it reaches the servers.

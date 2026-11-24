@@ -209,6 +209,9 @@ func newForwarderPortal(portal model.ServerTunnel, spec PortalSpec) (model.Serve
 	if err := forwarder.Validate(portal); err != nil {
 		return model.ServerTunnel{}, err
 	}
+	if err := forwarder.Preflight(portal); err != nil {
+		return model.ServerTunnel{}, err
+	}
 	return portal, nil
 }
 
@@ -404,6 +407,9 @@ func parseForwarderLink(bridge model.ServerTunnel, p setupPayload) (model.Server
 	bridge.EngineSecret = p.EngineSecret
 	// Rendering both ends is the engine's own validation of the carrier, the secret and the forwards.
 	if err := forwarder.Validate(bridge); err != nil {
+		return model.ServerTunnel{}, err
+	}
+	if err := forwarder.Preflight(bridge); err != nil {
 		return model.ServerTunnel{}, err
 	}
 	return bridge, nil

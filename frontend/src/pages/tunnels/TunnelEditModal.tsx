@@ -14,7 +14,7 @@ import type {
   TunnelOption,
 } from '@/api/queries/useTunnels';
 import TunnelOptionFields, { cleanOptions } from './TunnelOptionFields';
-import { isForwarder } from './forwardingEngines';
+import { isForwarder, requiredSettings } from './forwardingEngines';
 import { isRawCarrier, needsPeerIp } from './rakhshCarriers';
 
 interface Props {
@@ -235,7 +235,9 @@ export default function TunnelEditModal({
             skip={mode === 'direct' ? ['local_ip', 'peer_ip'] : []}
           />
         )}
-        {forwarder && portal && <TunnelOptionFields options={options} mode={mode} />}
+        {forwarder && portal && (
+          <TunnelOptionFields options={options} mode={mode} pinned={requiredSettings(options)} />
+        )}
         {rakhsh && (
           <TunnelOptionFields
             options={options}

@@ -9,11 +9,19 @@ export const FORWARDER_LABELS = {
   kariz: 'Kariz',
   singbox: 'sing-box',
   xraycore: 'Xray',
+  carrier: 'Kernel carriers',
 } as const;
 
 export type ForwarderEngine = keyof typeof FORWARDER_LABELS;
 
 export const FORWARDER_ENGINES = Object.keys(FORWARDER_LABELS) as ForwarderEngine[];
+
+// Engines that are part of the panel itself: nothing to install, and kept behind the advanced switch.
+export const BUILT_IN_ENGINES: readonly ForwarderEngine[] = ['carrier'];
+
+export function isBuiltIn(engine: string | undefined): boolean {
+  return BUILT_IN_ENGINES.some((id) => id === engine);
+}
 
 export function isForwarder(engine: string | undefined): engine is ForwarderEngine {
   return engine !== undefined && Object.hasOwn(FORWARDER_LABELS, engine);
@@ -52,18 +60,27 @@ export function transportAfterChange(
   return options.some((o) => o.value === current) ? (current as string) : (options[0]?.value ?? '');
 }
 
-// An engine's settings in the shape the shared option form reads; each one is a choice with a default.
+// An engine's settings in the shape the shared option form reads: a choice with a default, or an address to type.
 export function settingsAsOptions(engine: ForwardingEngine | undefined): TunnelOption[] {
   return (engine?.options ?? []).map((setting) => ({
     key: setting.key,
-    kind: 'choice',
+    kind: setting.kind === 'ip' ? 'text' : 'choice',
     role: 'both',
     mode: 'both',
     group: 'general',
     choices: setting.choices,
     min: 0,
     max: 0,
-    hintEn: `${setting.label}. Default: ${setting.default}.`,
-    hintFa: `${setting.label}. Default: ${setting.default}.`,
+    hintEn: settingHint(setting),
+    hintFa: settingHint(setting),
   }));
+}
+
+function settingHint(setting: ForwardingEngine['options'][number]): string {
+  return setting.kind === 'ip' ? setting.label : `${setting.label}. Default: ${setting.default}.`;
+}
+
+// The settings a tunnel cannot be made without: an address has no default to fall back on.
+export function requiredSettings(options: TunnelOption[]): string[] {
+  return options.filter((o) => o.kind === 'text').map((o) => o.key);
 }

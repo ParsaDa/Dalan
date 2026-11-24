@@ -657,6 +657,7 @@ export interface ForwardingSetting {
   choices: string[];
   default: string;
   key: string;
+  kind?: string;
   label: string;
 }
 

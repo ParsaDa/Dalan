@@ -3356,7 +3356,8 @@
       "backhaul": "Backhaul: a fast reverse tunnel with multiplexed TCP and WebSocket carriers.",
       "kariz": "Kariz: a reverse or direct tunnel with TCP, QUIC, KCP and a raw-packet mode, with tunable profiles.",
       "singbox": "sing-box: a direct tunnel over WebSocket with TLS, run by the sing-box core.",
-      "xraycore": "Xray: a direct tunnel over WebSocket with TLS, run as its own Xray process."
+      "xraycore": "Xray: a direct tunnel over WebSocket with TLS, run as its own Xray process.",
+      "carrier": "Kernel carriers: a GRE, IPIP or VXLAN link between the two servers with the ports relayed over it. Needs root on both and the ip command."
     },
     "installed": "Installed",
     "notInstalled": "Not installed",
@@ -3430,7 +3431,9 @@
       "best": "Best",
       "use": "Use this method",
       "leftover": "Left behind: {what}"
-    }
+    },
+    "advancedEngines": "Advanced engines",
+    "advancedEnginesHint": "Show engines that change the server network (kernel carriers; they need root)."
   },
   "outbounds": {
     "title": "Outbounds and routing",

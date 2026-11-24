@@ -8,7 +8,15 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import Icon from '@/components/dl/Icon';
 import { IlloEmpty, IlloOffline } from '@/components/dl/Illustrations';
 import { FormModal, Modal as DlModal } from '@/components/dl/overlays';
-import { Btn, Chip, Empty as DlEmpty, FlagDot, Sk, TileHead } from '@/components/dl/primitives';
+import {
+  Btn,
+  Chip,
+  Empty as DlEmpty,
+  FlagDot,
+  Sk,
+  TileHead,
+  Toggle,
+} from '@/components/dl/primitives';
 import { fmtInt } from '@/components/dl/numbers';
 import { EngineCard, FlowArrow, TunnelCard, TunnelRow } from './TunnelParts';
 import PortTest from './PortTest';
@@ -21,6 +29,8 @@ import { BACKPACK_TRANSPORTS } from './backpackTransports';
 import {
   FORWARDER_ENGINES,
   FORWARDER_LABELS,
+  isBuiltIn,
+  requiredSettings,
   isForwarder,
   modeAfterEngineChange,
   modesOf,
@@ -120,6 +130,9 @@ export default function TunnelsPage() {
   const forwarderDef = forwardingEngines.find((e) => e.id === engine);
   const editingEngine = forwardingEngines.find((e) => e.id === editing?.engine);
   const forwarderOptions = useMemo(() => settingsAsOptions(forwarderDef), [forwarderDef]);
+  const [advancedEngines, setAdvancedEngines] = useState(false);
+  const showAdvanced = advancedEngines || tunnels.some((tu) => isBuiltIn(tu.engine));
+  const visibleForwarders = FORWARDER_ENGINES.filter((id) => showAdvanced || !isBuiltIn(id));
   // The mode and transport must be ones the chosen engine runs, also once its list has arrived.
   useEffect(() => {
     if (!forwarderDef) return;
@@ -337,6 +350,17 @@ export default function TunnelsPage() {
         </section>
       ) : (
         <>
+          <div className="row" style={{ gap: 8 }}>
+            <Toggle
+              on={showAdvanced}
+              label={t('tunnels.advancedEngines')}
+              disabled={tunnels.some((tu) => isBuiltIn(tu.engine))}
+              onChange={setAdvancedEngines}
+            />
+            <span className="mut" style={{ fontSize: 13 }}>
+              {t('tunnels.advancedEnginesHint')}
+            </span>
+          </div>
           <div className="grid">
             <EngineCard
               engine="backpack"
@@ -354,10 +378,11 @@ export default function TunnelsPage() {
               nodes={nodeRefs}
               report={report}
             />
-            {FORWARDER_ENGINES.map((id) => (
+            {visibleForwarders.map((id) => (
               <EngineCard
                 key={id}
                 engine={id}
+                builtIn={isBuiltIn(id)}
                 label={FORWARDER_LABELS[id]}
                 blurb={t(`tunnels.blurb.${id}`)}
                 count={tunnels.filter((tu) => tu.engine === id).length}
@@ -704,7 +729,7 @@ export default function TunnelsPage() {
               options={[
                 { value: 'backpack', label: t('pages.tunnels.engineBackpack') },
                 { value: 'rakhsh', label: t('pages.tunnels.engineRakhsh') },
-                ...FORWARDER_ENGINES.map((id) => ({ value: id, label: FORWARDER_LABELS[id] })),
+                ...visibleForwarders.map((id) => ({ value: id, label: FORWARDER_LABELS[id] })),
               ]}
             />
           </Form.Item>
@@ -782,7 +807,11 @@ export default function TunnelsPage() {
                 />
               </Form.Item>
               {forwarder ? (
-                <TunnelOptionFields options={forwarderOptions} mode={mode} />
+                <TunnelOptionFields
+                  options={forwarderOptions}
+                  mode={mode}
+                  pinned={requiredSettings(forwarderOptions)}
+                />
               ) : (
                 <TunnelOptionFields
                   options={rakhshCatalog}

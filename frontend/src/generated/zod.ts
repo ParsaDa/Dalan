@@ -705,6 +705,7 @@ export const ForwardingSettingSchema = z.object({
   choices: z.array(z.string()),
   default: z.string(),
   key: z.string(),
+  kind: z.string().optional(),
   label: z.string(),
 });
 export type ForwardingSetting = z.infer<typeof ForwardingSettingSchema>;

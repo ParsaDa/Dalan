@@ -12,6 +12,7 @@ const (
 	TunnelEngineSingbox  = "singbox"
 	TunnelEngineXrayCore = "xraycore"
 	TunnelEngineKariz    = "kariz"
+	TunnelEngineCarrier  = "carrier"
 
 	TunnelModeReverse = "reverse"
 	TunnelModeDirect  = "direct"
@@ -21,7 +22,7 @@ const (
 func ExternalEngine(engine string) bool {
 	switch engine {
 	case TunnelEngineBackpack, TunnelEngineRakhsh, TunnelEngineGost, TunnelEngineRathole, TunnelEngineBackhaul,
-		TunnelEngineSingbox, TunnelEngineXrayCore, TunnelEngineKariz:
+		TunnelEngineSingbox, TunnelEngineXrayCore, TunnelEngineKariz, TunnelEngineCarrier:
 		return true
 	}
 	return false

@@ -355,8 +355,11 @@ export function EngineCard({
   count,
   nodes,
   report,
+  builtIn,
 }: {
   engine: TunnelEngine;
+  // An engine that is part of the panel has nothing to install or update.
+  builtIn?: boolean;
   label: string;
   blurb: string;
   count: number;
@@ -444,14 +447,16 @@ export function EngineCard({
       </p>
       <div className="row sp">
         <span className="badge">{t('tunnels.count', { n: num.int(count) })}</span>
-        <Btn
-          size="sm"
-          icon="settings"
-          aria-label={t('tunnels.engineOptions', { engine: label })}
-          onClick={openOptions}
-        >
-          {t('tunnels.options')}
-        </Btn>
+        {!builtIn && (
+          <Btn
+            size="sm"
+            icon="settings"
+            aria-label={t('tunnels.engineOptions', { engine: label })}
+            onClick={openOptions}
+          >
+            {t('tunnels.options')}
+          </Btn>
+        )}
       </div>
       <FormModal
         open={open}

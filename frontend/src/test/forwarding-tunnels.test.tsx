@@ -47,6 +47,16 @@ const catalog = [
   },
 ];
 
+const carrierEngine = {
+  id: 'carrier',
+  label: 'Kernel carriers',
+  pinned: 'built in',
+  transports: [transport('gre', 'GRE', true, true), transport('vxlan', 'VXLAN', true, true)],
+  options: [
+    { key: 'dialerIp', label: 'Public IPv4 address', choices: [], default: '', kind: 'ip' },
+  ],
+};
+
 const gostPortal = {
   id: 8,
   name: 'gs1',
@@ -79,7 +89,8 @@ function openTunnels() {
 
 // The engine list arrives asynchronously, so the form is ready once the first transport shows.
 async function startTunnel(name: string, engine: string, firstTransport: string) {
-  fireEvent.click(await screen.findByRole('button', { name: 'New tunnel' }));
+  // The empty state offers a second button once the list has loaded.
+  fireEvent.click((await screen.findAllByRole('button', { name: 'New tunnel' }))[0]);
   fireEvent.change(await screen.findByLabelText('Name'), { target: { value: name } });
   fireEvent.change(screen.getByLabelText('Address'), { target: { value: '198.51.100.7' } });
   fireEvent.click(await screen.findByRole('radio', { name: engine }));
@@ -94,7 +105,7 @@ beforeEach(() => {
   listed = [];
   vi.spyOn(HttpUtil, 'get').mockImplementation(async (url) => {
     if (url === '/panel/api/tunnels/list') return new Msg(true, '', listed);
-    if (url === '/panel/api/tunnels/engines') return new Msg(true, '', catalog);
+    if (url === '/panel/api/tunnels/engines') return new Msg(true, '', [...catalog, carrierEngine]);
     if (url === '/panel/api/tunnels/engine')
       return new Msg(true, '', { installed: true, version: 'v1.0.0', pinned: 'v1.0.0' });
     if (url === '/panel/api/tunnels/status/8')
@@ -279,4 +290,50 @@ test('every forwarding engine has its own install card', async () => {
   for (const label of ['GOST', 'Rathole', 'Backhaul', 'Kariz', 'sing-box', 'Xray']) {
     expect(await screen.findByText(new RegExp(`${label} engine v1.0.0`))).toBeTruthy();
   }
+});
+
+test('kernel carriers show up only once the advanced engines are switched on, and have nothing to install', async () => {
+  openTunnels();
+
+  expect(await screen.findByText(/GOST engine v1.0.0/)).toBeTruthy();
+  expect(screen.queryByText(/Kernel carriers engine/)).toBeNull();
+  fireEvent.click(screen.getByRole('switch', { name: 'Advanced engines' }));
+
+  expect(await screen.findByText(/Kernel carriers engine v1.0.0/)).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'GOST options' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Kernel carriers options' })).toBeNull();
+});
+
+test('a kernel carrier tunnel cannot be made without the public address of the dialing end', async () => {
+  openTunnels();
+  fireEvent.click(await screen.findByRole('switch', { name: 'Advanced engines' }));
+  await startTunnel('kc1', 'Kernel carriers', 'GRE');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
+  expect(await screen.findByText('This setting is required.')).toBeTruthy();
+  expect(HttpUtil.post).not.toHaveBeenCalled();
+
+  fireEvent.change(screen.getByLabelText('dialerIp'), { target: { value: '198.51.100.9' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Create tunnel' }));
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith(
+      '/panel/api/tunnels/add',
+      expect.objectContaining({
+        engine: 'carrier',
+        transport: 'gre',
+        options: { dialerIp: '198.51.100.9' },
+      }),
+      JSON_HEADERS,
+    ),
+  );
+});
+
+test('a tunnel already on a kernel carrier keeps the advanced engines in view', async () => {
+  listed = [{ ...gostPortal, id: 21, name: 'kc9', engine: 'carrier', transport: 'gre' }];
+  openTunnels();
+
+  expect(await screen.findByText(/Kernel carriers engine v1.0.0/)).toBeTruthy();
+  expect(
+    screen.getByRole('switch', { name: 'Advanced engines' }).getAttribute('aria-checked'),
+  ).toBe('true');
 });

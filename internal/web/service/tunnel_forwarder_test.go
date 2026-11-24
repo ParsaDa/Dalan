@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+	"errors"
 	"net"
 	"os"
 	"path/filepath"
@@ -8,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mhsanaei/3x-ui/v3/internal/config"
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/forwarder"
@@ -172,5 +175,26 @@ func TestEditingAForwardingEngineTunnelChecksTheNewTransportAndKeepsTheOldOnRefu
 	}
 	if updated.Transport != "grpc" || len(updated.ForwardPorts) != 2 || updated.EngineSecret != portal.EngineSecret {
 		t.Fatalf("updated = %+v, want the new transport and forwards with the same secret", updated)
+	}
+}
+
+func TestTheCarrierEngineIsThePanelItselfAndNeedsNoInstall(t *testing.T) {
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	kind, err := externalEngineFor(model.TunnelEngineCarrier)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := kind.supervisor().Binary; got != exe {
+		t.Fatalf("the carrier runs %q, want this panel %q", got, exe)
+	}
+	info, err := (&TunnelService{}).EngineInfo(model.TunnelEngineCarrier)
+	if err != nil || !info.Installed || info.Version != config.GetPanelVersion() {
+		t.Fatalf("EngineInfo = %+v, %v, want it installed at the panel's version", info, err)
+	}
+	if _, err := kind.latest(context.Background(), nil); !errors.Is(err, errEngineHasNoBinary) {
+		t.Fatalf("looking for a newer carrier: %v, want the engine said to have no binary", err)
 	}
 }

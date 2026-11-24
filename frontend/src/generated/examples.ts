@@ -702,6 +702,7 @@ export const EXAMPLES: Record<string, unknown> = {
         ],
         "default": "balanced",
         "key": "profile",
+        "kind": "ip",
         "label": "Profile"
       }
     ],
@@ -723,6 +724,7 @@ export const EXAMPLES: Record<string, unknown> = {
     ],
     "default": "balanced",
     "key": "profile",
+    "kind": "ip",
     "label": "Profile"
   },
   "ForwardingTransport": {

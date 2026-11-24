@@ -2808,6 +2808,11 @@ export const SCHEMAS: Record<string, unknown> = {
         "example": "profile",
         "type": "string"
       },
+      "kind": {
+        "description": "Kind is \"ip\" for a setting that takes an IPv4 address; empty means a choice among Choices.",
+        "example": "ip",
+        "type": "string"
+      },
       "label": {
         "example": "Profile",
         "type": "string"

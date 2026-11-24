@@ -42,6 +42,8 @@ type Plan struct {
 	// Dir is where an engine may keep files of its own for this tunnel, such as a certificate.
 	Dir     string
 	Options map[string]any
+	// RelayPort is the loopback port of the Xray relay, which a carrier also derives its link addresses from.
+	RelayPort int
 }
 
 // ForwardingSetting is one setting of an engine that the panel lets the operator choose. Both ends read it
@@ -51,6 +53,8 @@ type ForwardingSetting struct {
 	Label   string   `json:"label" example:"Profile"`
 	Choices []string `json:"choices" example:"[\"balanced\",\"ultraspeed\",\"gaming\"]"`
 	Default string   `json:"default" example:"balanced"`
+	// Kind is "ip" for a setting that takes an IPv4 address; empty means a choice among Choices.
+	Kind string `json:"kind,omitempty" example:"ip"`
 }
 
 // Engine describes one forwarding engine: how to install it, which transports it has and how to write
@@ -70,6 +74,10 @@ type Engine struct {
 	asset func(version, arch string) (Asset, error)
 	// Pins are the SHA-256 sums of the pinned release's files, which Dalan verified when it chose them.
 	Pins map[string]string
+	// Self marks an engine that is the panel's own binary run with a subcommand: nothing to download.
+	Self bool
+	// Preflight says whether this server can run the engine at all; nil means it always can.
+	Preflight func() error
 }
 
 var errNoTransport = errors.New("pick a transport for this engine")
@@ -128,7 +136,7 @@ func (e Engine) PlanFor(t model.ServerTunnel, dir string) (Plan, error) {
 	p := Plan{
 		Name: t.Name, Entry: t.Role == model.TunnelRolePortal, Listens: !Dials(t),
 		Host: t.Address, Port: t.Port, Secret: t.EngineSecret, Transport: t.Transport,
-		Dir: dir, Options: t.Options,
+		Dir: dir, Options: t.Options, RelayPort: t.RelayPort,
 	}
 	if p.Forwards, err = forwardsOf(t); err != nil {
 		return Plan{}, err
@@ -143,6 +151,12 @@ func (e Engine) checkOptions(options map[string]any) error {
 			return fmt.Errorf("%s has no option %q", e.Label, key)
 		}
 		choice, ok := value.(string)
+		if ok && e.Options[i].Kind == settingKindIP {
+			if _, err := parseIPv4(choice); choice != "" && err != nil {
+				return fmt.Errorf("%s option %q must be an IPv4 address", e.Label, key)
+			}
+			continue
+		}
 		if !ok || (choice != "" && !slices.Contains(e.Options[i].Choices, choice)) {
 			return fmt.Errorf("%s option %q must be one of %s", e.Label, key, strings.Join(e.Options[i].Choices, ", "))
 		}
@@ -228,4 +242,4 @@ func ByID(id string) (Engine, bool) {
 	return Engine{}, false
 }
 
-var registry = []Engine{ratholeEngine, backhaulEngine, gostEngine, karizEngine, singboxEngine, xrayCoreEngine}
+var registry = []Engine{ratholeEngine, backhaulEngine, gostEngine, karizEngine, singboxEngine, xrayCoreEngine, carrierEngine}

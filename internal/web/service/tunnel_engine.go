@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -105,15 +106,25 @@ var forwarderEngines = newForwarderEngines()
 func newForwarderEngines() map[string]*engine.Supervisor {
 	out := map[string]*engine.Supervisor{}
 	for _, e := range forwarder.Registry() {
-		out[e.ID] = e.NewSupervisor(
-			filepath.Join(config.GetBinFolderPath(), e.ID),
-			filepath.Join(config.GetDBFolderPath(), "tunnels"),
-		)
+		out[e.ID] = e.NewSupervisor(forwarderBinary(e), filepath.Join(config.GetDBFolderPath(), "tunnels"))
 	}
 	return out
 }
 
+// forwarderBinary is the file an engine runs from: its own download, or this panel for an engine that is part of it.
+func forwarderBinary(e forwarder.Engine) string {
+	if e.Self {
+		if exe, err := os.Executable(); err == nil {
+			return exe
+		}
+	}
+	return filepath.Join(config.GetBinFolderPath(), e.ID)
+}
+
 func forwarderKind(e forwarder.Engine) externalEngine {
+	if e.Self {
+		return selfKind(e)
+	}
 	return externalEngine{
 		id: e.ID, label: e.Label,
 		supervisor: func() *engine.Supervisor { return forwarderEngines[e.ID] },
@@ -131,6 +142,29 @@ func forwarderKind(e forwarder.Engine) externalEngine {
 		place:     e.Place,
 		rollback:  e.Rollback,
 		installed: e.InstalledVersion,
+		connected: func(_ string, t model.ServerTunnel) bool {
+			_, ok := forwarder.Check(t, forwarderEngines[e.ID].Running, forwarderStatusTimeout)
+			return ok
+		},
+	}
+}
+
+// selfKind is an engine that is this panel's own binary: always installed at the panel's version, never downloaded.
+func selfKind(e forwarder.Engine) externalEngine {
+	none := func() error { return fmt.Errorf("%s: %w", e.Label, errEngineHasNoBinary) }
+	return externalEngine{
+		id: e.ID, label: e.Label,
+		supervisor: func() *engine.Supervisor { return forwarderEngines[e.ID] },
+		pinned:     e.Pinned,
+		arch:       func() (string, error) { return forwarder.Arch(), nil },
+		latest:     func(context.Context, *http.Client) (string, error) { return "", none() },
+		recent:     func(context.Context, *http.Client, int) ([]string, error) { return nil, none() },
+		fetch: func(context.Context, *http.Client, string, string) (engine.Release, error) {
+			return engine.Release{}, none()
+		},
+		place:     func(engine.Release, string, string, string) error { return none() },
+		rollback:  func(string) error { return none() },
+		installed: func(string) string { return config.GetPanelVersion() },
 		connected: func(_ string, t model.ServerTunnel) bool {
 			_, ok := forwarder.Check(t, forwarderEngines[e.ID].Running, forwarderStatusTimeout)
 			return ok
