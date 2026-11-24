@@ -685,6 +685,47 @@ export const EXAMPLES: Record<string, unknown> = {
     "masterId": 0,
     "path": ""
   },
+  "ForwardingEngine": {
+    "id": "gost",
+    "label": "GOST",
+    "options": [
+      {
+        "choices": [
+          "balanced",
+          "ultraspeed",
+          "gaming"
+        ],
+        "default": "balanced",
+        "key": "profile",
+        "label": "Profile"
+      }
+    ],
+    "pinned": "v3.3.3",
+    "transports": [
+      {
+        "direct": true,
+        "id": "wss",
+        "label": "WebSocket over TLS",
+        "reverse": true
+      }
+    ]
+  },
+  "ForwardingSetting": {
+    "choices": [
+      "balanced",
+      "ultraspeed",
+      "gaming"
+    ],
+    "default": "balanced",
+    "key": "profile",
+    "label": "Profile"
+  },
+  "ForwardingTransport": {
+    "direct": true,
+    "id": "wss",
+    "label": "WebSocket over TLS",
+    "reverse": true
+  },
   "GeoCategory": {
     "attributes": [
       "ads",

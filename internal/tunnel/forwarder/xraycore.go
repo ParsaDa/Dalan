@@ -13,7 +13,7 @@ import (
 // dial the exit's inbound, and the exit lets each connection reach only the targets of the forwards.
 var xrayCoreEngine = Engine{
 	ID: "xraycore", Label: "Xray", Repo: "XTLS/Xray-core", Pinned: "v26.11.9",
-	Transports: []Transport{
+	Transports: []ForwardingTransport{
 		{ID: "wss", Label: "WebSocket over TLS", Direct: true},
 		{ID: "grpc-tls", Label: "gRPC over TLS", Direct: true},
 		{ID: "httpupgrade-tls", Label: "HTTP upgrade over TLS", Direct: true},

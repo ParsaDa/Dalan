@@ -12,7 +12,7 @@ import (
 // transport is the chosen one, and the exit delivers each forward's target.
 var singboxEngine = Engine{
 	ID: "singbox", Label: "sing-box", Repo: "SagerNet/sing-box", Pinned: "v1.14.4",
-	Transports: []Transport{
+	Transports: []ForwardingTransport{
 		{ID: "tcp-tls", Label: "TCP over TLS 1.3", Direct: true},
 		{ID: "smux-tls", Label: "TLS 1.3 with smux", Direct: true},
 		{ID: "yamux-tls", Label: "TLS 1.3 with yamux", Direct: true},

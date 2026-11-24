@@ -11,7 +11,7 @@ import (
 // over it; like Rathole it only runs in reverse.
 var backhaulEngine = Engine{
 	ID: "backhaul", Label: "Backhaul", Repo: "Musixal/Backhaul", Pinned: "v0.6.5",
-	Transports: []Transport{
+	Transports: []ForwardingTransport{
 		{ID: "tcp", Label: "TCP", Reverse: true},
 		{ID: "tcpmux", Label: "TCP multiplexed", Reverse: true},
 		{ID: "ws", Label: "WebSocket", Reverse: true},

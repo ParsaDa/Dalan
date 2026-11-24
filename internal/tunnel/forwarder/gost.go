@@ -11,7 +11,7 @@ import (
 // remote-bind (rtcp) forwards, direct ones its plain tcp forwards through the relay.
 var gostEngine = Engine{
 	ID: "gost", Label: "GOST", Repo: "go-gost/gost", Pinned: "v3.3.3",
-	Transports: []Transport{
+	Transports: []ForwardingTransport{
 		{ID: "tls", Label: "TLS", Reverse: true, Direct: true},
 		{ID: "ws", Label: "WebSocket", Reverse: true, Direct: true},
 		{ID: "wss", Label: "WebSocket over TLS", Reverse: true, Direct: true},

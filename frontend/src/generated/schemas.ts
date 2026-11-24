@@ -2726,6 +2726,107 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "ForwardingEngine": {
+    "description": "ForwardingEngine is an engine as the panel's forms and API list it.",
+    "properties": {
+      "id": {
+        "example": "gost",
+        "type": "string"
+      },
+      "label": {
+        "example": "GOST",
+        "type": "string"
+      },
+      "options": {
+        "items": {
+          "$ref": "#/components/schemas/ForwardingSetting"
+        },
+        "type": "array"
+      },
+      "pinned": {
+        "example": "v3.3.3",
+        "type": "string"
+      },
+      "transports": {
+        "items": {
+          "$ref": "#/components/schemas/ForwardingTransport"
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "id",
+      "label",
+      "options",
+      "pinned",
+      "transports"
+    ],
+    "type": "object"
+  },
+  "ForwardingSetting": {
+    "description": "ForwardingSetting is one setting of an engine that the panel lets the operator choose. Both ends read it\nfrom the tunnel's options, so it is shared through the setup link.",
+    "properties": {
+      "choices": {
+        "example": [
+          "balanced",
+          "ultraspeed",
+          "gaming"
+        ],
+        "items": {
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "default": {
+        "example": "balanced",
+        "type": "string"
+      },
+      "key": {
+        "example": "profile",
+        "type": "string"
+      },
+      "label": {
+        "example": "Profile",
+        "type": "string"
+      }
+    },
+    "required": [
+      "choices",
+      "default",
+      "key",
+      "label"
+    ],
+    "type": "object"
+  },
+  "ForwardingTransport": {
+    "description": "ForwardingTransport is one way an engine can carry a tunnel; the tunnel's Transport field holds its id.",
+    "properties": {
+      "direct": {
+        "example": true,
+        "type": "boolean"
+      },
+      "id": {
+        "example": "wss",
+        "type": "string"
+      },
+      "label": {
+        "example": "WebSocket over TLS",
+        "type": "string"
+      },
+      "reverse": {
+        "description": "Reverse and Direct say which directions the engine can run this transport in.",
+        "example": true,
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "direct",
+      "id",
+      "label",
+      "reverse"
+    ],
+    "type": "object"
+  },
   "GeoCategory": {
     "description": "GeoCategory is one code inside a database, such as geosite's \"google\".",
     "properties": {

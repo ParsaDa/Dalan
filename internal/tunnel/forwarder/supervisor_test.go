@@ -1,6 +1,7 @@
 package forwarder
 
 import (
+	"encoding/json"
 	"errors"
 	"net"
 	"os"
@@ -246,5 +247,40 @@ func TestOptionsAreCheckedAgainstTheEnginesCatalog(t *testing.T) {
 	other.Options = map[string]any{"profile": "gaming"}
 	if err := Validate(other); err == nil {
 		t.Fatal("GOST has no options, so a profile must be refused")
+	}
+}
+
+func TestCatalogListsEveryEngineWithTheDirectionsItCanRun(t *testing.T) {
+	byID := map[string]ForwardingEngine{}
+	for _, e := range Catalog() {
+		byID[e.ID] = e
+	}
+	if len(byID) != len(Registry()) {
+		t.Fatalf("catalog has %d engines, registry %d", len(byID), len(Registry()))
+	}
+	rathole := byID[model.TunnelEngineRathole]
+	if len(rathole.Transports) == 0 {
+		t.Fatal("Rathole has no transports in the catalog")
+	}
+	for _, tr := range rathole.Transports {
+		if !tr.Reverse || tr.Direct {
+			t.Fatalf("Rathole transport %+v must be reverse only", tr)
+		}
+	}
+	if opts := byID[model.TunnelEngineKariz].Options; len(opts) != 1 || opts[0].Key != "profile" || opts[0].Default != "balanced" {
+		t.Fatalf("Kariz options = %+v, want its profile", opts)
+	}
+	raw, err := json.Marshal(byID[model.TunnelEngineGost])
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, key := range []string{`"id":"gost"`, `"label":"GOST"`, `"pinned":"v3.3.3"`, `"transports":[`, `"reverse":true`, `"options":[]`} {
+		if !strings.Contains(string(raw), key) {
+			t.Fatalf("GOST's JSON lacks %s: %s", key, raw)
+		}
+	}
+	byID[model.TunnelEngineGost].Transports[0].ID = "tampered"
+	if Catalog()[slices.IndexFunc(Catalog(), func(e ForwardingEngine) bool { return e.ID == model.TunnelEngineGost })].Transports[0].ID == "tampered" {
+		t.Fatal("changing the catalog changed the engine itself")
 	}
 }

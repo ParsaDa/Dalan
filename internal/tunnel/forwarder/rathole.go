@@ -13,7 +13,7 @@ import (
 // in reverse, because its server is always the end that exposes the ports.
 var ratholeEngine = Engine{
 	ID: "rathole", Label: "Rathole", Repo: "rathole-org/rathole", Pinned: "v0.5.0",
-	Transports: []Transport{
+	Transports: []ForwardingTransport{
 		{ID: "tcp", Label: "TCP", Reverse: true},
 		{ID: "noise", Label: "Noise (encrypted)", Reverse: true},
 		{ID: "ws", Label: "WebSocket", Reverse: true},

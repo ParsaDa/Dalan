@@ -637,6 +637,28 @@ export interface FallbackParentInfo {
   path?: string;
 }
 
+export interface ForwardingEngine {
+  id: string;
+  label: string;
+  options: ForwardingSetting[];
+  pinned: string;
+  transports: ForwardingTransport[];
+}
+
+export interface ForwardingSetting {
+  choices: string[];
+  default: string;
+  key: string;
+  label: string;
+}
+
+export interface ForwardingTransport {
+  direct: boolean;
+  id: string;
+  label: string;
+  reverse: boolean;
+}
+
 export interface GeoCategory {
   attributes: string[];
   code: string;

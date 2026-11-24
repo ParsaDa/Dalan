@@ -9,6 +9,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/forwarder"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
 
@@ -33,6 +34,7 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.GET("/engine", a.engine)
 	g.GET("/engine/routes", a.engineRoutes)
 	g.GET("/options", a.options)
+	g.GET("/engines", a.engines)
 	g.GET("/pools/list", a.poolList)
 
 	g.POST("/add", a.add)
@@ -206,6 +208,11 @@ func (a *TunnelController) options(c *gin.Context) {
 	default:
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.list"), errUnknownEngine)
 	}
+}
+
+// engines lists the forwarding engines with the transports and settings each offers.
+func (a *TunnelController) engines(c *gin.Context) {
+	jsonObj(c, forwarder.Catalog(), nil)
 }
 
 func (a *TunnelController) update(c *gin.Context) {

@@ -679,6 +679,31 @@ export const FallbackParentInfoSchema = z.object({
 });
 export type FallbackParentInfo = z.infer<typeof FallbackParentInfoSchema>;
 
+export const ForwardingEngineSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  options: z.array(z.lazy(() => ForwardingSettingSchema)),
+  pinned: z.string(),
+  transports: z.array(z.lazy(() => ForwardingTransportSchema)),
+});
+export type ForwardingEngine = z.infer<typeof ForwardingEngineSchema>;
+
+export const ForwardingSettingSchema = z.object({
+  choices: z.array(z.string()),
+  default: z.string(),
+  key: z.string(),
+  label: z.string(),
+});
+export type ForwardingSetting = z.infer<typeof ForwardingSettingSchema>;
+
+export const ForwardingTransportSchema = z.object({
+  direct: z.boolean(),
+  id: z.string(),
+  label: z.string(),
+  reverse: z.boolean(),
+});
+export type ForwardingTransport = z.infer<typeof ForwardingTransportSchema>;
+
 export const GeoCategorySchema = z.object({
   attributes: z.array(z.string()),
   code: z.string(),

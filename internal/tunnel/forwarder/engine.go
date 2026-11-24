@@ -12,12 +12,13 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 )
 
-// Transport is one way an engine can carry a tunnel; the tunnel's Transport field holds its id.
-type Transport struct {
-	ID    string
-	Label string
+// ForwardingTransport is one way an engine can carry a tunnel; the tunnel's Transport field holds its id.
+type ForwardingTransport struct {
+	ID    string `json:"id" example:"wss"`
+	Label string `json:"label" example:"WebSocket over TLS"`
 	// Reverse and Direct say which directions the engine can run this transport in.
-	Reverse, Direct bool
+	Reverse bool `json:"reverse" example:"true"`
+	Direct  bool `json:"direct" example:"true"`
 }
 
 // Forward is one port the entry end opens and the exit end delivers to a target of its own.
@@ -43,9 +44,9 @@ type Plan struct {
 	Options map[string]any
 }
 
-// Option is one setting of an engine that the panel lets the operator choose. Both ends read it from the
-// tunnel's options, so it is shared through the setup link.
-type Option struct {
+// ForwardingSetting is one setting of an engine that the panel lets the operator choose. Both ends read it
+// from the tunnel's options, so it is shared through the setup link.
+type ForwardingSetting struct {
 	Key     string   `json:"key" example:"profile"`
 	Label   string   `json:"label" example:"Profile"`
 	Choices []string `json:"choices" example:"[\"balanced\",\"ultraspeed\",\"gaming\"]"`
@@ -58,8 +59,8 @@ type Engine struct {
 	ID, Label  string
 	Repo       string
 	Pinned     string
-	Transports []Transport
-	Options    []Option
+	Transports []ForwardingTransport
+	Options    []ForwardingSetting
 	// Render writes the engine's file for one end; Ext is that file's suffix and Args its command line.
 	Render func(p Plan) (string, error)
 	Ext    string
@@ -74,16 +75,16 @@ type Engine struct {
 var errNoTransport = errors.New("pick a transport for this engine")
 
 // TransportOf finds a transport of the engine by id.
-func (e Engine) TransportOf(id string) (Transport, error) {
+func (e Engine) TransportOf(id string) (ForwardingTransport, error) {
 	if id == "" {
-		return Transport{}, errNoTransport
+		return ForwardingTransport{}, errNoTransport
 	}
 	for _, t := range e.Transports {
 		if t.ID == id {
 			return t, nil
 		}
 	}
-	return Transport{}, fmt.Errorf("%s has no transport %q", e.Label, id)
+	return ForwardingTransport{}, fmt.Errorf("%s has no transport %q", e.Label, id)
 }
 
 // Dials reports whether this end opens the connection to its peer: the exit in a reverse tunnel, the entry
@@ -137,7 +138,7 @@ func (e Engine) PlanFor(t model.ServerTunnel, dir string) (Plan, error) {
 
 func (e Engine) checkOptions(options map[string]any) error {
 	for key, value := range options {
-		i := slices.IndexFunc(e.Options, func(o Option) bool { return o.Key == key })
+		i := slices.IndexFunc(e.Options, func(o ForwardingSetting) bool { return o.Key == key })
 		if i < 0 {
 			return fmt.Errorf("%s has no option %q", e.Label, key)
 		}
@@ -189,6 +190,27 @@ func endpoint(s, defaultHost string) (string, bool) {
 		return "", false
 	}
 	return host + ":" + strconv.Itoa(n), true
+}
+
+// ForwardingEngine is an engine as the panel's forms and API list it.
+type ForwardingEngine struct {
+	ID         string                `json:"id" example:"gost"`
+	Label      string                `json:"label" example:"GOST"`
+	Pinned     string                `json:"pinned" example:"v3.3.3"`
+	Transports []ForwardingTransport `json:"transports"`
+	Options    []ForwardingSetting   `json:"options"`
+}
+
+// Catalog lists every engine with the transports and settings it offers, in the order the panel shows them.
+func Catalog() []ForwardingEngine {
+	out := make([]ForwardingEngine, 0, len(registry))
+	for _, e := range registry {
+		out = append(out, ForwardingEngine{
+			ID: e.ID, Label: e.Label, Pinned: e.Pinned,
+			Transports: slices.Clone(e.Transports), Options: append([]ForwardingSetting{}, e.Options...),
+		})
+	}
+	return out
 }
 
 // Registry lists the engines in the order the panel offers them.

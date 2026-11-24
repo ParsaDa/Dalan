@@ -10,8 +10,8 @@ import (
 // Kariz is a Rust tunnel with seven transports, UDP, and both directions; the entry owns the forwards.
 var karizEngine = Engine{
 	ID: "kariz", Label: "Kariz", Repo: "Erfan-XRay/Kariz", Pinned: "v2.8.1",
-	Options: []Option{{Key: "profile", Label: "Profile", Choices: karizProfiles, Default: "balanced"}},
-	Transports: []Transport{
+	Options: []ForwardingSetting{{Key: "profile", Label: "Profile", Choices: karizProfiles, Default: "balanced"}},
+	Transports: []ForwardingTransport{
 		{ID: "tcp", Label: "TCP", Reverse: true, Direct: true},
 		{ID: "tcpmux", Label: "TCP multiplexed", Reverse: true, Direct: true},
 		{ID: "ws", Label: "WebSocket", Reverse: true, Direct: true},
