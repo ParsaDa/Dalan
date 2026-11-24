@@ -1,6 +1,7 @@
 package benchmark
 
 import (
+	"context"
 	"errors"
 	"net"
 	"strings"
@@ -38,7 +39,7 @@ func CheckAddress(address string, candidates []Candidate) error {
 
 // FreePort returns a port nothing listens on at this moment.
 func FreePort() (int, error) {
-	l, err := net.Listen("tcp", ":0")
+	l, err := (&net.ListenConfig{}).Listen(context.Background(), "tcp", ":0")
 	if err != nil {
 		return 0, err
 	}

@@ -157,7 +157,7 @@ func (s *BenchmarkService) removeTunnel(id int) error {
 		return nil
 	}
 	if hereErr := s.tunnels.DeleteHere(id); hereErr != nil {
-		return fmt.Errorf("%w; this server could not remove its end either: %v", err, hereErr)
+		return fmt.Errorf("%w; this server could not remove its end either: %w", err, hereErr)
 	}
 	return fmt.Errorf("removed on this server only, the node's end is still there: %w", err)
 }
