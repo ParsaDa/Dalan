@@ -179,3 +179,19 @@ func TestGostCarriesTrafficInBothDirectionsOnEveryTransport(t *testing.T) {
 		}
 	}
 }
+
+func TestKarizCarriesTrafficInBothDirectionsOnEveryTransport(t *testing.T) {
+	binary := engineBinary(t, "kariz")
+	for _, tr := range karizEngine.Transports {
+		for _, mode := range []string{model.TunnelModeReverse, model.TunnelModeDirect} {
+			t.Run(tr.ID+"/"+mode, func(t *testing.T) {
+				portal, bridge, listen := pairOf(t, karizEngine, tr.ID, mode)
+				runEnd(t, karizEngine, binary, portal)
+				runEnd(t, karizEngine, binary, bridge)
+				if !carries(t, listen) {
+					t.Fatalf("no traffic crossed the %s %s tunnel", tr.ID, mode)
+				}
+			})
+		}
+	}
+}
