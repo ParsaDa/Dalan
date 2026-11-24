@@ -193,7 +193,6 @@ func TestTheTestWaitsForAnExitEndThatIsNotReadyYet(t *testing.T) {
 	}
 
 	res, err := Run(context.Background(), linkConfig(addr, dial), nil)
-
 	if err != nil {
 		t.Fatalf("err = %v, the exit end became ready after a few attempts", err)
 	}
