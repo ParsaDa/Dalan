@@ -209,3 +209,17 @@ func TestSingboxCarriesTrafficOnEveryTransport(t *testing.T) {
 		})
 	}
 }
+
+func TestXrayCarriesTrafficOnEveryTransport(t *testing.T) {
+	binary := engineBinary(t, "xray")
+	for _, tr := range xrayCoreEngine.Transports {
+		t.Run(tr.ID, func(t *testing.T) {
+			portal, bridge, listen := pairOf(t, xrayCoreEngine, tr.ID, model.TunnelModeDirect)
+			runEnd(t, xrayCoreEngine, binary, bridge)
+			runEnd(t, xrayCoreEngine, binary, portal)
+			if !carries(t, listen) {
+				t.Fatalf("no traffic crossed the %s tunnel", tr.ID)
+			}
+		})
+	}
+}

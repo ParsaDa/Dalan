@@ -2,6 +2,7 @@ package forwarder
 
 import (
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/sha256"
@@ -86,4 +87,60 @@ func Fingerprint(certFile string) (string, error) {
 	}
 	sum := sha256.Sum256(block.Bytes)
 	return hex.EncodeToString(sum[:]), nil
+}
+
+// Derived is a certificate and key both ends of a tunnel compute from its shared secret, so the dialing
+// end can pin the certificate without ever receiving a file. Pin is the SHA-256 of its DER form in hex.
+type Derived struct {
+	CertPEM, KeyPEM []byte
+	Pin             string
+}
+
+// DeriveCert makes the same certificate for the same secret every time: an Ed25519 key from a hash of the
+// secret, a fixed serial and fixed validity.
+func DeriveCert(secret string) (Derived, error) {
+	seed := sha256.Sum256([]byte("dalan-tls-key:" + secret))
+	key := ed25519.NewKeyFromSeed(seed[:])
+	tmpl := &x509.Certificate{
+		SerialNumber: big.NewInt(1), Subject: pkix.Name{CommonName: "localhost"}, DNSNames: []string{"localhost"},
+		NotBefore: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC), NotAfter: time.Date(2120, 1, 1, 0, 0, 0, 0, time.UTC),
+		KeyUsage:    x509.KeyUsageDigitalSignature,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	}
+	der, err := x509.CreateCertificate(nil, tmpl, tmpl, key.Public(), key)
+	if err != nil {
+		return Derived{}, err
+	}
+	keyDER, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		return Derived{}, err
+	}
+	sum := sha256.Sum256(der)
+	return Derived{
+		CertPEM: pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}),
+		KeyPEM:  pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: keyDER}),
+		Pin:     hex.EncodeToString(sum[:]),
+	}, nil
+}
+
+// derivedFiles writes the derived certificate of a plan's secret into its folder and returns the paths.
+func derivedFiles(p Plan) (certFile, keyFile string, err error) {
+	if p.Dir == "" {
+		return "", "", errNoDir
+	}
+	d, err := DeriveCert(p.Secret)
+	if err != nil {
+		return "", "", err
+	}
+	if err := os.MkdirAll(p.Dir, 0o755); err != nil {
+		return "", "", err
+	}
+	certFile, keyFile = filepath.Join(p.Dir, p.Name+".crt"), filepath.Join(p.Dir, p.Name+".key")
+	if err := os.WriteFile(certFile, d.CertPEM, 0o600); err != nil {
+		return "", "", err
+	}
+	if err := os.WriteFile(keyFile, d.KeyPEM, 0o600); err != nil {
+		return "", "", err
+	}
+	return certFile, keyFile, nil
 }
