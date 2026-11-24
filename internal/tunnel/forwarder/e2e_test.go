@@ -149,3 +149,17 @@ func TestRatholeCarriesTrafficOnItsTransports(t *testing.T) {
 		})
 	}
 }
+
+func TestBackhaulCarriesTrafficOnItsTransports(t *testing.T) {
+	binary := engineBinary(t, "backhaul")
+	for _, tr := range backhaulEngine.Transports {
+		t.Run(tr.ID, func(t *testing.T) {
+			portal, bridge, listen := pairOf(t, backhaulEngine, tr.ID, model.TunnelModeReverse)
+			runEnd(t, backhaulEngine, binary, portal)
+			runEnd(t, backhaulEngine, binary, bridge)
+			if !carries(t, listen) {
+				t.Fatalf("no traffic crossed the %s tunnel", tr.ID)
+			}
+		})
+	}
+}
