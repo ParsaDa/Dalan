@@ -460,6 +460,28 @@ export const sections: readonly Section[] = [
           '{\n  "success": true,\n  "obj": {\n    "enabled": true,\n    "installed": true,\n    "usable": true,\n    "windows": false\n  }\n}',
       },
       {
+        method: 'POST',
+        path: '/panel/api/server/speedtest/start',
+        summary:
+          'Start a speed test of this server against speedtest.net. Runs in the background; poll /speedtest/status. Calling it while a run is active joins that run.',
+        response: '{\n  "success": true,\n  "obj": null\n}',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/server/speedtest/status',
+        summary:
+          'Live state of the speed test: phase (servers, ping, download, upload), progress 0-1 and the current rate in Mbps. After a run, result holds the finished measurement or error says why it failed.',
+        response:
+          '{\n  "success": true,\n  "obj": {\n    "running": false,\n    "phase": "",\n    "progress": 0,\n    "mbps": 0,\n    "pingMs": 0,\n    "result": {\n      "server": {\n        "id": "1234",\n        "name": "Tehran",\n        "sponsor": "Example ISP",\n        "country": "Iran",\n        "host": "speedtest.example.ir:8080",\n        "distance": 12.5\n      },\n      "pingMs": 14.2,\n      "jitterMs": 1.3,\n      "downMbps": 412.6,\n      "upMbps": 188.9,\n      "at": 1795000000000\n    },\n    "error": ""\n  }\n}',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/server/speedtest/history',
+        summary: 'The last 20 finished speed tests of this server, newest first.',
+        response:
+          '{\n  "success": true,\n  "obj": [\n    {\n      "server": {\n        "id": "1234",\n        "name": "Tehran",\n        "sponsor": "Example ISP",\n        "country": "Iran",\n        "host": "speedtest.example.ir:8080",\n        "distance": 12.5\n      },\n      "pingMs": 14.2,\n      "jitterMs": 1.3,\n      "downMbps": 412.6,\n      "upMbps": 188.9,\n      "at": 1795000000000\n    }\n  ]\n}',
+      },
+      {
         method: 'GET',
         path: '/panel/api/server/cpuHistory/:bucket',
         summary:

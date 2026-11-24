@@ -41,6 +41,7 @@ import { countryName } from '@/pages/xray/outbounds/outbounds-tab-helpers';
 import { HttpUtil, SizeFormatter } from '@/utils';
 import { ActivityList } from './ActivityList';
 import { AlertsTile } from './AlertsTile';
+import { SpeedtestTile } from './SpeedtestTile';
 import { tunnelRow } from './tunnelRow';
 import type { NodeRef } from './tunnelRow';
 import { fmtInt, useNum } from '@/components/dl/numbers';
@@ -769,6 +770,7 @@ export default function DashboardPage({ tools }: { tools?: ReactNode }) {
           <NodeView node={active} nodes={nodes} />
         ) : (
           <div className="grid">
+            {!simple && tools}
             <HealthTile restart={xray.start} />
             <TunnelsTile nodes={refs} />
             <UsageTile online={online} rate={rate} spark={spark} />
@@ -779,6 +781,7 @@ export default function DashboardPage({ tools }: { tools?: ReactNode }) {
               onRestartXray={xray.start}
             />
             <ActivityTile nodes={refs} />
+            <SpeedtestTile />
             {direct.length > 0 && (
               <section
                 className="s12"
@@ -815,7 +818,6 @@ export default function DashboardPage({ tools }: { tools?: ReactNode }) {
                 </div>
               </section>
             )}
-            {!simple && tools}
           </div>
         )}
       </div>

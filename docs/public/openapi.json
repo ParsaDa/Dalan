@@ -7181,6 +7181,146 @@
         }
       }
     },
+    "/panel/api/server/speedtest/start": {
+      "post": {
+        "tags": [
+          "Server"
+        ],
+        "summary": "Start a speed test of this server against speedtest.net. Runs in the background; poll /speedtest/status. Calling it while a run is active joins that run.",
+        "operationId": "post_panel_api_server_speedtest_start",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": null
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/server/speedtest/status": {
+      "get": {
+        "tags": [
+          "Server"
+        ],
+        "summary": "Live state of the speed test: phase (servers, ping, download, upload), progress 0-1 and the current rate in Mbps. After a run, result holds the finished measurement or error says why it failed.",
+        "operationId": "get_panel_api_server_speedtest_status",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "running": false,
+                    "phase": "",
+                    "progress": 0,
+                    "mbps": 0,
+                    "pingMs": 0,
+                    "result": {
+                      "server": {
+                        "id": "1234",
+                        "name": "Tehran",
+                        "sponsor": "Example ISP",
+                        "country": "Iran",
+                        "host": "speedtest.example.ir:8080",
+                        "distance": 12.5
+                      },
+                      "pingMs": 14.2,
+                      "jitterMs": 1.3,
+                      "downMbps": 412.6,
+                      "upMbps": 188.9,
+                      "at": 1795000000000
+                    },
+                    "error": ""
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/server/speedtest/history": {
+      "get": {
+        "tags": [
+          "Server"
+        ],
+        "summary": "The last 20 finished speed tests of this server, newest first.",
+        "operationId": "get_panel_api_server_speedtest_history",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "server": {
+                        "id": "1234",
+                        "name": "Tehran",
+                        "sponsor": "Example ISP",
+                        "country": "Iran",
+                        "host": "speedtest.example.ir:8080",
+                        "distance": 12.5
+                      },
+                      "pingMs": 14.2,
+                      "jitterMs": 1.3,
+                      "downMbps": 412.6,
+                      "upMbps": 188.9,
+                      "at": 1795000000000
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/server/cpuHistory/{bucket}": {
       "get": {
         "tags": [

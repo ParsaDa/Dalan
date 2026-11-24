@@ -3259,6 +3259,24 @@
       "versions": "پنل {panel} · Xray {xray}",
       "awgLogs": "لاگ AmneziaWG",
       "metrics": "آمار Xray"
+    },
+    "speedtest": {
+      "title": "تست سرعت",
+      "run": "اجرای تست سرعت",
+      "running": "در حال تست…",
+      "download": "دانلود",
+      "upload": "آپلود",
+      "ping": "پینگ",
+      "jitter": "جیتر",
+      "server": "{sponsor} · {name}، {country}",
+      "empty": "سرعت واقعی همین سرور تا speedtest.net را اندازه بگیرید.",
+      "history": "{n} تست آخر · دانلود و آپلود",
+      "phase": {
+        "servers": "در حال یافتن نزدیک‌ترین سرور…",
+        "ping": "در حال تست پینگ…",
+        "download": "در حال تست دانلود…",
+        "upload": "در حال تست آپلود…"
+      }
     }
   },
   "activity": {

@@ -3,6 +3,10 @@ export const keys = {
     status: () => ['server', 'status'] as const,
     fail2banStatus: () => ['server', 'fail2banStatus'] as const,
   },
+  speedtest: {
+    status: () => ['speedtest', 'status'] as const,
+    history: () => ['speedtest', 'history'] as const,
+  },
   nodes: {
     root: () => ['nodes'] as const,
     list: () => ['nodes', 'list'] as const,
