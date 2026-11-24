@@ -119,28 +119,36 @@ func (a *ServerController) getFail2banStatus(c *gin.Context) {
 	jsonObj(c, a.serverService.GetFail2banStatus(), nil)
 }
 
-// speedtestRunner is the speed-test service as the controller sees it.
+// speedtestRunner is the speed-test service as the controllers see it; target 0 is this server.
 type speedtestRunner interface {
-	Start() error
-	Status() service.SpeedtestStatus
-	History() ([]speedtest.Result, error)
+	Start(tunnelId int) error
+	Status(tunnelId int) service.SpeedtestStatus
+	History(tunnelId int) ([]speedtest.Result, error)
 }
 
-// speedtestStart begins a run; one already in flight is joined, not an error.
-func (a *ServerController) speedtestStart(c *gin.Context) {
-	err := a.speedtestService.Start()
+// startSpeedtest begins a run; one already running for the same target is joined, not an error.
+func startSpeedtest(c *gin.Context, runner speedtestRunner, tunnelId int) {
+	err := runner.Start(tunnelId)
 	if errors.Is(err, service.ErrSpeedtestRunning) {
 		err = nil
 	}
-	jsonObj(c, nil, err)
+	if err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.speedtest"), err)
+		return
+	}
+	jsonObj(c, nil, nil)
+}
+
+func (a *ServerController) speedtestStart(c *gin.Context) {
+	startSpeedtest(c, a.speedtestService, 0)
 }
 
 func (a *ServerController) speedtestStatus(c *gin.Context) {
-	jsonObj(c, a.speedtestService.Status(), nil)
+	jsonObj(c, a.speedtestService.Status(0), nil)
 }
 
 func (a *ServerController) speedtestHistory(c *gin.Context) {
-	history, err := a.speedtestService.History()
+	history, err := a.speedtestService.History(0)
 	jsonObj(c, history, err)
 }
 

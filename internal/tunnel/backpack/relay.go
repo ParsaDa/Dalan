@@ -1,12 +1,18 @@
 package backpack
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"math/big"
+	"net"
+	"strconv"
+	"time"
+
+	"golang.org/x/net/proxy"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 )
@@ -34,4 +40,20 @@ func RelayCredentials(t model.ServerTunnel) (user, pass string) {
 	mac := hmac.New(sha256.New, []byte(t.UUID))
 	mac.Write([]byte("dalan-relay"))
 	return "dalan", hex.EncodeToString(mac.Sum(nil))[:32]
+}
+
+// RelayDial opens connections from this end of an entry tunnel, so they leave at the exit server.
+func RelayDial(t model.ServerTunnel) func(ctx context.Context, network, addr string) (net.Conn, error) {
+	user, pass := RelayCredentials(t)
+	dialer, err := proxy.SOCKS5("tcp", net.JoinHostPort("127.0.0.1", strconv.Itoa(t.RelayPort)),
+		&proxy.Auth{User: user, Password: pass}, &net.Dialer{Timeout: 5 * time.Second})
+	return func(ctx context.Context, network, addr string) (net.Conn, error) {
+		if err != nil {
+			return nil, err
+		}
+		if cd, ok := dialer.(proxy.ContextDialer); ok {
+			return cd.DialContext(ctx, network, addr)
+		}
+		return dialer.Dial(network, addr)
+	}
 }
