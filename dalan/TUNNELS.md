@@ -146,7 +146,7 @@ The speed test button (the lightning bolt) on an entry tunnel's row measures the
 How it works: every exit end of a tunnel answers speed tests on a loopback port of its own (the tunnel's relay port plus 1000, in 64400-65399). The entry end sends and receives bytes there through the relay, so the numbers are what the tunnel carries.
 
 - Only an enabled reverse entry tunnel (BackPack, Rakhsh or a forwarding engine) can be tested. An exit end, a direct tunnel (it has no relay) and a management tunnel are refused.
-- The exit server must run a Dalan version that has this test (0.7.0 or newer). An older one is reported as not answering the speed test, and the message says whether nothing listens there or nothing replied within 5 seconds.
+- The exit server must run a Dalan version that has this test (0.7.0 or newer). An older one is reported as not answering the speed test, and the message says whether nothing listens there or nothing replied. A tunnel that was just made is not ready on the exit end at once (the exit's Xray picks up the relay on its next restart pass, up to 30 seconds), so the test keeps trying for 45 seconds before it reports that.
 - One speed test runs at a time on a panel. Starting the same tunnel again joins the running test; starting another tunnel waits until it ends.
 - The Speed test card on the dashboard still measures this server itself against speedtest.net and does not go through any tunnel.
 

@@ -26,6 +26,13 @@ const (
 // linkPingWait is how long one ping may wait for its echo; a variable so a test can shorten it.
 var linkPingWait = 5 * time.Second
 
+// A new tunnel is connected before its exit end is ready: the exit's Xray picks up the relay inbound on its
+// next restart pass, up to 30s later. The test keeps trying that long before it blames the exit end.
+var (
+	linkReadyWait  = 45 * time.Second
+	linkRetryEvery = time.Second
+)
+
 // ErrNoAnswer marks a link speed test that failed because the exit server's responder gave no answer.
 var ErrNoAnswer = errors.New("the exit server gave no answer to the speed test")
 
@@ -118,7 +125,7 @@ func dialLink(ctx context.Context, cfg Config, cmd byte) (net.Conn, func(), erro
 func runLink(ctx context.Context, cfg Config, emit func(Update)) (Result, error) {
 	res := Result{Server: ServerInfo{ID: LinkServerID, Name: "tunnel link", Host: cfg.LinkAddr}}
 	emit(Update{Phase: PhasePing})
-	samples, err := linkPings(ctx, cfg, func(ms float64) { emit(Update{Phase: PhasePing, PingMs: ms}) })
+	samples, err := pingsWhenReady(ctx, cfg, func(ms float64) { emit(Update{Phase: PhasePing, PingMs: ms}) })
 	if err != nil {
 		return Result{}, err
 	}
@@ -135,6 +142,25 @@ func runLink(ctx context.Context, cfg Config, emit func(Update)) (Result, error)
 	}
 	res.At = time.Now().UnixMilli()
 	return res, nil
+}
+
+// pingsWhenReady retries the first ping session while the exit end gives no answer, up to linkReadyWait.
+func pingsWhenReady(ctx context.Context, cfg Config, each func(float64)) ([]float64, error) {
+	deadline := time.Now().Add(linkReadyWait)
+	for {
+		samples, err := linkPings(ctx, cfg, each)
+		if err == nil || !errors.Is(err, ErrNoAnswer) || !time.Now().Add(linkRetryEvery).Before(deadline) {
+			if err != nil && errors.Is(err, ErrNoAnswer) {
+				err = noAnswer{fmt.Sprintf("%v; kept trying for %s", err, linkReadyWait)}
+			}
+			return samples, err
+		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(linkRetryEvery):
+		}
+	}
 }
 
 func linkPings(ctx context.Context, cfg Config, each func(float64)) ([]float64, error) {
