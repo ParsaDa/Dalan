@@ -195,3 +195,17 @@ func TestKarizCarriesTrafficInBothDirectionsOnEveryTransport(t *testing.T) {
 		}
 	}
 }
+
+func TestSingboxCarriesTrafficOnEveryTransport(t *testing.T) {
+	binary := engineBinary(t, "sing-box")
+	for _, tr := range singboxEngine.Transports {
+		t.Run(tr.ID, func(t *testing.T) {
+			portal, bridge, listen := pairOf(t, singboxEngine, tr.ID, model.TunnelModeDirect)
+			runEnd(t, singboxEngine, binary, bridge)
+			runEnd(t, singboxEngine, binary, portal)
+			if !carries(t, listen) {
+				t.Fatalf("no traffic crossed the %s tunnel", tr.ID)
+			}
+		})
+	}
+}

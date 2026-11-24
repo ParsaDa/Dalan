@@ -179,4 +179,4 @@ func ByID(id string) (Engine, bool) {
 	return Engine{}, false
 }
 
-var registry = []Engine{ratholeEngine, backhaulEngine, gostEngine, karizEngine}
+var registry = []Engine{ratholeEngine, backhaulEngine, gostEngine, karizEngine, singboxEngine}
