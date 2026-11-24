@@ -141,6 +141,9 @@ func (s *BenchmarkService) newRunner(nodeId int, address string) *benchmark.Runn
 		},
 		Measure: func(ctx context.Context, id int) (benchmark.Measurement, error) {
 			res, err := s.measure(ctx, id)
+			if errors.Is(err, speedtest.ErrNoAnswer) {
+				return benchmark.Measurement{}, benchmark.Unanswered(err)
+			}
 			if err != nil {
 				return benchmark.Measurement{}, err
 			}

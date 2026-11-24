@@ -58,10 +58,12 @@ _openapi:
         "speed" ranks by throughput with download weighted over upload;
         "balanced" weighs throughput, ping and jitter. A reverse method needs
         address, this server's address as the node dials it; a direct method
-        uses the node's own. Between 1 and 60 methods are accepted; only one
-        benchmark runs at a time and it also holds the speed test slot while a
-        method is measured. Poll /benchmark/status for progress.
-      url: '#try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-measures-the-speed-between-the-two-servers-through-it-the-tunnel-speed-test-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-between-1-and-60-methods-are-accepted-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress'
+        uses the node's own. At least one method is needed and there is no upper
+        limit; the run stops early when the exit server gives no answer to the
+        speed test for three methods in a row. Only one benchmark runs at a time
+        and it also holds the speed test slot while a method is measured. Poll
+        /benchmark/status for progress.
+      url: '#try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-measures-the-speed-between-the-two-servers-through-it-the-tunnel-speed-test-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-at-least-one-method-is-needed-and-there-is-no-upper-limit-the-run-stops-early-when-the-exit-server-gives-no-answer-to-the-speed-test-for-three-methods-in-a-row-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress'
     - depth: 2
       title: "Progress of the current or last benchmark: how many methods are done,
         the method and step in progress (create, connect, measure or remove),
@@ -266,11 +268,12 @@ _openapi:
           objective "speed" ranks by throughput with download weighted over
           upload; "balanced" weighs throughput, ping and jitter. A reverse
           method needs address, this server's address as the node dials it; a
-          direct method uses the node's own. Between 1 and 60 methods are
-          accepted; only one benchmark runs at a time and it also holds the
-          speed test slot while a method is measured. Poll /benchmark/status for
-          progress.
-        id: try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-measures-the-speed-between-the-two-servers-through-it-the-tunnel-speed-test-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-between-1-and-60-methods-are-accepted-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress
+          direct method uses the node's own. At least one method is needed and
+          there is no upper limit; the run stops early when the exit server
+          gives no answer to the speed test for three methods in a row. Only one
+          benchmark runs at a time and it also holds the speed test slot while a
+          method is measured. Poll /benchmark/status for progress.
+        id: try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-measures-the-speed-between-the-two-servers-through-it-the-tunnel-speed-test-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-at-least-one-method-is-needed-and-there-is-no-upper-limit-the-run-stops-early-when-the-exit-server-gives-no-answer-to-the-speed-test-for-three-methods-in-a-row-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress
       - content: "Progress of the current or last benchmark: how many methods are done,
           the method and step in progress (create, connect, measure or remove),
           and one result per finished method with its measurement and score

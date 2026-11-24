@@ -3414,7 +3414,6 @@
       "both": "Both",
       "engines": "Engines",
       "methods": "{count} methods",
-      "tooMany": "At most {max} methods per run.",
       "start": "Start",
       "stop": "Stop",
       "progress": "{done} of {total} done",
