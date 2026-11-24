@@ -98,6 +98,15 @@ The pencil in the tunnel list changes a tunnel without deleting it. On an entry 
 
 The Tunnels page shows the state each engine reports for every enabled tunnel, on both servers: **Connected** (BackPack has no latency figure; Rakhsh shows how many lanes are up) or **Down**, with the engine's reason on hover. A node's management tunnel is not tested on its own; its state is the node's status in the node list.
 
+## Speed test
+
+The speed test button (the lightning bolt) on an entry tunnel's row measures that tunnel. The test connects through the tunnel's loopback relay, so its connections leave from the exit server: ping, jitter, download and upload are the speed of this tunnel to the internet, against the speedtest.net server closest to the exit server. Run it whenever you like; the last 20 results of each tunnel are kept.
+
+- Only an enabled reverse entry tunnel (BackPack or Rakhsh) can be tested. An exit end, a direct tunnel (it has no relay) and a management tunnel are refused.
+- One speed test runs at a time on a panel. Starting the same tunnel again joins the running test; starting another tunnel waits until it ends.
+- The exit server must reach speedtest.net. If it cannot, the dialog shows the reason.
+- The Speed test card on the dashboard measures this server itself and does not go through any tunnel.
+
 ## Nodes that dial in
 
 A server abroad that the main panel cannot reach can still be one of its nodes: the node opens a tunnel to the main panel and is managed through it. The main panel never opens a connection toward the node.

@@ -3381,7 +3381,12 @@
     "colRoutes": "Routes",
     "layer3": "Layer 3",
     "ms": "{n} ms",
-    "enable": "Turn on"
+    "enable": "Turn on",
+    "speedtest": {
+      "open": "Speed test",
+      "title": "Speed test of {name}",
+      "hint": "The test goes through this tunnel: its connections leave from the exit server, so the result is the tunnel's speed to the internet. Tests run one at a time."
+    }
   },
   "outbounds": {
     "title": "Outbounds and routing",

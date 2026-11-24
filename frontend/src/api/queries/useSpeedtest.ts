@@ -9,13 +9,20 @@ import { parseMsg } from '@/utils/zodValidate';
 
 const POLL_MS = 500;
 
-export function useSpeedtest() {
+// Target 0 is this server's own test; any other id tests that entry tunnel.
+function speedtestUrl(action: 'start' | 'status' | 'history', tunnelId: number): string {
+  return tunnelId === 0
+    ? `/panel/api/server/speedtest/${action}`
+    : `/panel/api/tunnels/speedtest/${action}/${tunnelId}`;
+}
+
+export function useSpeedtest(tunnelId = 0) {
   const qc = useQueryClient();
 
   const status = useQuery({
-    queryKey: keys.speedtest.status(),
+    queryKey: keys.speedtest.status(tunnelId),
     queryFn: async () => {
-      const msg = await HttpUtil.get('/panel/api/server/speedtest/status', undefined, {
+      const msg = await HttpUtil.get(speedtestUrl('status', tunnelId), undefined, {
         silent: true,
       });
       if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the speed test');
@@ -28,9 +35,9 @@ export function useSpeedtest() {
   });
 
   const history = useQuery({
-    queryKey: keys.speedtest.history(),
+    queryKey: keys.speedtest.history(tunnelId),
     queryFn: async () => {
-      const msg = await HttpUtil.get('/panel/api/server/speedtest/history', undefined, {
+      const msg = await HttpUtil.get(speedtestUrl('history', tunnelId), undefined, {
         silent: true,
       });
       if (!msg?.success) throw new Error(msg?.msg || 'Failed to read the speed test history');
@@ -41,20 +48,20 @@ export function useSpeedtest() {
 
   const start = useMutation({
     mutationFn: async () => {
-      const msg = await HttpUtil.post('/panel/api/server/speedtest/start');
+      const msg = await HttpUtil.post(speedtestUrl('start', tunnelId));
       if (!msg?.success) throw new Error(msg?.msg || 'Failed to start the speed test');
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.speedtest.status() }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.speedtest.status(tunnelId) }),
   });
 
   const running = status.data?.running ?? false;
   const wasRunning = useRef(false);
   useEffect(() => {
     if (wasRunning.current && !running) {
-      void qc.invalidateQueries({ queryKey: keys.speedtest.history() });
+      void qc.invalidateQueries({ queryKey: keys.speedtest.history(tunnelId) });
     }
     wasRunning.current = running;
-  }, [running, qc]);
+  }, [running, qc, tunnelId]);
 
   return { status: status.data, history: history.data ?? [], start };
 }
