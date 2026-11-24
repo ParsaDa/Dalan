@@ -2491,7 +2491,8 @@
         "routeTest": "The route test could not run",
         "updateEngine": "Update the BackPack engine",
         "engineReleases": "List the engine releases",
-        "speedtest": "The speed test could not run"
+        "speedtest": "The speed test could not run",
+        "benchmark": "The benchmark could not run"
       },
       "nodeEnd": "Create the other end on a node",
       "nodeEndHint": "This panel also sets up the exit end on the chosen node, so nothing needs to be copied or pasted. Deleting the tunnel removes both ends.",

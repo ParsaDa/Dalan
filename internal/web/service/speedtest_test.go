@@ -161,3 +161,36 @@ func TestTunnelRunsKeepTheirOwnStatusAndHistoryAndShareOneSlot(t *testing.T) {
 		t.Fatalf("this server's history = %v, %v; want untouched", h, err)
 	}
 }
+
+func TestMeasureWaitsForTheRunSlotReturnsTheResultAndKeepsNoHistory(t *testing.T) {
+	release := make(chan struct{})
+	s := newSpeedtestService(t, func(ctx context.Context, id int, _ func(speedtest.Update)) (speedtest.Result, error) {
+		if id == 0 {
+			<-release
+		}
+		return resultWith(250), nil
+	})
+	if err := s.Start(0); err != nil {
+		t.Fatal(err)
+	}
+
+	short, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	if _, err := s.Measure(short, 7); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("Measure while the slot is taken: err = %v, want the context's deadline", err)
+	}
+
+	close(release)
+	waitIdle(t, s)
+	res, err := s.Measure(context.Background(), 7)
+	if err != nil || res.DownMbps != 250 {
+		t.Fatalf("Measure = %+v, %v", res, err)
+	}
+	if history, err := s.History(7); err != nil || len(history) != 0 {
+		t.Fatalf("history of the measured tunnel = %v, %v, want none: benchmark tunnels are temporary", history, err)
+	}
+	if err := s.Start(0); err != nil {
+		t.Fatalf("the slot was not released after Measure: %v", err)
+	}
+	waitIdle(t, s)
+}

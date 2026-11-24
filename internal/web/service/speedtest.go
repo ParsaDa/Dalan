@@ -135,6 +135,33 @@ func (s *SpeedtestService) execute(tunnelId int) {
 	s.busy = false
 }
 
+// Measure runs one test of an entry tunnel for the caller and returns its result without keeping a history.
+// It waits its turn when another test holds the single run slot.
+func (s *SpeedtestService) Measure(ctx context.Context, tunnelId int) (speedtest.Result, error) {
+	for {
+		s.mu.Lock()
+		if !s.busy {
+			s.busy, s.active = true, tunnelId
+			s.mu.Unlock()
+			break
+		}
+		s.mu.Unlock()
+		select {
+		case <-ctx.Done():
+			return speedtest.Result{}, ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+	defer func() {
+		s.mu.Lock()
+		s.busy = false
+		s.mu.Unlock()
+	}()
+	runCtx, cancel := context.WithTimeout(ctx, speedtestRunTimeout)
+	defer cancel()
+	return s.run(runCtx, tunnelId, func(speedtest.Update) {})
+}
+
 // Status returns a snapshot of one target that is safe to hold while a run goes on.
 func (s *SpeedtestService) Status(tunnelId int) SpeedtestStatus {
 	s.mu.Lock()

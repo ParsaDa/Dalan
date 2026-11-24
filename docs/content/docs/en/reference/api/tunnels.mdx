@@ -47,6 +47,32 @@ _openapi:
       title: The last 20 finished speed tests of one tunnel, newest first.
       url: '#the-last-20-finished-speed-tests-of-one-tunnel-newest-first'
     - depth: 2
+      title: Try tunnel methods against one node and rank them. For each method in
+        candidates the panel makes a temporary tunnel on this server and on the
+        node (named dalan-bench-N, a name regular tunnels cannot take), waits
+        until it connects, runs the speed test through it, then removes it on
+        both servers. objective "speed" ranks by throughput with download
+        weighted over upload; "balanced" weighs throughput, ping and jitter. A
+        reverse method needs address, this server's address as the node dials
+        it; a direct method uses the node's own. Between 1 and 60 methods are
+        accepted; only one benchmark runs at a time and it also holds the speed
+        test slot while a method is measured. Poll /benchmark/status for
+        progress.
+      url: '#try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-runs-the-speed-test-through-it-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-between-1-and-60-methods-are-accepted-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress'
+    - depth: 2
+      title: "Progress of the current or last benchmark: how many methods are done,
+        the method and step in progress (create, connect, measure or remove),
+        and one result per finished method with its measurement and score
+        (higher is better; 0 for a method that failed, with error saying why).
+        best names the highest score once the run has ended, and cancelled is
+        true when it was stopped. leftover on a result says what a failed
+        cleanup left behind, such as the node's end of a tunnel."
+      url: '#progress-of-the-current-or-last-benchmark-how-many-methods-are-done-the-method-and-step-in-progress-create-connect-measure-or-remove-and-one-result-per-finished-method-with-its-measurement-and-score-higher-is-better-0-for-a-method-that-failed-with-error-saying-why-best-names-the-highest-score-once-the-run-has-ended-and-cancelled-is-true-when-it-was-stopped-leftover-on-a-result-says-what-a-failed-cleanup-left-behind-such-as-the-nodes-end-of-a-tunnel'
+    - depth: 2
+      title: Stop the running benchmark after the tunnel being measured is removed.
+        Results so far are kept. Does nothing when no benchmark runs.
+      url: '#stop-the-running-benchmark-after-the-tunnel-being-measured-is-removed-results-so-far-are-kept-does-nothing-when-no-benchmark-runs'
+    - depth: 2
       title: Whether an engine binary (BackPack, Rakhsh or one of the forwarding
         engines) is on this server, which release is installed (empty when it
         was placed by hand), and the release this Dalan version installs by
@@ -226,6 +252,29 @@ _openapi:
         id: live-state-of-the-speed-test-of-one-tunnel-phase-servers-ping-download-upload-progress-0-1-and-the-current-rate-in-mbps-result-holds-the-finished-measurement-and-error-says-why-a-run-failed
       - content: The last 20 finished speed tests of one tunnel, newest first.
         id: the-last-20-finished-speed-tests-of-one-tunnel-newest-first
+      - content: Try tunnel methods against one node and rank them. For each method in
+          candidates the panel makes a temporary tunnel on this server and on
+          the node (named dalan-bench-N, a name regular tunnels cannot take),
+          waits until it connects, runs the speed test through it, then removes
+          it on both servers. objective "speed" ranks by throughput with
+          download weighted over upload; "balanced" weighs throughput, ping and
+          jitter. A reverse method needs address, this server's address as the
+          node dials it; a direct method uses the node's own. Between 1 and 60
+          methods are accepted; only one benchmark runs at a time and it also
+          holds the speed test slot while a method is measured. Poll
+          /benchmark/status for progress.
+        id: try-tunnel-methods-against-one-node-and-rank-them-for-each-method-in-candidates-the-panel-makes-a-temporary-tunnel-on-this-server-and-on-the-node-named-dalan-bench-n-a-name-regular-tunnels-cannot-take-waits-until-it-connects-runs-the-speed-test-through-it-then-removes-it-on-both-servers-objective-speed-ranks-by-throughput-with-download-weighted-over-upload-balanced-weighs-throughput-ping-and-jitter-a-reverse-method-needs-address-this-servers-address-as-the-node-dials-it-a-direct-method-uses-the-nodes-own-between-1-and-60-methods-are-accepted-only-one-benchmark-runs-at-a-time-and-it-also-holds-the-speed-test-slot-while-a-method-is-measured-poll-benchmarkstatus-for-progress
+      - content: "Progress of the current or last benchmark: how many methods are done,
+          the method and step in progress (create, connect, measure or remove),
+          and one result per finished method with its measurement and score
+          (higher is better; 0 for a method that failed, with error saying why).
+          best names the highest score once the run has ended, and cancelled is
+          true when it was stopped. leftover on a result says what a failed
+          cleanup left behind, such as the node's end of a tunnel."
+        id: progress-of-the-current-or-last-benchmark-how-many-methods-are-done-the-method-and-step-in-progress-create-connect-measure-or-remove-and-one-result-per-finished-method-with-its-measurement-and-score-higher-is-better-0-for-a-method-that-failed-with-error-saying-why-best-names-the-highest-score-once-the-run-has-ended-and-cancelled-is-true-when-it-was-stopped-leftover-on-a-result-says-what-a-failed-cleanup-left-behind-such-as-the-nodes-end-of-a-tunnel
+      - content: Stop the running benchmark after the tunnel being measured is removed.
+          Results so far are kept. Does nothing when no benchmark runs.
+        id: stop-the-running-benchmark-after-the-tunnel-being-measured-is-removed-results-so-far-are-kept-does-nothing-when-no-benchmark-runs
       - content: Whether an engine binary (BackPack, Rakhsh or one of the forwarding
           engines) is on this server, which release is installed (empty when it
           was placed by hand), and the release this Dalan version installs by
@@ -369,7 +418,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/speedtest/start/{id}","method":"post"},{"path":"/panel/api/tunnels/speedtest/status/{id}","method":"get"},{"path":"/panel/api/tunnels/speedtest/history/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/routes","method":"get"},{"path":"/panel/api/tunnels/engines","method":"get"},{"path":"/panel/api/tunnels/options","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/engine/releases","method":"post"},{"path":"/panel/api/tunnels/engine/update","method":"post"},{"path":"/panel/api/tunnels/engine/release","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/update/{id}","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/speedtest/start/{id}","method":"post"},{"path":"/panel/api/tunnels/speedtest/status/{id}","method":"get"},{"path":"/panel/api/tunnels/speedtest/history/{id}","method":"get"},{"path":"/panel/api/tunnels/benchmark/start","method":"post"},{"path":"/panel/api/tunnels/benchmark/status","method":"get"},{"path":"/panel/api/tunnels/benchmark/cancel","method":"post"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/routes","method":"get"},{"path":"/panel/api/tunnels/engines","method":"get"},{"path":"/panel/api/tunnels/options","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/engine/releases","method":"post"},{"path":"/panel/api/tunnels/engine/update","method":"post"},{"path":"/panel/api/tunnels/engine/release","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/update/{id}","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
     </>
   );
 }

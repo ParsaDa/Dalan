@@ -2057,6 +2057,28 @@ export const sections: readonly Section[] = [
           '{\n  "success": true,\n  "obj": [\n    {\n    "server": {\n      "id": "1234",\n      "name": "Frankfurt",\n      "sponsor": "Example ISP",\n      "country": "Germany",\n      "host": "speedtest.example.de:8080",\n      "distance": 12.5\n    },\n    "pingMs": 96.2,\n    "jitterMs": 2.1,\n    "downMbps": 212.6,\n    "upMbps": 88.9,\n    "at": 1795000000000\n  }\n  ]\n}',
       },
       {
+        method: 'POST',
+        path: '/panel/api/tunnels/benchmark/start',
+        summary:
+          'Try tunnel methods against one node and rank them. For each method in candidates the panel makes a temporary tunnel on this server and on the node (named dalan-bench-N, a name regular tunnels cannot take), waits until it connects, runs the speed test through it, then removes it on both servers. objective "speed" ranks by throughput with download weighted over upload; "balanced" weighs throughput, ping and jitter. A reverse method needs address, this server\'s address as the node dials it; a direct method uses the node\'s own. Between 1 and 60 methods are accepted; only one benchmark runs at a time and it also holds the speed test slot while a method is measured. Poll /benchmark/status for progress.',
+        body: '{\n  "nodeId": 3,\n  "address": "203.0.113.10",\n  "objective": "balanced",\n  "candidates": [\n    { "engine": "gost", "transport": "tls", "mode": "reverse" },\n    { "engine": "rathole", "transport": "noise", "mode": "reverse" }\n  ]\n}',
+        errorResponse:
+          '{\n  "success": false,\n  "msg": "The benchmark could not run (a benchmark is already running)"\n}',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/tunnels/benchmark/status',
+        summary:
+          "Progress of the current or last benchmark: how many methods are done, the method and step in progress (create, connect, measure or remove), and one result per finished method with its measurement and score (higher is better; 0 for a method that failed, with error saying why). best names the highest score once the run has ended, and cancelled is true when it was stopped. leftover on a result says what a failed cleanup left behind, such as the node's end of a tunnel.",
+        responseSchema: 'RunStatus',
+      },
+      {
+        method: 'POST',
+        path: '/panel/api/tunnels/benchmark/cancel',
+        summary:
+          'Stop the running benchmark after the tunnel being measured is removed. Results so far are kept. Does nothing when no benchmark runs.',
+      },
+      {
         method: 'GET',
         path: '/panel/api/tunnels/engine',
         summary:

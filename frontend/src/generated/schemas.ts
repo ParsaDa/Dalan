@@ -1866,6 +1866,29 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "Candidate": {
+    "description": "Candidate is one method to try: an engine, one of its transports and the direction of the tunnel.",
+    "properties": {
+      "engine": {
+        "example": "gost",
+        "type": "string"
+      },
+      "mode": {
+        "example": "reverse",
+        "type": "string"
+      },
+      "transport": {
+        "example": "tls",
+        "type": "string"
+      }
+    },
+    "required": [
+      "engine",
+      "mode",
+      "transport"
+    ],
+    "type": "object"
+  },
   "Client": {
     "description": "Client represents a client configuration for Xray inbounds with traffic limits and settings.",
     "properties": {
@@ -3916,6 +3939,101 @@ export const SCHEMAS: Record<string, unknown> = {
     ],
     "type": "object"
   },
+  "Measurement": {
+    "description": "Measurement is what one speed test through a tunnel reports.",
+    "properties": {
+      "downMbps": {
+        "example": 92.4,
+        "type": "number"
+      },
+      "jitterMs": {
+        "example": 3.2,
+        "type": "number"
+      },
+      "pingMs": {
+        "example": 84.5,
+        "type": "number"
+      },
+      "upMbps": {
+        "example": 41.7,
+        "type": "number"
+      }
+    },
+    "required": [
+      "downMbps",
+      "jitterMs",
+      "pingMs",
+      "upMbps"
+    ],
+    "type": "object"
+  },
+  "MethodResult": {
+    "description": "MethodResult is the outcome for one candidate; Score is zero for a failure.",
+    "properties": {
+      "connectMs": {
+        "example": 2100,
+        "format": "int64",
+        "type": "integer"
+      },
+      "downMbps": {
+        "example": 92.4,
+        "type": "number"
+      },
+      "engine": {
+        "example": "gost",
+        "type": "string"
+      },
+      "error": {
+        "type": "string"
+      },
+      "jitterMs": {
+        "example": 3.2,
+        "type": "number"
+      },
+      "leftover": {
+        "type": "string"
+      },
+      "mode": {
+        "example": "reverse",
+        "type": "string"
+      },
+      "ok": {
+        "example": true,
+        "type": "boolean"
+      },
+      "pingMs": {
+        "example": 84.5,
+        "type": "number"
+      },
+      "score": {
+        "example": 88.4,
+        "type": "number"
+      },
+      "transport": {
+        "example": "tls",
+        "type": "string"
+      },
+      "upMbps": {
+        "example": 41.7,
+        "type": "number"
+      }
+    },
+    "required": [
+      "connectMs",
+      "downMbps",
+      "engine",
+      "error",
+      "jitterMs",
+      "leftover",
+      "mode",
+      "ok",
+      "pingMs",
+      "score",
+      "transport",
+      "upMbps"
+    ],
+    "type": "object"
+  },
   "Msg": {
     "properties": {
       "msg": {
@@ -4977,6 +5095,67 @@ export const SCHEMAS: Record<string, unknown> = {
       "tls13",
       "tlsVersion",
       "x25519"
+    ],
+    "type": "object"
+  },
+  "RunStatus": {
+    "description": "RunStatus is a snapshot that is safe to hold while a run goes on.",
+    "properties": {
+      "best": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Candidate"
+          }
+        ],
+        "nullable": true
+      },
+      "cancelled": {
+        "example": false,
+        "type": "boolean"
+      },
+      "current": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Candidate"
+          }
+        ],
+        "nullable": true
+      },
+      "done": {
+        "example": 4,
+        "type": "integer"
+      },
+      "objective": {
+        "example": "balanced",
+        "type": "string"
+      },
+      "phase": {
+        "example": "measure",
+        "type": "string"
+      },
+      "results": {
+        "items": {
+          "$ref": "#/components/schemas/MethodResult"
+        },
+        "type": "array"
+      },
+      "running": {
+        "example": true,
+        "type": "boolean"
+      },
+      "total": {
+        "example": 12,
+        "type": "integer"
+      }
+    },
+    "required": [
+      "cancelled",
+      "done",
+      "objective",
+      "phase",
+      "results",
+      "running",
+      "total"
     ],
     "type": "object"
   },

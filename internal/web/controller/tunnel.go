@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/benchmark"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/forwarder"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/service"
@@ -20,10 +22,18 @@ type TunnelController struct {
 	tunnelService service.TunnelService
 	poolService   service.TunnelPoolService
 	speedtest     speedtestRunner
+	benchmark     benchmarkRunner
+}
+
+// benchmarkRunner is the benchmark service as the routes use it.
+type benchmarkRunner interface {
+	Start(req service.BenchmarkRequest) error
+	Cancel()
+	Status() benchmark.RunStatus
 }
 
 func NewTunnelController(g *gin.RouterGroup) *TunnelController {
-	a := &TunnelController{speedtest: service.NewSpeedtestService()}
+	a := &TunnelController{speedtest: service.NewSpeedtestService(), benchmark: service.NewBenchmarkService()}
 	a.initRouter(g)
 	return a
 }
@@ -39,6 +49,7 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.GET("/pools/list", a.poolList)
 	g.GET("/speedtest/status/:id", a.speedtestStatus)
 	g.GET("/speedtest/history/:id", a.speedtestHistory)
+	g.GET("/benchmark/status", a.benchmarkStatus)
 
 	g.POST("/add", a.add)
 	g.POST("/import", a.importLink)
@@ -52,6 +63,8 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.POST("/dial", a.dial)
 	g.POST("/routetest", a.routeTest)
 	g.POST("/speedtest/start/:id", a.speedtestStart)
+	g.POST("/benchmark/start", a.benchmarkStart)
+	g.POST("/benchmark/cancel", a.benchmarkCancel)
 	g.POST("/pools/add", a.poolAdd)
 	g.POST("/pools/del/:id", a.poolDel)
 }
@@ -178,6 +191,10 @@ func (a *TunnelController) add(c *gin.Context) {
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), err)
+		return
+	}
+	if strings.HasPrefix(req.Name, benchmark.NamePrefix) {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.add"), errors.New("names starting with "+benchmark.NamePrefix+" are kept for benchmark tunnels"))
 		return
 	}
 	spec := tunnel.PortalSpec{
@@ -420,4 +437,26 @@ func (a *TunnelController) speedtestHistory(c *gin.Context) {
 		history, err := a.speedtest.History(id)
 		jsonObj(c, history, err)
 	}
+}
+
+func (a *TunnelController) benchmarkStart(c *gin.Context) {
+	var req service.BenchmarkRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.benchmark"), err)
+		return
+	}
+	if err := a.benchmark.Start(req); err != nil {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.benchmark"), err)
+		return
+	}
+	jsonObj(c, nil, nil)
+}
+
+func (a *TunnelController) benchmarkCancel(c *gin.Context) {
+	a.benchmark.Cancel()
+	jsonObj(c, nil, nil)
+}
+
+func (a *TunnelController) benchmarkStatus(c *gin.Context) {
+	jsonObj(c, a.benchmark.Status(), nil)
 }
