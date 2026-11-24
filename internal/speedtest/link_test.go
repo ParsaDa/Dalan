@@ -2,6 +2,7 @@ package speedtest
 
 import (
 	"context"
+	"errors"
 	"net"
 	"strings"
 	"sync"
@@ -100,5 +101,75 @@ func TestResponderStopsWhenItsContextEnds(t *testing.T) {
 	}
 	if _, err := net.DialTimeout("tcp", ln.Addr().String(), time.Second); err == nil {
 		t.Fatal("the listener still accepts after the responder stopped")
+	}
+}
+
+func listenAndHandle(t *testing.T, handle func(net.Conn)) string {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { ln.Close() })
+	go func() {
+		for {
+			c, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			go handle(c)
+		}
+	}()
+	return ln.Addr().String()
+}
+
+func TestAnExitEndThatHangsUpOnTheTestSaysNothingListensThere(t *testing.T) {
+	addr := listenAndHandle(t, func(c net.Conn) { c.Close() })
+	dial := func(ctx context.Context, network, a string) (net.Conn, error) {
+		return (&net.Dialer{}).DialContext(ctx, network, a)
+	}
+
+	_, err := Run(context.Background(), linkConfig(addr, dial), nil)
+
+	if !errors.Is(err, ErrNoAnswer) {
+		t.Fatalf("err = %v, want it to be ErrNoAnswer", err)
+	}
+	if !strings.Contains(err.Error(), "closed the connection") || !strings.Contains(err.Error(), "Dalan version") {
+		t.Fatalf("err = %q, want the hang-up and the version the exit server needs", err)
+	}
+}
+
+func TestAnExitEndThatNeverRepliesSaysItWaitedInsteadOfShowingARawTimeout(t *testing.T) {
+	old := linkPingWait
+	linkPingWait = 150 * time.Millisecond
+	t.Cleanup(func() { linkPingWait = old })
+	addr := listenAndHandle(t, func(c net.Conn) { time.Sleep(2 * time.Second); c.Close() })
+	dial := func(ctx context.Context, network, a string) (net.Conn, error) {
+		return (&net.Dialer{}).DialContext(ctx, network, a)
+	}
+
+	start := time.Now()
+	_, err := Run(context.Background(), linkConfig(addr, dial), nil)
+
+	if !errors.Is(err, ErrNoAnswer) {
+		t.Fatalf("err = %v, want it to be ErrNoAnswer", err)
+	}
+	if strings.Contains(err.Error(), "i/o timeout") || !strings.Contains(err.Error(), "no reply") {
+		t.Fatalf("err = %q, want a plain no-reply message, not the raw socket error", err)
+	}
+	if time.Since(start) > time.Second {
+		t.Fatalf("took %v, the first ping must give up after one wait", time.Since(start))
+	}
+}
+
+func TestACancelledRunIsNotReportedAsTheExitEndNotAnswering(t *testing.T) {
+	addr := listenAndHandle(t, func(c net.Conn) { time.Sleep(2 * time.Second); c.Close() })
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	_, err := Run(ctx, linkConfig(addr, nil), nil)
+
+	if errors.Is(err, ErrNoAnswer) {
+		t.Fatalf("err = %v, a cancelled run says nothing about the exit server", err)
 	}
 }

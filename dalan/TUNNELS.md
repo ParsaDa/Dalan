@@ -129,7 +129,7 @@ It is behind the **Advanced engines** switch on the Tunnels page, because it cha
 
 **Compare methods** (a button on the Tunnels page, shown when a node is connected) finds out which method works best between this server and a node. For every method you pick it makes a temporary tunnel named `dalan-bench-<n>` on both servers, waits until it connects, measures the speed between the two servers through it (the speed test above), and removes it. The result is a table ranked by a score; **Use this method** copies the best row into the new-tunnel dialog.
 
-- Choose the node, this server's address as the node reaches it (reverse methods need it), the direction (reverse, direct or both) and the engines. At most 60 methods run in one run, and a run can take several minutes. The dialog scrolls, and its Start or Stop button and the progress stay at the bottom.
+- Choose the node, this server's address as the node reaches it (reverse methods need it), the direction (reverse, direct or both) and the engines. There is no limit on the number of methods, and a run can take several minutes. If the exit server gives no answer to the speed test for three methods in a row, the run stops and says why; the usual cause is a node that does not run this Dalan version yet. The dialog scrolls, and its Start or Stop button and the progress stay at the bottom.
 - **Rank by** *Speed* weighs download 70% and upload 30%. *Balanced* weighs throughput 50%, ping 30% and jitter 20%. A method that fails to connect or measure scores 0 and shows the reason.
 - One run goes at a time on a panel, and **Stop** cancels it after the current method.
 - A temporary tunnel that cannot be removed is listed as *Left behind*. Tunnels named `dalan-bench-*` that a crash left are deleted when the panel starts.
@@ -146,7 +146,7 @@ The speed test button (the lightning bolt) on an entry tunnel's row measures the
 How it works: every exit end of a tunnel answers speed tests on a loopback port of its own (the tunnel's relay port plus 1000, in 64400-65399). The entry end sends and receives bytes there through the relay, so the numbers are what the tunnel carries.
 
 - Only an enabled reverse entry tunnel (BackPack, Rakhsh or a forwarding engine) can be tested. An exit end, a direct tunnel (it has no relay) and a management tunnel are refused.
-- The exit server must run a Dalan version that has this test (0.7.0 or newer). An older one is reported as not answering the speed test.
+- The exit server must run a Dalan version that has this test (0.7.0 or newer). An older one is reported as not answering the speed test, and the message says whether nothing listens there or nothing replied within 5 seconds.
 - One speed test runs at a time on a panel. Starting the same tunnel again joins the running test; starting another tunnel waits until it ends.
 - The Speed test card on the dashboard still measures this server itself against speedtest.net and does not go through any tunnel.
 

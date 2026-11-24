@@ -249,18 +249,13 @@ func TestStartRefusesASecondRunWhileOneIsGoingOn(t *testing.T) {
 
 func TestStartRejectsARequestThatCannotRun(t *testing.T) {
 	ok := Candidate{Engine: "gost", Transport: "tls", Mode: "reverse"}
-	tooMany := make([]Candidate, MaxCandidates+1)
-	for i := range tooMany {
-		tooMany[i] = ok
-	}
 	for name, tc := range map[string]struct {
 		objective  Objective
 		candidates []Candidate
 		want       string
 	}{
 		"unknown objective": {"fastest", []Candidate{ok}, "unknown objective"},
-		"no methods":        {Speed, nil, "between 1 and"},
-		"too many":          {Speed, tooMany, "between 1 and"},
+		"no methods":        {Speed, nil, "at least one method"},
 		"no engine":         {Speed, []Candidate{{Transport: "tls", Mode: "reverse"}}, "incomplete method"},
 		"no transport":      {Speed, []Candidate{{Engine: "gost", Mode: "reverse"}}, "incomplete method"},
 		"bad mode":          {Speed, []Candidate{{Engine: "gost", Transport: "tls", Mode: "both"}}, "incomplete method"},
@@ -285,5 +280,82 @@ func TestStatusIsACopyThatLaterProgressDoesNotChange(t *testing.T) {
 	s.Results[0].Error = "changed by the caller"
 	if r.Status().Results[0].Error != "" {
 		t.Fatal("editing a returned status changed the runner's own results")
+	}
+}
+
+func TestAnyNumberOfMethodsCanBeStarted(t *testing.T) {
+	f := newFakeServers()
+	r := f.runner()
+	many := make([]Candidate, 150)
+	for i := range many {
+		many[i] = Candidate{Engine: "gost", Transport: "tls", Mode: "reverse"}
+	}
+
+	if err := r.Start(Speed, many); err != nil {
+		t.Fatalf("Start with %d methods = %v", len(many), err)
+	}
+	s := waitDone(t, r)
+
+	if s.Total != 150 || s.Done != 150 {
+		t.Fatalf("total/done = %d/%d, want 150/150", s.Total, s.Done)
+	}
+}
+
+func TestRunStopsWhenTheExitServerAnswersNoMethodThreeTimesInARow(t *testing.T) {
+	f := newFakeServers()
+	f.measure = func(context.Context, int) (Measurement, error) {
+		return Measurement{}, Unanswered(errors.New("nothing came back from the exit server"))
+	}
+	r := f.runner()
+	many := make([]Candidate, 10)
+	for i := range many {
+		many[i] = Candidate{Engine: "gost", Transport: "tls", Mode: "reverse"}
+	}
+
+	if err := r.Start(Speed, many); err != nil {
+		t.Fatal(err)
+	}
+	s := waitDone(t, r)
+
+	if len(s.Results) != 3 {
+		t.Fatalf("results = %d, want the run to stop after 3", len(s.Results))
+	}
+	last := s.Results[2].Error
+	if !strings.Contains(last, "nothing came back from the exit server") || !strings.Contains(last, "stopped") {
+		t.Fatalf("last error = %q, want the cause and that the run was stopped", last)
+	}
+	if strings.Contains(s.Results[0].Error, "stopped") {
+		t.Fatalf("first error = %q, only the last one says the run stopped", s.Results[0].Error)
+	}
+	for _, c := range f.callList() {
+		if strings.HasPrefix(c, "create dalan-bench-4") {
+			t.Fatal("a fourth method was tried after the run should have stopped")
+		}
+	}
+}
+
+func TestAnAnswerInBetweenStartsTheCountOfSilentMethodsOver(t *testing.T) {
+	f := newFakeServers()
+	calls := 0
+	f.measure = func(context.Context, int) (Measurement, error) {
+		calls++
+		if calls%3 == 0 {
+			return Measurement{PingMs: 50, DownMbps: 100, UpMbps: 50}, nil
+		}
+		return Measurement{}, Unanswered(errors.New("silent"))
+	}
+	r := f.runner()
+	many := make([]Candidate, 9)
+	for i := range many {
+		many[i] = Candidate{Engine: "gost", Transport: "tls", Mode: "reverse"}
+	}
+
+	if err := r.Start(Speed, many); err != nil {
+		t.Fatal(err)
+	}
+	s := waitDone(t, r)
+
+	if len(s.Results) != 9 {
+		t.Fatalf("results = %d, want all 9 tried: never 3 silent ones in a row", len(s.Results))
 	}
 }

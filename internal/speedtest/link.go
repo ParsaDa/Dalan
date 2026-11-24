@@ -2,6 +2,7 @@ package speedtest
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -20,8 +21,20 @@ const (
 
 	linkMaxSession = 40 * time.Second
 	linkMaxConns   = 64
-	linkPingWait   = 10 * time.Second
 )
+
+// linkPingWait is how long one ping may wait for its echo; a variable so a test can shorten it.
+var linkPingWait = 5 * time.Second
+
+// ErrNoAnswer marks a link speed test that failed because the exit server's responder gave no answer.
+var ErrNoAnswer = errors.New("the exit server gave no answer to the speed test")
+
+type noAnswer struct{ msg string }
+
+func (n noAnswer) Error() string        { return n.msg }
+func (n noAnswer) Is(target error) bool { return target == ErrNoAnswer }
+
+const needsDalan = "the exit server must run a Dalan version with the link speed test"
 
 // ServeLink answers speed tests on ln until ctx ends: one command byte, then echoes (ping), sends (download)
 // or discards (upload) until the client hangs up or the session limit passes.
@@ -91,13 +104,13 @@ func dialLink(ctx context.Context, cfg Config, cmd byte) (net.Conn, func(), erro
 	}
 	conn, err := dial(ctx, "tcp", cfg.LinkAddr)
 	if err != nil {
-		return nil, nil, fmt.Errorf("the exit server does not answer the speed test (it needs a Dalan version with this test): %w", err)
+		return nil, nil, noAnswer{fmt.Sprintf("the exit server does not answer the speed test (%s): %v", needsDalan, err)}
 	}
 	stop := context.AfterFunc(ctx, func() { _ = conn.Close() })
 	release := func() { stop(); _ = conn.Close() }
 	if _, err := conn.Write([]byte{cmd}); err != nil {
 		release()
-		return nil, nil, fmt.Errorf("the exit server does not answer the speed test: %w", err)
+		return nil, nil, noAnswer{fmt.Sprintf("the exit server does not answer the speed test (%s): %v", needsDalan, err)}
 	}
 	return conn, release, nil
 }
@@ -152,7 +165,11 @@ func linkErr(ctx context.Context, err error) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	return fmt.Errorf("the exit server does not answer the speed test: %w", err)
+	var timeout net.Error
+	if errors.As(err, &timeout) && timeout.Timeout() {
+		return noAnswer{fmt.Sprintf("the exit server accepted the speed test but sent no reply in %s (%s)", linkPingWait, needsDalan)}
+	}
+	return noAnswer{fmt.Sprintf("the exit server closed the connection to the speed test, so nothing listens for it there (%s): %v", needsDalan, err)}
 }
 
 // linkWorker moves bytes over sessions with the responder: reads for a download, writes for an upload.

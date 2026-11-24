@@ -3414,7 +3414,6 @@
       "both": "هر دو",
       "engines": "موتورها",
       "methods": "{count} روش",
-      "tooMany": "در هر اجرا حداکثر {max} روش.",
       "start": "شروع",
       "stop": "توقف",
       "progress": "{done} از {total} انجام شد",
