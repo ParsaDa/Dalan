@@ -4,6 +4,7 @@ package tunnel
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/backpack"
+	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/forwarder"
 	"github.com/mhsanaei/3x-ui/v3/internal/tunnel/rakhsh"
 )
 
@@ -28,6 +30,8 @@ const (
 	setupLinkBackpackOptions = 3
 	// Version 4 describes Rakhsh tunnels and carries the exit end's secret key.
 	setupLinkRakhsh = 4
+	// Version 5 describes a tunnel on a forwarding engine: its name, shared secret, relay port and forwards.
+	setupLinkForwarder = 5
 )
 
 var errNotASetupLink = errors.New("not a Dalan tunnel link")
@@ -41,7 +45,7 @@ type PortalSpec struct {
 	Address string
 	Port    int
 
-	// Engine is "backpack" when empty. For Rakhsh, Transport is the carrier.
+	// Engine is "backpack" when empty. For Rakhsh and the forwarding engines, Transport is the carrier.
 	Engine             string
 	Transport          string
 	FallbackTransports []string
@@ -68,6 +72,11 @@ type setupPayload struct {
 	// RakhshSecret is the exit end's secret key and RakhshPeer the entry's public key; the link is a secret.
 	RakhshSecret string `json:"rakhshSecret,omitempty"`
 	RakhshPeer   string `json:"rakhshPeer,omitempty"`
+
+	// Engine, EngineSecret and ForwardPorts describe a tunnel on a forwarding engine; the link is a secret.
+	Engine       string   `json:"engine,omitempty"`
+	EngineSecret string   `json:"engineSecret,omitempty"`
+	ForwardPorts []string `json:"forwardPorts,omitempty"`
 }
 
 func validateEndpoint(name, address string, port int) error {
@@ -168,8 +177,39 @@ func NewPortal(spec PortalSpec) (model.ServerTunnel, error) {
 	case model.TunnelEngineRakhsh:
 		return newRakhshPortal(portal, spec)
 	default:
+		if _, ok := forwarder.ByID(spec.Engine); ok {
+			return newForwarderPortal(portal, spec)
+		}
 		return model.ServerTunnel{}, fmt.Errorf("tunnel engine %q is not supported", spec.Engine)
 	}
+}
+
+func newForwarderPortal(portal model.ServerTunnel, spec PortalSpec) (model.ServerTunnel, error) {
+	portal.Engine, portal.Transport = spec.Engine, spec.Transport
+	portal.ForwardPorts = spec.ForwardPorts
+	portal.Options = maps.Clone(spec.Options)
+	switch spec.Mode {
+	case "", model.TunnelModeReverse:
+		portal.Mode = model.TunnelModeReverse
+	case model.TunnelModeDirect:
+		portal.Mode = model.TunnelModeDirect
+	default:
+		return model.ServerTunnel{}, fmt.Errorf("tunnel mode %q is not supported", spec.Mode)
+	}
+	relay, err := backpack.NewRelayPort()
+	if err != nil {
+		return model.ServerTunnel{}, err
+	}
+	portal.RelayPort = relay
+	secret := make([]byte, 32)
+	if _, err := rand.Read(secret); err != nil {
+		return model.ServerTunnel{}, err
+	}
+	portal.EngineSecret = hex.EncodeToString(secret)
+	if err := forwarder.Validate(portal); err != nil {
+		return model.ServerTunnel{}, err
+	}
+	return portal, nil
 }
 
 func newRakhshPortal(portal model.ServerTunnel, spec PortalSpec) (model.ServerTunnel, error) {
@@ -231,6 +271,13 @@ func SetupLink(portal model.ServerTunnel) (string, error) {
 			payload.Version = setupLinkBackpackOptions
 			payload.Mode, payload.Options = portal.Mode, portal.Options
 		}
+	}
+	if _, ok := forwarder.ByID(portal.Engine); ok {
+		payload.Version = setupLinkForwarder
+		payload.Engine, payload.Transport = portal.Engine, portal.Transport
+		payload.Mode, payload.Options = portal.Mode, portal.Options
+		payload.RelayPort, payload.ForwardPorts = portal.RelayPort, portal.ForwardPorts
+		payload.EngineSecret = portal.EngineSecret
 	}
 	if portal.Engine == model.TunnelEngineRakhsh {
 		bridgeSecret, err := rakhsh.BridgeSecret(portal.RakhshSecret, portal.UUID)
@@ -316,8 +363,10 @@ func ParseSetupLink(link string) (model.ServerTunnel, error) {
 		}
 	case setupLinkRakhsh:
 		return parseRakhshLink(bridge, p)
+	case setupLinkForwarder:
+		return parseForwarderLink(bridge, p)
 	default:
-		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands versions %d to %d", p.Version, setupLinkBackpack, setupLinkRakhsh)
+		return model.ServerTunnel{}, fmt.Errorf("tunnel link is version %d; this panel understands versions %d to %d", p.Version, setupLinkBackpack, setupLinkForwarder)
 	}
 	return bridge, nil
 }
@@ -338,6 +387,23 @@ func parseRakhshLink(bridge model.ServerTunnel, p setupPayload) (model.ServerTun
 	bridge.RakhshSecret, bridge.RakhshPeerPublic = p.RakhshSecret, p.RakhshPeer
 	// Rendering is the engine's own validation of the keys, the carrier and the options.
 	if _, err := rakhsh.RenderConfig(bridge, ""); err != nil {
+		return model.ServerTunnel{}, err
+	}
+	return bridge, nil
+}
+
+func parseForwarderLink(bridge model.ServerTunnel, p setupPayload) (model.ServerTunnel, error) {
+	if p.RelayPort < backpack.RelayPortMin || p.RelayPort > backpack.RelayPortMax {
+		return model.ServerTunnel{}, fmt.Errorf("tunnel link has a relay port outside %d-%d", backpack.RelayPortMin, backpack.RelayPortMax)
+	}
+	if p.Mode != model.TunnelModeReverse && p.Mode != model.TunnelModeDirect {
+		return model.ServerTunnel{}, fmt.Errorf("tunnel link has the unknown mode %q", p.Mode)
+	}
+	bridge.Engine, bridge.Transport, bridge.Mode = p.Engine, p.Transport, p.Mode
+	bridge.RelayPort, bridge.ForwardPorts, bridge.Options = p.RelayPort, p.ForwardPorts, p.Options
+	bridge.EngineSecret = p.EngineSecret
+	// Rendering both ends is the engine's own validation of the carrier, the secret and the forwards.
+	if err := forwarder.Validate(bridge); err != nil {
 		return model.ServerTunnel{}, err
 	}
 	return bridge, nil

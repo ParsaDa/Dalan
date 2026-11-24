@@ -1,5 +1,5 @@
 // Package forwarder runs server tunnels on engines that carry a loopback port from the entry end to the
-// exit end: GOST, Rathole, Backhaul, sing-box, Xray, Kariz and Dagger. Each is one Engine in the registry.
+// exit end: GOST, Rathole, Backhaul, sing-box, Xray, and Kariz. Each is one Engine in the registry.
 package forwarder
 
 import (

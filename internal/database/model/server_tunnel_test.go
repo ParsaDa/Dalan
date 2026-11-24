@@ -18,7 +18,6 @@ func TestExternalEngineNamesTheEnginesRunAsOwnProcesses(t *testing.T) {
 		TunnelEngineSingbox:  true,
 		TunnelEngineXrayCore: true,
 		TunnelEngineKariz:    true,
-		TunnelEngineDagger:   true,
 	} {
 		if got := ExternalEngine(engine); got != want {
 			t.Errorf("ExternalEngine(%q) = %v, want %v", engine, got, want)

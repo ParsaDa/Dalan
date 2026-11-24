@@ -12,7 +12,6 @@ const (
 	TunnelEngineSingbox  = "singbox"
 	TunnelEngineXrayCore = "xraycore"
 	TunnelEngineKariz    = "kariz"
-	TunnelEngineDagger   = "dagger"
 
 	TunnelModeReverse = "reverse"
 	TunnelModeDirect  = "direct"
@@ -22,7 +21,7 @@ const (
 func ExternalEngine(engine string) bool {
 	switch engine {
 	case TunnelEngineBackpack, TunnelEngineRakhsh, TunnelEngineGost, TunnelEngineRathole, TunnelEngineBackhaul,
-		TunnelEngineSingbox, TunnelEngineXrayCore, TunnelEngineKariz, TunnelEngineDagger:
+		TunnelEngineSingbox, TunnelEngineXrayCore, TunnelEngineKariz:
 		return true
 	}
 	return false
@@ -60,8 +59,8 @@ type ServerTunnel struct {
 	RakhshSecret     string `json:"-" gorm:"column:rakhsh_secret"`
 	RakhshPeerPublic string `json:"rakhshPeerPublic" gorm:"column:rakhsh_peer_public" example:"MzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM="`
 
-	// EngineSecret is the token or password both ends of a GOST, Rathole, Backhaul, sing-box, Xray, Kariz or
-	// Dagger tunnel share; the setup link carries it.
+	// EngineSecret is the token or password both ends of a GOST, Rathole, Backhaul, sing-box, Xray or
+	// Kariz tunnel share; the setup link carries it.
 	EngineSecret string `json:"-" gorm:"column:engine_secret"`
 
 	// RouteInbounds (portal) lists the local inbound tags whose traffic leaves through this tunnel.

@@ -105,7 +105,7 @@ func TestBackpackPortalsNeedAKnownTransportAndEngine(t *testing.T) {
 	}{
 		{"unknown transport", func(s *PortalSpec) { s.Transport = "smoke" }, "transport"},
 		{"unknown fallback", func(s *PortalSpec) { s.FallbackTransports = []string{"smoke"} }, "transport"},
-		{"unknown engine", func(s *PortalSpec) { s.Engine = "gost" }, "engine"},
+		{"unknown engine", func(s *PortalSpec) { s.Engine = "nonesuch" }, "engine"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -360,8 +360,8 @@ func TestParseSetupLinkRefusesARakhshLinkItCannotUse(t *testing.T) {
 	}
 	future := map[string]any{"v": 9, "name": "a", "address": "203.0.113.10", "port": 8443, "uuid": portal.UUID}
 	raw, _ := json.Marshal(future)
-	if _, err := ParseSetupLink("dalan://tunnel/" + base64.RawURLEncoding.EncodeToString(raw)); err == nil || !strings.Contains(err.Error(), "versions 2 to 4") {
-		t.Fatalf("a version 9 link gave %v, want one that says this panel understands versions 2 to 4", err)
+	if _, err := ParseSetupLink("dalan://tunnel/" + base64.RawURLEncoding.EncodeToString(raw)); err == nil || !strings.Contains(err.Error(), "versions 2 to 5") {
+		t.Fatalf("a version 9 link gave %v, want one that says this panel understands versions 2 to 5", err)
 	}
 }
 
@@ -413,7 +413,7 @@ func TestParseSetupLinkRefusesAnXrayVersionOneLink(t *testing.T) {
 	link := "dalan://tunnel/" + base64.RawURLEncoding.EncodeToString([]byte(
 		`{"v":1,"name":"a","address":"203.0.113.10","port":8443,"uuid":"8d6f3a0e-5c1b-4f0e-9a51-2f6d1c7b9e10","security":"none"}`))
 	_, err := ParseSetupLink(link)
-	want := "tunnel link is version 1; this panel understands versions 2 to 4"
+	want := "tunnel link is version 1; this panel understands versions 2 to 5"
 	if err == nil || err.Error() != want {
 		t.Fatalf("ParseSetupLink of an Xray link: err = %v, want %q", err, want)
 	}
