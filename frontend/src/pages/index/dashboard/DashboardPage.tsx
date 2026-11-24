@@ -769,6 +769,7 @@ export default function DashboardPage({ tools }: { tools?: ReactNode }) {
           <NodeView node={active} nodes={nodes} />
         ) : (
           <div className="grid">
+            {!simple && tools}
             <HealthTile restart={xray.start} />
             <TunnelsTile nodes={refs} />
             <UsageTile online={online} rate={rate} spark={spark} />
@@ -815,7 +816,6 @@ export default function DashboardPage({ tools }: { tools?: ReactNode }) {
                 </div>
               </section>
             )}
-            {!simple && tools}
           </div>
         )}
       </div>
