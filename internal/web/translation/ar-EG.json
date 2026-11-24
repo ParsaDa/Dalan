@@ -3397,6 +3397,39 @@
       "open": "Speed test",
       "title": "Speed test of {name}",
       "hint": "The test goes through this tunnel: its connections leave from the exit server, so the result is the tunnel's speed to the internet. Tests run one at a time."
+    },
+    "benchmark": {
+      "open": "Compare methods",
+      "title": "Compare tunnel methods",
+      "hint": "Each method is tried between this server and a node with a temporary tunnel: it is made on both ends, measured, then removed. A run can take several minutes.",
+      "node": "Node",
+      "address": "This server's address",
+      "addressHint": "How the node reaches this server. Reverse methods need it.",
+      "objective": "Rank by",
+      "speed": "Speed",
+      "balanced": "Balanced",
+      "direction": "Direction",
+      "both": "Both",
+      "engines": "Engines",
+      "methods": "{count} methods",
+      "tooMany": "At most {max} methods per run.",
+      "start": "Start",
+      "stop": "Stop",
+      "progress": "{done} of {total} done",
+      "phase": {
+        "create": "Creating the tunnel",
+        "connect": "Waiting for it to connect",
+        "measure": "Measuring",
+        "remove": "Removing the tunnel"
+      },
+      "colMethod": "Method",
+      "colDown": "Down (Mbps)",
+      "colUp": "Up (Mbps)",
+      "colPing": "Ping (ms)",
+      "colScore": "Score",
+      "best": "Best",
+      "use": "Use this method",
+      "leftover": "Left behind: {what}"
     }
   },
   "outbounds": {

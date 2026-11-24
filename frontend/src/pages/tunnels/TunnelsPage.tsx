@@ -12,6 +12,7 @@ import { Btn, Chip, Empty as DlEmpty, FlagDot, Sk, TileHead } from '@/components
 import { fmtInt } from '@/components/dl/numbers';
 import { EngineCard, FlowArrow, TunnelCard, TunnelRow } from './TunnelParts';
 import PortTest from './PortTest';
+import { TunnelBenchmark, type BenchmarkPick } from './TunnelBenchmark';
 import { TunnelSpeedtest } from './TunnelSpeedtest';
 import TunnelEditModal from './TunnelEditModal';
 import TunnelOptionFields, { TunnelOptionField, cleanOptions } from './TunnelOptionFields';
@@ -96,6 +97,7 @@ export default function TunnelsPage() {
 
   const [portalOpen, setPortalOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [benchmarkOpen, setBenchmarkOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [portalForm] = Form.useForm<PortalFormValues>();
   const [importForm] = Form.useForm<{ link: string; exitOutbound?: string }>();
@@ -204,6 +206,18 @@ export default function TunnelsPage() {
     }
   };
 
+  const applyBenchmarkMethod = ({ candidate, nodeId, address }: BenchmarkPick) => {
+    setBenchmarkOpen(false);
+    setPortalOpen(true);
+    portalForm.setFieldsValue({
+      engine: candidate.engine as TunnelEngine,
+      mode: candidate.mode as TunnelMode,
+      transport: candidate.transport,
+      nodeId,
+      address,
+    });
+  };
+
   const submitImport = async () => {
     const values = await importForm.validateFields();
     setSaving(true);
@@ -290,6 +304,11 @@ export default function TunnelsPage() {
           <Btn icon="refresh" onClick={testAll}>
             {t('tunnels.testAll')}
           </Btn>
+          {nodes.length > 0 && (
+            <Btn icon="bolt" onClick={() => setBenchmarkOpen(true)}>
+              {t('tunnels.benchmark.open')}
+            </Btn>
+          )}
           <Btn icon="down" onClick={() => setImportOpen(true)}>
             {t('pages.tunnels.importLink')}
           </Btn>
@@ -543,6 +562,13 @@ export default function TunnelsPage() {
       )}
 
       <TunnelSpeedtest tunnel={speedtesting} onClose={() => setSpeedtesting(null)} />
+      <TunnelBenchmark
+        open={benchmarkOpen}
+        nodes={nodes.map((n) => ({ id: n.id, name: n.name ?? '', enable: n.enable ?? false }))}
+        catalog={forwardingEngines}
+        onUse={applyBenchmarkMethod}
+        onClose={() => setBenchmarkOpen(false)}
+      />
       <DlModal
         open={deleting !== null}
         onClose={() => setDeleting(null)}
