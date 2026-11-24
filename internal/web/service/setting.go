@@ -115,6 +115,7 @@ var defaultValueMap = map[string]string{
 	"serverCountry":               "",
 	"serverAddress":               "",
 	"accent":                      "",
+	"speedtestHistory":            "[]",
 	"setupDone":                   "false",
 	"subSupportUrl":               "",
 	"subProfileMode":              SubProfileModeNone,

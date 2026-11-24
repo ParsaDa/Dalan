@@ -11,6 +11,7 @@ import (
 
 	"github.com/mhsanaei/3x-ui/v3/internal/database/model"
 	"github.com/mhsanaei/3x-ui/v3/internal/logger"
+	"github.com/mhsanaei/3x-ui/v3/internal/speedtest"
 	"github.com/mhsanaei/3x-ui/v3/internal/util/netsafe"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/entity"
 	"github.com/mhsanaei/3x-ui/v3/internal/web/global"
@@ -28,6 +29,7 @@ type ServerController struct {
 	BaseController
 
 	serverService      service.ServerService
+	speedtestService   speedtestRunner
 	settingService     service.SettingService
 	panelService       panel.PanelService
 	xrayMetricsService service.XrayMetricsService
@@ -35,7 +37,7 @@ type ServerController struct {
 
 // NewServerController creates a new ServerController, initializes routes, and starts background tasks.
 func NewServerController(g *gin.RouterGroup) *ServerController {
-	a := &ServerController{}
+	a := &ServerController{speedtestService: service.NewSpeedtestService()}
 	service.RestoreSystemMetrics()
 	a.initRouter(g)
 	a.startTask()
@@ -66,7 +68,10 @@ func (a *ServerController) initRouter(g *gin.RouterGroup) {
 	g.GET("/getNewVlessEnc", a.getNewVlessEnc)
 	g.GET("/clientIps", a.getClientIps)
 	g.GET("/fail2banStatus", a.getFail2banStatus)
+	g.GET("/speedtest/status", a.speedtestStatus)
+	g.GET("/speedtest/history", a.speedtestHistory)
 
+	g.POST("/speedtest/start", a.speedtestStart)
 	g.POST("/stopXrayService", a.stopXrayService)
 	g.POST("/restartXrayService", a.restartXrayService)
 	g.POST("/installXray/:version", a.installXray)
@@ -112,6 +117,31 @@ func (a *ServerController) status(c *gin.Context) { jsonObj(c, a.serverService.C
 
 func (a *ServerController) getFail2banStatus(c *gin.Context) {
 	jsonObj(c, a.serverService.GetFail2banStatus(), nil)
+}
+
+// speedtestRunner is the speed-test service as the controller sees it.
+type speedtestRunner interface {
+	Start() error
+	Status() service.SpeedtestStatus
+	History() ([]speedtest.Result, error)
+}
+
+// speedtestStart begins a run; one already in flight is joined, not an error.
+func (a *ServerController) speedtestStart(c *gin.Context) {
+	err := a.speedtestService.Start()
+	if errors.Is(err, service.ErrSpeedtestRunning) {
+		err = nil
+	}
+	jsonObj(c, nil, err)
+}
+
+func (a *ServerController) speedtestStatus(c *gin.Context) {
+	jsonObj(c, a.speedtestService.Status(), nil)
+}
+
+func (a *ServerController) speedtestHistory(c *gin.Context) {
+	history, err := a.speedtestService.History()
+	jsonObj(c, history, err)
 }
 
 func parseHistoryBucket(c *gin.Context) (int, bool) {

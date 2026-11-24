@@ -24,6 +24,19 @@ _openapi:
         Fail2ban being installed.
       url: '#reports-whether-per-client-ip-limits-can-be-enforced-on-this-host-the-panel-uses-it-to-gate-the-ip-limit-field-since-enforcement-depends-on-fail2ban-being-installed'
     - depth: 2
+      title: Start a speed test of this server against speedtest.net. Runs in the
+        background; poll /speedtest/status. Calling it while a run is active
+        joins that run.
+      url: '#start-a-speed-test-of-this-server-against-speedtestnet-runs-in-the-background-poll-speedteststatus-calling-it-while-a-run-is-active-joins-that-run'
+    - depth: 2
+      title: 'Live state of the speed test: phase (servers, ping, download, upload),
+        progress 0-1 and the current rate in Mbps. After a run, result holds the
+        finished measurement or error says why it failed.'
+      url: '#live-state-of-the-speed-test-phase-servers-ping-download-upload-progress-0-1-and-the-current-rate-in-mbps-after-a-run-result-holds-the-finished-measurement-or-error-says-why-it-failed'
+    - depth: 2
+      title: The last 20 finished speed tests of this server, newest first.
+      url: '#the-last-20-finished-speed-tests-of-this-server-newest-first'
+    - depth: 2
       title: 'Legacy: aggregated CPU history. Use /history/cpu/:bucket instead — same
         data with a uniform {t, v} shape.'
       url: '#legacy-aggregated-cpu-history-use-historycpubucket-instead--same-data-with-a-uniform-t-v-shape'
@@ -195,6 +208,16 @@ _openapi:
           panel uses it to gate the "IP Limit" field, since enforcement depends
           on Fail2ban being installed.
         id: reports-whether-per-client-ip-limits-can-be-enforced-on-this-host-the-panel-uses-it-to-gate-the-ip-limit-field-since-enforcement-depends-on-fail2ban-being-installed
+      - content: Start a speed test of this server against speedtest.net. Runs in the
+          background; poll /speedtest/status. Calling it while a run is active
+          joins that run.
+        id: start-a-speed-test-of-this-server-against-speedtestnet-runs-in-the-background-poll-speedteststatus-calling-it-while-a-run-is-active-joins-that-run
+      - content: 'Live state of the speed test: phase (servers, ping, download, upload),
+          progress 0-1 and the current rate in Mbps. After a run, result holds
+          the finished measurement or error says why it failed.'
+        id: live-state-of-the-speed-test-phase-servers-ping-download-upload-progress-0-1-and-the-current-rate-in-mbps-after-a-run-result-holds-the-finished-measurement-or-error-says-why-it-failed
+      - content: The last 20 finished speed tests of this server, newest first.
+        id: the-last-20-finished-speed-tests-of-this-server-newest-first
       - content: 'Legacy: aggregated CPU history. Use /history/cpu/:bucket instead —
           same data with a uniform {t, v} shape.'
         id: legacy-aggregated-cpu-history-use-historycpubucket-instead--same-data-with-a-uniform-t-v-shape
@@ -325,7 +348,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/openapi.json","method":"get"},{"path":"/panel/api/server/status","method":"get"},{"path":"/panel/api/server/fail2banStatus","method":"get"},{"path":"/panel/api/server/cpuHistory/{bucket}","method":"get"},{"path":"/panel/api/server/history/{metric}/{bucket}","method":"get"},{"path":"/panel/api/server/xrayMetricsState","method":"get"},{"path":"/panel/api/server/xrayMetricsHistory/{metric}/{bucket}","method":"get"},{"path":"/panel/api/server/xrayObservatory","method":"get"},{"path":"/panel/api/server/xrayObservatoryHistory/{tag}/{bucket}","method":"get"},{"path":"/panel/api/server/getXrayVersion","method":"get"},{"path":"/panel/api/server/getPanelUpdateInfo","method":"get"},{"path":"/panel/api/server/getUpdateStatus","method":"get"},{"path":"/panel/api/server/getConfigJson","method":"get"},{"path":"/panel/api/server/getDb","method":"get"},{"path":"/panel/api/server/getMigration","method":"get"},{"path":"/panel/api/server/getNewUUID","method":"get"},{"path":"/panel/api/server/getWebCertFiles","method":"get"},{"path":"/panel/api/server/descendants","method":"get"},{"path":"/panel/api/server/getNewX25519Cert","method":"get"},{"path":"/panel/api/server/getNewmldsa65","method":"get"},{"path":"/panel/api/server/getNewmlkem768","method":"get"},{"path":"/panel/api/server/getNewVlessEnc","method":"get"},{"path":"/panel/api/server/stopXrayService","method":"post"},{"path":"/panel/api/server/restartXrayService","method":"post"},{"path":"/panel/api/server/installXray/{version}","method":"post"},{"path":"/panel/api/server/updatePanel","method":"post"},{"path":"/panel/api/server/setUpdateChannel","method":"post"},{"path":"/panel/api/server/updateGeofile","method":"post"},{"path":"/panel/api/server/updateGeofile/{fileName}","method":"post"},{"path":"/panel/api/server/logs/{count}","method":"post"},{"path":"/panel/api/server/xraylogs/{count}","method":"post"},{"path":"/panel/api/server/amneziawglogs/{count}","method":"post"},{"path":"/panel/api/server/importDB","method":"post"},{"path":"/panel/api/server/getNewEchCert","method":"post"},{"path":"/panel/api/server/getCertHash","method":"post"},{"path":"/panel/api/server/getRemoteCertHash","method":"post"},{"path":"/panel/api/server/scanRealityTarget","method":"post"},{"path":"/panel/api/server/scanRealityTargets","method":"post"},{"path":"/panel/api/server/clientIps","method":"get"},{"path":"/panel/api/server/clientIps","method":"post"}]} showTitle />
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/openapi.json","method":"get"},{"path":"/panel/api/server/status","method":"get"},{"path":"/panel/api/server/fail2banStatus","method":"get"},{"path":"/panel/api/server/speedtest/start","method":"post"},{"path":"/panel/api/server/speedtest/status","method":"get"},{"path":"/panel/api/server/speedtest/history","method":"get"},{"path":"/panel/api/server/cpuHistory/{bucket}","method":"get"},{"path":"/panel/api/server/history/{metric}/{bucket}","method":"get"},{"path":"/panel/api/server/xrayMetricsState","method":"get"},{"path":"/panel/api/server/xrayMetricsHistory/{metric}/{bucket}","method":"get"},{"path":"/panel/api/server/xrayObservatory","method":"get"},{"path":"/panel/api/server/xrayObservatoryHistory/{tag}/{bucket}","method":"get"},{"path":"/panel/api/server/getXrayVersion","method":"get"},{"path":"/panel/api/server/getPanelUpdateInfo","method":"get"},{"path":"/panel/api/server/getUpdateStatus","method":"get"},{"path":"/panel/api/server/getConfigJson","method":"get"},{"path":"/panel/api/server/getDb","method":"get"},{"path":"/panel/api/server/getMigration","method":"get"},{"path":"/panel/api/server/getNewUUID","method":"get"},{"path":"/panel/api/server/getWebCertFiles","method":"get"},{"path":"/panel/api/server/descendants","method":"get"},{"path":"/panel/api/server/getNewX25519Cert","method":"get"},{"path":"/panel/api/server/getNewmldsa65","method":"get"},{"path":"/panel/api/server/getNewmlkem768","method":"get"},{"path":"/panel/api/server/getNewVlessEnc","method":"get"},{"path":"/panel/api/server/stopXrayService","method":"post"},{"path":"/panel/api/server/restartXrayService","method":"post"},{"path":"/panel/api/server/installXray/{version}","method":"post"},{"path":"/panel/api/server/updatePanel","method":"post"},{"path":"/panel/api/server/setUpdateChannel","method":"post"},{"path":"/panel/api/server/updateGeofile","method":"post"},{"path":"/panel/api/server/updateGeofile/{fileName}","method":"post"},{"path":"/panel/api/server/logs/{count}","method":"post"},{"path":"/panel/api/server/xraylogs/{count}","method":"post"},{"path":"/panel/api/server/amneziawglogs/{count}","method":"post"},{"path":"/panel/api/server/importDB","method":"post"},{"path":"/panel/api/server/getNewEchCert","method":"post"},{"path":"/panel/api/server/getCertHash","method":"post"},{"path":"/panel/api/server/getRemoteCertHash","method":"post"},{"path":"/panel/api/server/scanRealityTarget","method":"post"},{"path":"/panel/api/server/scanRealityTargets","method":"post"},{"path":"/panel/api/server/clientIps","method":"get"},{"path":"/panel/api/server/clientIps","method":"post"}]} showTitle />
     </>
   );
 }
