@@ -38,7 +38,7 @@ type SpeedtestStatus struct {
 }
 
 // SpeedtestService runs one speed test at a time and keeps the recent results. Target 0 is this server's own
-// connection; any other target is the id of an entry tunnel, tested through that tunnel.
+// connection to speedtest.net; any other target is the id of an entry tunnel, whose speed to its exit server is measured.
 type SpeedtestService struct {
 	run            func(ctx context.Context, tunnelId int, emit func(speedtest.Update)) (speedtest.Result, error)
 	check          func(tunnelId int) error
@@ -60,15 +60,15 @@ func NewSpeedtestService() *SpeedtestService {
 	sharedSpeedtestOnce.Do(func() {
 		var tunnels TunnelService
 		sharedSpeedtest = &SpeedtestService{
-			check: func(id int) error { _, err := tunnels.SpeedtestDial(id); return err },
+			check: func(id int) error { _, _, err := tunnels.SpeedtestLink(id); return err },
 			run: func(ctx context.Context, id int, emit func(speedtest.Update)) (speedtest.Result, error) {
 				cfg := speedtest.DefaultConfig()
 				if id != 0 {
-					dial, err := tunnels.SpeedtestDial(id)
+					dial, addr, err := tunnels.SpeedtestLink(id)
 					if err != nil {
 						return speedtest.Result{}, err
 					}
-					cfg.Dial = dial
+					cfg.Dial, cfg.LinkAddr = dial, addr
 				}
 				return speedtest.Run(ctx, cfg, emit)
 			},
@@ -96,7 +96,11 @@ func (s *SpeedtestService) Start(tunnelId int) error {
 		s.status = map[int]SpeedtestStatus{}
 	}
 	s.busy, s.active = true, tunnelId
-	s.status[tunnelId] = SpeedtestStatus{Running: true, Phase: speedtest.PhaseServers}
+	first := speedtest.PhaseServers
+	if tunnelId != 0 {
+		first = speedtest.PhasePing
+	}
+	s.status[tunnelId] = SpeedtestStatus{Running: true, Phase: first}
 	go s.execute(tunnelId)
 	return nil
 }

@@ -138,3 +138,33 @@ test('a finished run names the best method and fills the new tunnel form with th
     expect(screen.getByLabelText('Transport').closest('.ant-select')?.textContent).toBe('gRPC'),
   );
 });
+
+test('the Start button and the progress stay outside the part of the dialog that scrolls', async () => {
+  benchmarkStatus = {
+    ...idle,
+    running: true,
+    total: 40,
+    done: 3,
+    phase: 'measure',
+    current: { engine: 'gost', transport: 'tls', mode: 'reverse' },
+    results: Array.from({ length: 30 }, (_, i) => method(`t${i}`, 80, 70)),
+  };
+  await openBenchmark();
+  const dialog = await screen.findByRole('dialog');
+  const scroller = await within(dialog).findByTestId('benchmark-scroll');
+
+  expect(scroller.style.overflowY).toBe('auto');
+  expect(within(scroller).getByRole('table')).toBeTruthy();
+  const progress = within(dialog).getByText('3 of 40 done');
+  expect(scroller.contains(progress)).toBe(false);
+  expect(scroller.contains(within(dialog).getByRole('button', { name: 'Stop' }))).toBe(false);
+  expect(dialog.style.maxHeight).not.toBe('');
+});
+
+test('Start is reachable without scrolling, whatever the settings above it hold', async () => {
+  await openBenchmark();
+  const dialog = await screen.findByRole('dialog');
+  const scroller = await within(dialog).findByTestId('benchmark-scroll');
+
+  expect(scroller.contains(within(dialog).getByRole('button', { name: 'Start' }))).toBe(false);
+});

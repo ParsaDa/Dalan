@@ -32,6 +32,10 @@ func NewRelayPort() (int, error) {
 	return RelayPortMin + int(n.Int64()), nil
 }
 
+// ThroughputPort is the loopback port where the exit end of a tunnel answers its speed test; it sits just
+// above the relay range.
+func ThroughputPort(relayPort int) int { return relayPort + 1000 }
+
 // RelayForward is the forwarded-port entry that exposes the relay on loopback at both ends.
 func RelayForward(port int) string { return fmt.Sprintf("127.0.0.1:%d=127.0.0.1:%d", port, port) }
 

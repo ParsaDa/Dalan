@@ -1,4 +1,5 @@
-// Package speedtest measures this machine's ping, download and upload against a speedtest.net server.
+// Package speedtest measures this machine's ping, download and upload against a speedtest.net server,
+// or against the exit end of a tunnel.
 package speedtest
 
 import (
@@ -52,6 +53,9 @@ type Config struct {
 	Candidates   int
 	// Dial, when set, carries every connection (for example through a tunnel); the far end then refuses internal targets.
 	Dial func(ctx context.Context, network, addr string) (net.Conn, error)
+	// LinkAddr, when set, measures the link to the responder at this address (dialed through Dial) and
+	// leaves speedtest.net out, so the result is the speed of the path to that end.
+	LinkAddr string
 }
 
 // DefaultConfig is what the panel runs with.
@@ -101,6 +105,9 @@ func Run(ctx context.Context, cfg Config, onUpdate func(Update)) (Result, error)
 		if onUpdate != nil {
 			onUpdate(u)
 		}
+	}
+	if cfg.LinkAddr != "" {
+		return runLink(ctx, cfg, emit)
 	}
 	client := newClient(cfg, cfg.AllowPrivate)
 	defer client.CloseIdleConnections()

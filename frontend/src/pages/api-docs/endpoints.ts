@@ -2033,7 +2033,7 @@ export const sections: readonly Section[] = [
         method: 'POST',
         path: '/panel/api/tunnels/speedtest/start/:id',
         summary:
-          'Start a speed test through an entry tunnel: the connections leave at the exit server, so the result is the speed of this tunnel to the internet. Only one speed test runs at a time on a panel. Starting a test of the same tunnel while it runs joins it; starting another tunnel meanwhile fails. Only an enabled BackPack or Rakhsh entry tunnel with a relay can be tested; an exit end, a direct tunnel and a management tunnel are refused.',
+          'Start a speed test of an entry tunnel: ping, download and upload are measured through the tunnel to the exit server, which answers on a loopback port next to the relay port, so the result is the speed of the tunnel itself and speedtest.net is not used (the exit server needs a Dalan version with this test). Only one speed test runs at a time on a panel. Starting a test of the same tunnel while it runs joins it; starting another tunnel meanwhile fails. Only an enabled entry tunnel with a relay (BackPack, Rakhsh or a forwarding engine) can be tested; an exit end, a direct tunnel and a management tunnel are refused.',
         params: [{ name: 'id', in: 'path', type: 'number', desc: 'Entry tunnel ID.' }],
         response: '{\n  "success": true,\n  "obj": null\n}',
         errorResponse:
@@ -2043,7 +2043,7 @@ export const sections: readonly Section[] = [
         method: 'GET',
         path: '/panel/api/tunnels/speedtest/status/:id',
         summary:
-          'Live state of the speed test of one tunnel: phase (servers, ping, download, upload), progress 0-1 and the current rate in Mbps; result holds the finished measurement and error says why a run failed.',
+          'Live state of the speed test of one tunnel: phase (ping, download, upload), progress 0-1 and the current rate in Mbps; result holds the finished measurement (its server.id is "link", not a speedtest.net host) and error says why a run failed.',
         params: [{ name: 'id', in: 'path', type: 'number', desc: 'Entry tunnel ID.' }],
         response:
           '{\n  "success": true,\n  "obj": {\n    "running": false,\n    "phase": "",\n    "progress": 0,\n    "mbps": 0,\n    "pingMs": 0,\n    "result": {\n    "server": {\n      "id": "1234",\n      "name": "Frankfurt",\n      "sponsor": "Example ISP",\n      "country": "Germany",\n      "host": "speedtest.example.de:8080",\n      "distance": 12.5\n    },\n    "pingMs": 96.2,\n    "jitterMs": 2.1,\n    "downMbps": 212.6,\n    "upMbps": 88.9,\n    "at": 1795000000000\n  },\n    "error": ""\n  }\n}',
@@ -2060,7 +2060,7 @@ export const sections: readonly Section[] = [
         method: 'POST',
         path: '/panel/api/tunnels/benchmark/start',
         summary:
-          'Try tunnel methods against one node and rank them. For each method in candidates the panel makes a temporary tunnel on this server and on the node (named dalan-bench-N, a name regular tunnels cannot take), waits until it connects, runs the speed test through it, then removes it on both servers. objective "speed" ranks by throughput with download weighted over upload; "balanced" weighs throughput, ping and jitter. A reverse method needs address, this server\'s address as the node dials it; a direct method uses the node\'s own. Between 1 and 60 methods are accepted; only one benchmark runs at a time and it also holds the speed test slot while a method is measured. Poll /benchmark/status for progress.',
+          'Try tunnel methods against one node and rank them. For each method in candidates the panel makes a temporary tunnel on this server and on the node (named dalan-bench-N, a name regular tunnels cannot take), waits until it connects, measures the speed between the two servers through it (the tunnel speed test), then removes it on both servers. objective "speed" ranks by throughput with download weighted over upload; "balanced" weighs throughput, ping and jitter. A reverse method needs address, this server\'s address as the node dials it; a direct method uses the node\'s own. Between 1 and 60 methods are accepted; only one benchmark runs at a time and it also holds the speed test slot while a method is measured. Poll /benchmark/status for progress.',
         body: '{\n  "nodeId": 3,\n  "address": "203.0.113.10",\n  "objective": "balanced",\n  "candidates": [\n    { "engine": "gost", "transport": "tls", "mode": "reverse" },\n    { "engine": "rathole", "transport": "noise", "mode": "reverse" }\n  ]\n}',
         errorResponse:
           '{\n  "success": false,\n  "msg": "The benchmark could not run (a benchmark is already running)"\n}',
