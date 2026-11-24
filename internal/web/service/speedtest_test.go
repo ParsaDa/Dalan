@@ -11,7 +11,7 @@ import (
 	"github.com/mhsanaei/3x-ui/v3/internal/speedtest"
 )
 
-func newSpeedtestService(t *testing.T, run speedtestRunner) *SpeedtestService {
+func newSpeedtestService(t *testing.T, run func(context.Context, func(speedtest.Update)) (speedtest.Result, error)) *SpeedtestService {
 	t.Helper()
 	dbtest.InitDB(t, filepath.Join(t.TempDir(), "x-ui.db"))
 	return &SpeedtestService{run: run}

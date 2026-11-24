@@ -20,8 +20,6 @@ const (
 // ErrSpeedtestRunning is returned by Start while another run is in flight.
 var ErrSpeedtestRunning = errors.New("a speed test is already running")
 
-type speedtestRunner func(ctx context.Context, emit func(speedtest.Update)) (speedtest.Result, error)
-
 // SpeedtestStatus is what the dashboard polls: live progress while Running, then the Result or Error.
 type SpeedtestStatus struct {
 	Running  bool              `json:"running"`
@@ -35,7 +33,7 @@ type SpeedtestStatus struct {
 
 // SpeedtestService runs one speed test at a time against this server and keeps the recent results.
 type SpeedtestService struct {
-	run            speedtestRunner
+	run            func(ctx context.Context, emit func(speedtest.Update)) (speedtest.Result, error)
 	settingService SettingService
 
 	mu     sync.Mutex
