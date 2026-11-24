@@ -95,6 +95,17 @@ beforeEach(() => {
     if (url === '/panel/api/tunnels/options') return new Msg(true, '', optionCatalog);
     if (url === '/panel/api/tunnels/link/1') return new Msg(true, '', 'dalan://tunnel/abc');
     if (url === '/panel/api/tunnels/status/1') return new Msg(true, '', statusOfPortal);
+    if (url === '/panel/api/tunnels/speedtest/status/1')
+      return new Msg(true, '', {
+        running: false,
+        phase: '',
+        progress: 0,
+        mbps: 0,
+        pingMs: 0,
+        result: null,
+        error: '',
+      });
+    if (url === '/panel/api/tunnels/speedtest/history/1') return new Msg(true, '', []);
     return new Msg(true, '', []);
   });
   vi.spyOn(HttpUtil, 'post').mockImplementation(async () => new Msg(true, '', {}));
@@ -785,4 +796,21 @@ test('draws the last hour of probe latency for a tunnel', async () => {
   const row = (await screen.findByText('de1')).closest('tr') as HTMLElement;
   await within(row).findByText('Connected');
   expect(row.querySelector('svg.spark')).not.toBeNull();
+});
+
+test('offers a speed test only on an entry tunnel with a relay and starts it for that tunnel', async () => {
+  listed = [{ ...portal, relayPort: 63500 }, { ...bridge, relayPort: 63500 }, backpackPortal];
+  openTunnels();
+  await screen.findByText('de1');
+
+  expect(screen.getByRole('button', { name: 'Speed test de1' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Speed test ir1' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Speed test bp1' })).toBeNull();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Speed test de1' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Run speed test' }));
+
+  await waitFor(() =>
+    expect(HttpUtil.post).toHaveBeenCalledWith('/panel/api/tunnels/speedtest/start/1'),
+  );
 });

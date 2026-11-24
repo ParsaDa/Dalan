@@ -408,6 +408,25 @@ func (s *TunnelService) probe(id int) (tunnel.Status, error) {
 	return tunnel.Status{}, fmt.Errorf("tunnel engine %q is not supported", t.Engine)
 }
 
+// SpeedtestDial returns a dialer whose connections leave at the exit end of an entry tunnel.
+func (s *TunnelService) SpeedtestDial(id int) (func(ctx context.Context, network, addr string) (net.Conn, error), error) {
+	t, err := s.get(id)
+	if err != nil {
+		return nil, err
+	}
+	switch {
+	case t.ManagePort > 0:
+		return nil, errors.New("a management tunnel carries a node's panel, not traffic to test")
+	case t.Role != model.TunnelRolePortal:
+		return nil, errors.New("this is the exit end of a tunnel; run the speed test on the entry end")
+	case !t.Enable:
+		return nil, errors.New("the tunnel is disabled")
+	case !model.ExternalEngine(t.Engine) || t.RelayPort == 0:
+		return nil, errors.New("this tunnel has no relay to test through (a direct tunnel carries only its forwarded ports)")
+	}
+	return backpack.RelayDial(*t), nil
+}
+
 // applyChange lets every engine pick up a stored change; a missing engine binary is reported by Status.
 func (s *TunnelService) applyChange() {
 	s.xrayService.SetToNeedRestart()

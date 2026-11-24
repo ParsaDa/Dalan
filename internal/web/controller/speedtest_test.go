@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -14,13 +15,17 @@ import (
 
 type fakeSpeedtest struct {
 	startErr error
+	started  []int
 	status   service.SpeedtestStatus
 	history  []speedtest.Result
 }
 
-func (f *fakeSpeedtest) Start() error                         { return f.startErr }
-func (f *fakeSpeedtest) Status() service.SpeedtestStatus      { return f.status }
-func (f *fakeSpeedtest) History() ([]speedtest.Result, error) { return f.history, nil }
+func (f *fakeSpeedtest) Start(id int) error {
+	f.started = append(f.started, id)
+	return f.startErr
+}
+func (f *fakeSpeedtest) Status(int) service.SpeedtestStatus      { return f.status }
+func (f *fakeSpeedtest) History(int) ([]speedtest.Result, error) { return f.history, nil }
 
 func speedtestRequest(t *testing.T, f *fakeSpeedtest, method, path string) map[string]any {
 	t.Helper()
@@ -29,6 +34,9 @@ func speedtestRequest(t *testing.T, f *fakeSpeedtest, method, path string) map[s
 	engine.POST("/speedtest/start", a.speedtestStart)
 	engine.GET("/speedtest/status", a.speedtestStatus)
 	engine.GET("/speedtest/history", a.speedtestHistory)
+	tunnels := &TunnelController{speedtest: f}
+	engine.POST("/tunnels/speedtest/start/:id", tunnels.speedtestStart)
+	engine.GET("/tunnels/speedtest/status/:id", tunnels.speedtestStatus)
 	w := httptest.NewRecorder()
 	engine.ServeHTTP(w, httptest.NewRequest(method, path, nil))
 	var env map[string]any
@@ -59,5 +67,29 @@ func TestStatusAndHistoryUseTheKeysTheDashboardReads(t *testing.T) {
 	first, _ := list[0].(map[string]any)
 	if len(list) != 1 || first["downMbps"] != 90.0 || first["upMbps"] != 30.0 || first["pingMs"] != 8.0 {
 		t.Fatalf("history obj = %v", list)
+	}
+}
+
+func TestTunnelSpeedtestStartsTheTunnelInThePathAndReportsABusySlot(t *testing.T) {
+	f := &fakeSpeedtest{}
+	if env := speedtestRequest(t, f, http.MethodPost, "/tunnels/speedtest/start/7"); env["success"] != true {
+		t.Fatalf("envelope = %v, want success", env)
+	}
+	if len(f.started) != 1 || f.started[0] != 7 {
+		t.Fatalf("started = %v, want [7]", f.started)
+	}
+
+	busy := &fakeSpeedtest{startErr: service.ErrSpeedtestBusy}
+	env := speedtestRequest(t, busy, http.MethodPost, "/tunnels/speedtest/start/7")
+	if env["success"] != false || !strings.Contains(env["msg"].(string), "another speed test is running") {
+		t.Fatalf("envelope = %v, want a failure naming the running test", env)
+	}
+}
+
+func TestTunnelSpeedtestRefusesAnIdThatIsNotATunnel(t *testing.T) {
+	f := &fakeSpeedtest{}
+	env := speedtestRequest(t, f, http.MethodGet, "/tunnels/speedtest/status/0")
+	if env["success"] != false || len(f.started) != 0 {
+		t.Fatalf("envelope = %v, want a failure for id 0 (that is this server's own test)", env)
 	}
 }

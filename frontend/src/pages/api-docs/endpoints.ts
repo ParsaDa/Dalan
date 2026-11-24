@@ -2030,6 +2030,33 @@ export const sections: readonly Section[] = [
           '{\n  "success": true,\n  "obj": {\n    "connected": true,\n    "latencyMs": 182,\n    "exitIp": "203.0.113.77",\n    "exitLoc": "DE",\n    "error": "",\n    "history": [180, 0, 182]\n  }\n}',
       },
       {
+        method: 'POST',
+        path: '/panel/api/tunnels/speedtest/start/:id',
+        summary:
+          'Start a speed test through an entry tunnel: the connections leave at the exit server, so the result is the speed of this tunnel to the internet. Only one speed test runs at a time on a panel. Starting a test of the same tunnel while it runs joins it; starting another tunnel meanwhile fails. Only an enabled BackPack or Rakhsh entry tunnel with a relay can be tested; an exit end, a direct tunnel and a management tunnel are refused.',
+        params: [{ name: 'id', in: 'path', type: 'number', desc: 'Entry tunnel ID.' }],
+        response: '{\n  "success": true,\n  "obj": null\n}',
+        errorResponse:
+          '{\n  "success": false,\n  "msg": "The speed test could not run (another speed test is running; wait for it to finish)"\n}',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/tunnels/speedtest/status/:id',
+        summary:
+          'Live state of the speed test of one tunnel: phase (servers, ping, download, upload), progress 0-1 and the current rate in Mbps; result holds the finished measurement and error says why a run failed.',
+        params: [{ name: 'id', in: 'path', type: 'number', desc: 'Entry tunnel ID.' }],
+        response:
+          '{\n  "success": true,\n  "obj": {\n    "running": false,\n    "phase": "",\n    "progress": 0,\n    "mbps": 0,\n    "pingMs": 0,\n    "result": {\n    "server": {\n      "id": "1234",\n      "name": "Frankfurt",\n      "sponsor": "Example ISP",\n      "country": "Germany",\n      "host": "speedtest.example.de:8080",\n      "distance": 12.5\n    },\n    "pingMs": 96.2,\n    "jitterMs": 2.1,\n    "downMbps": 212.6,\n    "upMbps": 88.9,\n    "at": 1795000000000\n  },\n    "error": ""\n  }\n}',
+      },
+      {
+        method: 'GET',
+        path: '/panel/api/tunnels/speedtest/history/:id',
+        summary: 'The last 20 finished speed tests of one tunnel, newest first.',
+        params: [{ name: 'id', in: 'path', type: 'number', desc: 'Entry tunnel ID.' }],
+        response:
+          '{\n  "success": true,\n  "obj": [\n    {\n    "server": {\n      "id": "1234",\n      "name": "Frankfurt",\n      "sponsor": "Example ISP",\n      "country": "Germany",\n      "host": "speedtest.example.de:8080",\n      "distance": 12.5\n    },\n    "pingMs": 96.2,\n    "jitterMs": 2.1,\n    "downMbps": 212.6,\n    "upMbps": 88.9,\n    "at": 1795000000000\n  }\n  ]\n}',
+      },
+      {
         method: 'GET',
         path: '/panel/api/tunnels/engine',
         summary:

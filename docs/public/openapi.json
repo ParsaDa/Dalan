@@ -14416,6 +14416,201 @@
         }
       }
     },
+    "/panel/api/tunnels/speedtest/start/{id}": {
+      "post": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Start a speed test through an entry tunnel: the connections leave at the exit server, so the result is the speed of this tunnel to the internet. Only one speed test runs at a time on a panel. Starting a test of the same tunnel while it runs joins it; starting another tunnel meanwhile fails. Only an enabled BackPack or Rakhsh entry tunnel with a relay can be tested; an exit end, a direct tunnel and a management tunnel are refused.",
+        "operationId": "post_panel_api_tunnels_speedtest_start_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Entry tunnel ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "success": false,
+                  "msg": "The speed test could not run (another speed test is running; wait for it to finish)"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/speedtest/status/{id}": {
+      "get": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "Live state of the speed test of one tunnel: phase (servers, ping, download, upload), progress 0-1 and the current rate in Mbps; result holds the finished measurement and error says why a run failed.",
+        "operationId": "get_panel_api_tunnels_speedtest_status_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Entry tunnel ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": {
+                    "running": false,
+                    "phase": "",
+                    "progress": 0,
+                    "mbps": 0,
+                    "pingMs": 0,
+                    "result": {
+                      "server": {
+                        "id": "1234",
+                        "name": "Frankfurt",
+                        "sponsor": "Example ISP",
+                        "country": "Germany",
+                        "host": "speedtest.example.de:8080",
+                        "distance": 12.5
+                      },
+                      "pingMs": 96.2,
+                      "jitterMs": 2.1,
+                      "downMbps": 212.6,
+                      "upMbps": 88.9,
+                      "at": 1795000000000
+                    },
+                    "error": ""
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/panel/api/tunnels/speedtest/history/{id}": {
+      "get": {
+        "tags": [
+          "Tunnels"
+        ],
+        "summary": "The last 20 finished speed tests of one tunnel, newest first.",
+        "operationId": "get_panel_api_tunnels_speedtest_history_id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Entry tunnel ID.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "msg": {
+                      "type": "string"
+                    },
+                    "obj": {}
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "obj": [
+                    {
+                      "server": {
+                        "id": "1234",
+                        "name": "Frankfurt",
+                        "sponsor": "Example ISP",
+                        "country": "Germany",
+                        "host": "speedtest.example.de:8080",
+                        "distance": 12.5
+                      },
+                      "pingMs": 96.2,
+                      "jitterMs": 2.1,
+                      "downMbps": 212.6,
+                      "upMbps": 88.9,
+                      "at": 1795000000000
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/panel/api/tunnels/engine": {
       "get": {
         "tags": [

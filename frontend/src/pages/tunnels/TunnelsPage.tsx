@@ -12,6 +12,7 @@ import { Btn, Chip, Empty as DlEmpty, FlagDot, Sk, TileHead } from '@/components
 import { fmtInt } from '@/components/dl/numbers';
 import { EngineCard, FlowArrow, TunnelCard, TunnelRow } from './TunnelParts';
 import PortTest from './PortTest';
+import { TunnelSpeedtest } from './TunnelSpeedtest';
 import TunnelEditModal from './TunnelEditModal';
 import TunnelOptionFields, { TunnelOptionField, cleanOptions } from './TunnelOptionFields';
 import TunnelPools from './TunnelPools';
@@ -259,10 +260,8 @@ export default function TunnelsPage() {
           : stateOf(tu) === filter,
   );
   const [deleting, setDeleting] = useState<ServerTunnel | null>(null);
-  const [removeHere, setRemoveHere] = useState<{
-    row: ServerTunnel;
-    reason: string;
-  } | null>(null);
+  const [speedtesting, setSpeedtesting] = useState<ServerTunnel | null>(null);
+  const [removeHere, setRemoveHere] = useState<{ row: ServerTunnel; reason: string } | null>(null);
   const testAll = () => queryClient.invalidateQueries({ queryKey: [...TUNNELS_KEY, 'status'] });
   const flowTunnel =
     tunnels.find((tu) => tu.enable && tu.role === 'portal' && tu.mode === 'reverse' && tu.nodeId) ??
@@ -485,6 +484,7 @@ export default function TunnelsPage() {
                       onEdit={() => setEditing(row)}
                       onCopy={() => copyLink(row.id)}
                       onDelete={() => setDeleting(row)}
+                      onSpeedtest={() => setSpeedtesting(row)}
                     />
                   ))}
                 </div>
@@ -529,6 +529,7 @@ export default function TunnelsPage() {
                           onEdit={() => setEditing(row)}
                           onCopy={() => copyLink(row.id)}
                           onDelete={() => setDeleting(row)}
+                          onSpeedtest={() => setSpeedtesting(row)}
                         />
                       ))}
                     </tbody>
@@ -541,6 +542,7 @@ export default function TunnelsPage() {
         </>
       )}
 
+      <TunnelSpeedtest tunnel={speedtesting} onClose={() => setSpeedtesting(null)} />
       <DlModal
         open={deleting !== null}
         onClose={() => setDeleting(null)}

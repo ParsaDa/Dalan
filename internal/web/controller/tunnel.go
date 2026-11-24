@@ -19,10 +19,11 @@ import (
 type TunnelController struct {
 	tunnelService service.TunnelService
 	poolService   service.TunnelPoolService
+	speedtest     speedtestRunner
 }
 
 func NewTunnelController(g *gin.RouterGroup) *TunnelController {
-	a := &TunnelController{}
+	a := &TunnelController{speedtest: service.NewSpeedtestService()}
 	a.initRouter(g)
 	return a
 }
@@ -36,6 +37,8 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.GET("/options", a.options)
 	g.GET("/engines", a.engines)
 	g.GET("/pools/list", a.poolList)
+	g.GET("/speedtest/status/:id", a.speedtestStatus)
+	g.GET("/speedtest/history/:id", a.speedtestHistory)
 
 	g.POST("/add", a.add)
 	g.POST("/import", a.importLink)
@@ -48,6 +51,7 @@ func (a *TunnelController) initRouter(g *gin.RouterGroup) {
 	g.POST("/del/:id", a.del)
 	g.POST("/dial", a.dial)
 	g.POST("/routetest", a.routeTest)
+	g.POST("/speedtest/start/:id", a.speedtestStart)
 	g.POST("/pools/add", a.poolAdd)
 	g.POST("/pools/del/:id", a.poolDel)
 }
@@ -387,4 +391,33 @@ func (a *TunnelController) installEngine(c *gin.Context) {
 		}
 	}
 	jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.installEngine"), a.tunnelService.InstallEngineVersion(req.Engine, req.Version, req.Route))
+}
+
+// speedtestTunnelId reads the tunnel id of a speed-test route; 0 is this server's own test, not a tunnel.
+func speedtestTunnelId(c *gin.Context) (int, bool) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil || id <= 0 {
+		jsonMsg(c, I18nWeb(c, "pages.tunnels.toasts.speedtest"), errors.New("invalid tunnel id"))
+		return 0, false
+	}
+	return id, true
+}
+
+func (a *TunnelController) speedtestStart(c *gin.Context) {
+	if id, ok := speedtestTunnelId(c); ok {
+		startSpeedtest(c, a.speedtest, id)
+	}
+}
+
+func (a *TunnelController) speedtestStatus(c *gin.Context) {
+	if id, ok := speedtestTunnelId(c); ok {
+		jsonObj(c, a.speedtest.Status(id), nil)
+	}
+}
+
+func (a *TunnelController) speedtestHistory(c *gin.Context) {
+	if id, ok := speedtestTunnelId(c); ok {
+		history, err := a.speedtest.History(id)
+		jsonObj(c, history, err)
+	}
 }

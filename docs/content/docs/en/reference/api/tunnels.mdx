@@ -30,6 +30,23 @@ _openapi:
         restart.'
       url: '#send-one-request-through-an-entry-tunnel-and-report-whether-it-came-back-the-round-trip-time-and-the-address-and-country-it-left-from-a-tunnel-that-is-down-is-a-normal-answer-with-connectedfalse-and-the-reason-in-error-a-rakhsh-tunnel-is-judged-by-its-lanes-instead-connected-while-at-least-one-lane-is-up-with-lanesup-targetlanes-latencyms-and-losspct-from-the-engine-only-the-entry-end-can-be-tested-history-lists-the-latency-of-every-probe-in-the-last-hour-oldest-first-with-0-for-a-failed-probe-it-lives-in-memory-and-starts-empty-after-a-restart'
     - depth: 2
+      title: 'Start a speed test through an entry tunnel: the connections leave at the
+        exit server, so the result is the speed of this tunnel to the internet.
+        Only one speed test runs at a time on a panel. Starting a test of the
+        same tunnel while it runs joins it; starting another tunnel meanwhile
+        fails. Only an enabled BackPack or Rakhsh entry tunnel with a relay can
+        be tested; an exit end, a direct tunnel and a management tunnel are
+        refused.'
+      url: '#start-a-speed-test-through-an-entry-tunnel-the-connections-leave-at-the-exit-server-so-the-result-is-the-speed-of-this-tunnel-to-the-internet-only-one-speed-test-runs-at-a-time-on-a-panel-starting-a-test-of-the-same-tunnel-while-it-runs-joins-it-starting-another-tunnel-meanwhile-fails-only-an-enabled-backpack-or-rakhsh-entry-tunnel-with-a-relay-can-be-tested-an-exit-end-a-direct-tunnel-and-a-management-tunnel-are-refused'
+    - depth: 2
+      title: 'Live state of the speed test of one tunnel: phase (servers, ping,
+        download, upload), progress 0-1 and the current rate in Mbps; result
+        holds the finished measurement and error says why a run failed.'
+      url: '#live-state-of-the-speed-test-of-one-tunnel-phase-servers-ping-download-upload-progress-0-1-and-the-current-rate-in-mbps-result-holds-the-finished-measurement-and-error-says-why-a-run-failed'
+    - depth: 2
+      title: The last 20 finished speed tests of one tunnel, newest first.
+      url: '#the-last-20-finished-speed-tests-of-one-tunnel-newest-first'
+    - depth: 2
       title: Whether an engine binary (BackPack, Rakhsh or one of the forwarding
         engines) is on this server, which release is installed (empty when it
         was placed by hand), and the release this Dalan version installs by
@@ -195,6 +212,20 @@ _openapi:
           oldest first, with 0 for a failed probe; it lives in memory and starts
           empty after a restart.'
         id: send-one-request-through-an-entry-tunnel-and-report-whether-it-came-back-the-round-trip-time-and-the-address-and-country-it-left-from-a-tunnel-that-is-down-is-a-normal-answer-with-connectedfalse-and-the-reason-in-error-a-rakhsh-tunnel-is-judged-by-its-lanes-instead-connected-while-at-least-one-lane-is-up-with-lanesup-targetlanes-latencyms-and-losspct-from-the-engine-only-the-entry-end-can-be-tested-history-lists-the-latency-of-every-probe-in-the-last-hour-oldest-first-with-0-for-a-failed-probe-it-lives-in-memory-and-starts-empty-after-a-restart
+      - content: 'Start a speed test through an entry tunnel: the connections leave at
+          the exit server, so the result is the speed of this tunnel to the
+          internet. Only one speed test runs at a time on a panel. Starting a
+          test of the same tunnel while it runs joins it; starting another
+          tunnel meanwhile fails. Only an enabled BackPack or Rakhsh entry
+          tunnel with a relay can be tested; an exit end, a direct tunnel and a
+          management tunnel are refused.'
+        id: start-a-speed-test-through-an-entry-tunnel-the-connections-leave-at-the-exit-server-so-the-result-is-the-speed-of-this-tunnel-to-the-internet-only-one-speed-test-runs-at-a-time-on-a-panel-starting-a-test-of-the-same-tunnel-while-it-runs-joins-it-starting-another-tunnel-meanwhile-fails-only-an-enabled-backpack-or-rakhsh-entry-tunnel-with-a-relay-can-be-tested-an-exit-end-a-direct-tunnel-and-a-management-tunnel-are-refused
+      - content: 'Live state of the speed test of one tunnel: phase (servers, ping,
+          download, upload), progress 0-1 and the current rate in Mbps; result
+          holds the finished measurement and error says why a run failed.'
+        id: live-state-of-the-speed-test-of-one-tunnel-phase-servers-ping-download-upload-progress-0-1-and-the-current-rate-in-mbps-result-holds-the-finished-measurement-and-error-says-why-a-run-failed
+      - content: The last 20 finished speed tests of one tunnel, newest first.
+        id: the-last-20-finished-speed-tests-of-one-tunnel-newest-first
       - content: Whether an engine binary (BackPack, Rakhsh or one of the forwarding
           engines) is on this server, which release is installed (empty when it
           was placed by hand), and the release this Dalan version installs by
@@ -338,7 +369,7 @@ export default function Layout(props) {
   return (
     <>
       {props.children}
-      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/routes","method":"get"},{"path":"/panel/api/tunnels/engines","method":"get"},{"path":"/panel/api/tunnels/options","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/engine/releases","method":"post"},{"path":"/panel/api/tunnels/engine/update","method":"post"},{"path":"/panel/api/tunnels/engine/release","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/update/{id}","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
+      <OpenAPIPage document="./public/openapi.json" webhooks={[]} operations={[{"path":"/panel/api/tunnels/list","method":"get"},{"path":"/panel/api/tunnels/link/{id}","method":"get"},{"path":"/panel/api/tunnels/status/{id}","method":"get"},{"path":"/panel/api/tunnels/speedtest/start/{id}","method":"post"},{"path":"/panel/api/tunnels/speedtest/status/{id}","method":"get"},{"path":"/panel/api/tunnels/speedtest/history/{id}","method":"get"},{"path":"/panel/api/tunnels/engine","method":"get"},{"path":"/panel/api/tunnels/engine/routes","method":"get"},{"path":"/panel/api/tunnels/engines","method":"get"},{"path":"/panel/api/tunnels/options","method":"get"},{"path":"/panel/api/tunnels/engine/install","method":"post"},{"path":"/panel/api/tunnels/engine/releases","method":"post"},{"path":"/panel/api/tunnels/engine/update","method":"post"},{"path":"/panel/api/tunnels/engine/release","method":"post"},{"path":"/panel/api/tunnels/add","method":"post"},{"path":"/panel/api/tunnels/update/{id}","method":"post"},{"path":"/panel/api/tunnels/import","method":"post"},{"path":"/panel/api/tunnels/setEnable/{id}","method":"post"},{"path":"/panel/api/tunnels/pools/list","method":"get"},{"path":"/panel/api/tunnels/routetest","method":"post"},{"path":"/panel/api/tunnels/dial","method":"post"},{"path":"/panel/api/tunnels/pools/add","method":"post"},{"path":"/panel/api/tunnels/pools/del/{id}","method":"post"},{"path":"/panel/api/tunnels/del/{id}","method":"post"}]} showTitle />
     </>
   );
 }
