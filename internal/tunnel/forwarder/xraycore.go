@@ -51,8 +51,10 @@ func uuidOf(secret string) string {
 func xrayStream(p Plan) (object, bool, error) {
 	kcp := strings.HasPrefix(p.Transport, "mkcp-")
 	if kcp {
-		return object{"network": "kcp", "kcpSettings": object{"mtu": 1350, "tti": 20, "uplinkCapacity": 100, "downlinkCapacity": 100,
-			"congestion": true, "readBufferSize": 16, "writeBufferSize": 16, "seed": p.Secret}}, true, nil
+		return object{"network": "kcp", "kcpSettings": object{
+			"mtu": 1350, "tti": 20, "uplinkCapacity": 100, "downlinkCapacity": 100,
+			"congestion": true, "readBufferSize": 16, "writeBufferSize": 16, "seed": p.Secret,
+		}}, true, nil
 	}
 	stream := object{"security": "tls"}
 	switch p.Transport {
@@ -143,8 +145,10 @@ func renderXrayCore(p Plan) (string, error) {
 		cfg = object{
 			"log":      object{"loglevel": "warning"},
 			"inbounds": inbounds,
-			"outbounds": []object{{"tag": "tunnel", "protocol": protocol, "streamSettings": stream,
-				"settings": object{"vnext": []object{{"address": p.Host, "port": p.Port, "users": []object{user}}}}}},
+			"outbounds": []object{{
+				"tag": "tunnel", "protocol": protocol, "streamSettings": stream,
+				"settings": object{"vnext": []object{{"address": p.Host, "port": p.Port, "users": []object{user}}}},
+			}},
 		}
 	}
 	raw, err := json.MarshalIndent(cfg, "", "  ")

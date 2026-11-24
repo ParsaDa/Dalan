@@ -1,6 +1,7 @@
 package forwarder
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -39,7 +40,7 @@ var socksGreeting = []byte{5, 1, 2}
 // answer comes from the exit's Xray, so it proves the whole path through the engine, not a local listener.
 func RelayRTT(port int, timeout time.Duration) (time.Duration, bool) {
 	start := time.Now()
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", port), timeout)
+	conn, err := (&net.Dialer{Timeout: timeout}).DialContext(context.Background(), "tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		return 0, false
 	}
