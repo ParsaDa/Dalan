@@ -164,7 +164,7 @@ Verified once by hand, not in CI:
 
 ## Releasing
 
-1. Create the release on GitHub with a new tag `vX.Y.Z` on `main`, marked latest. `release.yml` writes the tag into `internal/config/dalan_version` before it builds, so the binary reports the tag it was released as; the file in the repo does not need to move first.
+1. Create the release on GitHub with a new tag `vX.Y.Z` on `main`, marked latest. `release.yml` writes the tag into `internal/config/dalan_version` before it builds, so the binary reports the tag it was released as (the Docker image gets the same through the `DALAN_TAG` build argument); the file in the repo does not need to move first.
 2. `release.yml` uploads the build to that release as a pre-release upload; afterwards confirm the release is still marked **Latest**. The installer and the in-panel update only see the latest release.
 3. A tag must be exactly `vX.Y.Z`; the build fails on anything else, e.g. `v1.2.3-rc1`.
 
