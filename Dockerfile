@@ -18,6 +18,7 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 
 RUN apk --no-cache --update add \
+  bash \
   build-base \
   gcc \
   curl \
@@ -25,6 +26,10 @@ RUN apk --no-cache --update add \
 
 COPY . .
 COPY --from=frontend /src/internal/web/dist ./internal/web/dist
+
+# A release build passes its tag so the image reports the version it was released as.
+ARG DALAN_TAG=""
+RUN if [ -n "$DALAN_TAG" ]; then bash scripts/dalan/stamp-version.sh "$DALAN_TAG" internal/config/dalan_version; fi
 
 ENV CGO_ENABLED=1
 ENV CGO_CFLAGS="-D_LARGEFILE64_SOURCE"
